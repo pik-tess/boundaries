@@ -24,12 +24,12 @@ The boundaries considered here are
 You can install `pbfunctions` by git cloning this repository ...
 
 ```bash
-git clone https://gitlab.pik-potsdam.de/lpjml/lpjmlkit.git
+git clone https://gitlab.pik-potsdam.de/tess/pbfunctions.git
 ```
 
 and install via  [`devtools`](https://rawgit.com/rstudio/cheatsheets/master/package-development.pdf) ...
 ```R
-devtools::install("<path_to_lpjmlkit>/lpjmlkit")
+devtools::install("<path_to_pbfunctions>/pbfunctions")
 
 library(lpjmlKit)
 ```
