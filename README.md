@@ -31,7 +31,7 @@ and install via  [`devtools`](https://rawgit.com/rstudio/cheatsheets/master/pack
 ```R
 devtools::install("<path_to_pbfunctions>/pbfunctions")
 
-library(lpjmlKit)
+library("pbfunctions")
 ```
 
 ## Scripts
