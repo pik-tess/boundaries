@@ -1,5 +1,4 @@
-# pbfunctions <a href='https://tidyr.tidyverse.org'><img src='man/figures/logo.png' align="right" /></a>
-
+# pbfunctions <a href='https://tidyr.tidyverse.org'><img src='man/figures/logo.png' align="right" height="180" /></a>
 
 
 *The goal of pbfunctions is to provide a toolset of functions that can be used   
