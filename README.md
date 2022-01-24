@@ -1,4 +1,4 @@
-# pbfunctions <a href=''><img src='man/figures/logo.png' align="right" /></a>
+# pbfunctions <a href=''><img src='man/figures/logo.png' align="right" height="139" /></a>
 
 
 *The goal of pbfunctions is to provide a toolset of functions that can be used   
