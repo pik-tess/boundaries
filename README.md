@@ -1,10 +1,5 @@
-![boundaries](./inst/img/pbs_title.png) 
-<!-- badges: start -->
+# pbfunctions <a href='https://tidyr.tidyverse.org'><img src='man/figures/logo.png' align="right" /></a>
 
- 
-<!-- badges: end -->
-<!-- badges: start -->
-<!-- badges: end -->
 
 
 *The goal of pbfunctions is to provide a toolset of functions that can be used   
