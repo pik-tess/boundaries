@@ -1,20 +1,19 @@
-#' Calculate environmental flow requirements (EFRs)
+#' Calculate bluewater planetary boundary status
 #'
-#' Calculate environmental flow requirements (EFRs) based on the number of years
-#' of `dim(x)[3]` or an avg_years interval that is recycled for `dim(x)[3]`.
+#' Calculate ...
 #'
-#' @param x discharge array with `dim(x)=c(ncells, months, years)`
+#' @param path
 #'
-#' @param method EFR method to be used , available methods are `c("VMF",
+#' @param method
+#'
+#' @param time_span
+#'
+#' @param bin_size
 #'
 #' @examples
 #' \dontrun{
-#' # basic example
-#' efrs1 <- calcEFRs(discharge_30y = discharge, method = "VMF")
+#'  calc_bluewater(path)
 #' }
-#' dim(efrs1)
-#' # c(67420, 12)
-
 #'
 #' @md
 #' @export
@@ -25,9 +24,11 @@ calc_bluewater <- function(path,
                            # to be replaced internally by lpjmlKit::read_output
                            start_year = 1901,
                            end_year = 2011) {
+  # verify available methods
   method <- match.arg(method, c("gerten2020",
                                 "steffen2015"))
 
+  # read baseline discharge
   # TO BE REPLACED BY lpjmlKit::read_output ...
   #   hardcoded values to be internally replaced
   nstep <- 12

@@ -29,3 +29,24 @@ Calculate environmental flow requirements (EFRs) based on the number of years
 of \code{dim(x)[3]} or specify a bin_size calculate the EFRs for each bin in
 \code{dim(x)[3]}.
 }
+\examples{
+\dontrun{
+# basic example
+efrs1 <- calcEFRs(discharge_30y = discharge, method = "vmf")
+
+dim(efrs1)
+# c(67420, 12)
+
+# example for using a 30 year average bin for a 90 year discharge
+efrs2 <- calcEFRs(discharge_90y = discharge, method="vmf", bin_size = 30)
+
+dim(efrs1)
+# c(67420, 12, 3)
+
+# example for using a 1 year (no average) bin for a 100 year discharge
+efrs3 <- calcEFRs(discharge_100y = discharge, method = "vmf", bin_size = 1)
+
+dim(efrs3)
+# c(67420, 12, 100)
+}
+}
