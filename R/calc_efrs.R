@@ -62,7 +62,7 @@ calc_efrs <- function(x, method = "VMF", avg_years = NULL) {
       # check if multiple
       if (dim(x)[3] %% avg_years == 0) {
         intervals <- rep(seq(1, dim(x)[3] / avg_years), each = avg_years)
-        mmf <- aperm(apply(x, c(1, 2), tapply, intervals, sum), c(2, 3, 1))
+        mmf <- aperm(apply(x, c(1, 2), tapply, intervals, mean), c(2, 3, 1))
       }
     } else if (avg_years == 1) {
       mmf <- x
@@ -124,6 +124,7 @@ calc_efrs <- function(x, method = "VMF", avg_years = NULL) {
       # high flow months
       efrs[mmf > 0.8 * maf] <- 0.45 * mmf[mmf > 0.8 * maf]
     },
+    # "Q90Q50" - Pastor et al. 2014
     Q90Q50 = {
       if (!is.null(avg_years)) {
         stop(paste0("Method \"Q90Q50\" is not supported with avg_years ",
