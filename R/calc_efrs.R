@@ -57,7 +57,7 @@ calc_efrs <- function(x, method = "VMF", avg_years = NULL) {
 
   # if avg_years (years to average) is supplied
   #   calculate mean monthly flow (mmf) and mean annual flow (maf)
-  if (avg_years) {
+  if (!is.null(avg_years)) {
     if (avg_years > 1 & avg_years < dim(x)[3]) {
       # check if multiple
       if (dim(x)[3] %% avg_years == 0) {
