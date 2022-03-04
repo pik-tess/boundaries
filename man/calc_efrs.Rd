@@ -4,27 +4,28 @@
 \alias{calc_efrs}
 \title{Calculate environmental flow requirements (EFRs)}
 \usage{
-calc_efrs(x, method = "VMF", avg_years = NULL)
+calc_efrs(x, method = "vmf", bin_size = NULL)
 }
 \arguments{
 \item{x}{discharge array with \code{dim(x)=c(ncells, months, years)}}
 
-\item{method}{EFR method to be used , available methods are \code{c("VMF", "VMFmin", "VMFmax", "Q90Q50")} based on
+\item{method}{EFR method to be used , available methods are \code{c("vmf", "vmf_min", "vmf_max", "q90q50")} based on
 \href{https://doi.org/10.5194/hess-18-5041-2014}{Pastor et al. 2014}
-as well as \code{"PBpaper"}, a modified version of VMF by
+as well as \code{"steffen2015"}, a modified version of vmf by
 \href{https://doi.org/10.1126/science.1259855}{Steffen et al. 2015}}
 
-\item{avg_years}{integer, if supplied it defines the years to average over,
-avg_years is recycled for all years \code{dim(x)[3]}. If \code{avg_years == 1} values
-are used directly (instead of calculating an average).
-avg_years has to smaller than \code{dim(x)[3]} and \code{dim(x)[3]} has to be a
-multiply of avg_years. Defaults to \code{NULL}}
+\item{bin_size}{integer, if supplied it defines the years for each bin to be
+averaged over in \code{dim(x)[3]}. If \code{bin_size == 1} values are used directly
+(instead of calculating an average). bin_size has to be smaller than
+\code{dim(x)[3]} and \code{dim(x)[3]} has to be a multiply of bin_size.
+Defaults to \code{NULL}}
 }
 \value{
 EFRs with same unit as \code{x} (discharge), with \code{dim(x)=c(ncells, 12)}
-or \code{dim(EFRs)=c(ncells, 12, dim(x)[3] / avg_years)} if avg_years is defined
+or \code{dim(EFRs)=c(ncells, 12, dim(x)[3] / bin_size)} if bin_size is defined
 }
 \description{
 Calculate environmental flow requirements (EFRs) based on the number of years
-of \code{dim(x)[3]} or an avg_years interval that is recycled for \code{dim(x)[3]}.
+of \code{dim(x)[3]} or specify a bin_size calculate the EFRs for each bin in
+\code{dim(x)[3]}.
 }
