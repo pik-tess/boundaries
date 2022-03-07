@@ -8,7 +8,7 @@ calc_bluewater(
   path,
   method = "gerten2020",
   time_span = c(1982, 2011),
-  bin_size = NULL,
+  n_avg = NULL,
   start_year = 1901,
   end_year = 2011
 )

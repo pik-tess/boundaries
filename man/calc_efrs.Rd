@@ -4,7 +4,13 @@
 \alias{calc_efrs}
 \title{Calculate environmental flow requirements (EFRs)}
 \usage{
-calc_efrs(x, method = "vmf", bin_size = NULL)
+calc_efrs(
+  x,
+  method = "vmf",
+  nyear_avg = NULL,
+  moving_avg = FALSE,
+  interpolate = FALSE
+)
 }
 \arguments{
 \item{x}{discharge array with \code{dim(x)=c(ncells, months, years)}}
@@ -14,19 +20,26 @@ calc_efrs(x, method = "vmf", bin_size = NULL)
 as well as \code{"steffen2015"}, a modified version of vmf by
 \href{https://doi.org/10.1126/science.1259855}{Steffen et al. 2015}}
 
-\item{bin_size}{integer, if supplied it defines the years for each bin to be
-averaged over in \code{dim(x)[3]}. If \code{bin_size == 1} values are used directly
-(instead of calculating an average). bin_size has to be smaller than
-\code{dim(x)[3]} and \code{dim(x)[3]} has to be a multiply of bin_size.
+\item{nyear_avg}{integer, if supplied it defines the years for each window to
+be averaged over in \code{dim(x)[3]}. If \code{nyear_avg == 1} values are used directly
+(instead of calculating an average). nyear_avg has to be smaller than
+\code{dim(x)[3]} and \code{dim(x)[3]} has to be a multiply of nyear_avg.
 Defaults to \code{NULL}}
+
+\item{moving_avg}{logical. If \code{TRUE} moving average is computed. start and
+end are interpolated using spline interpolation.}
+
+\item{interpolate}{logical. If \code{TRUE} and nyear_avg is defined (with
+\code{moving_avg == FALSE} years are interpolated (spline) to return same array
+with same dimensions as \code{x} (mostly \code{dim(x)[3]} -> years).}
 }
 \value{
 EFRs with same unit as \code{x} (discharge), with \code{dim(x)=c(ncells, 12)}
-or \code{dim(EFRs)=c(ncells, 12, dim(x)[3] / bin_size)} if bin_size is defined
+or \code{dim(EFRs)=c(ncells, 12, dim(x)[3] / nyear_avg)} if nyear_avg is defined
 }
 \description{
 Calculate environmental flow requirements (EFRs) based on the number of years
-of \code{dim(x)[3]} or specify a bin_size calculate the EFRs for each bin in
+of \code{dim(x)[3]} or specify a nyear_avg calculate the EFRs for each bin in
 \code{dim(x)[3]}.
 }
 \examples{
@@ -38,13 +51,13 @@ dim(efrs1)
 # c(67420, 12)
 
 # example for using a 30 year average bin for a 90 year discharge
-efrs2 <- calcEFRs(discharge_90y = discharge, method="vmf", bin_size = 30)
+efrs2 <- calcEFRs(discharge_90y = discharge, method="vmf", nyear_avg = 30)
 
 dim(efrs1)
 # c(67420, 12, 3)
 
 # example for using a 1 year (no average) bin for a 100 year discharge
-efrs3 <- calcEFRs(discharge_100y = discharge, method = "vmf", bin_size = 1)
+efrs3 <- calcEFRs(discharge_100y = discharge, method = "vmf", nyear_avg = 1)
 
 dim(efrs3)
 # c(67420, 12, 100)
