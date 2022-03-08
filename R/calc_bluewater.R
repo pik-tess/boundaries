@@ -20,7 +20,7 @@
 calc_bluewater <- function(path,
                            method = "gerten2020",
                            time_span = c(1982, 2011),
-                           n_avg = NULL,
+                           avg_nyear_args = list(),
                            # to be replaced internally by lpjmlKit::read_output
                            start_year = 1901,
                            end_year = 2011) {
@@ -52,6 +52,8 @@ calc_bluewater <- function(path,
   efr_req_uncertainty <- calc_efrs(discharge_baseline, "VMFmin")
   efr_req_safe <- calc_efrs(discharge_baseline, "vmf_max")
 
-  avg_disch_baseline <- apply(discharge_baseline, c(1, 2), mean) # mean of years
+  avg_disch_baseline <- do.call(average_nyear_window,
+                                append(list(x = discharge_baseline),
+                                       avg_nyear_args))
 
 }
