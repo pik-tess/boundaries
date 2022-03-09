@@ -153,19 +153,35 @@ calc_bluewater <- function(path_scenario,
       if (temporal_resolution == "annual") {
         # to average the ratio only over months which are not "safe"
         status_frac[status_frac <= 0.05] <- NA
-        pbw_frac_mean <- apply(
+        pb_status <- apply(
           status_frac,
           names(dim(status_frac))[
             names(dim(status_frac)) %in% c("cells", "years")
           ],
           mean,
-          na.rm = TRUE)
-
+          na.rm = TRUE) * 100
+      } else {
+        pb_status <- status_frac * 100
       }
+
+      # to display cells with marginal discharge in other color (grey):
+      cells_maginal_discharge <- array(0, ncell)
+      cells_maginal_discharge[
+        which(apply(avg_discharge_scenario, 1, mean) < cut_min)] <- (-1)
+
+      ######### TODO ##########
+      irrmask_basin <- NA
+
+      pb_range <- c(0, 100)
+      pb_status[irrmask_basin == 0] <- NA
+      pb_status[pb_status > pb_range[2]] <- pb_range[2]
+      pb_status[pb_status < pb_range[1]] <- pb_range[1]
+      pb_status[cells_maginal_discharge < 0] <- (-1)
 
     },
     steffen2015 = {
       stop("This method is currently not defined.")
     }
   )
+  return(pb_status)
 }
