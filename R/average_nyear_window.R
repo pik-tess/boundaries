@@ -35,6 +35,11 @@ average_nyear_window <- function(x,
                                  interpolate = FALSE,
                                  nyear_reference = NULL) {
 
+  # check validity of x dimensions
+  if (!all(names(dim(x)) %in% c("cells", "months", "years"))) {
+    stop("x has to have dimensions \"cells\", \"months\" and \"years\".")
+  }
+
   # moving average function - spline interpolation to fill NAs at start/end
   moving_average_fun <- function(x, n) {
     stats::filter(x, rep(1 / n, n), sides = 2) %>%

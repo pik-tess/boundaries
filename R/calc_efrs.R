@@ -66,12 +66,10 @@ calc_efrs <- function(x,
   # if nyear_avg (years to average) is supplied
   #   calculate mean monthly flow (mmf) and mean annual flow (maf)
   mmf <- do.call(average_nyear_window, append(list(x = x), avg_nyear_args))
-  if (length(dim(mmf)) == 3) {
-    dim_select <- c(1, 3)
-  } else {
-    dim_select <- 1
-  }
-  maf <- aperm(apply(mmf, dim_select, maf_fun), c(2, dim_select))
+  # get dimensions without cells to get back standard order cells, months, years
+  dim_select <- names(dim(mmf))[which(names(dim(mmf)) != "cells")]
+  # calculate maf based on flexibly calculated mmf (with/out "conserved" years)
+  maf <- aperm(apply(mmf, dim_select, maf_fun), c("cells", dim_select))
 
   # initialize efrs array
   efrs <- array(0, dim = dim(mmf))
