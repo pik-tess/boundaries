@@ -72,7 +72,7 @@ calc_efrs <- function(x,
   maf <- aperm(apply(mmf, dim_select, maf_fun), c("cells", dim_select))
 
   # initialize efrs array
-  efrs <- array(0, dim = dim(mmf))
+  efrs <- array(0, dim = dim(mmf), dimnames = dimnames(mmf))
 
   # apply defined method
   switch(method,
