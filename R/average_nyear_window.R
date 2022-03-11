@@ -137,7 +137,7 @@ average_nyear_window <- function(x,
       return(z)
     } else {
       # rename dimnames of array
-      if (dim(y) == dim(x)) {
+      if (all(dim(y) == dim(x))) {
         dim(y) <- dim(x)
         dimnames(y) <- dimnames(x)
       }
