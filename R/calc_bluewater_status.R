@@ -23,10 +23,6 @@
 #' @param temporal_resolution character. Temporal resolution, available options
 #' are `"annual"` (default) and `"monthly"`.
 #'
-#' @param spatial_format (SOON) character, defining the spatial aggregation
-#' level, default is `"grid"`, further available options are `c("country",
-#' "continent", "global")`
-#'
 #' @param cut_min double. Exclude boundary calculations for Q < cut_min
 #'
 #' @param avg_nyear_args list of arguments to be passed to
@@ -46,7 +42,6 @@ calc_bluewater_status <- function(path_scenario,
                                   time_span_reference = NULL,
                                   method = "gerten2020",
                                   temporal_resolution = "annual",
-                                  spatial_format = "grid",
                                   # Q < smaller than 1m³/s
                                   cut_min = 0.0864,
                                   avg_nyear_args = list(),
@@ -60,12 +55,7 @@ calc_bluewater_status <- function(path_scenario,
   temporal_resolution <- match.arg(temporal_resolution, c("annual",
                                                           "monthly"))
 
-  # verify available temporal resolution
-  spatial_format <- match.arg(spatial_format, c("grid",
-                                                "continent",
-                                                "country",
-                                                "global"))
-
+  # check time_spans of scenario and reference runs
   if (is.null(time_span_reference)) {
     time_span_reference <- time_span_scenario
   } else {
@@ -79,6 +69,7 @@ calc_bluewater_status <- function(path_scenario,
       nyear_ref <- NULL
     }
   }
+
   # reference discharge
   # TO BE REPLACED BY lpjmlKit::read_output ---------------------------------- #
   #   hardcoded values to be internally replaced
@@ -114,7 +105,6 @@ calc_bluewater_status <- function(path_scenario,
                                      append(list(x = discharge_reference,
                                                  nyear_reference = nyear_ref),
                                             avg_nyear_args))
-
 
   # scenario discharge
   # TO BE REPLACED BY lpjmlKit::read_output ---------------------------------- #

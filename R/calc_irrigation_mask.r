@@ -51,12 +51,6 @@ calc_irrigation_mask <- function(path_output,
 
   # TO BE REPLACED BY lpjmlKit::read_input ----------------------------------- #
   #   hardcoded values to be internally replaced
-  drainage <- autoReadInput(
-      inFile = "/p/projects/lpjml/input/historical/input_VERSION2/drainage.bin",
-      manu = TRUE,
-      msize = 4,
-      mheadersize = 43
-  )
   input_data_size <- 4
   header <- suppressWarnings(lpjmlKit::read_header(
     filename = paste(path_input, "drainage.bin", sep = "/")
