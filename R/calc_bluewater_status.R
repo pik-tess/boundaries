@@ -1,4 +1,4 @@
-#' Calculate bluewater planetary boundary status
+#' Calculate the planetary boundary status for the bluewater boundary
 #'
 #' Calculate ...
 #'
@@ -17,18 +17,19 @@
 #'
 #' @md
 #' @export
-calc_bluewater <- function(path_scenario,
-                           path_reference,
-                           time_span_scenario = c(1982, 2011),
-                           time_span_reference = NULL,
-                           method = "gerten2020",
-                           temporal_resolution = "annual",
-                           spatial_format = "grid",
-                           cut_min = 0.0864, # Q < smaller than 1m³/s
-                           avg_nyear_args = list(),
-                           # to be replaced internally by lpjmlKit::read_output
-                           start_year = 1901,
-                           end_year = 2011) {
+calc_bluewater_status <- function(path_scenario,
+                                  path_reference,
+                                  time_span_scenario = c(1982, 2011),
+                                  time_span_reference = NULL,
+                                  method = "gerten2020",
+                                  temporal_resolution = "annual",
+                                  spatial_format = "grid",
+                                  # Q < smaller than 1m³/s
+                                  cut_min = 0.0864,
+                                  avg_nyear_args = list(),
+                                  # to be replaced by lpjmlKit::read_output
+                                  start_year = 1901,
+                                  end_year = 2011) {
   # verify available methods
   method <- match.arg(method, c("gerten2020",
                                 "steffen2015"))
@@ -169,8 +170,11 @@ calc_bluewater <- function(path_scenario,
       cells_maginal_discharge[
         which(apply(avg_discharge_scenario, 1, mean) < cut_min)] <- (-1)
 
-      ######### TODO ##########
-      irrmask_basin <- NA
+      # calc irrigation mask to exclude non irrigated basins
+      irrmask_basin <- calc_irrigation_mask(path_scenario,
+                                            time_span = time_span_scenario,
+                                            avg_nyear_args = avg_nyear_args,
+                                            start_year = start_year)
 
       pb_range <- c(0, 100)
       pb_status[irrmask_basin == 0] <- NA
