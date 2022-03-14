@@ -1,18 +1,41 @@
 #' Calculate the planetary boundary status for the bluewater boundary
 #'
-#' Calculate ...
+#' Calculate the PB status for the bluewater (former freshwater) boundary based
+#' on a scenario LPJmL run and a reference LPJmL run.
 #'
-#' @param path_reference
+#' @param path_scenario output directory (character string) of the scenario
+#' LPJmL run where binary files (soon with metafiles) are written
 #'
-#' @param method
+#' @param path_reference output directory (character string) of the reference
+#' LPJmL run where binary files (soon with metafiles) are written
 #'
-#' @param time_span_scenario
+#' @param time_span_scenario time span to be used for the scenario run, defined
+#' as an integer vector, e.g. `1982:2011` (default)
 #'
-#' @param bin_size
+#' @param time_span_reference time span to be used for the scenario run, defined
+#' as an integer vector, e.g. `1901:1930`. Can differ in offset and length from
+#' `time_span_scenario`! If `NULL` value of `time_span_scenario` is used
+#'
+#' @param method method (character string) to be used , currently available
+#' method is `c("gerten2020")` based on
+#' [Gerten et al. 2020](https://doi.org/10.1038/s41893-019-0465-1).
+#'
+#' @param temporal_resolution character. Temporal resolution, available options
+#' are `"annual"` (default) and `"monthly"`.
+#'
+#' @param spatial_format (SOON) character, defining the spatial aggregation
+#' level, default is `"grid"`, further available options are `c("country",
+#' "continent", "global")`
+#'
+#' @param cut_min double. Exclude boundary calculations for Q < cut_min
+#'
+#' @param avg_nyear_args list of arguments to be passed to
+#' \link[pbfunctions]{average_nyear_window} (see for more info). To be used for
+#' time series analysis.
 #'
 #' @examples
 #' \dontrun{
-#'  calc_bluewater(path_reference)
+#'  calc_bluewater(path_scenario, path_reference)
 #' }
 #'
 #' @md
