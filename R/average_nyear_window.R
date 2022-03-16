@@ -28,6 +28,7 @@
 #' dim(x)[3] if `moving_average == TRUE` or `interpolate == TRUE`
 #'
 #' @md
+#' @importFrom magrittr %>%
 #' @export
 average_nyear_window <- function(x,
                                  nyear_window = NULL,
@@ -56,10 +57,9 @@ average_nyear_window <- function(x,
 
   # if nyear_window is supplied not all years are used for averaging
   if (!is.null(nyear_window)) {
-    # if 
     if (!is.null(nyear_reference)) {
       orig_x <- x
-      x <- abind::asub(x, 1:nyear_reference, which(names(dim(x)) == "years"))
+      x <- asub(x, list(years = 1:nyear_reference))
     }
     # only valid for nyear_window <  years of x (dim(x)[3])
     if (nyear_window > 1 & nyear_window <= dim(x)["years"]) {

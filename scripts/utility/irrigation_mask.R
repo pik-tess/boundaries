@@ -4,7 +4,7 @@ path_scenario <- (
 )
 
 test <- LPJmLTools::lpjmlinfo$cells_raster
-test[LPJmLTools::lpjmlinfo$cellnumbers] <- irrmask_basin# [, 1]
+test[LPJmLTools::lpjmlinfo$cellnumbers] <- pb_status# [, 1]
 plot(test)
 
 
@@ -86,24 +86,19 @@ for (id in seq_len(length(basin_ids))) {
   basincell <- which(endcell == basin_ids[id])
   if (is.na(third_dim)) {
     check_gt0 <- sum(
-      abind::asub(avg_irrigation_scenario,
-                  basincell,
-                  which(names(dim(avg_irrigation_scenario)) == "cells"))
+      asub(avg_irrigation_scenario,
+           list(cells = basincell))
     )
   } else {
     check_gt0 <- apply(
-      abind::asub(avg_irrigation_scenario,
-                  basincell,
-                  which(names(dim(avg_irrigation_scenario)) == "cells")),
+      asub(avg_irrigation_scenario,
+           list(cells = basincell)),
       "",
       sum
     )
   }
-  basin_replace <- abind::asub(irrmask_basin,
-                               basincell,
-                               which(
-                                 names(dim(avg_irrigation_scenario)) == "cells")
-                               ) %>%
+  basin_replace <- asub(irrmask_basin,
+                        list(cells = basincell)) %>%
     `[<-`(check_gt0 > 0, value = 1)
 
   irrmask_basin <- asub_replace(irrmask_basin,

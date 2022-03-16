@@ -46,8 +46,7 @@ calc_bluewater_status <- function(path_scenario,
                                   cut_min = 0.0864,
                                   avg_nyear_args = list(),
                                   # to be replaced by lpjmlKit::read_output
-                                  start_year = 1901,
-                                  end_year = 2011) {
+                                  start_year = 1901) {
   # verify available methods
   method <- match.arg(method, c("gerten2020",
                                 "steffen2015"))
@@ -58,6 +57,7 @@ calc_bluewater_status <- function(path_scenario,
   # check time_spans of scenario and reference runs
   if (is.null(time_span_reference)) {
     time_span_reference <- time_span_scenario
+    nyear_ref <- NULL
   } else {
     if (diff(time_span_reference) > diff(time_span_scenario)) {
       stop(paste0("time_span_reference is longer than time_span_scenario.",
@@ -109,7 +109,7 @@ calc_bluewater_status <- function(path_scenario,
   # scenario discharge
   # TO BE REPLACED BY lpjmlKit::read_output ---------------------------------- #
   #   hardcoded values to be internally replaced
-  s_path <- file(paste(path_scenario, "discharge.bin", sep = ""), "rb")
+  s_path <- file(paste(path_scenario, "discharge.bin", sep = "/"), "rb")
   seek(s_path,
        where = (time_span_scenario[1] - start_year) *
                nstep * nbands * ncell * size,
@@ -141,9 +141,12 @@ calc_bluewater_status <- function(path_scenario,
     # "gerten2020" - Gerten et al. 2020
     gerten2020 = {
       # calc efrs for vmf_min and vmf_max
-      efr_uncertain <- calc_efrs(discharge_reference, "vmf_min")
-      efr_safe <- calc_efrs(discharge_reference, "vmf_max")
-
+      efr_uncertain <- calc_efrs(discharge_reference,
+                                 "vmf_min",
+                                 avg_nyear_args)
+      efr_safe <- calc_efrs(discharge_reference,
+                            "vmf_max",
+                            avg_nyear_args)
       # calculation of EFR transgressions = EFR deficits in LU run
       safe_space <- efr_safe - avg_discharge_scenario
 
@@ -160,22 +163,27 @@ calc_bluewater_status <- function(path_scenario,
       #   the transgression-to uncertainty ratio
       #   if ratio is above >5%: within uncertainty range (yellow)
       #   if ratio is above >75% transgression (red)
-      status_frac <- ifelse(uncertainty_zone > 0,
-                            safe_space / uncertainty_zone,
-                            0)
+      status_frac_monthly <- ifelse(uncertainty_zone > 0,
+                                    safe_space / uncertainty_zone,
+                                    0)
+
+      third_dim <- names(dim(status_frac_monthly))[
+        !names(dim(status_frac_monthly)) %in% c("cells", "months")
+      ] %>%
+      ifelse(length(.) == 0, NA, .)
 
       if (temporal_resolution == "annual") {
         # to average the ratio only over months which are not "safe"
-        status_frac[status_frac <= 0.05] <- NA
-        pb_status <- apply(
-          status_frac,
-          names(dim(status_frac))[
-            names(dim(status_frac)) %in% c("cells", "years")
+        status_frac_monthly[status_frac_monthly <= 0.05] <- NA
+        status_frac <- apply(
+          status_frac_monthly,
+          names(dim(status_frac_monthly))[
+            names(dim(status_frac_monthly)) %in% na.omit(c("cells", third_dim))
           ],
           mean,
-          na.rm = TRUE) * 100
+          na.rm = TRUE)
       } else {
-        pb_status <- status_frac * 100
+        status_frac <- status_frac_monthly
       }
 
       # to display cells with marginal discharge in other color (grey):
@@ -188,13 +196,18 @@ calc_bluewater_status <- function(path_scenario,
                                             time_span = time_span_scenario,
                                             avg_nyear_args = avg_nyear_args,
                                             start_year = start_year)
-
-      pb_range <- c(0, 100)
-      pb_status[irrmask_basin == 0] <- NA
-      pb_status[pb_status > pb_range[2]] <- pb_range[2]
-      pb_status[pb_status < pb_range[1]] <- pb_range[1]
-      pb_status[cells_maginal_discharge < 0] <- (-1)
-
+      # init pb_status based on status_frac
+      pb_status <- status_frac
+      # high risk
+      pb_status[status_frac >= 0.75] <- 3
+      # increasing risk
+      pb_status[status_frac < 0.75 & status_frac >= 0.05] <- 2
+      # safe zone
+      pb_status[status_frac < 0.05] <- 1
+      pb_status[irrmask_basin == 0] <- 1
+      pb_status[is.na(status_frac)] <- 1
+      # non applicable cells
+      pb_status[cells_maginal_discharge < 0] <- 0
     },
     steffen2015 = {
       stop("This method is currently not defined.")
