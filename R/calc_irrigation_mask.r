@@ -96,22 +96,22 @@ calc_irrigation_mask <- function(path_output,
     basincell <- which(endcell == basin_ids[id])
     if (is.na(third_dim) | length(dim(drop(avg_irrigation_scenario))) < 3) {
       check_gt0 <- sum(
-        asub(avg_irrigation_scenario,
+        subset_array(avg_irrigation_scenario,
              list("cells" = basincell))
       )
     } else {
       check_gt0 <- apply(
-        asub(avg_irrigation_scenario,
+        subset_array(avg_irrigation_scenario,
              list(cells = basincell)),
         third_dim,
         sum
       )
     }
-    basin_replace <- asub(irrmask_basin,
+    basin_replace <- subset_array(irrmask_basin,
                           list(cells = basincell)) %>%
       `[<-`(check_gt0 > 0, value = 1)
 
-    irrmask_basin <- asub_replace(x = irrmask_basin,
+    irrmask_basin <- replace_array(x = irrmask_basin,
                                   subset_list = list(cells = basincell),
                                   y = basin_replace)
   }
@@ -134,13 +134,13 @@ show_route <- function(ind, routing_table) {
 # EXPORT TO lpjmlKIT  -------------------------------------------------------- #
 
 # https://stackoverflow.com/questions/47790061/r-replacing-a-sub-array-dynamically
-asub_replace <- function(x, subset_list, y) {
+replace_array <- function(x, subset_list, y) {
   argum <- c(alist(x), subarray_argument(x, subset_list), alist(y))
   do.call("[<-", argum)
 }
 
 
-asub <- function(x, subset_list, drop=TRUE) {
+subset_array <- function(x, subset_list, drop=TRUE) {
   if (drop) {
     argum <- c(alist(x), subarray_argument(x, subset_list))
   } else {

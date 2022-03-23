@@ -21,17 +21,21 @@
 #' [Gerten et al. 2020](https://doi.org/10.1038/s41893-019-0465-1).
 #'
 #' @param temporal_resolution character. Temporal resolution, available options
-#' are `"annual"` (default) and `"monthly"`.
+#' are `"annual"` (default) and `"monthly"`
 #'
 #' @param cut_min double. Exclude boundary calculations for Q < cut_min
 #'
+#' @param prefix_monthly_output character. Provide a prefix if required for
+#' monthly LPJmL output files, e.g. `"m"` for `"mdischarge.bin"` instead of
+#' `"discharge.bin"` (default is `""`)
+#'
 #' @param avg_nyear_args list of arguments to be passed to
 #' \link[pbfunctions]{average_nyear_window} (see for more info). To be used for
-#' time series analysis.
+#' time series analysis
 #'
 #' @examples
 #' \dontrun{
-#'  calc_bluewater(path_scenario, path_reference)
+#'  calc_bluewater_status(path_scenario, path_reference)
 #' }
 #'
 #' @md
@@ -44,6 +48,7 @@ calc_bluewater_status <- function(path_scenario,
                                   temporal_resolution = "annual",
                                   # Q < smaller than 1m³/s
                                   cut_min = 0.0864,
+                                  prefix_monthly_output = "",
                                   avg_nyear_args = list(),
                                   # to be replaced by lpjmlKit::read_output
                                   start_year = 1901) {
@@ -77,7 +82,11 @@ calc_bluewater_status <- function(path_scenario,
   nbands <- 1
   ncell <- 67420
   size <- 4
-  bl_file <- file(paste(path_reference, "discharge.bin", sep = "/"), "rb")
+  bl_file <- file(paste(path_reference,
+                        "/",
+                        prefix_monthly_output,
+                        "discharge.bin"),
+                  "rb")
   seek(bl_file,
        where = (time_span_reference[1] - start_year) *
                nstep * nbands * ncell * size,
@@ -109,7 +118,11 @@ calc_bluewater_status <- function(path_scenario,
   # scenario discharge
   # TO BE REPLACED BY lpjmlKit::read_output ---------------------------------- #
   #   hardcoded values to be internally replaced
-  s_path <- file(paste(path_scenario, "discharge.bin", sep = "/"), "rb")
+  s_path <- file(paste0(path_scenario,
+                        "/",
+                        prefix_monthly_output,
+                        "discharge.bin"),
+                  "rb")
   seek(s_path,
        where = (time_span_scenario[1] - start_year) *
                nstep * nbands * ncell * size,
@@ -170,7 +183,7 @@ calc_bluewater_status <- function(path_scenario,
       third_dim <- names(dim(status_frac_monthly))[
         !names(dim(status_frac_monthly)) %in% c("cells", "months")
       ] %>%
-      ifelse(length(.) == 0, NA, .)
+        ifelse(length(.) == 0, NA, .)
 
       if (temporal_resolution == "annual") {
         # to average the ratio only over months which are not "safe"
@@ -182,20 +195,37 @@ calc_bluewater_status <- function(path_scenario,
           ],
           mean,
           na.rm = TRUE)
+
+        # check if vector was returned (loss if dimnames) -> reconvert to array
+        if (is.null(dim(status_frac))) {
+          status_frac <- array(
+            status_frac,
+            dim = c(cells = dim(status_frac_monthly)[["cells"]], 1),
+            dimnames = list(cells = dimnames(status_frac_monthly)[["cells"]], 1)
+          )
+        }
       } else {
         status_frac <- status_frac_monthly
       }
 
       # to display cells with marginal discharge in other color (grey):
-      cells_maginal_discharge <- array(0, ncell)
-      cells_maginal_discharge[
-        which(apply(avg_discharge_scenario, 1, mean) < cut_min)] <- (-1)
+      cells_marginal_discharge <- array(FALSE,
+                                       dim = dim(status_frac),
+                                       dimnames = dimnames(status_frac))
+      cells_marginal_discharge[
+        which(
+          apply(
+            avg_discharge_scenario, na.omit(c("cells", third_dim)), mean
+          ) < cut_min
+        )
+      ] <- TRUE
 
       # calc irrigation mask to exclude non irrigated basins
       irrmask_basin <- calc_irrigation_mask(path_scenario,
                                             time_span = time_span_scenario,
                                             avg_nyear_args = avg_nyear_args,
                                             start_year = start_year)
+
       # init pb_status based on status_frac
       pb_status <- status_frac
       # high risk
@@ -207,7 +237,7 @@ calc_bluewater_status <- function(path_scenario,
       pb_status[irrmask_basin == 0] <- 1
       pb_status[is.na(status_frac)] <- 1
       # non applicable cells
-      pb_status[cells_maginal_discharge < 0] <- 0
+      pb_status[cells_marginal_discharge] <- 0
     },
     steffen2015 = {
       stop("This method is currently not defined.")
