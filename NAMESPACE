@@ -3,4 +3,5 @@
 export(average_nyear_window)
 export(calc_bluewater_status)
 export(calc_efrs)
+export(calc_nitrogen_status)
 importFrom(magrittr,"%>%")

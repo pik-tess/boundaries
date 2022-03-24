@@ -311,21 +311,20 @@ calc_nitrogen_status <- function(path_scenario,
     mean,
     na.rm = TRUE)
 
-  # calculate global aridity index as proxy for cut_min
+  # calculate global aridity index (AI) as an indicator for a level under which
+  #   the calculation of leaching just cannot show realistic behavior, see also
+  #   on the AI: https://doi.org/10.6084/m9.figshare.7504448.v4%C2%A0
+  #   on nitrogen processes in arid areas: https://www.jstor.org/stable/45128683
+  #     -> indicates boundary to "arid" as thresholds (=< 0.2)
+  #   on "arid threshold" (indirectly): https://doi.org/10.1038/ncomms5799
+  #     -> describes a threshold for behaviour change nitrogen cycling (=< 0.32)
   global_aridity_index <- avg_prec_annual / avg_pet_annual + 1e-9
 
-  # to display cells with marginal discharge in other color (grey):
+  # to display arid cells (leaching behaviour threshold) in other color (grey):
   cells_marginal_discharge <- array(FALSE,
                                    dim = dim(status_frac),
                                    dimnames = dimnames(status_frac))
-  cells_marginal_discharge[
-    which(
-      # apply(
-      #   avg_runoff, na.omit(c("cells", third_dim)), mean
-      # ) < cut_min
-      global_aridity_index <= cut_min
-    )
-  ] <- TRUE
+  cells_marginal_discharge[which(global_aridity_index <= cut_min)] <- TRUE
 
   # init pb_status based on status_frac
   pb_status <- status_frac
