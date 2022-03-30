@@ -33,6 +33,9 @@
 #' \link[pbfunctions]{average_nyear_window} (see for more info). To be used for
 #' time series analysis
 #'
+#' @param in_parallel logical. if TRUE (default) future (asynchronos, parallel)
+#' executions will be done in parallel, if FALSE sequential.
+#'
 #' @examples
 #' \dontrun{
 #'  calc_bluewater_status(path_scenario, path_reference)
@@ -46,10 +49,11 @@ calc_bluewater_status <- function(path_scenario,
                                   time_span_reference = NULL,
                                   method = "gerten2020",
                                   temporal_resolution = "annual",
-                                  # Q < smaller than 1m³/s
+                                  # Q < 1m³/s
                                   cut_min = 0.0864,
                                   prefix_monthly_output = "",
                                   avg_nyear_args = list(),
+                                  in_parallel = TRUE,
                                   # to be replaced by lpjmlKit::read_output
                                   start_year = 1901) {
   # verify available methods
@@ -58,6 +62,17 @@ calc_bluewater_status <- function(path_scenario,
   # verify available temporal resolution
   temporal_resolution <- match.arg(temporal_resolution, c("annual",
                                                           "monthly"))
+
+  if (in_parallel) {
+    if (.Platform$OS.type == "windows") {
+      future_plan <- future::plan("multisession")
+    } else {
+      future_plan <- future::plan("multicore")
+    }
+  } else {
+    future_plan <- future::plan("sequential")
+  }
+  on.exit(future::plan(future_plan))
 
   # check time_spans of scenario and reference runs
   if (is.null(time_span_reference)) {
@@ -82,7 +97,7 @@ calc_bluewater_status <- function(path_scenario,
   nbands <- 1
   ncell <- 67420
   size <- 4
-  bl_file <- file(paste(path_reference,
+  bl_file <- file(paste0(path_reference,
                         "/",
                         prefix_monthly_output,
                         "discharge.bin"),
@@ -108,12 +123,6 @@ calc_bluewater_status <- function(path_scenario,
                                         years = seq(time_span_scenario[1],
                                                     time_span_scenario[2]))
   # -------------------------------------------------------------------------- #
-
-  # average discharge reference
-  avg_discharge_reference <- do.call(average_nyear_window,
-                                     append(list(x = discharge_reference,
-                                                 nyear_reference = nyear_ref),
-                                            avg_nyear_args))
 
   # scenario discharge
   # TO BE REPLACED BY lpjmlKit::read_output ---------------------------------- #
@@ -145,21 +154,27 @@ calc_bluewater_status <- function(path_scenario,
   # -------------------------------------------------------------------------- #
 
   # average discharge reference
-  avg_discharge_scenario <- do.call(average_nyear_window,
-                                    append(list(x = discharge_scenario),
-                                           avg_nyear_args))
+  avg_discharge_reference %<-% do.call(average_nyear_window,
+                                       append(list(x = discharge_reference,
+                                                   nyear_reference = nyear_ref),
+                                              avg_nyear_args))
+
+  # average discharge reference
+  avg_discharge_scenario %<-% do.call(average_nyear_window,
+                                      append(list(x = discharge_scenario),
+                                             avg_nyear_args))
 
   # apply defined method
   switch(method,
     # "gerten2020" - Gerten et al. 2020
     gerten2020 = {
       # calc efrs for vmf_min and vmf_max
-      efr_uncertain <- calc_efrs(discharge_reference,
-                                 "vmf_min",
-                                 avg_nyear_args)
-      efr_safe <- calc_efrs(discharge_reference,
-                            "vmf_max",
-                            avg_nyear_args)
+      efr_uncertain %<-% calc_efrs(discharge_reference,
+                                   "vmf_min",
+                                   avg_nyear_args)
+      efr_safe %<-% calc_efrs(discharge_reference,
+                              "vmf_max",
+                              avg_nyear_args)
       # calculation of EFR transgressions = EFR deficits in LU run
       safe_space <- efr_safe - avg_discharge_scenario
 

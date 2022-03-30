@@ -41,12 +41,16 @@
 #' \link[pbfunctions]{average_nyear_window} (see for more info). To be used for
 #' time series analysis
 #'
+#' @param in_parallel logical. if TRUE (default) future (asynchronos, parallel)
+#' executions will be done in parallel, if FALSE sequential.
+#'
 #' @examples
 #' \dontrun{
 #'  calc_nitrogen_status(path_scenario, path_reference)
 #' }
 #'
 #' @md
+#' @importFrom future %<-%
 #' @export
 calc_nitrogen_status <- function(path_scenario,
                                  path_reference,
@@ -60,6 +64,7 @@ calc_nitrogen_status <- function(path_scenario,
                                  with_groundwater_denit = TRUE,
                                  prefix_monthly_output = "",
                                  avg_nyear_args = list(),
+                                 in_parallel = TRUE,
                                  # to be replaced by lpjmlKit::read_output
                                  start_year = 1901) {
   # verify available methods
@@ -68,6 +73,17 @@ calc_nitrogen_status <- function(path_scenario,
   # verify available temporal resolution
   temporal_resolution <- match.arg(temporal_resolution, c("annual",
                                                           "monthly"))
+
+  if (in_parallel) {
+    if (.Platform$OS.type == "windows") {
+      future_plan <- future::plan("multisession")
+    } else {
+      future_plan <- future::plan("multicore")
+    }
+  } else {
+    future_plan <- future::plan("sequential")
+  }
+  on.exit(future::plan(future_plan))
 
   # sub function to be used for scenario and reference run (braun2022_minusref)
   calc_nitrogen_leach <- function(path_data,
@@ -99,7 +115,7 @@ calc_nitrogen_status <- function(path_scenario,
     # TO BE REPLACED BY lpjmlKit::read_output -------------------------------- #
     #   hardcoded values to be internally replaced
     # read runoff
-    runoff <- tmp_read_monthly(
+    runoff %<-% tmp_read_monthly(
       file_name = paste0(path_data, "/", prefix_monthly_output, "runoff.bin"),
       time_span = time_span_scenario,
       start_year = start_year,
@@ -110,15 +126,10 @@ calc_nitrogen_status <- function(path_scenario,
     )
     # ------------------------------------------------------------------------ #
 
-    # average runoff
-    avg_runoff <- do.call(average_nyear_window,
-                          append(list(x = runoff),
-                                 avg_nyear_args))
-
     # TO BE REPLACED BY lpjmlKit::read_output -------------------------------- #
     #   hardcoded values to be internally replaced
     # read runoff
-    leaching <- tmp_read_monthly(
+    leaching %<-% tmp_read_monthly(
       file_name = paste0(path_data, "/", prefix_monthly_output, "leaching.bin"),
       time_span = time_span_scenario,
       start_year = start_year,
@@ -129,48 +140,17 @@ calc_nitrogen_status <- function(path_scenario,
     )
     # ------------------------------------------------------------------------ #
 
+
     # average runoff
-    avg_leaching <- do.call(average_nyear_window,
+    avg_runoff %<-% do.call(average_nyear_window,
+                          append(list(x = runoff),
+                                 avg_nyear_args))
+
+
+    # average runoff
+    avg_leaching %<-% do.call(average_nyear_window,
                             append(list(x = leaching),
                                    avg_nyear_args))
-
-    # TO BE REPLACED BY lpjmlKit::read_output -------------------------------- #
-    #   hardcoded values to be internally replaced
-    # read runoff
-    pet <- tmp_read_monthly(
-      file_name = paste0(path_data, "/", prefix_monthly_output, "pet.bin"),
-      time_span = time_span_scenario,
-      start_year = start_year,
-      nstep = 12,
-      ncell = 67420,
-      nbands = 1,
-      size = 4
-    )
-    # ------------------------------------------------------------------------ #
-
-    # average runoff
-    avg_pet <- do.call(average_nyear_window,
-                       append(list(x = pet),
-                              avg_nyear_args))
-
-    # TO BE REPLACED BY lpjmlKit::read_output -------------------------------- #
-    #   hardcoded values to be internally replaced
-    # read runoff
-    prec <- tmp_read_monthly(
-      file_name = paste0(path_data, "/", prefix_monthly_output, "prec.bin"),
-      time_span = time_span_scenario,
-      start_year = start_year,
-      nstep = 12,
-      ncell = 67420,
-      nbands = 1,
-      size = 4
-    )
-    # ------------------------------------------------------------------------ #
-
-    # average runoff
-    avg_prec <- do.call(average_nyear_window,
-                       append(list(x = prec),
-                              avg_nyear_args))
 
     # temporary solution using shares of global losses after Bouwman et al 2013
     #   (figure 4) https://doi.org/10.1098/rstb.2013.0112
@@ -203,6 +183,7 @@ calc_nitrogen_status <- function(path_scenario,
       !names(dim(status_frac_monthly)) %in% c("cells", "months")
     ] %>%
       ifelse(length(.) == 0, NA, .)
+    third_dim <<- third_dim
 
     if (temporal_resolution == "annual") {
       status_frac <- apply(
@@ -259,7 +240,7 @@ calc_nitrogen_status <- function(path_scenario,
         }
       }
       # calculate leaching concentration and loss rate for scenario output
-      status_frac_scenario <- calc_nitrogen_leach(
+      status_frac_scenario %<-% calc_nitrogen_leach(
         path_data = path_scenario,
         time_span = time_span_scenario,
         temporal_resolution = temporal_resolution,
@@ -276,7 +257,7 @@ calc_nitrogen_status <- function(path_scenario,
       }
 
       # calculate leaching concentration and loss rate for reference output
-      status_frac_reference <- calc_nitrogen_leach(
+      status_frac_reference %<-% calc_nitrogen_leach(
         path_data = path_reference,
         time_span = time_span_reference,
         temporal_resolution = temporal_resolution,
@@ -293,17 +274,45 @@ calc_nitrogen_status <- function(path_scenario,
     }
   )
 
-  # calculate annual precipiation mean
-  avg_prec_annual <- apply(
-    avg_prec,
-    names(dim(avg_prec))[
-      names(dim(avg_prec)) %in% na.omit(c("cells", third_dim))
-    ],
-    mean,
-    na.rm = TRUE)
+  # TO BE REPLACED BY lpjmlKit::read_output -------------------------------- #
+  #   hardcoded values to be internally replaced
+  # read runoff
+  pet %<-% tmp_read_monthly(
+    file_name = paste0(path_scenario, "/", prefix_monthly_output, "pet.bin"),
+    time_span = time_span_scenario,
+    start_year = start_year,
+    nstep = 12,
+    ncell = 67420,
+    nbands = 1,
+    size = 4
+  )
+  # ------------------------------------------------------------------------ #
+
+  # TO BE REPLACED BY lpjmlKit::read_output -------------------------------- #
+  #   hardcoded values to be internally replaced
+  # read runoff
+  prec %<-% tmp_read_monthly(
+    file_name = paste0(path_scenario, "/", prefix_monthly_output, "prec.bin"),
+    time_span = time_span_scenario,
+    start_year = start_year,
+    nstep = 12,
+    ncell = 67420,
+    nbands = 1,
+    size = 4
+  )
+  # ------------------------------------------------------------------------ #
+  # average runoff
+  avg_pet %<-% do.call(average_nyear_window,
+                     append(list(x = pet),
+                            avg_nyear_args))
+
+  # average runoff
+  avg_prec %<-% do.call(average_nyear_window,
+                     append(list(x = prec),
+                            avg_nyear_args))
 
   # calculate annual potential evapotranspiration mean
-  avg_pet_annual <- apply(
+  avg_pet_annual %<-% apply(
     avg_pet,
     names(dim(avg_pet))[
       names(dim(avg_pet)) %in% na.omit(c("cells", third_dim))
@@ -311,13 +320,23 @@ calc_nitrogen_status <- function(path_scenario,
     mean,
     na.rm = TRUE)
 
+  # calculate annual precipiation mean
+  avg_prec_annual %<-% apply(
+    avg_prec,
+    names(dim(avg_prec))[
+      names(dim(avg_prec)) %in% na.omit(c("cells", third_dim))
+    ],
+    mean,
+    na.rm = TRUE)
+
   # calculate global aridity index (AI) as an indicator for a level under which
   #   the calculation of leaching just cannot show realistic behavior, see also
   #   on the AI: https://doi.org/10.6084/m9.figshare.7504448.v4%C2%A0
+  #     & (first descr.) https://wedocs.unep.org/xmlui/handle/20.500.11822/30300
   #   on nitrogen processes in arid areas: https://www.jstor.org/stable/45128683
   #     -> indicates boundary to "arid" as thresholds (=< 0.2)
   #   on "arid threshold" (indirectly): https://doi.org/10.1038/ncomms5799
-  #     -> describes a threshold for behaviour change nitrogen cycling (=< 0.32)
+  #     -> threshold for behaviour change in nitrogen cycling (=< 0.32)
   global_aridity_index <- avg_prec_annual / avg_pet_annual + 1e-9
 
   # to display arid cells (leaching behaviour threshold) in other color (grey):
@@ -336,6 +355,8 @@ calc_nitrogen_status <- function(path_scenario,
   pb_status[status_frac < 1] <- 1
   # non applicable cells
   pb_status[cells_marginal_discharge] <- 0
+
+  return(pb_status)
 }
 
 

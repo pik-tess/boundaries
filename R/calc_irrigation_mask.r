@@ -40,14 +40,9 @@ calc_irrigation_mask <- function(path_output,
   # -------------------------------------------------------------------------- #
 
   # average discharge reference
-  avg_irrigation_scenario <- do.call(average_nyear_window,
-                                     append(list(x = irrigation_scenario),
-                                            avg_nyear_args))
-
-  third_dim <- names(dim(avg_irrigation_scenario))[
-    !names(dim(avg_irrigation_scenario)) %in% c("cells", "months")
-  ] %>%
-    ifelse(length(.) == 0, NA, .)
+  avg_irrigation_scenario %<-% do.call(average_nyear_window,
+                                       append(list(x = irrigation_scenario),
+                                              avg_nyear_args))
 
   # TO BE REPLACED BY lpjmlKit::read_input ----------------------------------- #
   #   hardcoded values to be internally replaced
@@ -76,7 +71,7 @@ calc_irrigation_mask <- function(path_output,
   # add 1 since in C indexing starts at 0 but in R at 1
   routing <- drainage[1, ] + 1
   endcell <- array(0, dim = ncell)
-  cellindex <-  endcell
+  cellindex <- endcell
   for (cell in 1:ncell) {
     route <- show_route(cell, routing)
     cellindex[route] <- seq(length(route), 1, -1)
@@ -91,6 +86,11 @@ calc_irrigation_mask <- function(path_output,
                          dimnames = dimnames(avg_irrigation_scenario)[
                            names(dimnames(avg_irrigation_scenario)) != "months"
                          ])
+
+  third_dim <- names(dim(avg_irrigation_scenario))[
+    !names(dim(avg_irrigation_scenario)) %in% c("cells", "months")
+  ] %>%
+    ifelse(length(.) == 0, NA, .)
 
   for (id in seq_len(length(basin_ids))) {
     basincell <- which(endcell == basin_ids[id])
