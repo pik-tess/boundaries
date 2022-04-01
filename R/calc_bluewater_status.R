@@ -33,9 +33,6 @@
 #' \link[pbfunctions]{average_nyear_window} (see for more info). To be used for
 #' time series analysis
 #'
-#' @param in_parallel logical. if TRUE (default) future (asynchronos, parallel)
-#' executions will be done in parallel, if FALSE sequential.
-#'
 #' @examples
 #' \dontrun{
 #'  calc_bluewater_status(path_scenario, path_reference)
@@ -53,7 +50,6 @@ calc_bluewater_status <- function(path_scenario,
                                   cut_min = 0.0864,
                                   prefix_monthly_output = "",
                                   avg_nyear_args = list(),
-                                  in_parallel = TRUE,
                                   # to be replaced by lpjmlKit::read_output
                                   start_year = 1901) {
   # verify available methods
@@ -63,14 +59,10 @@ calc_bluewater_status <- function(path_scenario,
   temporal_resolution <- match.arg(temporal_resolution, c("annual",
                                                           "monthly"))
 
-  if (in_parallel) {
-    if (.Platform$OS.type == "windows") {
-      future_plan <- future::plan("multisession")
-    } else {
-      future_plan <- future::plan("multicore")
-    }
+  if (.Platform$OS.type == "windows") {
+    future_plan <- future::plan("multisession")
   } else {
-    future_plan <- future::plan("sequential")
+    future_plan <- future::plan("multicore")
   }
   on.exit(future::plan(future_plan))
 
@@ -93,64 +85,35 @@ calc_bluewater_status <- function(path_scenario,
   # reference discharge
   # TO BE REPLACED BY lpjmlKit::read_output ---------------------------------- #
   #   hardcoded values to be internally replaced
-  nstep <- 12
-  nbands <- 1
-  ncell <- 67420
-  size <- 4
-  bl_file <- file(paste0(path_reference,
-                        "/",
-                        prefix_monthly_output,
-                        "discharge.bin"),
-                  "rb")
-  seek(bl_file,
-       where = (time_span_reference[1] - start_year) *
-               nstep * nbands * ncell * size,
-       origin = "start")
-  discharge_reference <- readBin(bl_file,
-                                double(),
-                                n = (ncell * nstep * nbands *
-                                     (time_span_reference[2] -
-                                      time_span_reference[1] + 1)),
-                                size = size)
-  close(bl_file)
-  dim(discharge_reference) <- c(cells = ncell,
-                                months = nstep,
-                                years = (time_span_reference[2] -
-                                         time_span_reference[1] + 1))
-
-  dimnames(discharge_reference) <- list(cells = seq_len(ncell),
-                                        months = seq_len(nstep),
-                                        years = seq(time_span_scenario[1],
-                                                    time_span_scenario[2]))
+  discharge_reference %<-% tmp_read_monthly(
+    file_name = paste0(path_reference,
+                       "/",
+                       prefix_monthly_output,
+                       "discharge.bin"),
+    time_span = time_span_reference,
+    start_year = start_year,
+    nstep = 12,
+    ncell = 67420,
+    nbands = 1,
+    size = 4
+  )
   # -------------------------------------------------------------------------- #
 
   # scenario discharge
   # TO BE REPLACED BY lpjmlKit::read_output ---------------------------------- #
   #   hardcoded values to be internally replaced
-  s_path <- file(paste0(path_scenario,
-                        "/",
-                        prefix_monthly_output,
-                        "discharge.bin"),
-                  "rb")
-  seek(s_path,
-       where = (time_span_scenario[1] - start_year) *
-               nstep * nbands * ncell * size,
-       origin = "start")
-  discharge_scenario <- readBin(s_path,
-                               double(),
-                                n = (ncell * nstep * nbands *
-                                     (time_span_scenario[2] -
-                                      time_span_scenario[1] + 1)),
-                               size = size)
-  close(s_path)
-  dim(discharge_scenario) <- c(cells = ncell,
-                               months = nstep,
-                               years = (time_span_scenario[2] -
-                                        time_span_scenario[1] + 1))
-  dimnames(discharge_scenario) <- list(cells = seq_len(ncell),
-                                       months = seq_len(nstep),
-                                       years = seq(time_span_scenario[1],
-                                                   time_span_scenario[2]))
+  discharge_scenario %<-% tmp_read_monthly(
+    file_name = paste0(path_scenario,
+                       "/",
+                       prefix_monthly_output,
+                       "discharge.bin"),
+    time_span = time_span_scenario,
+    start_year = start_year,
+    nstep = 12,
+    ncell = 67420,
+    nbands = 1,
+    size = 4
+  )
   # -------------------------------------------------------------------------- #
 
   # average discharge reference
@@ -196,9 +159,10 @@ calc_bluewater_status <- function(path_scenario,
                                     0)
 
       third_dim <- names(dim(status_frac_monthly))[
-        !names(dim(status_frac_monthly)) %in% c("cells", "months")
-      ] %>%
-        ifelse(length(.) == 0, NA, .)
+        !names(dim(status_frac_monthly)) %in% c("cell", "month")
+      ] %>% {
+        if (rlang::is_empty(.)) NULL else .
+      }
 
       if (temporal_resolution == "annual") {
         # to average the ratio only over months which are not "safe"
@@ -206,7 +170,7 @@ calc_bluewater_status <- function(path_scenario,
         status_frac <- apply(
           status_frac_monthly,
           names(dim(status_frac_monthly))[
-            names(dim(status_frac_monthly)) %in% na.omit(c("cells", third_dim))
+            names(dim(status_frac_monthly)) %in% c("cell", third_dim)
           ],
           mean,
           na.rm = TRUE)
@@ -215,22 +179,22 @@ calc_bluewater_status <- function(path_scenario,
         if (is.null(dim(status_frac))) {
           status_frac <- array(
             status_frac,
-            dim = c(cells = dim(status_frac_monthly)[["cells"]], 1),
-            dimnames = list(cells = dimnames(status_frac_monthly)[["cells"]], 1)
+            dim = c(cell = dim(status_frac_monthly)[["cell"]], 1),
+            dimnames = list(cell = dimnames(status_frac_monthly)[["cell"]], 1)
           )
         }
       } else {
         status_frac <- status_frac_monthly
       }
 
-      # to display cells with marginal discharge in other color (grey):
+      # to display cell with marginal discharge in other color (grey):
       cells_marginal_discharge <- array(FALSE,
                                        dim = dim(status_frac),
                                        dimnames = dimnames(status_frac))
       cells_marginal_discharge[
         which(
           apply(
-            avg_discharge_scenario, na.omit(c("cells", third_dim)), mean
+            avg_discharge_scenario, c("cell", third_dim), mean
           ) < cut_min
         )
       ] <- TRUE

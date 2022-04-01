@@ -13,7 +13,7 @@ average_nyear_window(
 )
 }
 \arguments{
-\item{x}{LPJmL output array with \code{dim(x)=c(ncell, months, years)}}
+\item{x}{LPJmL output array with \code{dim(x)=c(cell, month, year)}}
 
 \item{nyear_window}{integer, if supplied it defines the years for each window
 to be averaged over in \code{dim(x)[3]}. If \code{nyear_window == 1} values are used
@@ -26,7 +26,7 @@ and end are interpolated using spline interpolation.}
 
 \item{interpolate}{logical. If \code{TRUE} and nyear_window is defined (with
 \code{moving_average == FALSE} years are interpolated (spline) to return array
-with same dimensions as \code{x} (mainly\code{dim(x)[3]} -> years).}
+with same dimensions as \code{x} (mainly\code{dim(x)[3]} -> year).}
 
 \item{nyear_reference}{integer, if supplied (default NULL), it defines a
 time_span for ideally reference runs to be used as a baseline. E.g.

@@ -1,7 +1,7 @@
 # calculate irrigation mask for basins based on drainage input and irrigation
 #   output to exclude non irrigated basins
 #   also works with average_nyear_window
-#   returns lpjml output with either just cells or + years/windows
+#   returns lpjml output with either just cell or + year/window
 calc_irrigation_mask <- function(path_output,
                                  time_span,
                                  avg_nyear_args=list(),
@@ -30,12 +30,12 @@ calc_irrigation_mask <- function(path_output,
                                        (time_span[2] - time_span[1] + 1)),
                                  size = size)
   close(s_path)
-  dim(irrigation_scenario) <- c(cells = ncell,
-                                months = nstep,
-                                years = (time_span[2] - time_span[1]) + 1)
-  dimnames(irrigation_scenario) <- list(cells = seq_len(ncell),
-                                        months = seq_len(nstep),
-                                        years = seq(time_span[1],
+  dim(irrigation_scenario) <- c(cell = ncell,
+                                month = nstep,
+                                year = (time_span[2] - time_span[1]) + 1)
+  dimnames(irrigation_scenario) <- list(cell = seq_len(ncell),
+                                        month = seq_len(nstep),
+                                        year = seq(time_span[1],
                                                     time_span[2]))
   # -------------------------------------------------------------------------- #
 
@@ -61,11 +61,11 @@ calc_irrigation_mask <- function(path_output,
                   size = input_data_size) *
               lpjmlKit::get_header_item(header, "scalar")
   close(input_file)      #remove to save space
-  dim(drainage) <- c(bands = lpjmlKit::get_header_item(header, "nbands"),
-                     cells = lpjmlKit::get_header_item(header, "ncell"))
+  dim(drainage) <- c(band = lpjmlKit::get_header_item(header, "nbands"),
+                     cell = lpjmlKit::get_header_item(header, "ncell"))
   dimnames(drainage) <- list(
-    bands = seq_len(lpjmlKit::get_header_item(header, "nbands")),
-    cells = seq_len(lpjmlKit::get_header_item(header, "ncell")))
+    band = seq_len(lpjmlKit::get_header_item(header, "nbands")),
+    cell = seq_len(lpjmlKit::get_header_item(header, "ncell")))
   # -------------------------------------------------------------------------- #
 
   # add 1 since in C indexing starts at 0 but in R at 1
@@ -81,39 +81,42 @@ calc_irrigation_mask <- function(path_output,
   basin_ids <- sort(unique(endcell))
   irrmask_basin <- array(0,
                          dim = dim(avg_irrigation_scenario)[
-                           names(dim(avg_irrigation_scenario)) != "months"
+                           names(dim(avg_irrigation_scenario)) != "month"
                          ],
                          dimnames = dimnames(avg_irrigation_scenario)[
-                           names(dimnames(avg_irrigation_scenario)) != "months"
+                           names(dimnames(avg_irrigation_scenario)) != "month"
                          ])
 
   third_dim <- names(dim(avg_irrigation_scenario))[
-    !names(dim(avg_irrigation_scenario)) %in% c("cells", "months")
-  ] %>%
-    ifelse(length(.) == 0, NA, .)
+    !names(dim(avg_irrigation_scenario)) %in% c("cell", "month")
+  ] %>% {
+    if (rlang::is_empty(.)) NULL else .
+  }
 
   for (id in seq_len(length(basin_ids))) {
     basincell <- which(endcell == basin_ids[id])
-    if (is.na(third_dim) | length(dim(drop(avg_irrigation_scenario))) < 3) {
+    if (is.null(third_dim) | length(dim(drop(avg_irrigation_scenario))) < 3) {
       check_gt0 <- sum(
-        subset_array(avg_irrigation_scenario,
-             list("cells" = basincell))
+        lpjmlKit::subset_array(avg_irrigation_scenario,
+                               list("cell" = basincell))
       )
     } else {
       check_gt0 <- apply(
-        subset_array(avg_irrigation_scenario,
-             list(cells = basincell)),
+        lpjmlKit::subset_array(avg_irrigation_scenario,
+                               list(cell = basincell)),
         third_dim,
         sum
       )
     }
-    basin_replace <- subset_array(irrmask_basin,
-                          list(cells = basincell)) %>%
+    basin_replace <- lpjmlKit::subset_array(irrmask_basin,
+                                            list(cell = basincell)) %>%
       `[<-`(check_gt0 > 0, value = 1)
 
-    irrmask_basin <- replace_array(x = irrmask_basin,
-                                  subset_list = list(cells = basincell),
-                                  y = basin_replace)
+    irrmask_basin <- lpjmlKit::replace_array(
+      x = irrmask_basin,
+      subset_list = list(cell = basincell),
+      y = basin_replace
+    )
   }
   return(irrmask_basin)
 }
@@ -129,48 +132,3 @@ show_route <- function(ind, routing_table) {
              show_route(routing_table[ind], routing_table)))
   }
 }
-
-
-# EXPORT TO lpjmlKIT  -------------------------------------------------------- #
-
-# https://stackoverflow.com/questions/47790061/r-replacing-a-sub-array-dynamically
-replace_array <- function(x, subset_list, y) {
-  argum <- c(alist(x), subarray_argument(x, subset_list), alist(y))
-  do.call("[<-", argum)
-}
-
-
-subset_array <- function(x, subset_list, drop=TRUE) {
-  if (drop) {
-    argum <- c(alist(x), subarray_argument(x, subset_list))
-  } else {
-    argum <- c(alist(x), subarray_argument(x, subset_list), drop = FALSE)
-  }
-  do.call("[", argum)
-}
-
-
-# https://stackoverflow.com/questions/47790061/r-replacing-a-sub-array-dynamically
-subarray_argument <- function(x, subset_list) {
-  # first a suitable empty list
-  match_x <- which(names(dimnames(x)) %in% names(subset_list))
-  match_subset <- na.omit(match(names(dimnames(x)), names(subset_list)))
-  subset_list <- mapply(
-    function(x, y) {
-      if (is.character(x)) {
-        return(which(y %in% x))
-      } else {
-        return(x)
-      }
-    },
-    subset_list[match_subset],
-    dimnames(x)[match_x],
-    SIMPLIFY = FALSE
-  )
-  argument <- rep(list(bquote()), length(dim(x)))
-  # insert the wanted dimension slices
-  argument[match_x] <- subset_list
- return(argument)
-}
-
-# ---------------------------------------------------------------------------- #

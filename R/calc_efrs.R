@@ -4,7 +4,7 @@
 #' of `dim(x)[3]` or specify a nyear_avg calculate the EFRs for each bin in
 #' `dim(x)[3]`.
 #'
-#' @param x discharge array with `dim(x)=c(ncells, months, years)`
+#' @param x discharge array with `dim(x)=c(cell, month, year)`
 #'
 #' @param method EFR method to be used , available methods are `c("vmf",
 #' "vmf_min", "vmf_max", "q90q50")` based on
@@ -65,15 +65,16 @@ calc_efrs <- function(x,
 
   # if nyear_avg (years to average) is supplied
   #   calculate mean monthly flow (mmf) and mean annual flow (maf)
-  mmf <- do.call(average_nyear_window, append(list(x = x), avg_nyear_args))
-  # get dimensions without cells to get back standard order cells, months, years
+  mmf <- do.call(average_nyear_window,
+                 append(list(x = x), avg_nyear_args))
+  # get dimensions without cells to get back standard order cell, month, year
   dim_select <- names(dim(mmf))[
-    which(!names(dim(mmf)) %in% c("cells", "months"))
+    which(!names(dim(mmf)) %in% c("cell", "month"))
   ]
   # calculate maf based on flexibly calculated mmf (with/out "conserved" years)
-  maf <- apply(mmf, c("cells", dim_select), maf_fun) %>%
-    # months dimension is "" here
-    aperm(c("cells", "", dim_select))
+  maf <- apply(mmf, c("cell", dim_select), maf_fun) %>%
+    # month dimension is "" here
+    aperm(c("cell", "", dim_select))
 
   # initialize efrs array
   efrs <- array(0, dim = dim(mmf), dimnames = dimnames(mmf))

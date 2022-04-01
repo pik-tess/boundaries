@@ -16,7 +16,6 @@ calc_nitrogen_status(
   with_groundwater_denit = TRUE,
   prefix_monthly_output = "",
   avg_nyear_args = list(),
-  in_parallel = TRUE,
   start_year = 1901
 )
 }
@@ -60,9 +59,6 @@ monthly LPJmL output files, e.g. \code{"m"} for \code{"mdischarge.bin"} instead 
 \item{avg_nyear_args}{list of arguments to be passed to
 \link[pbfunctions]{average_nyear_window} (see for more info). To be used for
 time series analysis}
-
-\item{in_parallel}{logical. if TRUE (default) future (asynchronos, parallel)
-executions will be done in parallel, if FALSE sequential.}
 }
 \description{
 Calculate the PB status for the nitrogen boundary based on a scenario LPJmL

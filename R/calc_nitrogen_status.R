@@ -41,9 +41,6 @@
 #' \link[pbfunctions]{average_nyear_window} (see for more info). To be used for
 #' time series analysis
 #'
-#' @param in_parallel logical. if TRUE (default) future (asynchronos, parallel)
-#' executions will be done in parallel, if FALSE sequential.
-#'
 #' @examples
 #' \dontrun{
 #'  calc_nitrogen_status(path_scenario, path_reference)
@@ -64,7 +61,6 @@ calc_nitrogen_status <- function(path_scenario,
                                  with_groundwater_denit = TRUE,
                                  prefix_monthly_output = "",
                                  avg_nyear_args = list(),
-                                 in_parallel = TRUE,
                                  # to be replaced by lpjmlKit::read_output
                                  start_year = 1901) {
   # verify available methods
@@ -74,14 +70,10 @@ calc_nitrogen_status <- function(path_scenario,
   temporal_resolution <- match.arg(temporal_resolution, c("annual",
                                                           "monthly"))
 
-  if (in_parallel) {
-    if (.Platform$OS.type == "windows") {
-      future_plan <- future::plan("multisession")
-    } else {
-      future_plan <- future::plan("multicore")
-    }
+  if (.Platform$OS.type == "windows") {
+    future_plan <- future::plan("multisession")
   } else {
-    future_plan <- future::plan("sequential")
+    future_plan <- future::plan("multicore")
   }
   on.exit(future::plan(future_plan))
 
@@ -104,12 +96,12 @@ calc_nitrogen_status <- function(path_scenario,
     lpjml_grid <- readBin(grid_file, integer(), n = 2 * ncell, size = size) /
                   100
     close(grid_file)
-    dim(lpjml_grid) <- c(coordinates = 2, cells = ncell)
-    dimnames(lpjml_grid) <- list(coordinates = c("lon", "lat"),
-                                 cells = seq_len(ncell))
+    dim(lpjml_grid) <- c(coordinate = 2, cell = ncell)
+    dimnames(lpjml_grid) <- list(coordinate = c("lon", "lat"),
+                                 cell = seq_len(ncell))
     # ------------------------------------------------------------------------ #
     cell_area <-  lpjmlKit::calc_cellarea(
-      subset_array(lpjml_grid, list(coordinates = "lat"))
+      lpjmlKit::subset_array(lpjml_grid, list(coordinate = "lat"))
     )
 
     # TO BE REPLACED BY lpjmlKit::read_output -------------------------------- #
@@ -178,18 +170,19 @@ calc_nitrogen_status <- function(path_scenario,
                            (avg_leaching * cell_area * 1e3 * loss_factor) /
                            (avg_runoff * cell_area), 0)
 
-    # get name of third dimension of array (bands, years, ...)
+    # get name of third dimension of array (band, year, ...)
     third_dim <- names(dim(status_frac_monthly))[
-      !names(dim(status_frac_monthly)) %in% c("cells", "months")
-    ] %>%
-      ifelse(length(.) == 0, NA, .)
+      !names(dim(status_frac_monthly)) %in% c("cell", "month")
+    ] %>% {
+      if (rlang::is_empty(.)) NULL else .
+    }
     third_dim <<- third_dim
 
     if (temporal_resolution == "annual") {
       status_frac <- apply(
         status_frac_monthly,
         names(dim(status_frac_monthly))[
-          names(dim(status_frac_monthly)) %in% na.omit(c("cells", third_dim))
+          names(dim(status_frac_monthly)) %in% c("cell", third_dim)
         ],
         mean,
         na.rm = TRUE)
@@ -198,8 +191,8 @@ calc_nitrogen_status <- function(path_scenario,
       if (is.null(dim(status_frac))) {
         status_frac <- array(
           status_frac,
-          dim = c(cells = dim(status_frac_monthly)[["cells"]], 1),
-          dimnames = list(cells = dimnames(status_frac_monthly)[["cells"]], 1)
+          dim = c(cell = dim(status_frac_monthly)[["cell"]], 1),
+          dimnames = list(cell = dimnames(status_frac_monthly)[["cell"]], 1)
         )
       }
     } else {
@@ -315,7 +308,7 @@ calc_nitrogen_status <- function(path_scenario,
   avg_pet_annual %<-% apply(
     avg_pet,
     names(dim(avg_pet))[
-      names(dim(avg_pet)) %in% na.omit(c("cells", third_dim))
+      names(dim(avg_pet)) %in% c("cell", third_dim)
     ],
     mean,
     na.rm = TRUE)
@@ -324,7 +317,7 @@ calc_nitrogen_status <- function(path_scenario,
   avg_prec_annual %<-% apply(
     avg_prec,
     names(dim(avg_prec))[
-      names(dim(avg_prec)) %in% na.omit(c("cells", third_dim))
+      names(dim(avg_prec)) %in% c("cell", third_dim)
     ],
     mean,
     na.rm = TRUE)
@@ -382,13 +375,13 @@ tmp_read_monthly <- function(file_name,
                                time_span[1] + 1)),
                         size = size)
   close(file_con)
-  dim(lpjml_data) <- c(cells = ncell,
-                            months = nstep,
-                            years = (time_span[2] -
-                                     time_span[1] + 1))
-  dimnames(lpjml_data) <- list(cells = seq_len(ncell),
-                                    months = seq_len(nstep),
-                                    years = seq(time_span[1],
-                                                time_span[2]))
+  dim(lpjml_data) <- c(cell = ncell,
+                       month = nstep,
+                       year = (time_span[2] -
+                                time_span[1] + 1))
+  dimnames(lpjml_data) <- list(cell = seq_len(ncell),
+                               month = seq_len(nstep),
+                               year = seq(time_span[1],
+                                           time_span[2]))
   return(lpjml_data)
 }

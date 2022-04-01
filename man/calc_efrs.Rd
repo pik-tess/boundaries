@@ -7,7 +7,7 @@
 calc_efrs(x, method = "vmf", avg_nyear_args = list())
 }
 \arguments{
-\item{x}{discharge array with \code{dim(x)=c(ncells, months, years)}}
+\item{x}{discharge array with \code{dim(x)=c(cell, month, year)}}
 
 \item{method}{EFR method to be used , available methods are \code{c("vmf", "vmf_min", "vmf_max", "q90q50")} based on
 \href{https://doi.org/10.5194/hess-18-5041-2014}{Pastor et al. 2014}
