@@ -21,7 +21,7 @@
 #' @export
 classify_biomes <- function(path_data,
                             time_span = c(1982, 2011),
-                            vegc_proxy = TRUE,
+                            vegc_proxy = FALSE,
                             avg_nyear_args = list(),
                             # to be replaced by lpjmlKit::read_output
                             start_year = 1901) {
@@ -415,7 +415,7 @@ classify_biomes <- function(path_data,
   }
   # Temperate Savanna & Open Shrubland
   is_temperate_grassland %<-% {
-    is_shrubbland &
+    is_grassland &
     lpjmlKit::subset_array(avg_fpc, list(band = "Temperate C3 grass")) >
     lpjmlKit::subset_array(avg_fpc, list(band = "Tropical C4 grass")) &
     avg_temp >= -2 &
@@ -539,11 +539,11 @@ classify_biomes <- function(path_data,
 
 
 tmp_read_yearly <- function(file_name,
-                             time_span,
-                             start_year,
-                             ncell,
-                             nbands,
-                             size) {
+                            time_span,
+                            start_year,
+                            ncell,
+                            nbands,
+                            size) {
   # scenario runofv
   file_con <- file(file_name,
                    "rb")
