@@ -21,7 +21,7 @@
 #' @export
 classify_biomes <- function(path_data,
                             time_span = c(1982, 2011),
-                            vegc_proxy = FALSE,
+                            vegc_proxy = TRUE,
                             avg_nyear_args = list(),
                             # to be replaced by lpjmlKit::read_output
                             start_year = 1901) {
@@ -44,27 +44,28 @@ classify_biomes <- function(path_data,
   # (https://doi.org/10.1088/1748-9326/10/4/044011) and Gerten et al. 2020
   # (https://doi.org/10.1038/s41893-019-0465-1)
   # biome names
-  biome_names <- c("Tropical Rainforest", # 1
-                   "Tropical Seasonal & Deciduous Forest", # 2
-                   "Temperate Broadleaved Evergreen Forest", # 3
-                   "Temperate Broadleaved Deciduous Forest", # 4
-                   "Mixed Forest", # 6
-                   "Temperate Coniferous Forest", # 5
-                   "Boreal Evergreen Forest", # 7
-                   "Boreal Deciduous Forest", # 8
-                   "Warm Woody Savanna, Woodland & Shrubland", # 9
-                   "Warm Savanna & Open Shrubland", #10
-                   "Warm Grassland", #11
-                   "Temperate Woody Savanna, Woodland & Shrubland", # 12
-                   "Temperate Savanna & Open Shrubland", #13
-                   "Temperate Grassland", #14
-                   "Arctic Tundra", #15
-                   "Desert", #16
-                   "Rocks and Ice",
-                   "Water"
+  biome_names <- c(`Tropical Rainforest` = 1,
+                   `Tropical Seasonal & Deciduous Forest` = 2,
+                   `Temperate Broadleaved Evergreen Forest` = 3,
+                   `Temperate Broadleaved Deciduous Forest` = 4,
+                   `Mixed Forest` = 5,
+                   `Temperate Coniferous Forest` = 6,
+                   `Boreal Evergreen Forest` = 7,
+                   `Boreal Deciduous Forest` = 8,
+                   `Warm Woody Savanna, Woodland & Shrubland` = 9,
+                   `Warm Savanna & Open Shrubland` = 10,
+                   `Warm Grassland` = 11,
+                   `Temperate Woody Savanna, Woodland & Shrubland` = 12,
+                   `Temperate Savanna & Open Shrubland` = 13,
+                   `Temperate Grassland` = 14,
+                   `Arctic Tundra` = 15,
+                   `Desert` = 16,
+                   `Rocks and Ice` = 17,
+                   `Water` = 18
   )
 
-  # band names for fpc.bin
+  # TO BE REPLACED BY lpjmlKit::read_meta ------------------------------------ #
+  #   hardcoded values to be internally replaced
   fpc_names <- c("natvegfrac", # 1
                  "Tropical Broadleaved Evergreen Tree", # 2
                  "Tropical Broadleaved Raingreen Tree", # 3
@@ -213,9 +214,7 @@ classify_biomes <- function(path_data,
   )
   fpc_total %<-% apply(
     lpjmlKit::subset_array(avg_fpc,
-                           list(band = fpc_names[
-                             which(fpc_names != "natvegfrac")
-                           ])),
+                           list(band = fpc_names[fpc_names != "natvegfrac"])),
     c("cell", third_dim),
     sum,
     na.rm = TRUE
@@ -228,9 +227,7 @@ classify_biomes <- function(path_data,
   )
   max_share %<-% apply(
     lpjmlKit::subset_array(avg_fpc,
-                           list(band = fpc_names[
-                             which(fpc_names != "natvegfrac")
-                           ])),
+                           list(band = fpc_names[fpc_names != "natvegfrac"])),
     c("cell", third_dim),
     max,
     na.rm = TRUE
@@ -446,93 +443,39 @@ classify_biomes <- function(path_data,
 
   # CLASSIFY BIOMES ---------------------------------------------------------- #
 
-  biome_class[
-    which(is_arctic_tundra)
-  ] <- which(biome_names == "Arctic Tundra")
+  biome_class[is_arctic_tundra] <- biome_names["Arctic Tundra"]
 
-  biome_class[
-    which(is_desert)
-  ] <- which(biome_names == "Desert")
+  biome_class[is_desert] <- biome_names["Desert"]
 
-  biome_class[
-    which(is_boreal_evergreen)
-  ] <- which(biome_names == "Boreal Evergreen Forest")
+  # forests
+  biome_class[is_boreal_evergreen] <- biome_names["Boreal Evergreen Forest"]
+  biome_class[is_boreal_deciduous] <- biome_names["Boreal Deciduous Forest"]
+  biome_class[is_temperate_coniferous] <- biome_names["Temperate Coniferous Forest"] # nolint
+  biome_class[is_temperate_broadleaved_evergreen] <- biome_names["Temperate Broadleaved Evergreen Forest"] # nolint
+  biome_class[is_temperate_broadleaved_deciduous] <- biome_names["Temperate Broadleaved Deciduous Forest"] # nolint
+  biome_class[is_tropical_evergreen] <- biome_names["Tropical Rainforest"]
+  biome_class[is_tropical_raingreen] <- biome_names["Tropical Seasonal & Deciduous Forest"] # nolint
+  biome_class[is_tropical_forest_savannah] <- biome_names["Warm Woody Savanna, Woodland & Shrubland"] # nolint
+  biome_class[is_mixed_forest] <- biome_names["Mixed Forest"]
 
-  biome_class[
-    which(is_boreal_deciduous)
-  ] <- which(biome_names == "Boreal Deciduous Forest")
+  # woody savannah
+  biome_class[is_temperate_woody_savannah] <- biome_names["Temperate Woody Savanna, Woodland & Shrubland"] # nolint
+  biome_class[is_tropical_woody_savannah] <- biome_names["Warm Woody Savanna, Woodland & Shrubland"] # nolint
+  biome_class[is_woody_arctic_tundra] <- biome_names["Arctic Tundra"]
 
-  biome_class[
-    which(is_temperate_coniferous)
-  ] <- which(biome_names == "Temperate Coniferous Forest")
+  # open shrubland / savannah
+  biome_class[is_temperate_shrubland] <- biome_names["Temperate Savanna & Open Shrubland"] # nolint
+  biome_class[is_tropical_shrubland] <- biome_names["Warm Savanna & Open Shrubland"] # nolint
+  biome_class[is_arctic_shrubland] <- biome_names["Arctic Tundra"]
 
-  biome_class[
-    which(is_temperate_broadleaved_evergreen)
-  ] <- which(biome_names == "Temperate Broadleaved Evergreen Forest")
+  # grassland
+  biome_class[is_temperate_grassland] <- biome_names["Temperate Grassland"]
+  biome_class[is_tropical_grassland] <- biome_names["Warm Grassland"]
+  biome_class[is_arctic_grassland] <- biome_names["Arctic Tundra"]
 
-  biome_class[
-    which(is_temperate_broadleaved_deciduous)
-  ] <- which(biome_names == "Temperate Broadleaved Deciduous Forest")
-
-  biome_class[
-    which(is_tropical_evergreen)
-  ] <- which(biome_names == "Tropical Rainforest")
-
-  biome_class[
-    which(is_tropical_raingreen)
-  ] <- which(biome_names == "Tropical Seasonal & Deciduous Forest")
-
-  biome_class[
-    which(is_tropical_forest_savannah)
-  ] <- which(biome_names == "Warm Woody Savanna, Woodland & Shrubland")
-
-  biome_class[
-    which(is_mixed_forest)
-  ] <- which(biome_names == "Mixed Forest")
-
-  biome_class[
-    which(is_temperate_woody_savannah)
-  ] <- which(biome_names == "Temperate Woody Savanna, Woodland & Shrubland")
-
-  biome_class[
-    which(is_tropical_woody_savannah)
-  ] <- which(biome_names == "Warm Woody Savanna, Woodland & Shrubland")
-
-  biome_class[
-    which(is_woody_arctic_tundra)
-  ] <- which(biome_names == "Arctic Tundra")
-
-  biome_class[
-    which(is_temperate_shrubland)
-  ] <- which(biome_names == "Temperate Savanna & Open Shrubland")
-
-  biome_class[
-    which(is_tropical_shrubland)
-  ] <- which(biome_names == "Warm Savanna & Open Shrubland")
-
-  biome_class[
-    which(is_arctic_shrubland)
-  ] <- which(biome_names == "Arctic Tundra")
-
-  biome_class[
-    which(is_temperate_grassland)
-  ] <- which(biome_names == "Temperate Grassland")
-
-  biome_class[
-    which(is_tropical_grassland)
-  ] <- which(biome_names == "Warm Grassland")
-
-  biome_class[
-    which(is_arctic_grassland)
-  ] <- which(biome_names == "Arctic Tundra")
-
-  biome_class[
-    which(is_rocks_and_ice)
-  ] <- which(biome_names == "Rocks and Ice")
-
-  biome_class[
-    which(is_water)
-  ] <- which(biome_names == "Water")
+  # other
+  biome_class[is_rocks_and_ice] <- biome_names["Rocks and Ice"]
+  biome_class[is_water] <- biome_names["Water"]
 
   return(biome_class)
 }
