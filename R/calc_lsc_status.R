@@ -234,9 +234,8 @@ calc_lsc_status <- function(path_luinput,
 
   is_forest[biome_classes %in% seq_len(8)] <- 1
 
-  # tropical forets mask
+  # tropical forest mask
   is_tropical_forest[biome_classes %in% seq_len(2)] <- 1
-
   # temperate
   is_temperate_forest[biome_classes %in% seq(3, 6)] <- 1
 
@@ -247,32 +246,82 @@ calc_lsc_status <- function(path_luinput,
   deforestation[deforestation > 1] <- 1
   deforestation[deforestation > 0] <- 1 - deforestation[deforestation > 0]
 
+  third_dim <- names(dim(deforestation))[
+    !names(dim(deforestation)) %in% c("cell")
+  ]
+
+  if (!spatial_resolution == "biome") {
+    deforestation <- lpjmlKit::replace_array(
+      deforestation,
+      list(cell = which(is_tropical_forest == 1)),
+      apply(
+        lpjmlKit::subset_array(deforestation,
+                               list(cell = which(is_tropical_forest == 1)),
+                               drop = FALSE),
+        third_dim,
+        function(x) {
+          return(rep(mean(x, na.rm = TRUE), length(x)))
+        }
+      )
+    ) %>%
+      lpjmlKit::replace_array(
+        list(cell = which(is_boreal_forest == 1)),
+        apply(
+          lpjmlKit::subset_array(deforestation,
+                                 list(cell = which(is_boreal_forest == 1)),
+                                 drop = FALSE),
+          third_dim,
+          function(x) {
+            return(rep(mean(x, na.rm = TRUE), length(x)))
+          }
+        )
+      ) %>%
+      lpjmlKit::replace_array(
+        list(cell = which(is_temperate_forest == 1)),
+        apply(
+          lpjmlKit::subset_array(deforestation,
+                                 list(cell = which(is_temperate_forest == 1)),
+                                 drop = FALSE),
+          third_dim,
+          function(x) {
+            return(rep(mean(x, na.rm = TRUE), length(x)))
+          }
+        )
+      )
+  }
+
   pb_status <- array(0,
                      dim = dim(deforestation),
                      dimnames = dimnames(deforestation))
-  pb_status[is_tropical_forest |
-            is_boreal_forest &
-            deforestation >= 0.4
+  pb_status[
+    is_tropical_forest |
+    is_boreal_forest &
+    deforestation >= 0.4
   ] <- 3
-  pb_status[is_tropical_forest |
-            is_boreal_forest &
-            deforestation < 0.4 &
-            deforestation > 0.15
+  pb_status[
+    is_tropical_forest |
+    is_boreal_forest &
+    deforestation < 0.4 &
+    deforestation > 0.15
   ] <- 2
-  pb_status[is_tropical_forest |
-            is_boreal_forest &
-            deforestation <= 0.15
+  pb_status[
+    is_tropical_forest |
+    is_boreal_forest &
+    deforestation <= 0.15
   ] <- 1
 
-  pb_status[is_temperate_forest &
-            deforestation >= 0.7
+  pb_status[
+    is_temperate_forest &
+    deforestation >= 0.7
   ] <- 3
-  pb_status[is_temperate_forest &
-            deforestation < 0.7 &
-            deforestation > 0.5
+  pb_status[
+    is_temperate_forest &
+    deforestation < 0.7 &
+    deforestation > 0.5
   ] <- 2
-  pb_status[is_temperate_forest &
-            deforestation <= 0.5
+  pb_status[
+    is_temperate_forest &
+    deforestation <= 0.5
   ] <- 1
 
 }
