@@ -49,8 +49,15 @@ calc_lsc_status <- function(path_scenario,
                             start_year = 1901) {
 
   # verify available temporal resolution
-  spatial_resolution <- match.arg(temporal_resolution, c("biome",
-                                                         "grid"))
+  spatial_resolution <- match.arg(spatial_resolution, c("biome",
+                                                        "grid"))
+
+  if (.Platform$OS.type == "windows") {
+    future_plan <- future::plan("multisession")
+  } else {
+    future_plan <- future::plan("multicore")
+  }
+  on.exit(future::plan(future_plan))
 
   # check time_spans of scenario and reference runs
   if (is.null(time_span_reference)) {
@@ -66,6 +73,20 @@ calc_lsc_status <- function(path_scenario,
     } else {
       nyear_ref <- NULL
     }
+  }
+
+  # classify biomes based on foliage protected cover (FPC) output
+  biome_classes %<-% classify_biomes(
+      path_data = path_reference,
+      time_span = time_span_reference,
+      vegc_proxy = vegc_proxy,
+      avg_nyear_args = avg_nyear_args,
+      # to be replaced by lpjmlKit::read_output
+      start_year = start_year)
+
+  if (spatial_resolution == "biome") {
+    # get continents mask - pass arg of whether to merge europe and asia
+    continent_grid %<-% calc_continents_mask(path_reference, eurasia = eurasia)
   }
 
   # TO BE REPLACED BY lpjmlKit::read_output -------------------------------- #
@@ -182,15 +203,6 @@ calc_lsc_status <- function(path_scenario,
                                    append(list(x = all_tree_cover_reference),
                                           avg_nyear_args))
 
-  # classify biomes based on foliage protected cover (FPC) output
-  biome_classes <- classify_biomes(
-      path_data = path_reference,
-      time_span = time_span_reference,
-      vegc_proxy = vegc_proxy,
-      avg_nyear_args = avg_nyear_args,
-      # to be replaced by lpjmlKit::read_output
-      start_year = start_year)
-
   # binary is forest biome - mask
   is_forest <- array(0,
                      dim = dim(biome_classes),
@@ -204,7 +216,6 @@ calc_lsc_status <- function(path_scenario,
   is_boreal_forest <- is_forest
   # init forest type mask (tropical:1, temperate:2, boreal:3)
   forest_type <- is_forest
-  forest_type[] <- NA
 
   # 8 forest biomes
   is_forest[biome_classes %in% seq_len(8)] <- 1
@@ -231,41 +242,37 @@ calc_lsc_status <- function(path_scenario,
   ]
 
   if (spatial_resolution == "biome") {
-    # get continents mask - pass arg of whether to merge europe and asia
-    continent_grid <- calc_continents_mask(path_reference, eurasia = eurasia)
     # create space of combinations to loop over (even though not all make sense)
     comb <- expand.grid(
       continent = sort(unique(lpjmlKit::subset_array(continent_grid, list(coordinate = "continent")))), # nolint
-      forest = na.omit(sort(unique(forest_type)))
+      forest = sort(unique(factor(forest_type)))[-1]
     )
     for (idx in seq_len(nrow(comb))) {
+      sub_deforest <- deforestation
       # replace for every combination a subset of cells with mean of each
-      deforestation <- lpjmlKit::replace_array(
-        deforestation,
-        list(cell = which(
-          # match forest type for cells
-          forest_type == comb$forest[idx] &
-          # match continent for cells
-          lpjmlKit::subset_array(continent_grid, list(coordinate = "continent")) == comb$continent[idx] # nolint
-        )),
-        apply(
-          lpjmlKit::subset_array(
-            deforestation,
-            list(cell = which(
-              # match forest type for cells
-              forest_type == comb$forest[idx] &
-              # match continent for cells
-              lpjmlKit::subset_array(continent_grid, list(coordinate = "continent")) == comb$continent[idx] # nolint
-            )),
-            drop = FALSE
-          ),
-          third_dim,
-          function(x) {
-            # mean over cell subset of forest type and continent
-            return(rep(mean(x, na.rm = TRUE), length(x)))
-          }
+      sub_cells <- {
+        # match forest type for cells
+        forest_type == comb$forest[idx] &
+        # match continent for cells
+        array(
+          lpjmlKit::subset_array(continent_grid, list(coordinate = "continent"), drop = FALSE) == comb$continent[idx], # nolint
+          dim = dim(deforestation),
+          dimnames = dimnames(deforestation)
         )
+      }
+      if (!any(sub_cells)) {
+        next
+      }
+      sub_deforest[!sub_cells] <- NA
+      sub_deforest <- apply(
+        sub_deforest,
+        third_dim,
+        function(x) {
+          # mean over cell subset of forest type and continent
+          return(rep(mean(x, na.rm = TRUE), length(x)))
+        }
       )
+      deforestation[which(sub_cells)] <- sub_deforest[which(sub_cells)]
     }
   }
   # init pb_status array with 0 = no data and initial dimensions
@@ -317,4 +324,5 @@ calc_lsc_status <- function(path_scenario,
     deforestation <= 0.5
   ] <- 1
 
+  return(pb_status)
 }

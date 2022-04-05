@@ -90,12 +90,12 @@ average_nyear_window <- function(x,
         y <- array(x,
                    # set correct dimensions (with names)
                    dim = c(dim(x)[c("cell", third_dim)],
-                           nyear = nyear_window,
-                           windows = dim(x)[["year"]] / nyear_window),
+                           year = nyear_window,
+                           window = dim(x)[["year"]] / nyear_window),
                    # set correct dimensions names with nyear and windows
                    dimnames = append(dimnames(x)[c("cell", third_dim)],
-                                     list(nyear = seq_len(nyear_window),
-                                          windows = dimnames(x)[["year"]][
+                                     list(year = seq_len(nyear_window),
+                                          window = dimnames(x)[["year"]][
                                             seq(round(nyear_window / 2),
                                                 dim(x)[["year"]],
                                                 nyear_window)
@@ -125,9 +125,9 @@ average_nyear_window <- function(x,
       if (!moving_average & !interpolate) {
         z <- array(NA,
                    dim = c(dim(y)[c("cell", third_dim)],
-                           windows = replace_multiple_id),
+                           window = replace_multiple_id),
                    dimnames = append(dimnames(y)[c("cell", third_dim)],
-                                     list(windows = rep(dimnames(y)[[3]],
+                                     list(window = rep(dimnames(y)[[3]],
                                                         nmultiple))))
       # return as original year dimension
       } else {
