@@ -16,18 +16,15 @@
 #' as an integer vector, e.g. `1901:1930`. Can differ in offset and length from
 #' `time_span_scenario`! If `NULL` value of `time_span_scenario` is used
 #'
-#' @param method method (character string) to be used , currently available
-#' method is `c("gerten2020")` based on
-#' [Gerten et al. 2020](https://doi.org/10.1038/s41893-019-0465-1).
+#' @param spatial_resolution character. Spatial resolution, available options
+#' are `"biome"` (default) and `"grid"`
 #'
-#' @param temporal_resolution character. Temporal resolution, available options
-#' are `"annual"` (default) and `"monthly"`
+#' @param eurasia logical. If `spatial_resolution` = `"biome"` merge continents
+#' Europe and Asia to avoid arbitrary biome cut at europe/asia border. Defaults
+#' to `TRUE`
 #'
-#' @param cut_min double. Exclude boundary calculations for Q < cut_min
-#'
-#' @param prefix_monthly_output character. Provide a prefix if required for
-#' monthly LPJmL output files, e.g. `"m"` for `"mdischarge.bin"` instead of
-#' `"discharge.bin"` (default is `""`)
+#' @param vegc_proxy logical. If `TRUE` vegetation carbon (vegc) threshold of
+#' 7500 gC/m² is used to distinguish between forest and savannahs
 #'
 #' @param avg_nyear_args list of arguments to be passed to
 #' \link[pbfunctions]{average_nyear_window} (see for more info). To be used for
@@ -35,25 +32,25 @@
 #'
 #' @examples
 #' \dontrun{
-#'  calc_bluewater_status(path_scenario, path_reference)
+#'  calc_lsc_status(path_scenario, path_reference)
 #' }
 #'
 #' @md
 #' @export
-calc_lsc_status <- function(path_luinput,
-                            path_scenario,
+calc_lsc_status <- function(path_scenario,
                             path_reference,
                             time_span_scenario = c(1982, 2011),
                             time_span_reference = NULL,
-                            method = "gerten2020",
-                            temporal_resolution = "annual",
-                            # ???
-                            cut_min = 0.0864,
-                            vegc_proxy = TRUE,
-                            # prefix_monthly_output = "",
+                            spatial_resolution = "biome",
+                            eurasia = TRUE,
+                            vegc_proxy = FALSE,
                             avg_nyear_args = list(),
                             # to be replaced by lpjmlKit::read_output
                             start_year = 1901) {
+
+  # verify available temporal resolution
+  spatial_resolution <- match.arg(temporal_resolution, c("biome",
+                                                         "grid"))
 
   # check time_spans of scenario and reference runs
   if (is.null(time_span_reference)) {
@@ -86,37 +83,6 @@ calc_lsc_status <- function(path_luinput,
   cell_area <-  lpjmlKit::calc_cellarea(
     lpjmlKit::subset_array(lpjml_grid, list(coordinate = "lat"))
   )
-  # TO BE REPLACED BY lpjmlKit::read_input ----------------------------------- #
-  #   hardcoded values to be internally replaced
-  input_data_size <- 4
-  header <- suppressWarnings(lpjmlKit::read_header(filename = path_luinput))
-  headersize <- lpjmlKit::get_headersize(header)
-  input_file <- file(path_luinput, "rb")
-  seek(input_file,
-       where = headersize +
-               (time_span_scenario[1] -
-               lpjmlKit::get_header_item(header, "firstyear")) *
-               lpjmlKit::get_header_item(header, "nbands") *
-               lpjmlKit::get_header_item(header, "ncell") *
-               input_data_size,
-       origin = "start")
-  landuse <- readBin(input_file,
-                     double(),
-                     n = (time_span_scenario[2] - time_span_scenario[1] + 1) *
-                         lpjmlKit::get_header_item(header, "ncell") *
-                         lpjmlKit::get_header_item(header, "nbands"),
-                     size = input_data_size) *
-              lpjmlKit::get_header_item(header, "scalar")
-  close(input_file)      #remove to save space
-  dim(landuse) <- c(band = unname(lpjmlKit::get_header_item(header, "nbands")),
-                    cell = unname(lpjmlKit::get_header_item(header, "ncell")),
-                    year = length(
-                        time_span_scenario[1] : time_span_scenario[2]
-                    ))
-  dimnames(landuse) <- list(
-    band = unname(seq_len(lpjmlKit::get_header_item(header, "nbands"))),
-    cell = unname(seq_len(lpjmlKit::get_header_item(header, "ncell"))),
-    year = time_span_scenario[1] : time_span_scenario[2])
 
   # TO BE REPLACED BY lpjmlKit::read_output ---------------------------------- #
   #   hardcoded values to be internally replaced
@@ -170,12 +136,6 @@ calc_lsc_status <- function(path_luinput,
                   "Boreal Broadleaved Summergreen Tree", # 8
                   "Boreal Needleleaved Summergreen Tree"))
   )
-  tree_cover_scenario <- (
-    tree_share_scenario *
-    array(lpjmlKit::subset_array(fpc_scenario,
-                    list(band = c("natvegfrac"))),
-         dim = dim(tree_cover_scenario)) * cell_area
-  )
   tree_share_reference <- lpjmlKit::subset_array(
     fpc_reference,
     list(band = c("Tropical Broadleaved Evergreen Tree", # 2
@@ -187,32 +147,40 @@ calc_lsc_status <- function(path_luinput,
                   "Boreal Broadleaved Summergreen Tree", # 8
                   "Boreal Needleleaved Summergreen Tree"))
   )
+  # calculate actual tree cover area
+  tree_cover_scenario <- (
+    tree_share_scenario *
+    array(lpjmlKit::subset_array(fpc_scenario,
+                    list(band = c("natvegfrac"))),
+         dim = dim(tree_share_scenario)) * cell_area
+  )
   tree_cover_reference <- (
     tree_share_reference *
     array(lpjmlKit::subset_array(fpc_reference,
                     list(band = c("natvegfrac"))),
-         dim = dim(tree_cover_scenario)) * cell_area
+         dim = dim(tree_share_reference)) * cell_area
   )
   # sum tree pfts for forest cover
-  forest_cover_scenario %<-% apply(tree_cover_scenario,
-                                   c("cell", "year"),
-                                   sum,
-                                   na.rm = TRUE) # * cell_area
-  forest_cover_reference %<-% apply(tree_cover_reference,
-                                    c("cell", "year"),
-                                    sum,
-                                    na.rm = TRUE)
-  # average fpc
-  avg_forest_scenario %<-% do.call(average_nyear_window,
-                                append(list(x = forest_cover_scenario),
-                                       avg_nyear_args))
+  all_tree_cover_scenario %<-% apply(tree_cover_scenario,
+                                     c("cell", "year"),
+                                     sum,
+                                     na.rm = TRUE)
+  all_tree_cover_reference %<-% apply(tree_cover_reference,
+                                      c("cell", "year"),
+                                      sum,
+                                      na.rm = TRUE)
+  # average forest over time
+  avg_trees_scenario %<-% do.call(average_nyear_window,
+                                  append(list(x = all_tree_cover_scenario),
+                                         avg_nyear_args))
   if (!is.null(nyear_ref)) {
     avg_nyear_args["nyear_reference"] <- nyear_ref
   }
 
-  avg_forest_reference %<-% do.call(average_nyear_window,
-                                append(list(x = forest_cover_reference),
-                                       avg_nyear_args))
+  # average forest over time
+  avg_trees_reference %<-% do.call(average_nyear_window,
+                                   append(list(x = all_tree_cover_reference),
+                                          avg_nyear_args))
 
   # classify biomes based on foliage protected cover (FPC) output
   biome_classes <- classify_biomes(
@@ -223,102 +191,127 @@ calc_lsc_status <- function(path_luinput,
       # to be replaced by lpjmlKit::read_output
       start_year = start_year)
 
-  # forest biomes masks
+  # binary is forest biome - mask
   is_forest <- array(0,
                      dim = dim(biome_classes),
                      dimnames = dimnames(biome_classes))
 
+  # binary is tropical forest biome - mask
   is_tropical_forest <- is_forest
+  # binary is temperate forest biome - mask
   is_temperate_forest <- is_forest
+  # binary is boreal forest biome - mask
   is_boreal_forest <- is_forest
+  # init forest type mask (tropical:1, temperate:2, boreal:3)
+  forest_type <- is_forest
+  forest_type[] <- NA
 
+  # 8 forest biomes
   is_forest[biome_classes %in% seq_len(8)] <- 1
 
-  # tropical forest mask
+  # 2 tropical forest biomes
   is_tropical_forest[biome_classes %in% seq_len(2)] <- 1
-  # temperate
+  forest_type[which(is_tropical_forest == 1)] <- 1
+  # 4 temperate forest biomes
   is_temperate_forest[biome_classes %in% seq(3, 6)] <- 1
+  forest_type[which(is_temperate_forest == 1)] <- 2
 
-  # boreal
+  # 2 boreal forest biomes
   is_boreal_forest[biome_classes %in% seq(7, 8)] <- 1
+  forest_type[which(is_boreal_forest == 1)] <- 3
 
-  deforestation <- avg_forest_scenario / (avg_forest_reference + 1e-9)
+  # calculate deforestation status by share of scenario and reference run
+  deforestation <- avg_trees_scenario / (avg_trees_reference + 1e-9)
   deforestation[deforestation > 1] <- 1
   deforestation[deforestation > 0] <- 1 - deforestation[deforestation > 0]
 
+  # get flexibly named time dimension
   third_dim <- names(dim(deforestation))[
     !names(dim(deforestation)) %in% c("cell")
   ]
 
-  if (!spatial_resolution == "biome") {
-    deforestation <- lpjmlKit::replace_array(
-      deforestation,
-      list(cell = which(is_tropical_forest == 1)),
-      apply(
-        lpjmlKit::subset_array(deforestation,
-                               list(cell = which(is_tropical_forest == 1)),
-                               drop = FALSE),
-        third_dim,
-        function(x) {
-          return(rep(mean(x, na.rm = TRUE), length(x)))
-        }
-      )
-    ) %>%
-      lpjmlKit::replace_array(
-        list(cell = which(is_boreal_forest == 1)),
+  if (spatial_resolution == "biome") {
+    # get continents mask - pass arg of whether to merge europe and asia
+    continent_grid <- calc_continents_mask(path_reference, eurasia = eurasia)
+    # create space of combinations to loop over (even though not all make sense)
+    comb <- expand.grid(
+      continent = sort(unique(lpjmlKit::subset_array(continent_grid, list(coordinate = "continent")))), # nolint
+      forest = na.omit(sort(unique(forest_type)))
+    )
+    for (idx in seq_len(nrow(comb))) {
+      # replace for every combination a subset of cells with mean of each
+      deforestation <- lpjmlKit::replace_array(
+        deforestation,
+        list(cell = which(
+          # match forest type for cells
+          forest_type == comb$forest[idx] &
+          # match continent for cells
+          lpjmlKit::subset_array(continent_grid, list(coordinate = "continent")) == comb$continent[idx] # nolint
+        )),
         apply(
-          lpjmlKit::subset_array(deforestation,
-                                 list(cell = which(is_boreal_forest == 1)),
-                                 drop = FALSE),
+          lpjmlKit::subset_array(
+            deforestation,
+            list(cell = which(
+              # match forest type for cells
+              forest_type == comb$forest[idx] &
+              # match continent for cells
+              lpjmlKit::subset_array(continent_grid, list(coordinate = "continent")) == comb$continent[idx] # nolint
+            )),
+            drop = FALSE
+          ),
           third_dim,
           function(x) {
-            return(rep(mean(x, na.rm = TRUE), length(x)))
-          }
-        )
-      ) %>%
-      lpjmlKit::replace_array(
-        list(cell = which(is_temperate_forest == 1)),
-        apply(
-          lpjmlKit::subset_array(deforestation,
-                                 list(cell = which(is_temperate_forest == 1)),
-                                 drop = FALSE),
-          third_dim,
-          function(x) {
+            # mean over cell subset of forest type and continent
             return(rep(mean(x, na.rm = TRUE), length(x)))
           }
         )
       )
+    }
   }
-
+  # init pb_status array with 0 = no data and initial dimensions
   pb_status <- array(0,
                      dim = dim(deforestation),
                      dimnames = dimnames(deforestation))
+  # boundaries for tropical forest and boreal forest after Steffen et al. 2015
+  #   (https://doi.org/10.1126/science.1259855)
+  #   share for safe space <= 0.15, uncertainty zone < 0.4 & >0.15 and
+  #   for high risk >= 0.4
+  # high risk
   pb_status[
     is_tropical_forest |
     is_boreal_forest &
     deforestation >= 0.4
   ] <- 3
+  # uncertainty zone
   pb_status[
     is_tropical_forest |
     is_boreal_forest &
     deforestation < 0.4 &
     deforestation > 0.15
   ] <- 2
+  # safe space
   pb_status[
     is_tropical_forest |
     is_boreal_forest &
     deforestation <= 0.15
   ] <- 1
 
+  # boundaries for temperate forest after Steffen et al. 2015
+  #   (https://doi.org/10.1126/science.1259855)
+  #   share for safe space <= 0.5, uncertainty zone < 0.7 & >0.5 and
+  #   for high risk >= 0.7
+  # high risk
   pb_status[
     is_temperate_forest &
     deforestation >= 0.7
   ] <- 3
+  # uncertainty zone
   pb_status[
     is_temperate_forest &
     deforestation < 0.7 &
     deforestation > 0.5
   ] <- 2
+  # safe space
   pb_status[
     is_temperate_forest &
     deforestation <= 0.5

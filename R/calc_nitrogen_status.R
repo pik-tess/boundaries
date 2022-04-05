@@ -132,12 +132,10 @@ calc_nitrogen_status <- function(path_scenario,
     )
     # ------------------------------------------------------------------------ #
 
-
     # average runoff
     avg_runoff %<-% do.call(average_nyear_window,
                           append(list(x = runoff),
                                  avg_nyear_args))
-
 
     # average runoff
     avg_leaching %<-% do.call(average_nyear_window,

@@ -9,10 +9,9 @@ calc_lsc_status(
   path_reference,
   time_span_scenario = c(1982, 2011),
   time_span_reference = NULL,
-  method = "gerten2020",
-  temporal_resolution = "annual",
-  cut_min = 0.0864,
-  prefix_monthly_output = "",
+  spatial_resolution = "biome",
+  eurasia = TRUE,
+  vegc_proxy = FALSE,
   avg_nyear_args = list(),
   start_year = 1901
 )
@@ -31,18 +30,15 @@ as an integer vector, e.g. \code{1982:2011} (default)}
 as an integer vector, e.g. \code{1901:1930}. Can differ in offset and length from
 \code{time_span_scenario}! If \code{NULL} value of \code{time_span_scenario} is used}
 
-\item{method}{method (character string) to be used , currently available
-method is \code{c("gerten2020")} based on
-\href{https://doi.org/10.1038/s41893-019-0465-1}{Gerten et al. 2020}.}
+\item{spatial_resolution}{character. Spatial resolution, available options
+are \code{"biome"} (default) and \code{"grid"}}
 
-\item{temporal_resolution}{character. Temporal resolution, available options
-are \code{"annual"} (default) and \code{"monthly"}}
+\item{eurasia}{logical. If \code{spatial_resolution} = \code{"biome"} merge continents
+Europe and Asia to avoid arbitrary biome cut at europe/asia border. Defaults
+to \code{TRUE}}
 
-\item{cut_min}{double. Exclude boundary calculations for Q < cut_min}
-
-\item{prefix_monthly_output}{character. Provide a prefix if required for
-monthly LPJmL output files, e.g. \code{"m"} for \code{"mdischarge.bin"} instead of
-\code{"discharge.bin"} (default is \code{""})}
+\item{vegc_proxy}{logical. If \code{TRUE} vegetation carbon (vegc) threshold of
+7500 gC/m² is used to distinguish between forest and savannahs}
 
 \item{avg_nyear_args}{list of arguments to be passed to
 \link[pbfunctions]{average_nyear_window} (see for more info). To be used for
@@ -54,7 +50,7 @@ on a scenario LPJmL run and a reference LPJmL run.
 }
 \examples{
 \dontrun{
- calc_bluewater_status(path_scenario, path_reference)
+ calc_lsc_status(path_scenario, path_reference)
 }
 
 }
