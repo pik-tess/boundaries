@@ -1,22 +1,8 @@
+# written by Fabian Stenzel, based on work by Sebastian Ostberg, Johanna Braun, Jannes Breier
+# 2022 - stenzel@pik-potsdam.de
+
 #requirements:
-require(lpjmliotools) # in at least version 0.2.15
-require(lpjmlKit) # requires the built package from checked-out branch metafile, see below
-###### clone lpjmlKit repository 
-# git clone git@gitlab.pik-potsdam.de:lpjml/lpjmlkit.git lpjmlKit
-# cd lpjmlKit
-# git checkout metafile
-# 
-###### build
-### on cluster:
-# module load piam
-# R  #(open R console)
-# devtools::install("<path_to_lpjmlkit>/lpjmlkit")
-#
-### on local machine:
-# Open lpjmlKit.RProj file with RStudio
-# in the "Built" card on the top right -> "Install and Restart"
-
-
+require(lpjmliotools) # in at least version 0.2.17
 
 #' Classify biomes
 #'
@@ -71,8 +57,6 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
                    elevationInput = "/p/projects/lpjml/input/historical/input_VERSION2/elevation.bin",
                    lpjGridHeaderSize = 43, lpjCells = 67420) {
 
-  require(lpjmlKit)
-  require(magrittr)
   require(lpjmliotools)
   
   if (readOutput) { #reading output from folder
