@@ -21,7 +21,8 @@
 #' [Gerten et al. 2020](https://doi.org/10.1038/s41893-019-0465-1).
 #'
 #' @param temporal_resolution character. Temporal resolution, available options
-#' are `"annual"` (default) and `"monthly"`
+#' are `"annual"` (default) and `"monthly"`. `"annual"` describes the mean only
+#' over months that are transgressed.
 #'
 #' @param cut_min double. Exclude boundary calculations for Q < cut_min
 #'
@@ -202,6 +203,7 @@ calc_bluewater_status <- function(path_scenario,
       # calc irrigation mask to exclude non irrigated basins
       irrmask_basin <- calc_irrigation_mask(path_scenario,
                                             time_span = time_span_scenario,
+                                            prefix_monthly_output = prefix_monthly_output, # nolint
                                             avg_nyear_args = avg_nyear_args,
                                             start_year = start_year)
 

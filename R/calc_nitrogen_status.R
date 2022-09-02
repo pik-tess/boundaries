@@ -262,6 +262,7 @@ calc_nitrogen_status <- function(path_scenario,
 
       # subtract scenario leaching concentration and loss rate from reference
       status_frac <- status_frac_scenario - status_frac_reference
+      status_frac[status_frac < 0] <- 0
     }
   )
 
@@ -331,10 +332,10 @@ calc_nitrogen_status <- function(path_scenario,
   global_aridity_index <- avg_prec_annual / avg_pet_annual + 1e-9
 
   # to display arid cells (leaching behaviour threshold) in other color (grey):
-  cells_marginal_discharge <- array(FALSE,
-                                   dim = dim(status_frac),
-                                   dimnames = dimnames(status_frac))
-  cells_marginal_discharge[which(global_aridity_index <= cut_min)] <- TRUE
+  cells_arid <- array(FALSE,
+                      dim = dim(status_frac),
+                      dimnames = dimnames(status_frac))
+  cells_arid[which(global_aridity_index <= cut_min)] <- TRUE
 
   # init pb_status based on status_frac
   pb_status <- status_frac
@@ -345,7 +346,7 @@ calc_nitrogen_status <- function(path_scenario,
   # safe zone
   pb_status[status_frac < 1] <- 1
   # non applicable cells
-  pb_status[cells_marginal_discharge] <- 0
+  pb_status[cells_arid] <- 0
 
   return(pb_status)
 }

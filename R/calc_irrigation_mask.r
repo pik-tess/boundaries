@@ -4,6 +4,7 @@
 #   returns lpjml output with either just cell or + year/window
 calc_irrigation_mask <- function(path_output,
                                  time_span,
+                                 prefix_monthly_output = "",
                                  avg_nyear_args=list(),
                                  start_year = 1901,
                                  path_input = (
@@ -19,7 +20,8 @@ calc_irrigation_mask <- function(path_output,
   ncell <- 67420
   size <- 4
 
-  s_path <- file(paste(path_output, "irrig.bin", sep = "/"), "rb")
+  s_path <- file(paste0(path_output, "/", prefix_monthly_output, "irrig.bin"),
+                 "rb")
   seek(s_path,
        where = (time_span[1] - start_year) *
                nstep * nbands * ncell * size,

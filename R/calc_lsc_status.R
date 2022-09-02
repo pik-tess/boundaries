@@ -75,7 +75,7 @@ calc_lsc_status <- function(path_scenario,
     }
   }
 
-  # classify biomes based on foliage protected cover (FPC) output
+  # classify biomes based on foliage projected cover (FPC) output
   biome_classes %<-% classify_biomes(
       path_data = path_reference,
       time_span = time_span_reference,
@@ -107,7 +107,7 @@ calc_lsc_status <- function(path_scenario,
 
   # TO BE REPLACED BY lpjmlKit::read_output ---------------------------------- #
   #   hardcoded values to be internally replaced
-  # read foliage protected cover (fpc) output
+  # read foliage projected cover (fpc) output
   ncell <- 67420
   fpc_names <- c("natvegfrac", # 1
                  "Tropical Broadleaved Evergreen Tree", # 2

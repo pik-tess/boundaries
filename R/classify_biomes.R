@@ -94,7 +94,7 @@ classify_biomes <- function(path_data,
   fpc_evergreen_trees <- c("Tropical Broadleaved Evergreen Tree",
                            "Temperate Needleleaved Evergreen Tree",
                            "Temperate Broadleaved Evergreen Tree",
-                           "Temperate Broadleaved Summergreen Tree")
+                           "Boreal Needleleaved Evergreen Tree")
   fpc_grass <- c("Tropical C4 grass",
                  "Temperate C3 grass",
                  "Polar C3 grass")
