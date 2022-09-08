@@ -25,6 +25,12 @@ require(lpjmliotools) # in at least version 0.2.17
 #'        vegetation as a proxy threshold to distinguish forests and savannahs
 #' @param montaneArcticProxy "elevation" or "latitude". Use elevation or latitude
 #'        as a proxy threshold to distinguish arctic tundra and montane grassland
+#' @param elevation_threshold threshold in m above which ArcticTundra is
+#'        classified as Montane Grassland, if montaneArcticProxy is set to
+#'        elevation - default: 1000
+#' @param latitude_threshold threshold in degrees, south of which ArcticTundra is
+#'        classified as Montane Grassland, if montaneArcticProxy is set to
+#'        latitude - default: 55
 #' @param lai_threshold threshold for "natLAI" proxy (default: 6 m2/m2)
 #' @param vegc_threshold threshold for "vegc" proxy (default: 7500 gC/m2)
 #' @param lpjGridInput path to lpjml grid input to be used for conversion
@@ -52,7 +58,7 @@ require(lpjmliotools) # in at least version 0.2.17
 classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = NULL,
                    timespan = NULL, savannaProxy = "natLAI", lai_threshold = 6,
                    vegc_threshold = 7500, montaneArcticProxy = "elevation",
-                   elevation_threshold = 2000, latitude_threshold = 55, tree_cover_thresholds = c(0.6,0.3,0.1),
+                   elevation_threshold = 1000, latitude_threshold = 55, tree_cover_thresholds = c(0.6,0.3,0.1),
                    lpjGridInput = "/p/projects/lpjml/input/historical/input_VERSION2/grid.bin",
                    elevationInput = "/p/projects/lpjml/input/historical/input_VERSION2/elevation.bin",
                    lpjGridHeaderSize = 43, lpjCells = 67420) {
@@ -199,11 +205,12 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
                    `Temperate Woody Savanna, Woodland & Shrubland` = 12,
                    `Temperate Savanna & Open Shrubland` = 13,
                    `Temperate Grassland` = 14,
-                   `Arctic Tundra` = 15,
-                   `Desert` = 16,
-                   `Rocks and Ice` = 17,
-                   `Water` = 18,
-                   `Montane Grassland` = 19
+                   `Montane Grassland` = 15,
+                   `Arctic Tundra` = 16,
+                   `Desert` = 17,
+                   `Rocks and Ice` = 18,
+                   `Water` = 19
+
   )
 
   if (npft == 9) {
@@ -370,13 +377,13 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
     max,
     na.rm = TRUE
   )
-  max_share <- apply(
-    subset_array(fpc,
-                           list(band = fpc_names[fpc_names != "natvegfrac"])),
-    c("cell"),
-    max,
-    na.rm = TRUE
-  )
+  # max_share <- apply(
+  #   subset_array(fpc,
+  #                          list(band = fpc_names[fpc_names != "natvegfrac"])),
+  #   c("cell"),
+  #   max,
+  #   na.rm = TRUE
+  # )
   fpc_tree_broadleaf <- fpc_tree_total - fpc_tree_needle
 
   # initiate biome_class array
@@ -673,11 +680,12 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
                          "Temp. Woodland", # 12
                          "Temp. Savanna", #13
                          "Temp. Grassland",	#14
-                         "Arctic Tundra", #15
-                         "Desert", #16
-                         "Rocks and Ice", #17
-                         "Water", #18
-                         "Montane Grassland") #19
+                         "Montane Grassland", #15
+                         "Arctic Tundra", #16
+                         "Desert", #17
+                         "Rocks and Ice", #18
+                         "Water") #19
+
   biome_names_abbrv <- c("TrRF", # 1
                          "TrDF", # 2
                          "TeBE", # 3
@@ -692,11 +700,12 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
                          "TeWo", #12
                          "TeSa", #13
                          "TeGr", #14
-                         "ArTu", #15
-                         "Des",  #16
-                         "RoIc", #17
-                         "Wat",  #18
-                         "MoGr") #19
+                         "MoGr", #15
+                         "ArTu", #16
+                         "Des",  #17
+                         "RoIc", #18
+                         "Wat")  #19
+
 
 
   return(list(biome_id = biome_class, biome_names = names(biome_names), biome_names_short = biome_names_short, biomes_abbrv = biome_names_abbrv))

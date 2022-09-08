@@ -1,7 +1,7 @@
 # written by Fabian Stenzel
 # 2022 - stenzel@pik-potsdam.de
 
-## todo: documentation
+## todo: documentation, HANPP find scaling factor for grassland harvest
 
 netcdfPFT2lpjarray <- function(ncInFile,var,lon,lat){
   #ncInfile = "/p/projects/amazonas/drueke/POEM/work/fabian_LU/history/output-20040101/pft_npp.nc"
@@ -17,7 +17,7 @@ netcdfPFT2lpjarray <- function(ncInFile,var,lon,lat){
   time <- ncvar_get(file_nc,"time")
   years <- length(time)
   data <- ncvar_get(file_nc, var)
-  #flip latitude according to netcdf 
+  #flip latitude according to netcdf
   if ((yFromRow(file_raster, 1) < yFromRow(file_raster,  2))
       != (file_nc$dim$lat$vals[1] < file_nc$dim$lat$vals[2])) {
     if (years == 1) data <- data[, file_nc$dim$lat$len:1, ]
@@ -41,7 +41,7 @@ netcdfPFT2lpjarray <- function(ncInFile,var,lon,lat){
       # resulting array has dimensions c(ncell, nbands)
       if (years == 1) outdata[,band] <- dat[cells]
       else outdata[,band,year] <- dat[cells]
-      
+
     }
   }
   nc_close(file_nc)
@@ -72,9 +72,9 @@ plotNPPmap <- function(data, file, title, legendtitle, eps = FALSE){
   maps::map('world',add=TRUE,res=0.4, lwd=0.25,ylim=c(-60,90))
   dev.off()
 }
-plotHANPPmap <- function(data, file, title, legendtitle, eps = FALSE){
-  brks <- c(-400,-200,-100,-50,-0.1,0.1,10,20,30,40,50,60,70,80,100)
-  classes <- c("<-200","-200 - -100","-100 - -50","-50 - -0.1","-0.1 - 0.1","0.1 - 10","10 - 20","20 - 30","30 - 40","40 - 50","50 - 60","60 - 70","70 - 80","80 - 100")
+plotHANPPmap <- function(data, file, title, legendtitle, zeroThreshold = 0.1, eps = FALSE){
+  brks <- c(-400,-200,-100,-50,-zeroThreshold,zeroThreshold,10,20,30,40,50,60,70,80,100)
+  classes <- c("<-200","-200 - -100","-100 - -50",paste0("-50 - -",zeroThreshold),paste0("-",zeroThreshold," - ",zeroThreshold),paste0(zeroThreshold," - 10"),"10 - 20","20 - 30","30 - 40","40 - 50","50 - 60","60 - 70","70 - 80","80 - 100")
   palette <- c("navy","royalblue3","royalblue1","skyblue1","grey80","yellowgreen","greenyellow","yellow","gold","orange","orangered","orangered4","brown4","black")
   data[data < brks[1]] <- brks[1]
   data[data > brks[length(brks)]] <- brks[length(brks)]
@@ -97,9 +97,9 @@ plotHANPPmap <- function(data, file, title, legendtitle, eps = FALSE){
   legend(x = -180, y = 50, fill = palette, border = palette, legend = classes, title = legendtitle)
   dev.off()
 }
-plotNPPovertime <- function(file, dataAct, dataEco, dataPot, dataBE, dataHANPP, 
-                            dataHarvNPP, firstyr, plotyrs, highlightyrs = 2000, 
-                            maxVal = 100, ext = FALSE, eps = FALSE){
+plotNPPovertime <- function(file, dataAct, dataEco, dataPot, dataBE, dataHANPP,
+                            dataHarvNPP, dataHANPPperc, firstyr, plotyrs, highlightyrs = 2000, minVal = 0,
+                            maxVal = 100, legendpos="topleft", ext = FALSE, eps = FALSE){
   #maxVal=max(c(dataPot,dataAct,dataEco,dataHANPP))
   lastyr = firstyr + length(dataAct) - 1
   colz = c("slateblue","gold","green3","red3","darkorange","black")
@@ -112,37 +112,44 @@ plotNPPovertime <- function(file, dataAct, dataEco, dataPot, dataBE, dataHANPP,
     png(file, width=3.5,  height = 3, units = "in", res = 300, pointsize = 6,type="cairo")
   }
   par(bty="o",oma=c(0,0,0,0),mar=c(4,5,1,3))
-  plot(x=seq(firstyr,lastyr,1),y=dataPot,ylab="GtC/yr",xlab="Year",xlim=plotyrs,ylim=c(0, maxVal),type = "l",col=colz[1],xaxs="i",yaxs="i")
+  plot(x=seq(firstyr,lastyr,1),y=dataPot,ylab="GtC/yr",xlab="Year",xlim=plotyrs,
+       ylim=c(minVal, maxVal),type = "l",col=colz[1],xaxs="i",yaxs="i")
   lines(x=seq(firstyr,lastyr,1),y=dataAct,type = "l",col=colz[2])
   lines(x=seq(firstyr,lastyr,1),y=dataEco,type = "l",col=colz[3])
-  lines(x=seq(firstyr,lastyr,1),y=dataHANPP,type = "l",col=colz[4])
+
+  par(bty="n",oma=c(0,0,0,0),mar=c(4,5,1,3), new = T)
+  plot(x=seq(firstyr,lastyr,1),y=dataHANPPperc,ylab="",xlab="",xlim=plotyrs,
+       ylim=c(10, 30),type = "l",col=colz[4],xaxs="i", yaxs="i", axes = F)
+  axis(side = 4, col = colz[4],col.axis = colz[4])
+  mtext(text = "%", col=colz[4], side = 4,line = 2)
+
   if (ext){
     lines(x=seq(firstyr,lastyr,1),y=dataBE,type = "l",col=colz[5])
     HANPPperc=dataHANPP/dataPot*100
     lines(x=seq(firstyr,lastyr,1),y=HANPPperc,type = "l",col="black")
   }
-  for (y in highlightyrs){
-    lines(x=c(y,y),y=c(0,70),col="grey40")
+  if (!is.null(highlightyrs)){
+    for (y in highlightyrs){
+      lines(x=c(y,y),y=c(minVal,maxVal),col="grey40")
+    }
   }
-  axis(side = 4)
-  legendpos="topleft"
-  if (maxVal==70) legendpos="left"
+
   if (ext) legend(legendpos,legend = c("NPPpot (PNV)","NPPact (landuse)","NPPeco","HANPP","Bioenergy","total NPP on cropland"),col=colz ,lty=1,cex=1)
-  else legend(legendpos,legend = c("NPPpot (PNV)","NPPact (landuse)","NPPeco","HANPP"),col=colz[1:4] ,lty=1,cex=1)
+  else legend(legendpos,legend = c("NPPpot (PNV)","NPPact (landuse)","NPPeco","M-COL [% NPPpi]"),col=colz[1:4] ,lty=1,cex=1)
   dev.off()
 }
-readHANPPdata <- function(inFol_lu, inFol_pnv, startyr, stopyr, gridbased = T, 
-                          pftbands = 11, cftbands = 32, headersize = 0, dataFile, 
+readHANPPdata <- function(inFol_lu, inFol_pnv, startyr, stopyr, gridbased = T,
+                          pftbands = 11, cftbands = 32, headersize = 0, dataFile,
                           ncells = 67420, fileType = "clm", varnames, saveDataFile = F) {
   totalbands = (pftbands + cftbands)
   if (fileType == "clm") {
     nppFile = paste0(inFol_lu, varnames["npp","outname"])
     print(paste0("reading NPP file: ",nppFile))
-    if (varnames["npp","timestep"] == "Y") {   
-      ynpp = readYearly(inFile = nppFile,startyear = startyr,stopyear = stopyr,size = 4, 
+    if (varnames["npp","timestep"] == "Y") {
+      ynpp = readYearly(inFile = nppFile,startyear = startyr,stopyear = stopyr,size = 4,
                         headersize = headersize, getyearstart = startyr,getyearstop = stopyr)# gC/m2
     }else if (varnames["npp","timestep"] == "M") {
-      npp = readMonthly(inFile = nppFile,startyear = startyr,stopyear = stopyr,size = 4, 
+      npp = readMonthly(inFile = nppFile,startyear = startyr,stopyear = stopyr,size = 4,
                         headersize = headersize, getyearstart = startyr,getyearstop = stopyr)# gC/m2
       ynpp = apply(npp, c(1,3), sum) #gC/m2
     }
@@ -166,7 +173,7 @@ readHANPPdata <- function(inFol_lu, inFol_pnv, startyr, stopyr, gridbased = T,
     cftfrac = readCFToutput(inFile = cftFile,startyear = startyr,stopyear = stopyr,size = 4,bands = cftbands, headersize = headersize, getyearstart = startyr,getyearstop = stopyr)
     pnv_nppFile = paste0(inFol_pnv,varnames["npp","outname"])
     print(paste0("reading PNV NPP file: ",pnv_nppFile))
-    if (varnames["npp","timestep"] == "Y") {   
+    if (varnames["npp","timestep"] == "Y") {
       ynpp_potential = readYearly(inFile = pnv_nppFile,startyear = startyr,stopyear = stopyr,size = 4, headersize = headersize, getyearstart = startyr,getyearstop = stopyr)# gC/m2
     }else if (varnames["npp","timestep"] == "M") {
       npp_potential = readMonthly(inFile = pnv_nppFile,startyear = startyr,stopyear = stopyr,size = 4, headersize = headersize, getyearstart = startyr,getyearstop = stopyr)# gC/m2
@@ -187,7 +194,7 @@ readHANPPdata <- function(inFol_lu, inFol_pnv, startyr, stopyr, gridbased = T,
     npp_potential = netcdfMonthly2lpjarray(ncInFile = pnv_nppFile,var = "NPP",timeVar="time",lon = lon,lat=lat)# gC/m2
     print(paste0("reading FPC file: ",fpcFile))
     fpc = netcdfCFT2lpjarray(ncInFile = fpcFile,var = "fpc",lon = lon, lat = lat)
-    
+
     ynpp = apply(npp, c(1,3), sum) #gC/m2
     ynpp_potential = apply(npp_potential, c(1,3), sum) #gC/m2
   }else{
@@ -218,16 +225,16 @@ readHANPPdata <- function(inFol_lu, inFol_pnv, startyr, stopyr, gridbased = T,
     }
   }
   #print(paste0("export variables to global environment"))
-  return(list(ynpp_potential = ynpp_potential, ynpp = ynpp, pftnpp_cft = pftnpp_cft, 
-              pftnpp_nat = pftnpp_nat, pftnpp_grasslands = pftnpp_grasslands, 
-              pftnpp_bioenergy = pftnpp_bioenergy, harvest_cft = harvest_cft, 
-              rharvest_cft = rharvest_cft, fire = fire, timber = timber, 
+  return(list(ynpp_potential = ynpp_potential, ynpp = ynpp, pftnpp_cft = pftnpp_cft,
+              pftnpp_nat = pftnpp_nat, pftnpp_grasslands = pftnpp_grasslands,
+              pftnpp_bioenergy = pftnpp_bioenergy, harvest_cft = harvest_cft,
+              rharvest_cft = rharvest_cft, fire = fire, timber = timber,
               cftfrac = cftfrac, fpc = fpc))
-  
+
 } # end of readHANPPdata
-calcHANPP <- function(inFol_lu, inFol_pnv, startyr, stopyr, gridbased = T, 
-                      pftbands = 11, cftbands = 32, p = 1, readPreviouslySavedData, 
-                      dataFile, saveDataFile = T, ncells = 67420, fileType = "clm", 
+calcHANPP <- function(inFol_lu, inFol_pnv, startyr, stopyr, gridbased = T,
+                      pftbands = 11, cftbands = 32, p = 1, readPreviouslySavedData,
+                      dataFile, saveDataFile = T, ncells = 67420, fileType = "clm",
                       headersize = 0, varnames){
   # reading required data
   if (readPreviouslySavedData) {
@@ -240,9 +247,9 @@ calcHANPP <- function(inFol_lu, inFol_pnv, startyr, stopyr, gridbased = T,
   }else{
     print(paste0("Reading in data from outputs"))
     readVars <- readHANPPdata(inFol_lu = inFol_lu,inFol_pnv = inFol_pnv,startyr = startyr,
-                              stopyr = stopyr, gridbased = gridbased, pftbands = pftbands, 
-                              cftbands = cftbands,dataFile = dataFile, ncells = ncells, 
-                              fileType = fileType, headersize = headersize, 
+                              stopyr = stopyr, gridbased = gridbased, pftbands = pftbands,
+                              cftbands = cftbands,dataFile = dataFile, ncells = ncells,
+                              fileType = fileType, headersize = headersize,
                               varnames = varnames, saveDataFile = saveDataFile)
     ynpp_potential <- readVars$ynpp_potential
     ynpp <- readVars$ynpp
@@ -257,7 +264,7 @@ calcHANPP <- function(inFol_lu, inFol_pnv, startyr, stopyr, gridbased = T,
     cftfrac <- readVars$cftfrac
     fpc <- readVars$fpc
   }
-  
+
   print(paste0("Calculating data"))
   npp_act_overtime <- colSums(ynpp*cellarea)/10^15 # from gC/m2 to GtC
   lastyr <- startyr + length(npp_act_overtime) - 1
@@ -272,27 +279,36 @@ calcHANPP <- function(inFol_lu, inFol_pnv, startyr, stopyr, gridbased = T,
   npp_bioenergy_overtime <- colSums(pftnpp_bioenergy*cellarea)/10^15 #from gC/m2 to GtC
   npp_luc_overtime <- npp_pot_overtime - npp_act_overtime
   hanpp_overtime <- harvest_cft_overtime + rharvest_cft_overtime + timber_harvest_overtime + fire_overtime + npp_luc_overtime
+  hanpp_overtime_perc_piref <- hanpp_overtime/mean(npp_pot_overtime[1:10])*100
   hanpp <- harvest_cft + rharvest_cft + timber + fire + ynpp_potential - ynpp
-  hanpp_perc <- hanpp/ynpp_potential*100
-  return(list(hanpp_overtime = hanpp_overtime, hanpp = hanpp, hanpp_perc = hanpp_perc, ynpp_potential = ynpp_potential,
-              npp_act_overtime = npp_act_overtime, npp_pot_overtime = npp_pot_overtime, 
-              npp_eco_overtime = npp_eco_overtime, harvest_cft_overtime = harvest_cft_overtime, 
-              rharvest_cft_overtime = rharvest_cft_overtime, timber_harvest_overtime = timber_harvest_overtime, 
-              fire_overtime = fire_overtime, npp_bioenergy_overtime = npp_bioenergy_overtime, npp_luc_overtime = npp_luc_overtime))
+  hanpp_perc <- hanpp/ynpp_potential*100 #actual NPPpot as ref
+  hanpp_perc_piref <- hanpp/rowMeans(ynpp_potential[,1:10])*100 # NPPpi as ref
+  return(list(hanpp_overtime = hanpp_overtime, hanpp = hanpp, hanpp_perc = hanpp_perc,
+              hanpp_overtime_perc_piref = hanpp_overtime_perc_piref,
+              hanpp_perc_piref = hanpp_perc_piref, ynpp_potential = ynpp_potential,
+              npp_act_overtime = npp_act_overtime, npp_pot_overtime = npp_pot_overtime,
+              npp_eco_overtime = npp_eco_overtime, harvest_cft_overtime = harvest_cft_overtime,
+              rharvest_cft_overtime = rharvest_cft_overtime, fire_overtime = fire_overtime,
+              timber_harvest_overtime = timber_harvest_overtime,
+              npp_bioenergy_overtime = npp_bioenergy_overtime, npp_luc_overtime = npp_luc_overtime))
 }
-plotHANPP <- function(hanppData, outFol, plotyears, maxVal, startyr, mapyear, eps = FALSE){
+plotHANPP <- function(hanppData, outFol, plotyears, minVal, maxVal, legendpos, startyr, mapyear, highlightyear, eps = FALSE){
   mapindex <- mapyear - startyr
   print(paste0("Plotting HANPP figures"))
   dir.create(file.path(outFol),showWarnings = F)
-  plotGlobalWlin(data = hanppData$hanpp[,mapindex], file = paste0(outFol,"HANPP",mapyear,"_absolute.png"), 
+  plotGlobalWlin(data = hanppData$hanpp[,mapindex], file = paste0(outFol,"HANPP",mapyear,"_absolute.png"),
                  title = paste0("HANPP in ",mapyear), min = 0, max = 1000, legendtitle = "GtC", legYes = T, onlyPos = F, eps = eps)
   plotNPPovertime(file = paste0(outFol,"HANPP_overtime_LPJmL_",plotyears[1],"-",plotyears[2],".png"),
                   dataAct = hanppData$npp_act_overtime, dataEco = hanppData$npp_eco_overtime,
-                  dataPot = hanppData$npp_pot_overtime, dataBE = hanppData$npp_bioenergy_overtime, 
+                  dataPot = hanppData$npp_pot_overtime, dataBE = hanppData$npp_bioenergy_overtime,
                   dataHANPP = hanppData$hanpp_overtime, dataHarvNPP = hanppData$npp_harv_overtime,
-                  firstyr = startyr, plotyrs = plotyears, maxVal = maxVal, eps = eps)
+                  dataHANPPperc = hanppData$hanpp_overtime_perc_piref,
+                  firstyr = startyr, plotyrs = plotyears, minVal = minVal,
+                  legendpos = legendpos,maxVal = maxVal, eps = eps,highlightyrs = highlightyear)
   plotHANPPmap(data = hanppData$hanpp_perc[,mapindex], file = paste0(outFol,"HANPP",mapyear,"_LPJmL.png"),
-               title = paste0("HANPP ",mapyear),legendtitle = "% of NPP0", eps = eps)
+               title = "",legendtitle = "% of NPPpot", eps = eps)
+  plotHANPPmap(data = hanppData$hanpp_perc_piref[,mapindex], file = paste0(outFol,"HANPP_piref_",mapyear,"_LPJmL.png"),
+               title = "",legendtitle = "% of NPPpi", eps = eps)
   plotNPPmap(data = hanppData$ynpp[,mapindex],file = paste0(outFol,"NPP",mapyear,"_LPJmL.png"),
              title = paste0("NPP ",mapyear),legendtitle = "gC/m2", eps = eps)
 } # end of plotHANPP
