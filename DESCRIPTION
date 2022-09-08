@@ -20,7 +20,11 @@ Imports:
     zoo,
     sf,
     reshape2,
-    lpjmlKit
+    lpjmlKit,
+    lpjmliotools,
+    sp,
+    rgdal,
+    raster
 RoxygenNote: 7.1.1
 Suggests: 
     testthat (>= 3.0.0)
