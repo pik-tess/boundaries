@@ -36,7 +36,8 @@ method is \code{c("gerten2020")} based on
 \href{https://doi.org/10.1038/s41893-019-0465-1}{Gerten et al. 2020}.}
 
 \item{temporal_resolution}{character. Temporal resolution, available options
-are \code{"annual"} (default) and \code{"monthly"}}
+are \code{"annual"} (default) and \code{"monthly"}. \code{"annual"} describes the mean only
+over months that are transgressed.}
 
 \item{cut_min}{double. Exclude boundary calculations for Q < cut_min}
 
