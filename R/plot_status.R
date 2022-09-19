@@ -17,6 +17,9 @@
 #'
 #' @param legend logical, specify whether a legend should be plotted
 #'
+#' @param to_robinson logical to define if robinson projection should be used
+#' for plotting
+#'
 #' @param bg_col character, specify background possible (`NA` for transparent)
 #'
 #' @examples
