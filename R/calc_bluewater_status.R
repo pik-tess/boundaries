@@ -34,6 +34,11 @@
 #' \link[pbfunctions]{average_nyear_window} (see for more info). To be used for
 #' time series analysis
 #'
+#' @param startyear first year of simulation
+#'
+#' @param irrmask_basin logical, if true: all cells in river basins without
+#' irrigation will be masked (= no boundary transgression)
+#'
 #' @examples
 #' \dontrun{
 #'  calc_bluewater_status(path_scenario, path_reference)
@@ -52,7 +57,8 @@ calc_bluewater_status <- function(path_scenario,
                                   prefix_monthly_output = "",
                                   avg_nyear_args = list(),
                                   # to be replaced by lpjmlKit::read_output
-                                  start_year = 1901) {
+                                  start_year = 1901,
+                                  irrmask_basin = TRUE) {
   # verify available methods
   method <- match.arg(method, c("gerten2020",
                                 "steffen2015"))
@@ -200,13 +206,6 @@ calc_bluewater_status <- function(path_scenario,
         )
       ] <- TRUE
 
-      # calc irrigation mask to exclude non irrigated basins
-      irrmask_basin <- calc_irrigation_mask(path_scenario,
-                                            time_span = time_span_scenario,
-                                            prefix_monthly_output = prefix_monthly_output, # nolint
-                                            avg_nyear_args = avg_nyear_args,
-                                            start_year = start_year)
-
       # init pb_status based on status_frac
       pb_status <- status_frac
       # high risk
@@ -215,10 +214,19 @@ calc_bluewater_status <- function(path_scenario,
       pb_status[status_frac < 0.75 & status_frac >= 0.05] <- 2
       # safe zone
       pb_status[status_frac < 0.05] <- 1
-      pb_status[irrmask_basin == 0] <- 1
       pb_status[is.na(status_frac)] <- 1
       # non applicable cells
       pb_status[cells_marginal_discharge] <- 0
+
+      if (irrmask_basin) {
+        # calc irrigation mask to exclude non irrigated basins
+        irrmask_basin <- calc_irrigation_mask(path_scenario,
+                                              time_span = time_span_scenario,
+                                              prefix_monthly_output = prefix_monthly_output, # nolint
+                                              avg_nyear_args = avg_nyear_args,
+                                              start_year = start_year)
+        pb_status[irrmask_basin == 0] <- 1
+      }
     },
     steffen2015 = {
       stop("This method is currently not defined.")

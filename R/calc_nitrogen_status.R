@@ -24,14 +24,17 @@
 #' @param temporal_resolution character. Temporal resolution, available options
 #' are `"annual"` (default) and `"monthly"`
 #'
-#' @param cut_min double. Exclude boundary calculations for Q < cut_min
+#' @param cut_arid double. Exclude boundary calculations below the defined
+#' threshold for aridity (annual precipitation / annual potential
+#' evapotranspiration); Default: 0.2
 #'
-#' @param with_groundwater_storage logical. Include global assumptions based on
-#' assumed water storages (not included
-#' in LPJmL). Defaults to FALSE
+#' @param cut_runoff double. Exclude boundary calculations below the defined
+#' runoff threshold; Default: 0 mm per year (no treshold)
 #'
 #' @param with_groundwater_denit logical. Include global assumptions made on
-#' groundwater denitrification losses. Defaults to TRUE
+#' groundwater denitrification losses. Defaults to TRUE ( = simulated leaching
+#' is multiplied with 0.71 based on simulated denitrification losses in ground
+#' water from Bouwman et al 2013)
 #'
 #' @param prefix_monthly_output character. Provide a prefix if required for
 #' monthly LPJmL output files, e.g. `"m"` for `"mdischarge.bin"` instead of
@@ -55,9 +58,8 @@ calc_nitrogen_status <- function(path_scenario,
                                  time_span_reference = NULL,
                                  method = "braun2022",
                                  temporal_resolution = "annual",
-                                 # global aridity index < than 0.2 (arid)
-                                 cut_min = 0.2,
-                                 with_groundwater_storage = FALSE,
+                                 cut_arid = 0.2,
+                                 cut_runoff = 0,
                                  with_groundwater_denit = TRUE,
                                  prefix_monthly_output = "",
                                  avg_nyear_args = list(),
@@ -81,8 +83,6 @@ calc_nitrogen_status <- function(path_scenario,
   calc_nitrogen_leach <- function(path_data,
                                   time_span,
                                   temporal_resolution,
-                                  cut_min,
-                                  with_groundwater_storage,
                                   with_groundwater_denit,
                                   prefix_monthly_output,
                                   avg_nyear_args,
@@ -109,7 +109,7 @@ calc_nitrogen_status <- function(path_scenario,
     # read runoff
     runoff %<-% tmp_read_monthly(
       file_name = paste0(path_data, "/", prefix_monthly_output, "runoff.bin"),
-      time_span = time_span_scenario,
+      time_span = time_span,
       start_year = start_year,
       nstep = 12,
       ncell = 67420,
@@ -120,10 +120,10 @@ calc_nitrogen_status <- function(path_scenario,
 
     # TO BE REPLACED BY lpjmlKit::read_output -------------------------------- #
     #   hardcoded values to be internally replaced
-    # read runoff
+    # read leaching
     leaching %<-% tmp_read_monthly(
       file_name = paste0(path_data, "/", prefix_monthly_output, "leaching.bin"),
-      time_span = time_span_scenario,
+      time_span = time_span,
       start_year = start_year,
       nstep = 12,
       ncell = 67420,
@@ -133,69 +133,77 @@ calc_nitrogen_status <- function(path_scenario,
     # ------------------------------------------------------------------------ #
 
     # average runoff
-    avg_runoff %<-% do.call(average_nyear_window,
+    monthly_runoff %<-% do.call(average_nyear_window,
                           append(list(x = runoff),
                                  avg_nyear_args))
 
-    # average runoff
-    avg_leaching %<-% do.call(average_nyear_window,
+    # average leaching
+    monthly_leaching %<-% do.call(average_nyear_window,
                             append(list(x = leaching),
                                    avg_nyear_args))
 
-    # temporary solution using shares of global losses after Bouwman et al 2013
-    #   (figure 4) https://doi.org/10.1098/rstb.2013.0112
 
-    if (with_groundwater_storage) {
-      # net_flow = net soil N flow + net groundwater N flow (inflow - outflow)
-      net_flow <- 65 + 15 - 6
-    } else {
-      # net_flow = net soil N flow
-      net_flow <- 65
-    }
 
     if (with_groundwater_denit) {
+      # temporary solution using shares of global losses after
+      # Bouwman et al 2013
+      # (figure 4) https://doi.org/10.1098/rstb.2013.0112
+      # net_flow = net soil N flow + net groundwater N flow (inflow - outflow)
+      net_flow <- 65 + 15 - 6
       # gross_flow = gross soil & groundwater N flow + gross surface N flow
       gross_flow <- 93 + 11
+      loss_factor <- net_flow / gross_flow
     } else {
-      # gross_flow = gross soil N flow + gross groundwater N flow +
-      #   gross riparian N flow + gross surface N flow
-      gross_flow <- 49 + 5 + 15 + 11
+      loss_factor <- 1
     }
 
-    loss_factor <- net_flow / gross_flow
-
-    status_frac_monthly <- ifelse(avg_runoff > 0,
-                           (avg_leaching * cell_area * 1e3 * loss_factor) /
-                           (avg_runoff * cell_area), 0)
 
     # get name of third dimension of array (band, year, ...)
-    third_dim <- names(dim(status_frac_monthly))[
-      !names(dim(status_frac_monthly)) %in% c("cell", "month")
+    third_dim <- names(dim(monthly_runoff))[
+      !names(dim(monthly_runoff)) %in% c("cell", "month")
     ] %>% {
       if (rlang::is_empty(.)) NULL else .
     }
     third_dim <<- third_dim
 
     if (temporal_resolution == "annual") {
-      status_frac <- apply(
-        status_frac_monthly,
-        names(dim(status_frac_monthly))[
-          names(dim(status_frac_monthly)) %in% c("cell", third_dim)
+      avg_runoff <- apply(
+        monthly_runoff,
+        names(dim(monthly_runoff))[
+          names(dim(monthly_runoff)) %in% c("cell", third_dim)
         ],
-        mean,
+        sum,
+        na.rm = TRUE)
+      avg_leaching <- apply(
+        monthly_leaching,
+        names(dim(monthly_leaching))[
+          names(dim(monthly_leaching)) %in% c("cell", third_dim)
+        ],
+        sum,
         na.rm = TRUE)
 
       # check if vector was returned (loss if dimnames) -> reconvert to array
-      if (is.null(dim(status_frac))) {
-        status_frac <- array(
-          status_frac,
-          dim = c(cell = dim(status_frac_monthly)[["cell"]], 1),
-          dimnames = list(cell = dimnames(status_frac_monthly)[["cell"]], 1)
+      if (is.null(dim(avg_runoff))) {
+        avg_runoff <- array(
+          avg_runoff,
+          dim = c(cell = dim(monthly_runoff)[["cell"]], 1),
+          dimnames = list(cell = dimnames(monthly_runoff)[["cell"]], 1)
+        )
+        avg_leaching <- array(
+          avg_leaching,
+          dim = c(cell = dim(monthly_leaching)[["cell"]], 1),
+          dimnames = list(cell = dimnames(monthly_leaching)[["cell"]], 1)
         )
       }
     } else {
-      status_frac <- status_frac_monthly
+      avg_runoff <- monthly_runoff
+      avg_leaching <- monthly_leaching
     }
+
+    status_frac <- ifelse(avg_runoff > 0,
+                           (avg_leaching * cell_area * 1e3 * loss_factor) /
+                           (avg_runoff * cell_area), 0)
+
     return(status_frac)
   }
 
@@ -206,8 +214,6 @@ calc_nitrogen_status <- function(path_scenario,
         path_data = path_scenario,
         time_span = time_span_scenario,
         temporal_resolution = temporal_resolution,
-        cut_min = cut_min,
-        with_groundwater_storage = with_groundwater_storage,
         with_groundwater_denit = with_groundwater_denit,
         prefix_monthly_output = prefix_monthly_output,
         avg_nyear_args = avg_nyear_args,
@@ -235,8 +241,6 @@ calc_nitrogen_status <- function(path_scenario,
         path_data = path_scenario,
         time_span = time_span_scenario,
         temporal_resolution = temporal_resolution,
-        cut_min = cut_min,
-        with_groundwater_storage = with_groundwater_storage,
         with_groundwater_denit = with_groundwater_denit,
         prefix_monthly_output = prefix_monthly_output,
         avg_nyear_args = avg_nyear_args,
@@ -252,8 +256,6 @@ calc_nitrogen_status <- function(path_scenario,
         path_data = path_reference,
         time_span = time_span_reference,
         temporal_resolution = temporal_resolution,
-        cut_min = cut_min,
-        with_groundwater_storage = with_groundwater_storage,
         with_groundwater_denit = with_groundwater_denit,
         prefix_monthly_output = prefix_monthly_output,
         avg_nyear_args = avg_nyear_args,
@@ -268,7 +270,7 @@ calc_nitrogen_status <- function(path_scenario,
 
   # TO BE REPLACED BY lpjmlKit::read_output -------------------------------- #
   #   hardcoded values to be internally replaced
-  # read runoff
+  # read potential evapotranspiration
   pet %<-% tmp_read_monthly(
     file_name = paste0(path_scenario, "/", prefix_monthly_output, "pet.bin"),
     time_span = time_span_scenario,
@@ -282,7 +284,7 @@ calc_nitrogen_status <- function(path_scenario,
 
   # TO BE REPLACED BY lpjmlKit::read_output -------------------------------- #
   #   hardcoded values to be internally replaced
-  # read runoff
+  # read precipitation
   prec %<-% tmp_read_monthly(
     file_name = paste0(path_scenario, "/", prefix_monthly_output, "prec.bin"),
     time_span = time_span_scenario,
@@ -293,12 +295,12 @@ calc_nitrogen_status <- function(path_scenario,
     size = 4
   )
   # ------------------------------------------------------------------------ #
-  # average runoff
+  # average pet
   avg_pet %<-% do.call(average_nyear_window,
                      append(list(x = pet),
                             avg_nyear_args))
 
-  # average runoff
+  # average precipitation
   avg_prec %<-% do.call(average_nyear_window,
                      append(list(x = prec),
                             avg_nyear_args))
@@ -331,11 +333,45 @@ calc_nitrogen_status <- function(path_scenario,
   #     -> threshold for behaviour change in nitrogen cycling (=< 0.32)
   global_aridity_index <- avg_prec_annual / avg_pet_annual + 1e-9
 
+  # ------------------------------------------------------------------------
+  # TO BE REPLACED BY lpjmlKit::read_output -------------------------------- #
+  # hardcoded values to be internally replaced
+  # read runoff
+  runoff %<-% tmp_read_monthly(
+      file_name = paste0(path_scenario, "/", prefix_monthly_output, "runoff.bin"),
+      time_span = time_span_scenario,
+      start_year = start_year,
+      nstep = 12,
+      ncell = 67420,
+      nbands = 1,
+      size = 4
+  )
+
+  # average runoff
+  runoff_monthly %<-% do.call(average_nyear_window,
+                          append(list(x = runoff),
+                                 avg_nyear_args))
+
+  # calculate annual runoff
+  runoff_annual %<-% apply(
+    runoff_monthly,
+    names(dim(runoff_monthly))[
+      names(dim(runoff_monthly)) %in% c("cell", third_dim)
+    ],
+    sum,
+    na.rm = TRUE)
+
   # to display arid cells (leaching behaviour threshold) in other color (grey):
   cells_arid <- array(FALSE,
                       dim = dim(status_frac),
                       dimnames = dimnames(status_frac))
-  cells_arid[which(global_aridity_index <= cut_min)] <- TRUE
+  cells_arid[which(global_aridity_index <= cut_arid)] <- TRUE
+
+  # to display cells with low runoff in other color (grey):
+  cells_low_runoff <- array(FALSE,
+                            dim = dim(status_frac),
+                            dimnames = dimnames(status_frac))
+  cells_low_runoff[which(runoff_annual <= cut_runoff)] <- TRUE
 
   # init pb_status based on status_frac
   pb_status <- status_frac
@@ -347,6 +383,7 @@ calc_nitrogen_status <- function(path_scenario,
   pb_status[status_frac < 1] <- 1
   # non applicable cells
   pb_status[cells_arid] <- 0
+  pb_status[cells_low_runoff] <- 0
 
   return(pb_status)
 }
