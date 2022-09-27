@@ -22,6 +22,10 @@
 #' @param eurasia logical. If `spatial_resolution` = `"biome"` merge continents
 #' Europe and Asia to avoid arbitrary biome cut at europe/asia border. Defaults
 #' to `TRUE`
+#' 
+#' @param biome_classification default to NULL, if biomes are to be calculated
+#' within the function based on classify_biomes. Can be set to array
+#' (dim = c(ncell, 1)) with already defined biomes.
 #'
 #' @param vegc_proxy logical. If `TRUE` vegetation carbon (vegc) threshold of
 #' 7500 gC/m² is used to distinguish between forest and savannahs
@@ -43,6 +47,7 @@ calc_lsc_status <- function(path_scenario,
                             time_span_reference = NULL,
                             spatial_resolution = "biome",
                             eurasia = TRUE,
+                            biome_classification = NULL,
                             vegc_proxy = FALSE,
                             avg_nyear_args = list(),
                             # to be replaced by lpjmlKit::read_output
@@ -75,15 +80,18 @@ calc_lsc_status <- function(path_scenario,
     }
   }
 
-  # classify biomes based on foliage projected cover (FPC) output
-  biome_classes %<-% classify_biomes(
+  if (is.null(biome_classification)) {
+    # classify biomes based on foliage projected cover (FPC) output
+    biome_classes %<-% classify_biomes(
       path_data = path_reference,
       time_span = time_span_reference,
       vegc_proxy = vegc_proxy,
       avg_nyear_args = avg_nyear_args,
       # to be replaced by lpjmlKit::read_output
       start_year = start_year)
-
+  } else {
+    biome_classes <- biome_classification
+  }
   if (spatial_resolution == "biome") {
     # get continents mask - pass arg of whether to merge europe and asia
     continent_grid %<-% calc_continents_mask(path_reference, eurasia = eurasia)
