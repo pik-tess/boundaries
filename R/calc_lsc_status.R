@@ -269,10 +269,11 @@ calc_lsc_status <- function(path_scenario,
         third_dim,
         function(x) {
           # mean over cell subset of forest type and continent
-          return(rep(mean(x, na.rm = TRUE), length(x)))
+          # weighted by cell area
+          return(rep(weighted.mean(x, cell_area, na.rm = TRUE), length(x)))
         }
       )
-      deforestation[which(sub_cells)] <- sub_deforest[which(sub_cells)]
+      deforestation[sub_cells] <- sub_deforest[sub_cells]
     }
   }
   # init pb_status array with 0 = no data and initial dimensions
@@ -285,21 +286,21 @@ calc_lsc_status <- function(path_scenario,
   #   for high risk >= 0.4
   # high risk
   pb_status[
-    is_tropical_forest |
-    is_boreal_forest &
+    (is_tropical_forest |
+    is_boreal_forest) &
     deforestation >= 0.4
   ] <- 3
   # uncertainty zone
   pb_status[
-    is_tropical_forest |
-    is_boreal_forest &
+    (is_tropical_forest |
+    is_boreal_forest) &
     deforestation < 0.4 &
     deforestation > 0.15
   ] <- 2
   # safe space
   pb_status[
-    is_tropical_forest |
-    is_boreal_forest &
+    (is_tropical_forest |
+    is_boreal_forest) &
     deforestation <= 0.15
   ] <- 1
 
