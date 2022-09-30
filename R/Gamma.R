@@ -4,6 +4,45 @@
 #requirements:
 require(lpjmliotools)
 
+################# general functions  ###################
+#' Returns LPJmL outputs required for given metric
+#'
+#' Function to return a list of strings with the LPJmL output names required for
+#' the computation of the metrics M-COL, M-ECO, or the biome classification
+#'
+#' @param metric string: which metric? "meco", "mcol", "biome", or "all" (default)
+#' @param withNitrogen logical: include nitrogen outputs? default: TRUE
+#'
+#' @return List of strings with LPJmL variable names
+#'
+#' @examples
+#' \dontrun{
+#'
+#' }
+#' @export
+listOutputs <- function(metric="both", withNitrogen = TRUE) {
+  varsGAMMA <- c("grid",    "fpc",    "fpc_bft",    "cftfrac",    "firec",    "rh_harvest",    "npp",    "runoff",    "transp",    "vegc",    "firef",    "rh",    "harvestc",    "evap",    "interc",    "soilc",    "litc",    "swc")
+  varsGAMMAnitrogen <- c("vegn",    "soilnh4",    "soilno3",    "leaching",    "n2o_denit",    "n2o_nit",    "n2o_denit",    "n2_emis",    "bnf",    "n_volatilization")
+  varsHANPP <- c("grid","mnpp","pft_npp","pft_harvest","pft_rharvest","firec","timber_harvest","cftfrac","fpc")
+  varsBiome <- c("fpc","grid","vegc","pft_lai","temp")
+  if (metric == "all") {
+    if (withNitrogen) {
+      return(unique(sort(c(varsGAMMA,varsGAMMAnitrogen,varsHANPP))))
+    }else{
+      return(unique(sort(c(varsGAMMA,varsHANPP))))
+    }
+  }else if (metric == "meco") {
+    if (withNitrogen) {
+      return(unique(sort(c(varsGAMMA,varsGAMMAnitrogen))))
+    }else{
+      return(unique(sort(varsGAMMA)))
+    }
+  }else if (metric == "biome") {
+    return(unique(sort(varsBiome)))
+  }else if (metric == "mcol") {
+    return(unique(sort(varsHANPP)))
+  }else{stop(paste0("Unknown parameter: metric=",metric))}
+}
 ################# gamma calc functions  ###################
 
 #' Calculate the ecosystem change metric gamma between 2 simulations/timesteps
@@ -1582,7 +1621,7 @@ plotGammaMap <- function(data, file, focusBiome = NULL, biome_classes = NULL,
 #'
 #' }
 #' @export
-plotGammaRadialToScreen <- function(data, title, zoom = 1.0, type = "regular", titleSize = 2, titleline=-2) {
+plotGammaRadialToScreen <- function(data, title, zoom = 1.0, type = "regular", titleSize = 2, titleline=-2,quantile=T) {
    suppressPackageStartupMessages(require(circlize))
    require(RColorBrewer)
    gamma_dims <- length(data[,1])
@@ -1591,9 +1630,11 @@ plotGammaRadialToScreen <- function(data, title, zoom = 1.0, type = "regular", t
                  local = "local\nchange", global = "global\nimportance",
                  balance =  "ecosystem\nbalance", cstocks = "carbon stocks", cfluxes = "carbon fluxes",
                  wfluxes = "water fluxes", nstocks = "nitrogen\nstocks", nfluxes = "nitrogen fluxes")
-     set <- brewer.pal(6, "Set1") #c(red,blue,green,purple,orange,yellow,brown,pink,grey)
-     colz <- c("limegreen", "darkgreen", "maroon","orchid4","bisque4",
-               "orangered","sienna",brewer.pal(6, "PuBu")[6], "yellow" , "orange")
+     set <- brewer.pal(12, "Set3") #c(blue-green, yellow,violet,red,blue,orange,green,pink,grey,purple,green-blue,yellow-orange)
+     colz <- set[c(4,7,8,11,1,3,10,5,12,6)]
+     #set <- brewer.pal(9, "Set1") #c(red,blue,green,purple,orange,yellow,brown,pink,grey)
+     #colz <- c("limegreen", "darkgreen", "maroon","orchid4","bisque4",
+     #         "orangered","sienna",brewer.pal(6, "PuBu")[6], "yellow" , "orange")
      #                  gamma    deltaV      lc       gc      eb          cs      cf       wf       ns      nf
      angles <- matrix(c(90,270, 216,252,  180,216, 144,180, 108,144,  -18,18, -54,-18, -90,-54,  54,90, 18,54 ),byrow = T,nrow = length(colz))
    }else if (gamma_dims == 8) {
@@ -1633,17 +1674,21 @@ plotGammaRadialToScreen <- function(data, title, zoom = 1.0, type = "regular", t
       draw.sector(0, 360, rou1 = 0.65)
       draw.sector(0, 360, rou1 = 0.3)
       draw.sector(start.degree = -18 + 90, end.degree = 18 + 90, clock.wise = F, rou1 = 0.55, border = "black") #sector
-      draw.sector(start.degree = 90, end.degree = 90, clock.wise = F, rou1 = 0.4, rou2 = 0.7, border = "black") #uncertainty arrow
-      draw.sector(start.degree = -9 + 90, end.degree = 9 + 90, clock.wise = F, rou1 = 0.7, rou2 = 0.7, border = "black") #uncertainty lower
+      draw.sector(start.degree = 90, end.degree = 90, clock.wise = F, rou1 = 0.4, rou2 = 0.8, border = "black") #uncertainty arrow
+      draw.sector(start.degree = -9 + 90, end.degree = 9 + 90, clock.wise = F, rou1 = 0.8, rou2 = 0.8, border = "black") #uncertainty lower
       draw.sector(start.degree = -9 + 90, end.degree = 9 + 90, clock.wise = F, rou1 = 0.4, rou2 = 0.4, border = "black") #uncertainty upper
       draw.sector(start.degree = 270 - 270, end.degree = 270 - 270, clock.wise = F, rou1 = 0.3, rou2 = 1.3, border = "black",lty = "dashed") #0.3
       draw.sector(start.degree = 280 - 270, end.degree = 280 - 270, clock.wise = F, rou1 = 0.65, rou2 = 1.3, border = "black",lty = "dashed") #0.65
       draw.sector(start.degree = 290 - 270, end.degree = 290 - 270, clock.wise = F, rou1 = 1, rou2 = 1.3, border = "black",lty = "dashed") #1.0
       text(c("0.3","0.65","1"),x = c(1.4,1.45,1.25), y = c(0,0.25,0.45))
+      # plot how the whiskers are calculated
+      if (quantile) text(c("Q90","Q50","Q10"),x = c(-0.3,-0.29,-0.26), y = c(0.8,0.48,0.35),cex=0.7) # quantile case
+      else text(c("max","mean","min"),x = c(-0.3,-0.29,-0.26), y = c(0.8,0.48,0.35),cex=0.7) # minmeanmax case
    }else if (type == "regular") {
      draw.sector(180, 360, rou1 = 1,col = "gray80")
       for (i in 1:length(angles[,1])) {
          mangle <- mean(angles[i,])
+         if (i==1) mangle <- -98
          dmin <- data[i,1]
          dmedian <- data[i,2]
          dmax <- data[i,3]
@@ -1684,7 +1729,7 @@ plotGammaRadialToScreen <- function(data, title, zoom = 1.0, type = "regular", t
 #'
 #' }
 #' @export
-plotGammaRadial <- function(data, file, title, legYes = T, eps = FALSE) {
+plotGammaRadial <- function(data, file, title, legYes = T, eps = FALSE,quantile=T) {
    #param data gamma data array c(8[ncomponents],3[min,median,max])
    #param title title for plot
    #param type plot type, 'legend1' for variable and color legend, 'legend2' for value legend, or 'regular' (default setting) for the regular gamma plot
@@ -1702,13 +1747,13 @@ plotGammaRadial <- function(data, file, title, legYes = T, eps = FALSE) {
    par(fig = c(0,0.7,0,1))#, oma=c(0,0,0,0),mar=c(0,0,0,0))
 
    #plot main gamma radial
-   plotGammaRadialToScreen(data = data, title = title,zoom=1.2, type = "regular")
+   plotGammaRadialToScreen(data = data, title = title,zoom=1.0, type = "regular")
 
    if (legYes) {
       par(fig = c(0.7,1,0,0.5), new = TRUE)#, oma=c(0,0,0,0),mar=c(0,0,0,0))
       plotGammaRadialToScreen(data = data, title = "", zoom = 1.5, type = "legend1")
       par(fig = c(0.7,1,0.5,1), new = TRUE)#, oma=c(0,0,0,0),mar=c(0,0,0,0))
-      plotGammaRadialToScreen(data = data, title = "",zoom = 1.5, type = "legend2")
+      plotGammaRadialToScreen(data = data, title = "",zoom = 1.5, type = "legend2", quantile=quantile)
    }
    dev.off()
 }
@@ -1730,7 +1775,7 @@ plotGammaRadial <- function(data, file, title, legYes = T, eps = FALSE) {
 #'
 #' }
 #' @export
-plotGammaRadial4 <- function(data, biomeNames, file, eps = FALSE) {
+plotGammaRadial4 <- function(data, biomeNames, file, eps = FALSE, quantile=T) {
   if (length(which(data < 0 | data > 1)) > 0) print("Warning: there are values in data outside the expected gamma range [0..1].")
   if (eps) {
     file <- strsplit(file,".",fixed = TRUE)[[1]]
@@ -1760,7 +1805,8 @@ plotGammaRadial4 <- function(data, biomeNames, file, eps = FALSE) {
   par(fig = c(0.6,1,0.1,0.6), new = TRUE)#, oma=c(0,0,0,0),mar=c(0,0,0,0))
   plotGammaRadialToScreen(data = data[1,,], title = "", zoom = 1.5, type = "legend1")
   par(fig = c(0.6,1,0.5,1.0), new = TRUE)#, oma=c(0,0,0,0),mar=c(0,0,0,0))
-  plotGammaRadialToScreen(data = data[1,,], title = "legend",zoom = 1.5, type = "legend2",titleSize = 1)
+  plotGammaRadialToScreen(data = data[1,,], title = "legend",zoom = 1.5,
+                          type = "legend2",titleSize = 1,quantile = quantile)
   dev.off()
 }
 
