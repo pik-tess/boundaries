@@ -26,8 +26,6 @@ gammaCrossTable(
 
 \item{elevation}{elevation input file for the biome classification}
 
-\item{lat}{}
-
 \item{lon}{}
 }
 \description{
@@ -39,8 +37,8 @@ each of them as in the SI of Ostberg et al. 2013
 }
 \examples{
 \dontrun{
-gammaCrossTable(dataFileIn = "/media/All/Gamma/Gamma_today_data.RData", 
-      dataFileOut = "/media/All/Gamma/Gamma_preind_compared_to_average_TrBD_data.RData", 
+gammaCrossTable(dataFileIn = "/media/All/Gamma/Gamma_today_data.RData",
+      dataFileOut = "/media/All/Gamma/Gamma_preind_compared_to_average_TrBD_data.RData",
       temperature = temperature_1716, pft_lai = pft_lai_1996, elevation = elevation, lat = lat64240, lon = lon64240, refBiom = 4)
 }
 }

@@ -22,10 +22,6 @@ evaluateGamma(
 
 \item{temperature}{yearly average temperature}
 
-\item{lat}{}
-
-\item{lon}{}
-
 \item{refBiom}{}
 }
 \description{
@@ -34,8 +30,8 @@ to the average cell of the precribed reference biome refBiom
 }
 \examples{
 \dontrun{
-evaluateGamma(dataFileIn = "/media/All/Gamma/Gamma_today_data.RData", 
-      dataFileOut = "/media/All/Gamma/Gamma_preind_compared_to_average_TrBD_data.RData", 
+evaluateGamma(dataFileIn = "/media/All/Gamma/Gamma_today_data.RData",
+      dataFileOut = "/media/All/Gamma/Gamma_preind_compared_to_average_TrBD_data.RData",
       temperature = temperature_1716, lat = lat64240, lon = lon64240, refBiom = 4)
 }
 }

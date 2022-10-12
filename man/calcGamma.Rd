@@ -24,7 +24,8 @@ calcGamma(
   npfts,
   ncfts,
   nbfts,
-  ncells
+  ncells,
+  dimensionsOnlyLocal = T
 )
 }
 \arguments{
@@ -84,10 +85,10 @@ than the C/bash version from Ostberg 2018, but following their methodology.
 gamma_today <- calcGamma(folderRef = "/p/projects/elis/ostberg/biome_shift/archive_Ostberg2018/simulations/scenario_PNV_trunkupdate_noCC/HadGEM2-ES/r1i1p1/",
                folderScen = "/p/projects/elis/ostberg/biome_shift/archive_Ostberg2018/simulations/scenario_LUC_trunkupdate/rcp26/HadGEM2-ES/r1i1p1/luc_rcp26_50bg50btflexi/",
                readPreviouslySavedData = TRUE, saveFileData = "/media/All/Gamma/Gamma_today_data.RData",
-               saveFileGamma = "/media/All/Gamma/Gamma_today_gamma.RData", 
-               timespan_full_ref = c(1991,2099), timespan_full_scen = c(1991,2099), 
+               saveFileGamma = "/media/All/Gamma/Gamma_today_gamma.RData",
+               timespan_full_ref = c(1991,2099), timespan_full_scen = c(1991,2099),
                timespan_focus_ref = c(2000,2029), timespan_focus_scen = c(2000,2029),
-               npfts = 9, ncfts = 32, nbfts = 12, ncells = 64240, 
+               npfts = 9, ncfts = 32, nbfts = 12, ncells = 64240,
                combined = TRUE, weighting = "old")
 }
 }

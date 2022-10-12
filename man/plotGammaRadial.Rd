@@ -4,7 +4,7 @@
 \alias{plotGammaRadial}
 \title{Plot radial gamma plot to file}
 \usage{
-plotGammaRadial(data, file, title, legYes = T, eps = FALSE)
+plotGammaRadial(data, file, title, legYes = T, eps = FALSE, quantile = T)
 }
 \arguments{
 \item{data}{gamma data array c(\link{ngammacomponents},3\link{min,median,max})}

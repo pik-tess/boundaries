@@ -8,7 +8,9 @@ in connection with [LPJmL](https://gitlab.pik-potsdam.de/lpjml/LPJmL_internal).*
 The boundaries considered here are
 
 * **freshwater use**, tag *freshwater*
-* **land-system change**, tag *landuse*
+    * **bluewater use**, tag *bluewater*
+    * **greenwater use**, tag *greenwater*
+* **land-system change**, tag *lsc*
 * **biosphere integrity**, tag *biosphere*
 * **nitrogen flows**, tag *nitrogen*
 

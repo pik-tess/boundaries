@@ -4,7 +4,15 @@
 \alias{plotGammaRadialToScreen}
 \title{Plot radial gamma plot to screen}
 \usage{
-plotGammaRadialToScreen(data, title, zoom = 1, type = "regular", titleSize = 2)
+plotGammaRadialToScreen(
+  data,
+  title,
+  zoom = 1,
+  type = "regular",
+  titleSize = 2,
+  titleline = -2,
+  quantile = T
+)
 }
 \arguments{
 \item{data}{gamma data array c(\link{ngammacomponents},3\link{min,median,max})}

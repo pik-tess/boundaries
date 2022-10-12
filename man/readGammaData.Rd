@@ -74,12 +74,12 @@ Utility function to read in output data from LPJmL for calculation of gamma
 \dontrun{
 returned_vars <- readGammaData(folderRef = folderRef, folderRef2 = folderRef2,
                  folderScen = folderScen, saveFile = saveFileData, export = F,
-                 combined = combined, nitrogen = nitrogen, varnames = varnames, 
-                 headerout = headerout, timespan_full_ref = timespan_full_ref, 
-                 timespan_full_scen = timespan_full_scen, 
-                 timespan_focus_ref = timespan_focus_ref, 
-                 timespan_focus_ref2 = timespan_focus_ref2, 
-                 timespan_focus_scen = timespan_focus_scen, 
+                 combined = combined, nitrogen = nitrogen, varnames = varnames,
+                 headerout = headerout, timespan_full_ref = timespan_full_ref,
+                 timespan_full_scen = timespan_full_scen,
+                 timespan_focus_ref = timespan_focus_ref,
+                 timespan_focus_ref2 = timespan_focus_ref2,
+                 timespan_focus_scen = timespan_focus_scen,
                  npfts = npfts, ncfts = ncfts, nbfts = nbfts, ncells = ncells)
 }
 }

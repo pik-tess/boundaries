@@ -20,6 +20,19 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.0
 Depends:
     lpjmliotools (>= 0.2.17)
+Imports:
+    magrittr,
+    tibble,
+    dplyr,
+    future,
+    zoo,
+    sf,
+    reshape2,
+    lpjmlKit,
+    lpjmliotools,
+    sp,
+    rgdal,
+    raster
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3

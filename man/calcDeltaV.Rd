@@ -32,7 +32,7 @@ for calculation of gamma
 \dontrun{
 deltaV <- calcDeltaV(fpcRef = fpc_ref_mean,fpcScen = apply(fpc_scen,c(1,2),mean),
           bftRef = bft_ref_mean,bftScen = apply(bft_scen,c(1,2),mean),
-          cftRef = cft_ref_mean, cftScen = apply(cft_scen,c(1,2),mean), 
+          cftRef = cft_ref_mean, cftScen = apply(cft_scen,c(1,2),mean),
           weighting = "new")
 }
 }
