@@ -44,7 +44,7 @@ require(lpjmliotools) # in at least version 0.2.17
 #'        only required for nc input
 #'
 #' @return list object containing biome_id (main biome per grid cell [dim=c(ncells)]),
-#' and list of respective biome_names, biome_names_short, biomes_abbrv [dim=c(nbiomes)]
+#' and list of respective biome_names[dim=c(nbiomes)]
 #'
 #' @examples
 #' \dontrun{
@@ -191,27 +191,12 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
   # (https://doi.org/10.1088/1748-9326/10/4/044011) and Gerten et al. 2020
   # (https://doi.org/10.1038/s41893-019-0465-1)
   # biome names
-  biome_names <- c(`Tropical Rainforest` = 1,
-                   `Tropical Seasonal & Deciduous Forest` = 2,
-                   `Temperate Broadleaved Evergreen Forest` = 3,
-                   `Temperate Broadleaved Deciduous Forest` = 4,
-                   `Mixed Forest` = 5,
-                   `Temperate Coniferous Forest` = 6,
-                   `Boreal Evergreen Forest` = 7,
-                   `Boreal Deciduous Forest` = 8,
-                   `Warm Woody Savanna, Woodland & Shrubland` = 9,
-                   `Warm Savanna & Open Shrubland` = 10,
-                   `Warm Grassland` = 11,
-                   `Temperate Woody Savanna, Woodland & Shrubland` = 12,
-                   `Temperate Savanna & Open Shrubland` = 13,
-                   `Temperate Grassland` = 14,
-                   `Montane Grassland` = 15,
-                   `Arctic Tundra` = 16,
-                   `Desert` = 17,
-                   `Rocks and Ice` = 18,
-                   `Water` = 19
 
-  )
+  biome_mapping <- system.file("extdata", "biome_mapping.csv",
+                              package = "pbfunctions") %>%
+                   read.csv(header = TRUE, sep = ";")
+  biome_names <- biome_mapping$id
+  names(biome_names) <- biome_mapping$biome_names
 
   if (npft == 9) {
     fpc_names <- c("natvegfrac", 												    #1
@@ -666,47 +651,5 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
   biome_class[is_rocks_and_ice] <- biome_names["Rocks and Ice"]
   biome_class[is_water] <- biome_names["Water"]
 
-  biome_names_short <- c("Tropical Rain.", # 1
-                         "Tropical Decid. Forest", # 2
-                         "Temp. Broad. Ever. Forest", # 3
-                         "Temp. Broad. Decid. Forest", # 4
-                         "Mixed Forest", # 6
-                         "Temp. Conif. Forest", # 5
-                         "Bor. Ever. Forest",	# 7
-                         "Bor. Decid. Forest", # 8
-                         "Warm Woodland", # 9
-                         "Warm Savanna", #10
-                         "Warm Grassland", #11
-                         "Temp. Woodland", # 12
-                         "Temp. Savanna", #13
-                         "Temp. Grassland",	#14
-                         "Montane Grassland", #15
-                         "Arctic Tundra", #16
-                         "Desert", #17
-                         "Rocks and Ice", #18
-                         "Water") #19
-
-  biome_names_abbrv <- c("TrRF", # 1
-                         "TrDF", # 2
-                         "TeBE", # 3
-                         "TeBD", # 4
-                         "MF",   # 6
-                         "TeCF", # 5
-                         "BoEF", # 7
-                         "BoDF", # 8
-                         "WaWo", # 9
-                         "WaSa", #10
-                         "WaGr", #11
-                         "TeWo", #12
-                         "TeSa", #13
-                         "TeGr", #14
-                         "MoGr", #15
-                         "ArTu", #16
-                         "Des",  #17
-                         "RoIc", #18
-                         "Wat")  #19
-
-
-
-  return(list(biome_id = biome_class, biome_names = names(biome_names), biome_names_short = biome_names_short, biomes_abbrv = biome_names_abbrv))
+  return(list(biome_id = biome_class, biome_names = names(biome_names)))
 }
