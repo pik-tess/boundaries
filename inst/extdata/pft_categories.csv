@@ -1,0 +1,60 @@
+pft, category, npft_proxy
+
+"tropical broadleaved evergreen tree", "trees", 9
+"tropical broadleaved evergreen tree", "tropical trees", 9
+"tropical broadleaved evergreen tree", "evergreen trees", 9
+"tropical broadleaved evergreen tree", "trees", 11
+"tropical broadleaved evergreen tree", "tropical trees", 11
+"tropical broadleaved evergreen tree", "evergreen trees", 11
+
+"tropical broadleaved raingreen tree", "trees", 9
+"tropical broadleaved raingreen tree", "tropical trees", 9
+"tropical broadleaved raingreen tree", "trees", 11
+"tropical broadleaved raingreen tree", "tropical trees", 11
+
+"temperate needleleaved evergreen tree", "trees", 9
+"temperate needleleaved evergreen tree", "temperate trees", 9
+"temperate needleleaved evergreen tree", "needle trees", 9
+"temperate needleleaved evergreen tree", "evergreen trees", 9
+"temperate needleleaved evergreen tree", "trees", 11
+"temperate needleleaved evergreen tree", "temperate trees", 11
+"temperate needleleaved evergreen tree", "needle trees", 11
+"temperate needleleaved evergreen tree", "evergreen trees", 11
+
+"temperate broadleaved evergreen tree", "trees", 9
+"temperate broadleaved evergreen tree", "temperate trees", 9
+"temperate broadleaved evergreen tree", "evergreen trees", 9
+"temperate broadleaved evergreen tree", "trees", 11
+"temperate broadleaved evergreen tree", "temperate trees", 11
+"temperate broadleaved evergreen tree", "evergreen trees", 11
+
+"temperate broadleaved summergreen tree", "trees", 9
+"temperate broadleaved summergreen tree", "temperate trees", 9
+"temperate broadleaved summergreen tree", "trees", 12
+"temperate broadleaved summergreen tree", "temperate trees", 12
+
+"boreal needleleaved evergreen tree", "trees", 9
+"boreal needleleaved evergreen tree", "boreal trees", 9
+"boreal needleleaved evergreen tree", "needle trees", 9
+"boreal needleleaved evergreen tree", "evergreen_trees", 9
+"boreal needleleaved evergreen tree", "trees", 11
+"boreal needleleaved evergreen tree", "boreal trees", 11
+"boreal needleleaved evergreen tree", "needle trees", 11
+"boreal needleleaved evergreen tree", "evergreen_trees", 11
+
+"boreal broadleaved summergreen tree", "trees", 9
+"boreal broadleaved summergreen tree", "boreal trees", 9
+"boreal broadleaved summergreen tree", "trees", 11
+"boreal broadleaved summergreen tree", "boreal trees", 11
+
+"boreal needleleaved summergreen tree", "trees", 9
+"boreal needleleaved summergreen tree", "boreal trees", 9
+"boreal needleleaved summergreen tree", "evergreen_trees", 11
+
+"tropical c4 grass", "grass", 9
+"tropical c4 grass", "grass", 11
+
+"temperate c3 grass", "grass", 9
+"temperate c3 grass", "grass", 11
+
+"polar c3 grass", "grass", 9
