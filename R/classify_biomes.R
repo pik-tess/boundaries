@@ -192,11 +192,11 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
   # (https://doi.org/10.1038/s41893-019-0465-1)
   # biome names
 
-  biome_mapping <- system.file("extdata", "biome_mapping.csv",
+  biome_mapping <- system.file("extdata", "biomes.csv",
                               package = "pbfunctions") %>%
-                   read.csv(header = TRUE, sep = ";")
+                   readr::read.csv2()
   biome_names <- biome_mapping$id
-  names(biome_names) <- biome_mapping$biome_names
+  names(biome_names) <- biome_mapping$name
 
   if (npft == 9) {
     fpc_names <- c("natvegfrac", 												    #1
