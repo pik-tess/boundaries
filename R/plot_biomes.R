@@ -48,15 +48,15 @@ plot_biomes <- function(biome_data,
 
   biome_mapping <- system.file("extdata", "biome_mapping.csv",
                               package = "pbfunctions") %>%
-                   read.csv(header = TRUE, sep = ";")
-  names(biome_cols) <- biome_mapping$biome_names_short
+                   readr::read.csv2()
+  names(biome_cols) <- biome_mapping$short_name
 
   order_legend <- c(1, 2, 9, 10, 11, 3, 4, 5, 6, 12, 13, 14, 7, 8, 15, 16, 17,
                       18, 19)
 
   biome_cols_legend <- biome_cols[order_legend]
 
-  biome_names_legend <- biome_mapping$biome_names_short[order_legend]
+  biome_names_legend <- biome_mapping$short_name[order_legend]
 
   biomes_lpjml <- to_raster(lpjml_array = biome_data$biome_id,
                          boundary_box = bounding_box,
