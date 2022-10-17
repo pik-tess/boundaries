@@ -33,6 +33,17 @@ require(lpjmliotools) # in at least version 0.2.17
 #'        latitude - default: 55
 #' @param lai_threshold threshold for "natLAI" proxy (default: 6 m2/m2)
 #' @param vegc_threshold threshold for "vegc" proxy (default: 7500 gC/m2)
+#' @param tree_cover_thresholds list with minimum tree cover thresholds for
+#'        definition of forest, woodland, savanna and grassland. Only changes to
+#'        the default have to be included in the list, for the rest the default
+#'        is used. Default values:
+#'        "boreal forest" = 0.6
+#'        "temperate forest" = 0.6
+#'        "temperate woodland" = 0.3
+#'        "temperate savannah" = 0.1
+#'        "tropical forest" = 0.6
+#'        "tropical woodland" = 0.3
+#'        "tropical savannah" = 0.1
 #' @param lpjGridInput path to lpjml grid input to be used for conversion
 #'        only required for nc input
 #'        (default: "/p/projects/lpjml/input/historical/input_VERSION2/grid.bin")
@@ -58,7 +69,7 @@ require(lpjmliotools) # in at least version 0.2.17
 classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = NULL,
                    timespan = NULL, savannaProxy = "natLAI", lai_threshold = 6,
                    vegc_threshold = 7500, montaneArcticProxy = "elevation",
-                   elevation_threshold = 1000, latitude_threshold = 55, tree_cover_thresholds = c(0.6,0.3,0.1),
+                   elevation_threshold = 1000, latitude_threshold = 55, tree_cover_thresholds = list(),
                    lpjGridInput = "/p/projects/lpjml/input/historical/input_VERSION2/grid.bin",
                    elevationInput = "/p/projects/lpjml/input/historical/input_VERSION2/elevation.bin",
                    lpjGridHeaderSize = 43, lpjCells = 67420) {
@@ -78,6 +89,33 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
     if (!is.null(timespan)) stop("In data supply mode, timespan cannot be supplied. Aborting.")
   }
 
+  # define default minimum tree cover for forest / woodland / savanna
+  min_tree_cover <- list("boreal forest" = 0.6, "temperate forest" = 0.6,
+                         "temperate woodland" = 0.3, "temperate savannah" = 0.1,
+                         "tropical forest" = 0.6, "tropical woodland" = 0.3,
+                         "tropical savannah" = 0.1)
+
+  # replace default values by values defined in tree_cover_thresholds
+  # parameter
+  for (i in seq_len(length(min_tree_cover))) {
+    temp2 <- names(min_tree_cover)[i]
+    if (!is.null(tree_cover_thresholds[[temp2]])) {
+      min_tree_cover[[temp2]] <- tree_cover_thresholds[[temp2]]
+    }
+  }
+
+  # test if forest threshold is always > woodland threshold > savanna threshold
+  if (min_tree_cover[["temperate forest"]] <=
+        min_tree_cover[["temperate woodland"]] |
+      min_tree_cover[["temperate woodland"]] <=
+        min_tree_cover[["temperate savannah"]] |
+      min_tree_cover[["tropical woodland"]] <=
+        min_tree_cover[["tropical savannah"]] |
+      min_tree_cover[["tropical forest"]] <=
+        min_tree_cover[["tropical woodland"]]) {
+    stop(paste0("Tree cover threshold for forest are not always higher than",
+                "tree cover thresholds for woodland and savannah. Aborting."))
+  }
 
   if (!readOutput) {
     #process grid
@@ -194,7 +232,7 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
 
   biome_mapping <- system.file("extdata", "biomes.csv",
                               package = "pbfunctions") %>%
-                   readr::read.csv2()
+                   readr::read_csv2()
   biome_names <- biome_mapping$id
   names(biome_names) <- biome_mapping$name
 
@@ -371,9 +409,6 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
   # )
   fpc_tree_broadleaf <- fpc_tree_total - fpc_tree_needle
 
-  # initiate biome_class array
-  biome_class <- array(NA, dim = c(ncell), dimnames = dimnames(fpc_total))
-
   if (savannaProxy == "natLAI") {
     #prepare natLAI array
     natLAI <- rowSums( pft_lai[,1:npft] * fpc[,2:(npft + 1)] * fpc[,1] )
@@ -390,25 +425,36 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
     stop(paste0("Unknown parameter savannaProxy = ",savannaProxy))
   }
 
-  # Arctic Tundra
-  is_arctic_tundra <- {
-    fpc_total <= 0.05 &
-      temp < 0 #-2
-  }
+
   # Desert
   is_desert <- {
     fpc_total <= 0.05 &
       temp >= 0 #-2
   }
 
+  # montane (for classification of montane grassland)
+  is_montane <- {
+    elevation > elevation_threshold
+  }
+
+  # high latitude (for classification of montane grassland)
+  is_high_latitude <- {
+    abs(latitudes) > latitude_threshold
+  }
+
   # FORESTS ------------------------------------------------------------------ #
-  is_forest <- {
-    fpc_total > 0.05 &
-      fpc_tree_total >= tree_cover_thresholds[1]
+  is_boreal_forest <- {
+    fpc_tree_total >= min_tree_cover[["boreal forest"]]
+  }
+  is_temperate_forest <- {
+    fpc_tree_total >= min_tree_cover[["temperate forest"]]
+  }
+  is_tropical_forest <- {
+    fpc_tree_total >= min_tree_cover[["tropical forest"]]
   }
   # Boreal Evergreen
   is_boreal_evergreen <- {
-    is_forest &
+    is_boreal_forest &
       subset_array(fpc,
                              list(band = "Boreal Needleleaved Evergreen Tree")) ==
       max_share_trees &
@@ -418,7 +464,7 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
   if (npft == 9) {
     # Boreal Deciduous
     is_boreal_deciduous <- {
-      is_forest &
+      is_boreal_forest &
         (subset_array(fpc,
                                 list(band = "Boreal Broadleaved Summergreen Tree")) == # nolint
            max_share_trees) &
@@ -427,7 +473,7 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
   }else if (npft == 11) {
     # Boreal Deciduous
     is_boreal_deciduous <- {
-      is_forest &
+      is_boreal_forest &
         (subset_array(fpc,
                                 list(band = "Boreal Broadleaved Summergreen Tree")) == # nolint
            max_share_trees |
@@ -438,17 +484,9 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
     }
   }else{stop(paste("Unknown number of pfts:",npft))}
 
-  is_montane <- {
-    elevation > elevation_threshold
-  }
-
-  is_high_latitude <- {
-    abs(latitudes) > latitude_threshold
-  }
-
   # Temperate Coniferous Forest
   is_temperate_coniferous <- {
-    is_forest &
+    is_temperate_forest &
       subset_array(fpc,
                              list(band = "Temperate Needleleaved Evergreen Tree")) == # nolint
       max_share_trees &
@@ -456,7 +494,7 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
   }
   # Temperate Broadleaved Evergreen Forest
   is_temperate_broadleaved_evergreen <- { # nolint
-    is_forest &
+    is_temperate_forest &
       subset_array(fpc,
                              list(band = "Temperate Broadleaved Evergreen Tree")) == # nolint
       max_share_trees &
@@ -465,7 +503,7 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
   }
   # Temperate Broadleaved Deciduous Forest
   is_temperate_broadleaved_deciduous <- { # nolint
-    is_forest &
+    is_temperate_forest &
       subset_array(fpc,
                              list(band = "Temperate Broadleaved Summergreen Tree")) == # nolint
       max_share_trees &
@@ -474,7 +512,7 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
   }
   # Tropical Rainforest
   is_tropical_evergreen <- {
-    is_forest &
+    is_tropical_forest &
       subset_array(fpc,
                              list(band = "Tropical Broadleaved Evergreen Tree")) == # nolint
       max_share_trees &
@@ -483,7 +521,7 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
   }
   # Tropical Seasonal & Deciduous Forest
   is_tropical_raingreen <- {
-    is_forest &
+    is_tropical_forest &
       (subset_array(fpc,
                               list(band = "Tropical Broadleaved Raingreen Tree")) == # nolint
          max_share_trees) &
@@ -492,7 +530,7 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
   }
   # Warm Woody Savanna, Woodland & Shrubland
   is_tropical_forest_savannah <- {
-    is_forest &
+    is_tropical_forest &
       (subset_array(fpc,
                               list(band = "Tropical Broadleaved Evergreen Tree")) == # nolint
          max_share_trees |
@@ -503,7 +541,7 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
       is_savannah_proxy
   }
   is_mixed_forest <- {
-    is_forest &
+    is_temperate_forest &
       !is_boreal_evergreen &
       !is_boreal_deciduous &
       !is_temperate_coniferous &
@@ -515,14 +553,11 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
   }
 
   # WOODY SAVANNAH ----------------------------------------------------------- #
-  is_woody_savannah <- {
-    fpc_total > 0.05 &
-      fpc_tree_total < tree_cover_thresholds[1] &
-      fpc_tree_total >= tree_cover_thresholds[2]
-  }
+
   # Temperate Woody Savanna, Woodland & Shrubland
   is_temperate_woody_savannah <- {
-    is_woody_savannah &
+    fpc_tree_total <= min_tree_cover[["temperate forest"]] &
+    fpc_tree_total >= min_tree_cover[["temperate woodland"]] &
       subset_array(fpc, list(band = "Temperate C3 Grass")) >
       subset_array(fpc, list(band = "Tropical C4 Grass")) &
       temp >= 0 #-2 &
@@ -530,27 +565,18 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
   }
   # Warm Woody Savanna, Woodland & Shrubland
   is_tropical_woody_savannah <- {
-    is_woody_savannah &
+    fpc_tree_total <= min_tree_cover[["tropical forest"]] &
+    fpc_tree_total >= min_tree_cover[["tropical woodland"]] &
       subset_array(fpc, list(band = "Temperate C3 Grass")) <
       subset_array(fpc, list(band = "Tropical C4 Grass"))
-  }
-  # Arctic Tundra
-  is_woody_arctic_tundra <- {
-    is_woody_savannah &
-      !is_temperate_woody_savannah &
-      !is_tropical_woody_savannah
   }
 
   # OPEN SHRUBLAND / SAVANNAHS ----------------------------------------------- #
 
-  is_shrubbland <- {
-    fpc_total > 0.05 &
-      fpc_tree_total < tree_cover_thresholds[2] &
-      fpc_tree_total >= tree_cover_thresholds[3]
-  }
   # Temperate Savanna & Open Shrubland
   is_temperate_shrubland <- {
-    is_shrubbland &
+    fpc_tree_total <= min_tree_cover[["temperate woodland"]] &
+    fpc_tree_total >= min_tree_cover[["temperate savannah"]] &
       subset_array(fpc, list(band = "Temperate C3 Grass")) >
       subset_array(fpc, list(band = "Tropical C4 Grass")) &
       temp >= 0 #-2 &
@@ -558,27 +584,19 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
   }
   # Warm Savanna & Open Shrubland
   is_tropical_shrubland <- {
-    is_shrubbland &
+    fpc_tree_total <= min_tree_cover[["tropical woodland"]] &
+    fpc_tree_total >= min_tree_cover[["tropical savannah"]] &
       subset_array(fpc, list(band = "Temperate C3 Grass")) <
       subset_array(fpc, list(band = "Tropical C4 Grass")) &
       temp >= 0 #-2
   }
-  # Arctic Tundra
-  is_arctic_shrubland <- {
-    is_shrubbland &
-      !is_temperate_shrubland &
-      !is_tropical_shrubland
-  }
 
   # GRASSLAND ---------------------------------------------------------------- #
-  is_grassland <- {
-    fpc_total > 0.05 &
-      fpc_tree_total < tree_cover_thresholds[3]
-  }
 
   # Temperate Savanna & Open Shrubland
   is_temperate_grassland <- {
-    is_grassland &
+    fpc_total > 0.05 &
+    fpc_tree_total <= min_tree_cover[["temperate savannah"]] &
       subset_array(fpc, list(band = "Temperate C3 Grass")) >
       subset_array(fpc, list(band = "Tropical C4 Grass")) &
       temp >= 0 #-2 &
@@ -586,16 +604,24 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
   }
   # Warm Savanna & Open Shrubland
   is_tropical_grassland <- {
-    is_grassland &
+    fpc_total > 0.05 &
+    fpc_tree_total <= min_tree_cover[["tropical savannah"]] &
       subset_array(fpc, list(band = "Temperate C3 Grass")) <
       subset_array(fpc, list(band = "Tropical C4 Grass")) &
       temp >= 0 #-2
   }
-  # Arctic Tundra
-  is_arctic_grassland <- {
-    is_grassland &
-      (!is_temperate_grassland &
-         !is_tropical_grassland)
+
+  # Arctic Tundra ------------------------------------------------------------ #
+  is_arctic_tundra <- {
+      (!is_boreal_evergreen &
+      !is_boreal_deciduous &
+      !is_temperate_forest &
+      (temp < 0 |
+      subset_array(fpc, list(band = "Temperate C3 Grass")) ==
+      subset_array(fpc, list(band = "Tropical C4 Grass"))) &
+      fpc_total > 0.05) |
+
+      (temp < 0 & fpc_total < 0.05)
   }
 
   # Rocks and Ice
@@ -610,7 +636,8 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
 
   # CLASSIFY BIOMES ---------------------------------------------------------- #
 
-  biome_class[is_arctic_tundra] <- biome_names["Arctic Tundra"]
+  # initiate biome_class array
+  biome_class <- array(NA, dim = c(ncell), dimnames = dimnames(fpc_total))
 
   biome_class[is_desert] <- biome_names["Desert"]
 
@@ -628,17 +655,16 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
   # woody savannah
   biome_class[is_temperate_woody_savannah] <- biome_names["Temperate Woody Savanna, Woodland & Shrubland"] # nolint
   biome_class[is_tropical_woody_savannah] <- biome_names["Warm Woody Savanna, Woodland & Shrubland"] # nolint
-  biome_class[is_woody_arctic_tundra] <- biome_names["Arctic Tundra"]
 
   # open shrubland / savannah
   biome_class[is_temperate_shrubland] <- biome_names["Temperate Savanna & Open Shrubland"] # nolint
   biome_class[is_tropical_shrubland] <- biome_names["Warm Savanna & Open Shrubland"] # nolint
-  biome_class[is_arctic_shrubland] <- biome_names["Arctic Tundra"]
 
   # grassland
   biome_class[is_temperate_grassland] <- biome_names["Temperate Grassland"]
   biome_class[is_tropical_grassland] <- biome_names["Warm Grassland"]
-  biome_class[is_arctic_grassland] <- biome_names["Arctic Tundra"]
+
+  biome_class[is_arctic_tundra] <- biome_names["Arctic Tundra"]
   if (montaneArcticProxy == "elevation") {
     biome_class[biome_class == biome_names["Arctic Tundra"] & is_montane] <- biome_names["Montane Grassland"]
   }else if (montaneArcticProxy == "latitude") {

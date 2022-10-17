@@ -46,9 +46,9 @@ plot_biomes <- function(biome_data,
                    "#E0F3DB", "#F7FCF0", "#c79999", "#0868AC",
                    "#FFFFD4", "white", "#dad4d4")
 
-  biome_mapping <- system.file("extdata", "biome_mapping.csv",
+  biome_mapping <- system.file("extdata", "biomes.csv",
                               package = "pbfunctions") %>%
-                   readr::read.csv2()
+                   readr::read_csv2()
   names(biome_cols) <- biome_mapping$short_name
 
   order_legend <- c(1, 2, 9, 10, 11, 3, 4, 5, 6, 12, 13, 14, 7, 8, 15, 16, 17,
