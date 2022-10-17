@@ -194,7 +194,7 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
 
   biome_mapping <- system.file("extdata", "biomes.csv",
                               package = "pbfunctions") %>%
-                   readr::read.csv2()
+                   readr::read_csv2()
   biome_names <- biome_mapping$id
   names(biome_names) <- biome_mapping$name
 
