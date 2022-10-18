@@ -65,11 +65,6 @@ classify_biomes <- function(path_data,
                             lpjml_header_size = 43,
                             lpjml_ncell = 67420) {
 
-  output_files <- list(grid = "grid.bin",
-                       fpc = "fpc.bin",
-                       vegc = "vegc.bin",
-                       pft_lai = "pft_lai.bin",
-                       temp = "temp.bin")
 
   file_extension <- switch(file_type,
                            raw = ".bin",
@@ -77,22 +72,27 @@ classify_biomes <- function(path_data,
                            clm = ".clm",
                            nc = ".nc",
                            cdf = ".nc")
+  # default output files with defined file_extension
+  output_files <- list(grid = "grid",
+                       fpc = "fpc",
+                       vegc = "vegc",
+                       pft_lai = "pft_lai",
+                       temp = "temp") %>%
+    lapply(paste0, file_extension)
 
-  # replace file_ending
-  output_files <- lapply(output_files,
-                         function(x, path_data, pattern, replacement) {
-                           gsub(pattern, replacement, x) %>%
-                           paste(path_data, ., sep = "/")
-                         },
-                         path_data = path_data,
-                         pattern = ".bin",
-                         replacement = file_extension)
 
-  # replace file_ending
+  # replace output files that differ from standard output  id
   if (!is.null(diff_output_files)) {
     replace_idx <- match(names(diff_output_files), names(output_files))
     output_files[c(replace_idx)] <- diff_output_files
   }
+
+  #  concatenate path_data and output_files
+  output_files <- lapply(output_files,
+                         function(x, path_data) {
+                           paste(path_data, x, sep = "/")
+                         },
+                         path_data = path_data)
 
   # define default minimum tree cover for forest / woodland / savanna
   min_tree_cover <- list("boreal forest" = 0.6, "temperate forest" = 0.6,
