@@ -4,45 +4,6 @@
 #requirements:
 require(lpjmliotools)
 
-################# general functions  ###################
-#' Returns LPJmL outputs required for given metric
-#'
-#' Function to return a list of strings with the LPJmL output names required for
-#' the computation of the metrics M-COL, M-ECO, or the biome classification
-#'
-#' @param metric string: which metric? "meco", "mcol", "biome", or "all" (default)
-#' @param withNitrogen logical: include nitrogen outputs? default: TRUE
-#'
-#' @return List of strings with LPJmL variable names
-#'
-#' @examples
-#' \dontrun{
-#'
-#' }
-#' @export
-listOutputs <- function(metric="both", withNitrogen = TRUE) {
-  varsGAMMA <- c("grid",    "fpc",    "fpc_bft",    "cftfrac",    "firec",    "rh_harvest",    "npp",    "runoff",    "transp",    "vegc",    "firef",    "rh",    "harvestc",    "evap",    "interc",    "soilc",    "litc",    "swc")
-  varsGAMMAnitrogen <- c("vegn",    "soilnh4",    "soilno3",    "leaching",    "n2o_denit",    "n2o_nit",    "n2o_denit",    "n2_emis",    "bnf",    "n_volatilization")
-  varsHANPP <- c("grid","mnpp","pft_npp","pft_harvest","pft_rharvest","firec","timber_harvest","cftfrac","fpc")
-  varsBiome <- c("fpc","grid","vegc","pft_lai","temp")
-  if (metric == "all") {
-    if (withNitrogen) {
-      return(unique(sort(c(varsGAMMA,varsGAMMAnitrogen,varsHANPP))))
-    }else{
-      return(unique(sort(c(varsGAMMA,varsHANPP))))
-    }
-  }else if (metric == "meco") {
-    if (withNitrogen) {
-      return(unique(sort(c(varsGAMMA,varsGAMMAnitrogen))))
-    }else{
-      return(unique(sort(varsGAMMA)))
-    }
-  }else if (metric == "biome") {
-    return(unique(sort(varsBiome)))
-  }else if (metric == "mcol") {
-    return(unique(sort(varsHANPP)))
-  }else{stop(paste0("Unknown parameter: metric=",metric))}
-}
 ################# gamma calc functions  ###################
 
 #' Calculate the ecosystem change metric gamma between 2 simulations/timesteps
