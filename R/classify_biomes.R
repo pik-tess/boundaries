@@ -6,30 +6,29 @@ require(lpjmliotools) # in at least version 0.2.17
 
 #' Classify biomes
 #'
-#' Classify biomes based on foliage protected cover (FPC) LPJmL output
-#' and temperature output plus either vegetation carbon or pft_lai depending on
-#' the savannaProxy option and elevation if montaneArcticProxy requires this
+#' Classify biomes based on foliage protected cover (FPC) and temperature
+#' LPJmL output plus either vegetation carbon or pft_lai depending on
+#' the savanna_proxy option and elevation if montane_arctic_proxy requires this
 #'
-#' @param data list object. Contains all relevant data for computation of the
-#'        biome classes as yearly averages of monthly values.
-#'        fpc [dim=c(ncells,npfts+1)],pft_lai [dim=c(ncells,npfts+ncfts)],
-#'        lat, lon, vegc, temp [all dim=c(ncells)] e.g. list(lat = lat67420,
-#'        lon = lon67420, fpc = apply(fpc_scen, c(1,2), mean),
-#'        vegc = mean_state_scen[,8],temp = average_annual_temperature_1916)
-#' @param readOutput read output from folder or use supplied data
-#'        (requires folder and timespan to be set)
-#' @param folder to read outputs from
-#' @param files to read as list list(grid="grid.bin",fpc="fpc.bin")
+#' @param folder to read default outputs from (fpc, grid, vegc, pft_lai, temp)
+#' @param diff_output_files optional list for specification of output file names
+#'        differing from default, which is list(grid = "grid.bin", fpc = "fpc.bin",
+#'        vegc = "vegc.bin", pft_lai = "pft_lai.bin", temp = "temp.bin")
+#' @param input_files list containing additional input (!) files, not in the
+#'        folder, e.g. if temp was not written out:
+#'        list(grid=..., temp = ..., elevation = ...)
+#' @param file_ending replace default file ending. default: ".bin"
 #' @param timespan as c(startyear,stopyear) to use for averaging outputs over
-#' @param savannaProxy "vegc" or "natLAI". Use vegetation carbon or LAI in natural
-#'        vegetation as a proxy threshold to distinguish forests and savannahs
-#' @param montaneArcticProxy "elevation" or "latitude". Use elevation or latitude
+#' @param savanna_proxy "vegc" or "natLAI". Use vegetation carbon or LAI in
+#'        natural vegetation as a proxy threshold to distinguish forests and
+#'        savannas, default: "natLAI"
+#' @param montane_arctic_proxy "elevation" or "latitude". Use elevation or latitude
 #'        as a proxy threshold to distinguish arctic tundra and montane grassland
 #' @param elevation_threshold threshold in m above which ArcticTundra is
-#'        classified as Montane Grassland, if montaneArcticProxy is set to
+#'        classified as Montane Grassland, if montane_arctic_proxy is set to
 #'        elevation - default: 1000
 #' @param latitude_threshold threshold in degrees, south of which ArcticTundra is
-#'        classified as Montane Grassland, if montaneArcticProxy is set to
+#'        classified as Montane Grassland, if montane_arctic_proxy is set to
 #'        latitude - default: 55
 #' @param lai_threshold threshold for "natLAI" proxy (default: 6 m2/m2)
 #' @param vegc_threshold threshold for "vegc" proxy (default: 7500 gC/m2)
@@ -40,15 +39,10 @@ require(lpjmliotools) # in at least version 0.2.17
 #'        "boreal forest" = 0.6
 #'        "temperate forest" = 0.6
 #'        "temperate woodland" = 0.3
-#'        "temperate savannah" = 0.1
+#'        "temperate savanna" = 0.1
 #'        "tropical forest" = 0.6
 #'        "tropical woodland" = 0.3
-#'        "tropical savannah" = 0.1
-#' @param lpjGridInput path to lpjml grid input to be used for conversion
-#'        only required for nc input
-#'        (default: "/p/projects/lpjml/input/historical/input_VERSION2/grid.bin")
-#' @param elevationInput path to lpjml elevation input to be used as proxy
-#'        (default: "/p/projects/lpjml/input/historical/input_VERSION2/elevation.bin")
+#'        "tropical savanna" = 0.1
 #' @param lpjGridHeaderSize header size for lpjml grid input (default: 43)
 #'        only required for nc input
 #' @param lpjCells number of grid cells in lpjml grid input (default: 67420)
@@ -59,41 +53,43 @@ require(lpjmliotools) # in at least version 0.2.17
 #'
 #' @examples
 #' \dontrun{
-#' classify_biomes(readOutput = T, timespan = c(1982,2011)
+#' classify_biomes(timespan = c(1982,2011)
 #'      folder = "/p/projects/open/Fabian/runs/Gamma/output/historic_gamma/",
 #'      files = list(grid = "grid.bin", fpc = "fpc.bin", vegc = "vegc.bin",
 #'      pft_lai = "pft_lai.bin", temp = "temp.bin"))
 #' }
 #'
 #' @export
-classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = NULL,
-                   timespan = NULL, savannaProxy = "natLAI", lai_threshold = 6,
-                   vegc_threshold = 7500, montaneArcticProxy = "elevation",
-                   elevation_threshold = 1000, latitude_threshold = 55, tree_cover_thresholds = list(),
-                   lpjGridInput = "/p/projects/lpjml/input/historical/input_VERSION2/grid.bin",
-                   elevationInput = "/p/projects/lpjml/input/historical/input_VERSION2/elevation.bin",
+classify_biomes <- function(folder = NULL, input_files = NULL, timespan = NULL,
+                   diff_output_files = NULL, savanna_proxy = "natLAI", file_ending = ".bin",
+                   montane_arctic_proxy = "elevation", lai_threshold = 6,
+                   elevation_threshold = 1000, vegc_threshold = 7500,
+                   latitude_threshold = 55, tree_cover_thresholds = list(),
                    lpjGridHeaderSize = 43, lpjCells = 67420) {
 
   require(lpjmliotools)
+  output_files = list(grid = "grid.bin", fpc = "fpc.bin", vegc = "vegc.bin",
+                      pft_lai = "pft_lai.bin",  temp = "temp.bin")
 
-  if (readOutput) { #reading output from folder
-    if (!is.null(data)) stop("In readOutput mode, data cannot be supplied. Aborting.")
-    if ( is.null(folder)) stop("Missing required parameter folder. Aborting.")
-    if ( is.null(files)) stop("Missing required parameter files Aborting.")
-    if ( is.null(timespan)) stop("Missing required parameter timespan. Aborting.")
+  # replace file_ending
+  output_files <- gsub(".bin", file_ending, output_files)
 
-  }else{ # output is supplied via data list-object
-    if ( is.null(data)) stop("In data supply mode, data cannot be NULL. Aborting.")
-    if (!is.null(folder)) stop("In data supply mode, folder cannot be supplied. Aborting.")
-    if (!is.null(files)) stop("In data supply mode, files cannot be supplied. Aborting.")
-    if (!is.null(timespan)) stop("In data supply mode, timespan cannot be supplied. Aborting.")
+  if (!is.null(diff_output_files)) {
+    overwrite <- match(names(diff_output_files), names(output_files))
+    output_files[c(overwrite)] <- diff_output_files
   }
+
+  if ( is.null(folder) ) stop("Missing required parameter folder. Aborting.")
+  # todo add consistence check for required inputs
+  #if ( is.null(files) ) stop("Missing required parameter files Aborting.")
+  if ( is.null(timespan) ) stop("Missing required parameter timespan. Aborting.")
+
 
   # define default minimum tree cover for forest / woodland / savanna
   min_tree_cover <- list("boreal forest" = 0.6, "temperate forest" = 0.6,
-                         "temperate woodland" = 0.3, "temperate savannah" = 0.1,
+                         "temperate woodland" = 0.3, "temperate savanna" = 0.1,
                          "tropical forest" = 0.6, "tropical woodland" = 0.3,
-                         "tropical savannah" = 0.1)
+                         "tropical savanna" = 0.1)
 
   # replace default values by values defined in tree_cover_thresholds
   # parameter
@@ -108,59 +104,36 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
   if (min_tree_cover[["temperate forest"]] <=
         min_tree_cover[["temperate woodland"]] |
       min_tree_cover[["temperate woodland"]] <=
-        min_tree_cover[["temperate savannah"]] |
+        min_tree_cover[["temperate savanna"]] |
       min_tree_cover[["tropical woodland"]] <=
-        min_tree_cover[["tropical savannah"]] |
+        min_tree_cover[["tropical savanna"]] |
       min_tree_cover[["tropical forest"]] <=
         min_tree_cover[["tropical woodland"]]) {
     stop(paste0("Tree cover threshold for forest are not always higher than",
-                "tree cover thresholds for woodland and savannah. Aborting."))
+                "tree cover thresholds for woodland and savanna. Aborting."))
   }
 
-  if (!readOutput) {
-    #process grid
-    lpjml_grid  <- rbind(data$lon,data$lat)
-
-    # process foliage projected cover (fpc)
-    fpc <- data$fpc
-    di <- dim(fpc)
-    npft <- di[2] - 1
-    ncell <- di[1]
-
-    if (savannaProxy == "vegc") {
-      # process vegetation carbon output
-      vegc <- data$vegc
-    }else if (savannaProxy == "natLAI") {
-      # process pft_lai input
-      pft_lai <- data$pft_lai
-    }else{
-      stop(paste0("Unknown setting (",savannaProxy,") for savannaProxy. Enter either 'natLAI' or 'vegc'. Aborting."))
-    }
-
-    # process temperature input
-    temp <- data$temp
-
-    # process elevation input
-    if (montaneArcticProxy == "elevation") {
-      elevation <- data$elevation
-    }
-  }else{ # read in output
-
-    grid_ending <- tail(strsplit(files$grid,".", fixed = T)[[1]], n = 1)
+  if (file.exists(output_files$grid)){
+    grid_ending <- tail(strsplit(output_files$grid,".", fixed = T)[[1]], n = 1)
     if (grid_ending %in% c("bin","clm","raw")) {
       grid <- lpjmliotools::autoReadMetaOutput(metaFile = paste0(folder,"/",files$grid,".json"))
       ncell <- length(grid)/2
       lon   <- grid[c(1:ncell)*2 - 1]
       lat   <- grid[c(1:ncell)*2]
     }else if (grid_ending %in% c("nc","cdf")) {
-      grid <- readGridInputBin(inFile = lpjGridInput, headersize = lpjGridHeaderSize, ncells = lpjCells)
-      ncell <- lpjCells
-      lon   <- grid$lon
-      lat   <- grid$lat
+      print("Reading of netcdf output is still preliminary. Please specify LPJmL grid input.")
+      grid <- readGridInputBin(inFile = input_files$grid, headersize = lpjGridHeaderSize, ncells = lpjCells)
+
     }else{
       stop(paste0("Unknown file ending (",grid_ending,"). Aborting."))
     }
+  }else{
+    stop(paste0("Output file ",output_files$grid, " does not exist. Make sure
+                 the specified input folder is correct. If your file names
+                 differ from the default, please use diff_output_files to
+                 specify them. "))
 
+  }
     lpjml_grid <- rbind(lon,lat)
 
     fpc_ending <- tail(strsplit(files$fpc,".", fixed = T)[[1]], n = 1)
@@ -177,7 +150,7 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
     di <- dim(fpc)
     npft <- di[2] - 1
 
-    if (savannaProxy == "vegc") {
+    if (savanna_proxy == "vegc") {
       vegc_ending <- tail(strsplit(files$vegc,".", fixed = T)[[1]], n = 1)
       if (vegc_ending %in% c("bin","clm","raw")) {
         vegc <- apply(lpjmliotools::autoReadMetaOutput(
@@ -191,8 +164,8 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
       }
     }
 
-    if (montaneArcticProxy == "elevation") {
-        elevation <- lpjmliotools::autoReadInput(inFile = elevationInput)[1,]
+    if (montane_arctic_proxy == "elevation") {
+        elevation <- lpjmliotools::autoReadInput(inFile = input_files$elevation)[1,]
         #plotGlobalWlin(data = elevation,file = "/home/stenzel/elevation.png",title = "",max = 6000,min=-100,legYes = T,legendtitle = "",eps = F)
     }
 
@@ -208,7 +181,7 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
       stop(paste0("Unknown file ending (",temp_ending,"). Aborting."))
     }
 
-    if (savannaProxy == "natLAI") {
+    if (savanna_proxy == "natLAI") {
       pft_lai_ending <- tail(strsplit(files$pft_lai,".", fixed = T)[[1]], n = 1)
       if (pft_lai_ending %in% c("bin","clm","raw")) {
         pft_lai <- apply(lpjmliotools::autoReadMetaOutput(
@@ -222,7 +195,7 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
       }
     }
 
-  }
+
 
   # biome_names after biome classification in Ostberg et al. 2013
   # (https://doi.org/10.5194/esd-4-347-2013), Ostberg et al 2015
@@ -319,7 +292,7 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
   dimnames(fpc) <- list(cell = seq_len(ncell),
                         band = fpc_names)
 
-  if (savannaProxy == "vegc") {
+  if (savanna_proxy == "vegc") {
     # process vegetation carbon output
     dim(vegc) <- c(cell = ncell)
     dimnames(vegc) <- list(cell = seq_len(ncell))
@@ -329,7 +302,7 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
   dim(temp) <- c(cell = ncell)
   dimnames(temp) <- list(cell = seq_len(ncell))
 
-  if (savannaProxy == "natLAI") {
+  if (savanna_proxy == "natLAI") {
     # process pft_lai input
     di2 <- dim(pft_lai)
     dim(pft_lai) <- c(cell = di2[1],
@@ -409,20 +382,20 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
   # )
   fpc_tree_broadleaf <- fpc_tree_total - fpc_tree_needle
 
-  if (savannaProxy == "natLAI") {
+  if (savanna_proxy == "natLAI") {
     #prepare natLAI array
     natLAI <- rowSums( pft_lai[,1:npft] * fpc[,2:(npft + 1)] * fpc[,1] )
   }
 
-  # use vegc 7500 gC/m2 or natLAI 6 as proxy threshold for forest/savannah "boundary"
-  if (savannaProxy == "vegc") {
+  # use vegc 7500 gC/m2 or natLAI 6 as proxy threshold for forest/savanna "boundary"
+  if (savanna_proxy == "vegc") {
     is_tropical_proxy <- vegc >= vegc_threshold
-    is_savannah_proxy <- vegc < vegc_threshold
-  } else if (savannaProxy == "natLAI") {
+    is_savanna_proxy <- vegc < vegc_threshold
+  } else if (savanna_proxy == "natLAI") {
     is_tropical_proxy <- natLAI >= lai_threshold
-    is_savannah_proxy <- natLAI < lai_threshold
+    is_savanna_proxy <- natLAI < lai_threshold
   } else {
-    stop(paste0("Unknown parameter savannaProxy = ",savannaProxy))
+    stop(paste0("Unknown parameter savanna_proxy = ",savanna_proxy))
   }
 
 
@@ -529,7 +502,7 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
       is_tropical_proxy
   }
   # Warm Woody Savanna, Woodland & Shrubland
-  is_tropical_forest_savannah <- {
+  is_tropical_forest_savanna <- {
     is_tropical_forest &
       (subset_array(fpc,
                               list(band = "Tropical Broadleaved Evergreen Tree")) == # nolint
@@ -538,7 +511,7 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
                                 list(band = "Tropical Broadleaved Raingreen Tree")) == # nolint
          max_share_trees) &
       (fpc_tree_boreal + fpc_tree_temperate) < (0.4 * fpc_tree_total) &
-      is_savannah_proxy
+      is_savanna_proxy
   }
   is_mixed_forest <- {
     is_temperate_forest &
@@ -549,13 +522,13 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
       !is_temperate_broadleaved_deciduous &
       !is_tropical_evergreen &
       !is_tropical_raingreen &
-      !is_tropical_forest_savannah
+      !is_tropical_forest_savanna
   }
 
-  # WOODY SAVANNAH ----------------------------------------------------------- #
+  # WOODY savanna ----------------------------------------------------------- #
 
   # Temperate Woody Savanna, Woodland & Shrubland
-  is_temperate_woody_savannah <- {
+  is_temperate_woody_savanna <- {
     fpc_tree_total <= min_tree_cover[["temperate forest"]] &
     fpc_tree_total >= min_tree_cover[["temperate woodland"]] &
       subset_array(fpc, list(band = "Temperate C3 Grass")) >
@@ -564,19 +537,19 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
     #latitudes < 55
   }
   # Warm Woody Savanna, Woodland & Shrubland
-  is_tropical_woody_savannah <- {
+  is_tropical_woody_savanna <- {
     fpc_tree_total <= min_tree_cover[["tropical forest"]] &
     fpc_tree_total >= min_tree_cover[["tropical woodland"]] &
       subset_array(fpc, list(band = "Temperate C3 Grass")) <
       subset_array(fpc, list(band = "Tropical C4 Grass"))
   }
 
-  # OPEN SHRUBLAND / SAVANNAHS ----------------------------------------------- #
+  # OPEN SHRUBLAND / SAVANNAS ----------------------------------------------- #
 
   # Temperate Savanna & Open Shrubland
   is_temperate_shrubland <- {
     fpc_tree_total <= min_tree_cover[["temperate woodland"]] &
-    fpc_tree_total >= min_tree_cover[["temperate savannah"]] &
+    fpc_tree_total >= min_tree_cover[["temperate savanna"]] &
       subset_array(fpc, list(band = "Temperate C3 Grass")) >
       subset_array(fpc, list(band = "Tropical C4 Grass")) &
       temp >= 0 #-2 &
@@ -585,7 +558,7 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
   # Warm Savanna & Open Shrubland
   is_tropical_shrubland <- {
     fpc_tree_total <= min_tree_cover[["tropical woodland"]] &
-    fpc_tree_total >= min_tree_cover[["tropical savannah"]] &
+    fpc_tree_total >= min_tree_cover[["tropical savanna"]] &
       subset_array(fpc, list(band = "Temperate C3 Grass")) <
       subset_array(fpc, list(band = "Tropical C4 Grass")) &
       temp >= 0 #-2
@@ -596,7 +569,7 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
   # Temperate Savanna & Open Shrubland
   is_temperate_grassland <- {
     fpc_total > 0.05 &
-    fpc_tree_total <= min_tree_cover[["temperate savannah"]] &
+    fpc_tree_total <= min_tree_cover[["temperate savanna"]] &
       subset_array(fpc, list(band = "Temperate C3 Grass")) >
       subset_array(fpc, list(band = "Tropical C4 Grass")) &
       temp >= 0 #-2 &
@@ -605,7 +578,7 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
   # Warm Savanna & Open Shrubland
   is_tropical_grassland <- {
     fpc_total > 0.05 &
-    fpc_tree_total <= min_tree_cover[["tropical savannah"]] &
+    fpc_tree_total <= min_tree_cover[["tropical savanna"]] &
       subset_array(fpc, list(band = "Temperate C3 Grass")) <
       subset_array(fpc, list(band = "Tropical C4 Grass")) &
       temp >= 0 #-2
@@ -649,14 +622,14 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
   biome_class[is_temperate_broadleaved_deciduous] <- biome_names["Temperate Broadleaved Deciduous Forest"] # nolint
   biome_class[is_tropical_evergreen] <- biome_names["Tropical Rainforest"]
   biome_class[is_tropical_raingreen] <- biome_names["Tropical Seasonal & Deciduous Forest"] # nolint
-  biome_class[is_tropical_forest_savannah] <- biome_names["Warm Woody Savanna, Woodland & Shrubland"] # nolint
+  biome_class[is_tropical_forest_savanna] <- biome_names["Warm Woody Savanna, Woodland & Shrubland"] # nolint
   biome_class[is_mixed_forest] <- biome_names["Mixed Forest"]
 
-  # woody savannah
-  biome_class[is_temperate_woody_savannah] <- biome_names["Temperate Woody Savanna, Woodland & Shrubland"] # nolint
-  biome_class[is_tropical_woody_savannah] <- biome_names["Warm Woody Savanna, Woodland & Shrubland"] # nolint
+  # woody savanna
+  biome_class[is_temperate_woody_savanna] <- biome_names["Temperate Woody Savanna, Woodland & Shrubland"] # nolint
+  biome_class[is_tropical_woody_savanna] <- biome_names["Warm Woody Savanna, Woodland & Shrubland"] # nolint
 
-  # open shrubland / savannah
+  # open shrubland / savanna
   biome_class[is_temperate_shrubland] <- biome_names["Temperate Savanna & Open Shrubland"] # nolint
   biome_class[is_tropical_shrubland] <- biome_names["Warm Savanna & Open Shrubland"] # nolint
 
@@ -665,12 +638,12 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
   biome_class[is_tropical_grassland] <- biome_names["Warm Grassland"]
 
   biome_class[is_arctic_tundra] <- biome_names["Arctic Tundra"]
-  if (montaneArcticProxy == "elevation") {
+  if (montane_arctic_proxy == "elevation") {
     biome_class[biome_class == biome_names["Arctic Tundra"] & is_montane] <- biome_names["Montane Grassland"]
-  }else if (montaneArcticProxy == "latitude") {
+  }else if (montane_arctic_proxy == "latitude") {
     biome_class[biome_class == biome_names["Arctic Tundra"] & !is_high_latitude] <- biome_names["Montane Grassland"]
   }else {
-    stop(paste0("Unknown value (",montaneArcticProxy,") for parameter montaneArcticProxy. Use 'elevation' or 'latitude'. Aborting."))
+    stop(paste0("Unknown value (",montane_arctic_proxy,") for parameter montane_arctic_proxy. Use 'elevation' or 'latitude'. Aborting."))
   }
 
   # other
