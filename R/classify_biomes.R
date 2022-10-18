@@ -194,7 +194,7 @@ classify_biomes <- function(path_data,
       )
     }
   } else if (file_type %in% c("raw", "clm")) {
-      # TODO: implement raw, clm grid handling
+    # TODO: implement raw, clm grid handling
   } else {
       stop(paste0("Unknown file ending (",
                   fpc_ending,
@@ -202,6 +202,28 @@ classify_biomes <- function(path_data,
   }
   fpc_nbands <- dim(fpc)[["nbands"]]
   npft <- fpc_nbands - 1
+
+  # average fpc
+  avg_fpc %<-% do.call(
+    average_nyear_window,
+    append(list(x = fix_dimnames(fpc, "fpc", ncell, npft, fpc_nbands)),
+           avg_nyear_args)
+  )
+
+  # average vegc or pft_lai
+  avg_savanna_proxy_data %<-% do.call(
+    average_nyear_window,
+    append(list(x = fix_dimnames(savanna_proxy_data, savanna_proxy_name, ncell, npft, fpc_nbands)), # nolint
+           avg_nyear_args)
+  )
+
+  # average fpc
+  avg_temp %<-% do.call(
+    average_nyear_window,
+    append(list(x = fix_dimnames(temp, "temp", ncell, npft)),
+           avg_nyear_args)
+  )
+
 
   if (montane_arctic_proxy_name == "elevation") {
       elevation <- lpjmliotools::autoReadInput(
@@ -213,8 +235,8 @@ classify_biomes <- function(path_data,
   # (https://doi.org/10.5194/esd-4-347-2013), Ostberg et al 2015
   # (https://doi.org/10.1088/1748-9326/10/4/044011) and Gerten et al. 2020
   # (https://doi.org/10.1038/s41893-019-0465-1)
-  # biome names
 
+  # biome names
   biome_mapping <- system.file("extdata",
                                "biomes.csv",
                                package = "pbfunctions") %>%
@@ -274,36 +296,6 @@ classify_biomes <- function(path_data,
     if (any(is.na(.$npft_proxy))) .$pft else .$lpjml_index + 1
   }
 
-  # TODO: this has to be separated!
-  # process grid
-  # dim(lpjml_grid) <- c(coordinate = 2, cell = ncell)
-  # dimnames(lpjml_grid) <- list(coordinate = c("lon", "lat"),
-  #                              cell = seq_len(ncell))
-  # 
-  # # process foliage projected cover (fpc)
-  # dim(fpc) <- c(cell = ncell,
-  #               band = npft + 1)
-  # dimnames(fpc) <- list(cell = seq_len(ncell),
-  #                       band = fpc_names)
-  #
-  # if (!is.null(savanna_proxy)) {
-  #   if (savanna_proxy == "vegc") {
-  #     # process vegetation carbon output
-  #     dim(vegc) <- c(cell = ncell)
-  #     dimnames(vegc) <- list(cell = seq_len(ncell))
-  #   } else if (savanna_proxy == "natLAI") {
-  #     # process pft_lai input
-  #     di2 <- dim(pft_lai)
-  #     dim(pft_lai) <- c(cell = di2[1],
-  #                     band = di2[2])
-  #     dimnames(pft_lai) <- list(cell = seq_len(di2[1]),
-  #                             band = c(fpc_names[2:(npft + 1)],(npft + 1):di2[2]))
-  #   }
-  # }
-  #
-  # process temperature input
-  # dim(temp) <- c(cell = ncell)
-  # dimnames(temp) <- list(cell = seq_len(ncell))
 
   # latitudes (same dimension for vectorized biome classification)
   latitudes <- array(
@@ -311,58 +303,64 @@ classify_biomes <- function(path_data,
     dim = c(ncell)
   )
 
+  third_dim <- names(dim(avg_fpc))[
+    !names(dim(avg_fpc)) %in% c("cell", "band")
+  ] %>% {
+    if (rlang::is_empty(.)) NULL else .
+  }
+
   fpc_tree_total <- apply(
-    lpjmliotools::subset_array(fpc, list(band = fpc_trees)),
+    lpjmliotools::subset_array(avg_fpc, list(band = fpc_trees)),
     c("cell"),
     sum,
     na.rm = TRUE
   )
 
   fpc_tree_tropical <- apply(
-    lpjmliotools::subset_array(fpc, list(band = fpc_tropical_trees)),
+    lpjmliotools::subset_array(avg_fpc, list(band = fpc_tropical_trees)),
     c("cell"),
     sum,
     na.rm = TRUE
   )
   fpc_tree_temperate <- apply(
-    lpjmliotools::subset_array(fpc, list(band = fpc_temperate_trees)),
+    lpjmliotools::subset_array(avg_fpc, list(band = fpc_temperate_trees)),
     c("cell"),
     sum,
     na.rm = TRUE
   )
   fpc_tree_boreal <- apply(
-    lpjmliotools::subset_array(fpc, list(band = fpc_boreal_trees)),
+    lpjmliotools::subset_array(avg_fpc, list(band = fpc_boreal_trees)),
     c("cell"),
     sum,
     na.rm = TRUE
   )
   fpc_tree_needle <- apply(
-    lpjmliotools::subset_array(fpc, list(band = fpc_needle_trees)),
+    lpjmliotools::subset_array(avg_fpc, list(band = fpc_needle_trees)),
     c("cell"),
     sum,
     na.rm = TRUE
   )
   fpc_tree_evergreen <- apply(
-    lpjmliotools::subset_array(fpc, list(band = fpc_evergreen_trees)),
+    lpjmliotools::subset_array(avg_fpc, list(band = fpc_evergreen_trees)),
     c("cell"),
     sum,
     na.rm = TRUE
   )
   fpc_grass_total <- apply(
-    lpjmliotools::subset_array(fpc, list(band = fpc_grass)),
+    lpjmliotools::subset_array(avg_fpc, list(band = fpc_grass)),
     c("cell"),
     sum,
     na.rm = TRUE
   )
   fpc_total <- apply(
-    lpjmliotools::subset_array(fpc,
+    lpjmliotools::subset_array(avg_fpc,
                                list(band = fpc_names[fpc_names != "natvegfrac"])), # nolint
     c("cell"),
     sum,
     na.rm = TRUE
   )
   max_share_trees <- apply(
-    lpjmliotools::subset_array(fpc, list(band = fpc_trees)),
+    lpjmliotools::subset_array(avg_fpc, list(band = fpc_trees)),
     c("cell"),
     max,
     na.rm = TRUE
@@ -375,12 +373,12 @@ classify_biomes <- function(path_data,
   if (!is.null(savanna_proxy)) {
     if (savanna_proxy == "natLAI") {
       # TODO: dynamic subsetting
-      savanna_proxy_data <- rowSums(
-        savanna_proxy_data[, 1:npft] * fpc[, 2:(npft + 1)] * fpc[, 1]
+      avg_savanna_proxy_data <- rowSums(
+        avg_savanna_proxy_data[, 1:npft] * avg_fpc[, 2:(npft + 1)] * avg_fpc[, 1] # nolint
       )
     }
-    is_tropical_proxy <- savanna_proxy_data >= savanna_proxy[[savanna_proxy_name]] # nolint
-    is_savannah_proxy <- savanna_proxy_data < savanna_proxy[[savanna_proxy_name]] # nolint
+    is_tropical_proxy <- avg_savanna_proxy_data >= savanna_proxy[[savanna_proxy_name]] # nolint
+    is_savannah_proxy <- avg_savanna_proxy_data < savanna_proxy[[savanna_proxy_name]] # nolint
   } else {
     is_tropical_proxy <- rep(TRUE, ncell)
     is_savannah_proxy <- rep(FALSE, ncell)
@@ -389,7 +387,7 @@ classify_biomes <- function(path_data,
   # Desert
   is_desert <- {
     fpc_total <= 0.05 &
-      temp >= 0 #-2
+      avg_temp >= 0 #-2
   }
 
   # montane (for classification of montane grassland)
@@ -417,7 +415,7 @@ classify_biomes <- function(path_data,
   is_boreal_evergreen <- {
     is_boreal_forest &
     lpjmliotools::subset_array(
-      fpc,
+      avg_fpc,
       list(band = "Boreal Needleleaved Evergreen Tree")
     ) == max_share_trees &
     fpc_tree_broadleaf < (0.4 * fpc_tree_total)
@@ -429,7 +427,7 @@ classify_biomes <- function(path_data,
       is_boreal_forest &
       (
         lpjmliotools::subset_array(
-          fpc,
+          avg_fpc,
           list(band = "Boreal Broadleaved Summergreen Tree")
         ) == max_share_trees
       ) &
@@ -441,11 +439,11 @@ classify_biomes <- function(path_data,
       is_boreal_forest &
       (
         lpjmliotools::subset_array(
-          fpc,
+          avg_fpc,
           list(band = "Boreal Broadleaved Summergreen Tree")
         ) == max_share_trees |
         lpjmliotools::subset_array(
-          fpc,
+          avg_fpc,
           list(band = "Boreal Needleleaved Summergreen Tree")
         ) == max_share_trees
       ) &
@@ -459,7 +457,7 @@ classify_biomes <- function(path_data,
   is_temperate_coniferous <- {
     is_temperate_forest &
     lpjmliotools::subset_array(
-      fpc,
+      avg_fpc,
       list(band = "Temperate Needleleaved Evergreen Tree")
     ) == max_share_trees &
     fpc_tree_broadleaf < (0.4 * fpc_tree_total)
@@ -468,7 +466,7 @@ classify_biomes <- function(path_data,
   is_temperate_broadleaved_evergreen <- { # nolint
     is_temperate_forest &
     lpjmliotools::subset_array(
-      fpc,
+      avg_fpc,
       list(band = "Temperate Broadleaved Evergreen Tree")
     ) == max_share_trees &
     fpc_tree_tropical < (0.4 * fpc_tree_total) &
@@ -478,7 +476,7 @@ classify_biomes <- function(path_data,
   is_temperate_broadleaved_deciduous <- { # nolint
     is_temperate_forest &
     lpjmliotools::subset_array(
-      fpc,
+      avg_fpc,
       list(band = "Temperate Broadleaved Summergreen Tree")
     ) == max_share_trees &
     fpc_tree_tropical < (0.4 * fpc_tree_total) &
@@ -488,7 +486,7 @@ classify_biomes <- function(path_data,
   is_tropical_evergreen <- {
     is_tropical_forest &
     lpjmliotools::subset_array(
-      fpc,
+      avg_fpc,
       list(band = "Tropical Broadleaved Evergreen Tree")
     ) == max_share_trees &
     (fpc_tree_boreal + fpc_tree_temperate) < (0.4 * fpc_tree_total) &
@@ -498,7 +496,7 @@ classify_biomes <- function(path_data,
   is_tropical_raingreen <- {
     is_tropical_forest &
     (lpjmliotools::subset_array(
-      fpc,
+      avg_fpc,
       list(band = "Tropical Broadleaved Raingreen Tree")
     ) == max_share_trees) &
     (fpc_tree_boreal + fpc_tree_temperate) < (0.4 * fpc_tree_total) &
@@ -509,11 +507,11 @@ classify_biomes <- function(path_data,
     is_tropical_forest &
     (
       lpjmliotools::subset_array(
-        fpc,
+        avg_fpc,
         list(band = "Tropical Broadleaved Evergreen Tree")
       ) == max_share_trees |
       lpjmliotools::subset_array(
-        fpc,
+        avg_fpc,
         list(band = "Tropical Broadleaved Raingreen Tree")
       ) == max_share_trees
     ) &
@@ -538,17 +536,17 @@ classify_biomes <- function(path_data,
   is_temperate_woody_savanna <- {
     fpc_tree_total <= min_tree_cover[["temperate forest"]] &
     fpc_tree_total >= min_tree_cover[["temperate woodland"]] &
-    lpjmliotools::subset_array(fpc, list(band = "Temperate C3 Grass")) >
-    lpjmliotools::subset_array(fpc, list(band = "Tropical C4 Grass")) &
-    temp >= 0 #-2 &
+    lpjmliotools::subset_array(avg_fpc, list(band = "Temperate C3 Grass")) >
+    lpjmliotools::subset_array(avg_fpc, list(band = "Tropical C4 Grass")) &
+    avg_temp >= 0 #-2 &
     #latitudes < 55
   }
   # Warm Woody Savanna, Woodland & Shrubland
   is_tropical_woody_savanna <- {
     fpc_tree_total <= min_tree_cover[["tropical forest"]] &
     fpc_tree_total >= min_tree_cover[["tropical woodland"]] &
-    lpjmliotools::subset_array(fpc, list(band = "Temperate C3 Grass")) <
-    lpjmliotools::subset_array(fpc, list(band = "Tropical C4 Grass"))
+    lpjmliotools::subset_array(avg_fpc, list(band = "Temperate C3 Grass")) <
+    lpjmliotools::subset_array(avg_fpc, list(band = "Tropical C4 Grass"))
   }
 
   # OPEN SHRUBLAND / SAVANNAS ----------------------------------------------- #
@@ -557,18 +555,18 @@ classify_biomes <- function(path_data,
   is_temperate_shrubland <- {
     fpc_tree_total <= min_tree_cover[["temperate woodland"]] &
     fpc_tree_total >= min_tree_cover[["temperate savanna"]] &
-    lpjmliotools::subset_array(fpc, list(band = "Temperate C3 Grass")) >
-    lpjmliotools::subset_array(fpc, list(band = "Tropical C4 Grass")) &
-    temp >= 0 #-2 &
+    lpjmliotools::subset_array(avg_fpc, list(band = "Temperate C3 Grass")) >
+    lpjmliotools::subset_array(avg_fpc, list(band = "Tropical C4 Grass")) &
+    avg_temp >= 0 #-2 &
     #latitudes < 55
   }
   # Warm Savanna & Open Shrubland
   is_tropical_shrubland <- {
     fpc_tree_total <= min_tree_cover[["tropical woodland"]] &
     fpc_tree_total >= min_tree_cover[["tropical savanna"]] &
-    lpjmliotools::subset_array(fpc, list(band = "Temperate C3 Grass")) <
-    lpjmliotools::subset_array(fpc, list(band = "Tropical C4 Grass")) &
-    temp >= 0 #-2
+    lpjmliotools::subset_array(avg_fpc, list(band = "Temperate C3 Grass")) <
+    lpjmliotools::subset_array(avg_fpc, list(band = "Tropical C4 Grass")) &
+    avg_temp >= 0 #-2
   }
 
   # GRASSLAND ---------------------------------------------------------------- #
@@ -577,18 +575,18 @@ classify_biomes <- function(path_data,
   is_temperate_grassland <- {
     fpc_total > 0.05 &
     fpc_tree_total <= min_tree_cover[["temperate savanna"]] &
-    lpjmliotools::subset_array(fpc, list(band = "Temperate C3 Grass")) >
-    lpjmliotools::subset_array(fpc, list(band = "Tropical C4 Grass")) &
-    temp >= 0 #-2 &
+    lpjmliotools::subset_array(avg_fpc, list(band = "Temperate C3 Grass")) >
+    lpjmliotools::subset_array(avg_fpc, list(band = "Tropical C4 Grass")) &
+    avg_temp >= 0 #-2 &
     #latitudes < 55
   }
   # Warm Savanna & Open Shrubland
   is_tropical_grassland <- {
     fpc_total > 0.05 &
     fpc_tree_total <= min_tree_cover[["tropical savanna"]] &
-    lpjmliotools::subset_array(fpc, list(band = "Temperate C3 Grass")) <
-    lpjmliotools::subset_array(fpc, list(band = "Tropical C4 Grass")) &
-    temp >= 0 #-2
+    lpjmliotools::subset_array(avg_fpc, list(band = "Temperate C3 Grass")) <
+    lpjmliotools::subset_array(avg_fpc, list(band = "Tropical C4 Grass")) &
+    avg_temp >= 0 #-2
   }
 
   # Arctic Tundra ------------------------------------------------------------ #
@@ -597,22 +595,22 @@ classify_biomes <- function(path_data,
     !is_boreal_deciduous &
     !is_temperate_forest &
     (
-      temp < 0 |
-      lpjmliotools::subset_array(fpc, list(band = "Temperate C3 Grass")) ==
-      lpjmliotools::subset_array(fpc, list(band = "Tropical C4 Grass"))) &
+      avg_temp < 0 |
+      lpjmliotools::subset_array(avg_fpc, list(band = "Temperate C3 Grass")) ==
+      lpjmliotools::subset_array(avg_fpc, list(band = "Tropical C4 Grass"))) &
       fpc_total > 0.05
     ) |
-    (temp < 0 & fpc_total < 0.05)
+    (avg_temp < 0 & fpc_total < 0.05)
   }
 
   # Rocks and Ice
   is_rocks_and_ice <- {
     fpc_total == 0 &
-      temp < 0 #-2
+      avg_temp < 0 #-2
   }
   # Water body
   is_water <- {
-    lpjmliotools::subset_array(fpc, list(band = "natvegfrac")) == 0
+    lpjmliotools::subset_array(avg_fpc, list(band = "natvegfrac")) == 0
   }
 
   # CLASSIFY BIOMES ---------------------------------------------------------- #
@@ -694,3 +692,38 @@ read_pft_categories <- function(file_path) {
                  values_drop_na = TRUE) %>%
     return()
 }
+´
+
+  # TODO: this has to be separated!
+  # process grid
+
+# bring in line dimnames from lpjmiotools with function
+fix_dimnames <- function(data,
+                         name,
+                         ncell = 67420,
+                         npft = NULL,
+                         band_names = NULL) {
+  if (name == "grid") {
+    dim(data) <- c(coordinate = 2, cell = ncell)
+    dimnames(data) <- list(coordinate = c("lon", "lat"),
+                                 cell = seq_len(ncell))
+  } else if (name == "fpc") {
+    # process foliage projected cover (fpc)
+    dim(data) <- c(cell = ncell,
+                   band = npft + 1)
+    dimnames(data) <- list(cell = seq_len(ncell),
+                           band = fpc_names)
+  } else if (name == "vegc" || name == "temp" ){
+      dim(data) <- c(cell = ncell)
+      dimnames(data) <- list(cell = seq_len(ncell))
+  } else if (name == "pft_lai"){
+      # process pft_lai input
+      pre_dims <- dim(pft_lai)
+      dim(data) <- c(cell = pre_dims[1],
+                     band = pre_dims[2])
+      dimnames(data) <- list(cell = seq_len(pre_dims[1]),
+                             band = c(fpc_names[2:(npft + 1)],(npft + 1):pre_dims[2]))
+  }
+  return(data)
+}
+
