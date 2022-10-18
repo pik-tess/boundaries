@@ -97,12 +97,15 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
 
   # replace default values by values defined in tree_cover_thresholds
   # parameter
-  for (i in seq_len(length(min_tree_cover))) {
-    temp2 <- names(min_tree_cover)[i]
-    if (!is.null(tree_cover_thresholds[[temp2]])) {
-      min_tree_cover[[temp2]] <- tree_cover_thresholds[[temp2]]
-    }
+  overwrite <- match(names(tree_cover_thresholds), names(min_tree_cover))
+  if (any(is.na(overwite))) {
+    stop(paste0(
+      names(tree_cover_thresholds)[which(is.na(overwrite))],
+      " is not valid. Please use a name of: ",
+      paste0(names(min_tree_cover), collapse = ", ")
+    ))
   }
+  min_tree_cover[overwrite] <- tree_cover_thresholds
 
   # test if forest threshold is always > woodland threshold > savanna threshold
   if (min_tree_cover[["temperate forest"]] <=
