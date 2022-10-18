@@ -192,83 +192,64 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
   # (https://doi.org/10.1038/s41893-019-0465-1)
   # biome names
 
-  biome_mapping <- system.file("extdata", "biomes.csv",
-                              package = "pbfunctions") %>%
-                   readr::read_csv2()
+  biome_mapping <- system.file("extdata",
+                               "biomes.csv",
+                               package = "pbfunctions") %>%
+                   readr::read_delim(col_types = readr::cols(), delim = ";")
   biome_names <- biome_mapping$id
   names(biome_names) <- biome_mapping$name
 
-  if (npft == 9) {
-    fpc_names <- c("natvegfrac", 												    #1
-                   "Tropical Broadleaved Evergreen Tree",		#2
-                   "Tropical Broadleaved Raingreen Tree",		#3
-                   "Temperate Needleleaved Evergreen Tree",	#4
-                   "Temperate Broadleaved Evergreen Tree",	#5
-                   "Temperate Broadleaved Summergreen Tree",#6
-                   "Boreal Needleleaved Evergreen Tree",		#7
-                   "Boreal Broadleaved Summergreen Tree",   #8 actually Boreal Summergreen Tree (broadleaved and needleleaved, includes larchs)
-                   "Temperate C3 Grass",										#9
-                   "Tropical C4 Grass"											#10
-    )
-    fpc_temperate <- c(4,5,6)
-    fpc_tropical  <- c(2,3)
-    fpc_boreal    <- c(7,8)
-    fpc_needle    <- c(4,7,8)
-    fpc_grass     <- c(9,10)
-  }else if (npft == 11) {
-    fpc_names <- c("natvegfrac", 														#1
-                   "Tropical Broadleaved Evergreen Tree",		#2
-                   "Tropical Broadleaved Raingreen Tree",		#3
-                   "Temperate Needleleaved Evergreen Tree",	#4
-                   "Temperate Broadleaved Evergreen Tree",	#5
-                   "Temperate Broadleaved Summergreen Tree",#6
-                   "Boreal Needleleaved Evergreen Tree",		#7
-                   "Boreal Broadleaved Summergreen Tree",   #8
-                   "Boreal Needleleaved Summergreen Tree",  #9
-                   "Tropical C4 Grass",										  #10
-                   "Temperate C3 Grass",										#11
-                   "Polar C3 Grass"											    #12
-    )
-    fpc_temperate <- c(4,5,6)
-    fpc_tropical  <- c(2,3)
-    fpc_boreal    <- c(7,8,9)
-    fpc_needle    <- c(4,7,9)
-    fpc_grass     <- c(10,11,12)
-  }else{stop(paste("Unknown number of pfts:",npft))}
-  fpc_trees     <- sort(unique(c(fpc_temperate, fpc_tropical, fpc_boreal, fpc_needle)))
 
-  # indices for pft subsets
-  fpc_tropical_trees <- c("Tropical Broadleaved Evergreen Tree",
-                          "Tropical Broadleaved Raingreen Tree")
-  fpc_temperate_trees <- c("Temperate Needleleaved Evergreen Tree",
-                           "Temperate Broadleaved Evergreen Tree",
-                           "Temperate Broadleaved Summergreen Tree")
-  fpc_evergreen_trees <- c("Tropical Broadleaved Evergreen Tree",
-                           "Temperate Needleleaved Evergreen Tree",
-                           "Temperate Broadleaved Evergreen Tree",
-                           "Boreal Needleleaved Evergreen Tree") # was "Temperate Broadleaved Summergreen Tree") #FS?
-  if (npft == 9) {
-    fpc_boreal_trees <- c("Boreal Needleleaved Evergreen Tree",
-                          "Boreal Broadleaved Summergreen Tree")
-    fpc_needle_trees <- c("Temperate Needleleaved Evergreen Tree",
-                          "Boreal Needleleaved Evergreen Tree")
-    fpc_grass <- c("Tropical C4 Grass",
-                   "Temperate C3 Grass")
-  }else if (npft == 11) {
-    fpc_boreal_trees <- c("Boreal Needleleaved Evergreen Tree",
-                          "Boreal Broadleaved Summergreen Tree",
-                          "Boreal Needleleaved Summergreen Tree")
-    fpc_needle_trees <- c("Temperate Needleleaved Evergreen Tree",
-                          "Boreal Needleleaved Evergreen Tree",
-                          "Boreal Needleleaved Summergreen Tree")
-    fpc_grass <- c("Tropical C4 Grass",
-                   "Temperate C3 Grass",
-                   "Polar C3 Grass")
-  }else{stop(paste("Unknown number of pfts:",npft))}
+  pft_categories <- system.file("extdata",
+                                "pft_categories.csv",
+                                package = "pbfunctions") %>%
+    read_pft_categories() %>%
+    dplyr::filter(npft_proxy == npft)
 
-  fpc_trees <- c(fpc_tropical_trees,
-                 fpc_temperate_trees,
-                 fpc_boreal_trees)
+  fpc_names <- dplyr::filter(pft_categories, category == "natural")$pft
+
+  # indices (when estimation only via npft possible) or names for pft subsets
+  fpc_temperate_trees <- dplyr::filter(
+    pft_categories,
+    type == "tree" & zone == "temperate" & category == "natural"
+  ) %>% {
+      if (any(is.na(.$npft_proxy))) .$pft else .$lpjml_index + 1
+    }
+
+  fpc_tropical_trees <- dplyr::filter(
+    pft_categories,
+    type == "tree" & zone == "temperate" & category == "natural"
+  ) %>% {
+    if (any(is.na(.$npft_proxy))) .$pft else .$lpjml_index + 1
+  }
+
+  fpc_boreal_trees <- dplyr::filter(
+    pft_categories,
+    type == "tree" & zone == "boreal" & category == "natural"
+  ) %>% {
+    if (any(is.na(.$npft_proxy))) .$pft else .$lpjml_index + 1
+  }
+
+  fpc_needle_trees <- dplyr::filter(
+    pft_categories,
+    type == "tree" & category == "needle"
+  ) %>% {
+    if (any(is.na(.$npft_proxy))) .$pft else .$lpjml_index + 1
+  }
+
+  fpc_grass <- dplyr::filter(
+    pft_categories,
+    type == "grass" & category == "natural"
+  ) %>% {
+    if (any(is.na(.$npft_proxy))) .$pft else .$lpjml_index + 1
+  }
+
+  fpc_trees <- dplyr::filter(
+    pft_categories,
+    type == "tree" & category == "natural"
+  ) %>% {
+    if (any(is.na(.$npft_proxy))) .$pft else .$lpjml_index + 1
+  }
 
   #process grid
   dim(lpjml_grid) <- c(coordinate = 2, cell = ncell)
@@ -652,4 +633,40 @@ classify_biomes <- function(data = NULL, readOutput = F, folder = NULL, files = 
   biome_class[is_water] <- biome_names["Water"]
 
   return(list(biome_id = biome_class, biome_names = names(biome_names)))
+}
+
+
+
+read_pft_categories <- function(file_path) {
+  # read_delim, col_types = readr::cols(), delim = ";")to suppress messages
+  readr::read_delim(file_path, col_types = readr::cols(), delim = ";") %>%
+    # change 1, 0.5, 0 values to TRUE and NAs (NA's can be dropped)
+    dplyr::mutate_at(dplyr::vars(dplyr::starts_with(c("category_", "zone_"))),
+                     function(x) ifelse(as.logical(x), TRUE, NA)) %>%
+    # filter natural pfts
+    dplyr::filter(category_natural) %>%
+    # all binary zone columns (tropical, temperate, boreal) in one categorical
+    #   zone column
+    tidyr::pivot_longer(cols = starts_with("zone_"),
+                 names_to = "zone",
+                 names_prefix = "zone_",
+                 values_to = "zone_value",
+                 values_drop_na = TRUE) %>%
+    # all binary category columns (natural, needle, evergreen) in one categorical # nolint
+    #   category column
+    tidyr::pivot_longer(cols = starts_with("category_"),
+                 names_to = "category",
+                 names_prefix = "category_",
+                 values_to = "category_value",
+                 values_drop_na = TRUE) %>%
+    # delete side product - logical columns
+    dplyr::select(-c("category_value", "zone_value")) %>%
+    # values to lpjml_index, names to length of npft (convert to numeric)
+    tidyr::pivot_longer(cols = starts_with("lpjml_index_npft_"),
+                 values_to = "lpjml_index",
+                 names_to = "npft_proxy",
+                 names_transform = list(npft_proxy = function(x) suppressWarnings(as.numeric(x))), # nolint
+                 names_prefix = "lpjml_index_npft_",
+                 values_drop_na = TRUE) %>%
+    return()
 }
