@@ -19,18 +19,12 @@ require(lpjmliotools) # in at least version 0.2.17
 #'        list(grid=..., temp = ..., elevation = ...)
 #' @param file_ending replace default file ending. default: ".bin"
 #' @param timespan as c(startyear,stopyear) to use for averaging outputs over
-<<<<<<< HEAD
-#' @param savanna_proxy "vegc" or "natLAI". Use vegetation carbon or LAI in
-#'        natural vegetation as a proxy threshold to distinguish forests and
-#'        savannas, default: "natLAI"
-#' @param montane_arctic_proxy "elevation" or "latitude". Use elevation or latitude
-=======
-#' @param savannaProxy "vegc", "natLAI" or NULL. Use vegetation carbon or LAI
+
+#' @param savanna_proxy "vegc", "natLAI" or NULL. Use vegetation carbon or LAI
 #'        in natural vegetation as a proxy threshold to distinguish forests and
 #'        savannahs. Set to NULL if no savanna proxy should be used
 #'        - default: "natLAI"
-#' @param montaneArcticProxy "elevation" or "latitude". Use elevation or latitude
->>>>>>> cbef0b514124d1f6a551c72e8935d071ac7a3350
+#' @param montane_arctic_proxy "elevation" or "latitude". Use elevation or latitude
 #'        as a proxy threshold to distinguish arctic tundra and montane grassland
 #' @param elevation_threshold threshold in m above which ArcticTundra is
 #'        classified as Montane Grassland, if montane_arctic_proxy is set to
@@ -124,43 +118,11 @@ classify_biomes <- function(folder = NULL, input_files = NULL, timespan = NULL,
                 "tree cover thresholds for woodland and savanna. Aborting."))
   }
 
-<<<<<<< HEAD
-  if (file.exists(output_files$grid)){
-    grid_ending <- tail(strsplit(output_files$grid,".", fixed = T)[[1]], n = 1)
-=======
   # test if savanna proxy is valid
-  match.arg(savannaProxy, c("vegc", "natLAI"))
+  match.arg(savanna_proxy, c("vegc", "natLAI"))
 
-  if (!readOutput) {
-    #process grid
-    lpjml_grid  <- rbind(data$lon,data$lat)
-
-    # process foliage projected cover (fpc)
-    fpc <- data$fpc
-    di <- dim(fpc)
-    npft <- di[2] - 1
-    ncell <- di[1]
-
-    if (!is.null(savannaProxy)) {
-      if (savannaProxy == "vegc") {
-        # process vegetation carbon output
-        vegc <- data$vegc
-      }else if (savannaProxy == "natLAI") {
-        # process pft_lai input
-        pft_lai <- data$pft_lai
-      }
-    }
-    # process temperature input
-    temp <- data$temp
-
-    # process elevation input
-    if (montaneArcticProxy == "elevation") {
-      elevation <- data$elevation
-    }
-  }else{ # read in output
-
-    grid_ending <- tail(strsplit(files$grid,".", fixed = T)[[1]], n = 1)
->>>>>>> cbef0b514124d1f6a551c72e8935d071ac7a3350
+  if (file.exists(output_files$grid)) {
+    grid_ending <- tail(strsplit(output_files$grid,".", fixed = T)[[1]], n = 1)
     if (grid_ending %in% c("bin","clm","raw")) {
       grid <- lpjmliotools::autoReadMetaOutput(metaFile = paste0(folder,"/",files$grid,".json"))
       ncell <- length(grid)/2
@@ -195,19 +157,12 @@ classify_biomes <- function(folder = NULL, input_files = NULL, timespan = NULL,
     }
     di <- dim(fpc)
     npft <- di[2] - 1
-<<<<<<< HEAD
 
-    if (savanna_proxy == "vegc") {
-      vegc_ending <- tail(strsplit(files$vegc,".", fixed = T)[[1]], n = 1)
-      if (vegc_ending %in% c("bin","clm","raw")) {
-        vegc <- apply(lpjmliotools::autoReadMetaOutput(
-=======
-    if (!is.null(savannaProxy)) {
-      if (savannaProxy == "vegc") {
+    if (!is.null(savanna_proxy)) {
+      if (savanna_proxy == "vegc") {
         vegc_ending <- tail(strsplit(files$vegc,".", fixed = T)[[1]], n = 1)
         if (vegc_ending %in% c("bin","clm","raw")) {
           vegc <- apply(lpjmliotools::autoReadMetaOutput(
->>>>>>> cbef0b514124d1f6a551c72e8935d071ac7a3350
                     metaFile = paste0(folder,"/",files$vegc,".json"),
                     getyearstart = timespan[1], getyearstop = timespan[2]),
                       c(1,2),mean)
@@ -216,7 +171,7 @@ classify_biomes <- function(folder = NULL, input_files = NULL, timespan = NULL,
         }else{
           stop(paste0("Unknown file ending (",vegc_ending,"). Aborting."))
         }
-      } else if (savannaProxy == "natLAI") {
+      } else if (savanna_proxy == "natLAI") {
         pft_lai_ending <- tail(strsplit(files$pft_lai,".", fixed = T)[[1]], n = 1)
         if (pft_lai_ending %in% c("bin","clm","raw")) {
           pft_lai <- apply(lpjmliotools::autoReadMetaOutput(
@@ -231,15 +186,9 @@ classify_biomes <- function(folder = NULL, input_files = NULL, timespan = NULL,
       }
     }
 
-<<<<<<< HEAD
     if (montane_arctic_proxy == "elevation") {
         elevation <- lpjmliotools::autoReadInput(inFile = input_files$elevation)[1,]
         #plotGlobalWlin(data = elevation,file = "/home/stenzel/elevation.png",title = "",max = 6000,min=-100,legYes = T,legendtitle = "",eps = F)
-=======
-    if (montaneArcticProxy == "elevation") {
-      elevation <- lpjmliotools::autoReadInput(inFile = elevationInput)[1,]
-      #plotGlobalWlin(data = elevation,file = "/home/stenzel/elevation.png",title = "",max = 6000,min=-100,legYes = T,legendtitle = "",eps = F)
->>>>>>> cbef0b514124d1f6a551c72e8935d071ac7a3350
     }
 
     temp_ending <- tail(strsplit(files$temp,".", fixed = T)[[1]], n = 1)
@@ -253,26 +202,8 @@ classify_biomes <- function(folder = NULL, input_files = NULL, timespan = NULL,
     }else{
       stop(paste0("Unknown file ending (",temp_ending,"). Aborting."))
     }
-<<<<<<< HEAD
-
-    if (savanna_proxy == "natLAI") {
-      pft_lai_ending <- tail(strsplit(files$pft_lai,".", fixed = T)[[1]], n = 1)
-      if (pft_lai_ending %in% c("bin","clm","raw")) {
-        pft_lai <- apply(lpjmliotools::autoReadMetaOutput(
-                         metaFile = paste0(folder,"/",files$pft_lai,".json"),
-                         getyearstart = timespan[1], getyearstop = timespan[2]),
-                         c(1,2),mean)
-      }else if (pft_lai_ending %in% c("nc","cdf")) {
-        pft_lai <- lpjmliotools::netcdfCFT2lpjarray(ncInFile = files$pft_lai, var = "LAI", lon = lon, lat = lat)
-      }else{
-        stop(paste0("Unknown file ending (",pft_lai_ending,"). Aborting."))
-      }
-    }
 
 
-=======
-  }
->>>>>>> cbef0b514124d1f6a551c72e8935d071ac7a3350
 
   # biome_names after biome classification in Ostberg et al. 2013
   # (https://doi.org/10.5194/esd-4-347-2013), Ostberg et al 2015
@@ -369,18 +300,12 @@ classify_biomes <- function(folder = NULL, input_files = NULL, timespan = NULL,
   dimnames(fpc) <- list(cell = seq_len(ncell),
                         band = fpc_names)
 
-<<<<<<< HEAD
-  if (savanna_proxy == "vegc") {
-    # process vegetation carbon output
-    dim(vegc) <- c(cell = ncell)
-    dimnames(vegc) <- list(cell = seq_len(ncell))
-=======
-  if (!is.null(savannaProxy)) {
-    if (savannaProxy == "vegc") {
+  if (!is.null(savanna_proxy)) {
+    if (savanna_proxy == "vegc") {
       # process vegetation carbon output
       dim(vegc) <- c(cell = ncell)
       dimnames(vegc) <- list(cell = seq_len(ncell))
-    } else if (savannaProxy == "natLAI") {
+    } else if (savanna_proxy == "natLAI") {
       # process pft_lai input
       di2 <- dim(pft_lai)
       dim(pft_lai) <- c(cell = di2[1],
@@ -388,25 +313,12 @@ classify_biomes <- function(folder = NULL, input_files = NULL, timespan = NULL,
       dimnames(pft_lai) <- list(cell = seq_len(di2[1]),
                               band = c(fpc_names[2:(npft + 1)],(npft + 1):di2[2]))
     }
->>>>>>> cbef0b514124d1f6a551c72e8935d071ac7a3350
   }
 
   # process temperature input
   dim(temp) <- c(cell = ncell)
   dimnames(temp) <- list(cell = seq_len(ncell))
 
-<<<<<<< HEAD
-  if (savanna_proxy == "natLAI") {
-    # process pft_lai input
-    di2 <- dim(pft_lai)
-    dim(pft_lai) <- c(cell = di2[1],
-                      band = di2[2])
-    dimnames(pft_lai) <- list(cell = seq_len(di2[1]),
-                              band = c(fpc_names[2:(npft + 1)],(npft + 1):di2[2]))
-  }
-
-=======
->>>>>>> cbef0b514124d1f6a551c72e8935d071ac7a3350
   # latitudes (same dimension for vectorized biome classification)
   latitudes <- array(
     subset_array(lpjml_grid, list(coordinate = "lat")),
@@ -478,28 +390,12 @@ classify_biomes <- function(folder = NULL, input_files = NULL, timespan = NULL,
   # )
   fpc_tree_broadleaf <- fpc_tree_total - fpc_tree_needle
 
-<<<<<<< HEAD
-  if (savanna_proxy == "natLAI") {
-    #prepare natLAI array
-    natLAI <- rowSums( pft_lai[,1:npft] * fpc[,2:(npft + 1)] * fpc[,1] )
-  }
-
-  # use vegc 7500 gC/m2 or natLAI 6 as proxy threshold for forest/savanna "boundary"
-  if (savanna_proxy == "vegc") {
-    is_tropical_proxy <- vegc >= vegc_threshold
-    is_savanna_proxy <- vegc < vegc_threshold
-  } else if (savanna_proxy == "natLAI") {
-    is_tropical_proxy <- natLAI >= lai_threshold
-    is_savanna_proxy <- natLAI < lai_threshold
-  } else {
-    stop(paste0("Unknown parameter savanna_proxy = ",savanna_proxy))
-=======
   # use vegc 7500 gC/m2 or natLAI 6 as proxy threshold for forest/savannah "boundary"
-  if (!is.null(savannaProxy)) {
-    if (savannaProxy == "vegc") {
+  if (!is.null(savanna_proxy)) {
+    if (savanna_proxy == "vegc") {
       is_tropical_proxy <- vegc >= vegc_threshold
       is_savannah_proxy <- vegc < vegc_threshold
-    } else if (savannaProxy == "natLAI") {
+    } else if (savanna_proxy == "natLAI") {
       #prepare natLAI array
       natLAI <- rowSums( pft_lai[,1:npft] * fpc[,2:(npft + 1)] * fpc[,1] )
       is_tropical_proxy <- natLAI >= lai_threshold
@@ -508,7 +404,6 @@ classify_biomes <- function(folder = NULL, input_files = NULL, timespan = NULL,
   } else {
     is_tropical_proxy <- rep(TRUE, ncell)
     is_savannah_proxy <- rep(FALSE, ncell)
->>>>>>> cbef0b514124d1f6a551c72e8935d071ac7a3350
   }
 
   # Desert
