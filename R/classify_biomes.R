@@ -22,8 +22,6 @@
 #' @param montane_arctic_proxy `list` with either "elevation" or "latitude" as
 #'        name/key and value in m for elevation (default 1000) and degree for
 #'        latitude (default would be 55), Set to `NULL` if no proxy is used.
-#' @param lai_threshold threshold for "natLAI" proxy (default: 6 m2/m2)
-#' @param vegc_threshold threshold for "vegc" proxy (default: 7500 gC/m2)
 #' @param tree_cover_thresholds list with minimum tree cover thresholds for
 #'        definition of forest, woodland, savanna and grassland. Only changes to
 #'        the default have to be included in the list, for the rest the default
