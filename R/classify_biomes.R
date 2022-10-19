@@ -656,7 +656,6 @@ classify_biomes <- function(path_data,
 }
 
 
-
 read_pft_categories <- function(file_path) {
   # read_delim, col_types = readr::cols(), delim = ";")to suppress messages
   readr::read_delim(file_path, col_types = readr::cols(), delim = ";") %>%
@@ -690,10 +689,7 @@ read_pft_categories <- function(file_path) {
                  values_drop_na = TRUE) %>%
     return()
 }
-´
 
-  # TODO: this has to be separated!
-  # process grid
 
 # bring in line dimnames from lpjmiotools with function
 fix_dimnames <- function(data,
