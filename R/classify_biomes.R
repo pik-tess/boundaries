@@ -15,11 +15,11 @@ require(lpjmliotools) # in at least version 0.2.17
 #'        differing from default, which is list(grid = "grid.bin", fpc = "fpc.bin",
 #'        vegc = "vegc.bin", pft_lai = "pft_lai.bin", temp = "temp.bin")
 #' @param input_files list containing additional input (!) files, not in the
-#'        folder, e.g. if temp was not written out:
-#'        list(grid=..., temp = ..., elevation = ...)
+#'        folder (grid, temp or elevation), grid, if netcdf output is used,
+#'        temp, if temp was not written out, and elevation, if this is used as
+#'        montane_arctic_proxy: list(grid=..., temp = ..., elevation = ...)
 #' @param file_ending replace default file ending. default: ".bin"
 #' @param timespan as c(startyear,stopyear) to use for averaging outputs over
-
 #' @param savanna_proxy "vegc", "natLAI" or NULL. Use vegetation carbon or LAI
 #'        in natural vegetation as a proxy threshold to distinguish forests and
 #'        savannahs. Set to NULL if no savanna proxy should be used
@@ -45,13 +45,9 @@ require(lpjmliotools) # in at least version 0.2.17
 #'        "tropical forest" = 0.6
 #'        "tropical woodland" = 0.3
 #'        "tropical savanna" = 0.1
-#' @param lpjGridHeaderSize header size for lpjml grid input (default: 43)
-#'        only required for nc input
-#' @param lpjCells number of grid cells in lpjml grid input (default: 67420)
-#'        only required for nc input
 #'
 #' @return list object containing biome_id (main biome per grid cell [dim=c(ncells)]),
-#' and list of respective biome_names[dim=c(nbiomes)]
+#' list of respective biome_names[dim=c(nbiomes)], shorter biome names and abbreviated biome names
 #'
 #' @examples
 #' \dontrun{
@@ -66,7 +62,7 @@ classify_biomes <- function(folder = NULL, input_files = NULL, timespan = NULL,
                    diff_output_files = NULL, savanna_proxy = "natLAI", file_ending = ".bin",
                    montane_arctic_proxy = "elevation", lai_threshold = 6,
                    elevation_threshold = 1000, vegc_threshold = 7500,
-                   latitude_threshold = 55, tree_cover_thresholds = list(),
+                   latitude_threshold = 55, tree_cover_thresholds = NULL,
                    lpjGridHeaderSize = 43, lpjCells = 67420) {
 
   require(lpjmliotools)
@@ -78,6 +74,13 @@ classify_biomes <- function(folder = NULL, input_files = NULL, timespan = NULL,
 
   if (!is.null(diff_output_files)) {
     overwrite <- match(names(diff_output_files), names(output_files))
+    if (any(is.na(overwrite))) {
+      stop(paste0(
+        names(diff_output_files)[which(is.na(overwrite))],
+        " is not valid. Please use a name of: ",
+        paste0(names(output_files), collapse = ", ")
+      ))
+    }
     output_files[c(overwrite)] <- diff_output_files
   }
 
@@ -95,15 +98,17 @@ classify_biomes <- function(folder = NULL, input_files = NULL, timespan = NULL,
 
   # replace default values by values defined in tree_cover_thresholds
   # parameter
-  overwrite <- match(names(tree_cover_thresholds), names(min_tree_cover))
-  if (any(is.na(overwrite))) {
-    stop(paste0(
-      names(tree_cover_thresholds)[which(is.na(overwrite))],
-      " is not valid. Please use a name of: ",
-      paste0(names(min_tree_cover), collapse = ", ")
-    ))
+  if (!is.null(tree_cover_thresholds)) {
+    overwrite <- match(names(tree_cover_thresholds), names(min_tree_cover))
+    if (any(is.na(overwrite))) {
+      stop(paste0(
+        names(tree_cover_thresholds)[which(is.na(overwrite))],
+        " is not valid. Please use a name of: ",
+        paste0(names(min_tree_cover), collapse = ", ")
+      ))
+    }
+    min_tree_cover[overwrite] <- tree_cover_thresholds
   }
-  min_tree_cover[overwrite] <- tree_cover_thresholds
 
   # test if forest threshold is always > woodland threshold > savanna threshold
   if (min_tree_cover[["temperate forest"]] <=
@@ -118,20 +123,21 @@ classify_biomes <- function(folder = NULL, input_files = NULL, timespan = NULL,
                 "tree cover thresholds for woodland and savanna. Aborting."))
   }
 
-  # test if savanna proxy is valid
+  # test if savanna proxy is valid -> otherwise stop
   match.arg(savanna_proxy, c("vegc", "natLAI"))
 
   if (file.exists(output_files$grid)) {
     grid_ending <- tail(strsplit(output_files$grid,".", fixed = T)[[1]], n = 1)
     if (grid_ending %in% c("bin","clm","raw")) {
-      grid <- lpjmliotools::autoReadMetaOutput(metaFile = paste0(folder,"/",files$grid,".json"))
+      grid <- lpjmliotools::autoReadMetaOutput(metaFile = paste0(folder,"/",output_files$grid,".json"))
       ncell <- length(grid)/2
       lon   <- grid[c(1:ncell)*2 - 1]
       lat   <- grid[c(1:ncell)*2]
     }else if (grid_ending %in% c("nc","cdf")) {
       print("Reading of netcdf output is still preliminary. Please specify LPJmL grid input.")
-      grid <- readGridInputBin(inFile = input_files$grid, headersize = lpjGridHeaderSize, ncells = lpjCells)
-
+      grid <- lpjmliotools::readGridInputBin(inFile = input_files$grid, headersize = lpjGridHeaderSize, ncells = lpjCells)
+      lon   <- grid[c(1:ncell)*2 - 1]
+      lat   <- grid[c(1:ncell)*2]
     }else{
       stop(paste0("Unknown file ending (",grid_ending,"). Aborting."))
     }
@@ -140,68 +146,132 @@ classify_biomes <- function(folder = NULL, input_files = NULL, timespan = NULL,
                  the specified input folder is correct. If your file names
                  differ from the default, please use diff_output_files to
                  specify them. "))
-
   }
-    lpjml_grid <- rbind(lon,lat)
 
-    fpc_ending <- tail(strsplit(files$fpc,".", fixed = T)[[1]], n = 1)
+  lpjml_grid <- rbind(lon,lat)
+
+  if (file.exists(output_files$fpc)) {
+    fpc_ending <- tail(strsplit(output_files$fpc,".", fixed = T)[[1]], n = 1)
     if (fpc_ending %in% c("bin","clm","raw")) {
       fpc <- apply(lpjmliotools::autoReadMetaOutput(
-                            metaFile = paste0(folder,"/",files$fpc,".json"),
-                            getyearstart = timespan[1], getyearstop = timespan[2]),
-                            c(1,2),mean)
+        metaFile = paste0(folder,"/",output_files$fpc,".json"),
+        getyearstart = timespan[1], getyearstop = timespan[2]),
+        c(1,2),mean)
     }else if (fpc_ending %in% c("nc","cdf")) {
-      fpc <- lpjmliotools::netcdfCFT2lpjarray(ncInFile = files$fpc, var = "FPC", lon = lon, lat = lat)
+      fpc <- lpjmliotools::netcdfCFT2lpjarray(ncInFile = output_files$fpc, var = "FPC", lon = lon, lat = lat)
     }else{
       stop(paste0("Unknown file ending (",fpc_ending,"). Aborting."))
     }
     di <- dim(fpc)
     npft <- di[2] - 1
+  }else{
+    stop(paste0("Output file ",output_files$fpc, " does not exist. Make sure
+                 the specified input folder is correct. If your file names
+                 differ from the default, please use diff_output_files to
+                 specify them. "))
+  }
 
-    if (!is.null(savanna_proxy)) {
-      if (savanna_proxy == "vegc") {
-        vegc_ending <- tail(strsplit(files$vegc,".", fixed = T)[[1]], n = 1)
+  if (!is.null(savanna_proxy)) {
+    if (savanna_proxy == "vegc") {
+      if (file.exists(output_files$vegc)) {
+        vegc_ending <- tail(strsplit(output_files$vegc,".", fixed = T)[[1]], n = 1)
         if (vegc_ending %in% c("bin","clm","raw")) {
           vegc <- apply(lpjmliotools::autoReadMetaOutput(
-                    metaFile = paste0(folder,"/",files$vegc,".json"),
-                    getyearstart = timespan[1], getyearstop = timespan[2]),
-                      c(1,2),mean)
+            metaFile = paste0(folder,"/",output_files$vegc,".json"),
+            getyearstart = timespan[1], getyearstop = timespan[2]),
+            c(1,2),mean)
         }else if (vegc_ending %in% c("nc","cdf")) {
-          vegc <- lpjmliotools::netcdfCFT2lpjarray(ncInFile = files$vegc, var = "VegC", lon = lon, lat = lat)
+          vegc <- lpjmliotools::netcdfCFT2lpjarray(ncInFile = output_files$vegc, var = "VegC", lon = lon, lat = lat)
         }else{
           stop(paste0("Unknown file ending (",vegc_ending,"). Aborting."))
         }
-      } else if (savanna_proxy == "natLAI") {
-        pft_lai_ending <- tail(strsplit(files$pft_lai,".", fixed = T)[[1]], n = 1)
+    }else{
+      stop(paste0("Output file ",output_files$vegc, " does not exist. Make sure
+                 the specified input folder is correct. If your file names
+                 differ from the default, please use diff_output_files to
+                 specify them. "))
+    }
+    } else if (savanna_proxy == "natLAI") {
+      if (file.exists(output_files$pft_lai)) {
+        pft_lai_ending <- tail(strsplit(output_files$pft_lai,".", fixed = T)[[1]], n = 1)
         if (pft_lai_ending %in% c("bin","clm","raw")) {
           pft_lai <- apply(lpjmliotools::autoReadMetaOutput(
-                         metaFile = paste0(folder,"/",files$pft_lai,".json"),
-                         getyearstart = timespan[1], getyearstop = timespan[2]),
-                         c(1,2),mean)
+            metaFile = paste0(folder,"/",output_files$pft_lai,".json"),
+            getyearstart = timespan[1], getyearstop = timespan[2]),
+            c(1,2),mean)
         }else if (pft_lai_ending %in% c("nc","cdf")) {
-          pft_lai <- lpjmliotools::netcdfCFT2lpjarray(ncInFile = files$pft_lai, var = "LAI", lon = lon, lat = lat)
+          pft_lai <- lpjmliotools::netcdfCFT2lpjarray(ncInFile = output_files$pft_lai, var = "LAI", lon = lon, lat = lat)
         }else{
           stop(paste0("Unknown file ending (",pft_lai_ending,"). Aborting."))
         }
+      }else{
+        stop(paste0("Output file ",output_files$pft_lai, " does not exist. Make sure
+                 the specified input folder is correct. If your file names
+                 differ from the default, please use diff_output_files to
+                 specify them. "))
       }
     }
-
-    if (montane_arctic_proxy == "elevation") {
-        elevation <- lpjmliotools::autoReadInput(inFile = input_files$elevation)[1,]
-        #plotGlobalWlin(data = elevation,file = "/home/stenzel/elevation.png",title = "",max = 6000,min=-100,legYes = T,legendtitle = "",eps = F)
+  }
+(
+  if (montane_arctic_proxy == "elevation") {
+    if (is.null(input_files$elevation)){
+      stop("Please specify elevation input as input_files$elevation")
     }
-
-    temp_ending <- tail(strsplit(files$temp,".", fixed = T)[[1]], n = 1)
-    if (temp_ending %in% c("bin","clm","raw")) {
-      temp <- apply(lpjmliotools::autoReadMetaOutput(
-                    metaFile = paste0(folder,"/",files$temp,".json"),
-                    getyearstart = timespan[1], getyearstop = timespan[2]),
-                    c(1,2),mean)
-    }else if (temp_ending %in% c("nc","cdf")) {
-      temp <- lpjmliotools::netcdfCFT2lpjarray(ncInFile = files$temp, var = "temp", lon = lon, lat = lat)
+    if (file.exists(input_files$elevation)) {
+      elevation <- lpjmliotools::autoReadInput(inFile = input_files$elevation)[1,]
     }else{
-      stop(paste0("Unknown file ending (",temp_ending,"). Aborting."))
+      stop(paste0("Output file ",input_files$elevation, " does not exist. Make sure
+                   the specified input folder is correct. If your file names
+                   differ from the default, please use diff_output_files to
+                   specify them. "))
     }
+    #plotGlobalWlin(data = elevation,file = "/home/stenzel/elevation.png",title = "",max = 6000,min=-100,legYes = T,legendtitle = "",eps = F)
+  }
+
+  if (is.null(input_files$temp) && is.null(output_files$temp)){
+    stop("Please specify temperature either as input_files$temp or output_files$temp")
+  }else if (!is.null(input_files$temp) && !is.null(output_files$temp)) {
+    print("Temperature defined as both input_files$temp and output_files$temp.")
+  }
+  if (!is.null(input_files$temp)) {
+    if (file.exists(input_files$temp)) {
+      temp_ending <- tail(strsplit(input_files$temp,".", fixed = T)[[1]], n = 1)
+      if (temp_ending %in% c("bin","clm","raw")) {
+        temp <- apply(lpjmliotools::autoReadInput(inFile = input_files$temp,
+                      getyearstart = timespan[1], getyearstop = timespan[2])[1,],
+          c(1,2),mean)
+      }else if (temp_ending %in% c("nc","cdf")) {
+        temp <- lpjmliotools::netcdfCFT2lpjarray(ncInFile = output_files$temp, var = "temp", lon = lon, lat = lat)
+      }else{
+        stop(paste0("Unknown file ending (",temp_ending,"). Aborting."))
+      }
+    } else {
+      stop(paste0("Temperate input file ",input_files$temp, " does not exist.
+                   Make sure the specified input folder is correct. If your file
+                   names differ from the default, please use diff_output_files to
+                   specify them."))
+    }
+  } else { # using output_files
+    if (file.exists(input_files$temp)) {
+      temp_ending <- tail(strsplit(output_files$temp,".", fixed = T)[[1]], n = 1)
+      if (temp_ending %in% c("bin","clm","raw")) {
+        temp <- apply(lpjmliotools::autoReadMetaOutput(
+          metaFile = paste0(folder,"/",output_files$temp,".json"),
+          getyearstart = timespan[1], getyearstop = timespan[2]),
+          c(1,2),mean)
+      }else if (temp_ending %in% c("nc","cdf")) {
+        temp <- lpjmliotools::netcdfCFT2lpjarray(ncInFile = output_files$temp, var = "temp", lon = lon, lat = lat)
+      }else{
+        stop(paste0("Unknown file ending (",temp_ending,"). Aborting."))
+      }
+    } else {
+      stop(paste0("Temperate input file ",input_files$temp, " does not exist.
+                   Make sure the specified input folder is correct. If your file
+                   names differ from the default, please use diff_output_files to
+                   specify them."))
+    }
+  }
+
 
 
 
