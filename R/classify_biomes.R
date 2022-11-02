@@ -36,10 +36,12 @@
 #' @param avg_nyear_args list of arguments to be passed to
 #'        \link[pbfunctions]{average_nyear_window} (see for more info). To be used for # nolint
 #'        time series analysis
-#' @param lpjml_header_size header size for lpjml grid input (default: 43) # todo replace with header info list
-#'        only required for nc input
-#' @param lpjml_ncell number of grid cells in lpjml grid input (default: 67420)
-#'        only required for nc input
+#' @param read_details list of arguments for reading input/output. only required
+#'        for:
+#'        nc output: specification of header_size_grid and ncell to read in
+#'                   lpjml grid input
+#'        raw/clm output: specification of header_size, ncell, firstyear and 
+#'                   fpc_nbands (12 or 10)
 #' @return list object containing biome_id (main biome per grid cell [dim=c(ncells)]), # nolint
 #' and list of respective biome_names[dim=c(nbiomes)]
 #'
@@ -60,8 +62,10 @@ classify_biomes <- function(path_data,
                             montane_arctic_proxy = list(elevation = 1000),
                             tree_cover_thresholds = list(),
                             avg_nyear_args = list(), # currently a place holder
-                            lpjml_header_size = 43,
-                            lpjml_ncell = 67420) {
+                            read_details = list(
+                              header_size_grid = 43, header_size = 0,
+                              ncell = 67420, firstyear = 1901, fpc_nbands = 12
+                            )) {
 
 
   file_extension <- switch(file_type,
@@ -130,6 +134,7 @@ classify_biomes <- function(path_data,
 
   # test if provided proxies are valid
   savanna_proxy_name <- match.arg(names(savanna_proxy), c("vegc", "pft_lai"))
+  # TODO handle NULL case (= no savanna proxy)
   montane_arctic_proxy_name <- match.arg(names(montane_arctic_proxy),
                                          c("elevation", "latitude"))
 
@@ -144,11 +149,19 @@ classify_biomes <- function(path_data,
     # if nc output is defined, we need an lpjml grid to convert to 
     # the correct array size, this needs to be given in input_files$grid
     message("Reading of netcdf output is still preliminary. Please specify LPJmL grid input.") # nolint
-    grid <- readGridInputBin(inFile = input_files$grid,
-                             headersize = lpjml_header_size,
-                             ncells = lpjml_ncell)
+    grid <- lpjmliotools::readGridInputBin(inFile = input_files$grid,
+                             headersize = read_details$header_size_grid,
+                             ncells = read_details$ncell)
+    lon <- grid$lon
+    lat <- grid$lat
+    ncell <- length(grid$lon)
   } else if (file.exists(output_files$grid) && file_type %in% c("raw", "clm")) {
-      # TODO: implement raw, clm grid handling
+    grid <- lpjmliotools::readGridOutputBin(inFile = output_files$grid,
+                                            headersize = read_details$header_size_grid, #nolint
+                                            ncells = read_details$ncell)
+    lon <- grid$lon
+    lat <- grid$lat
+    ncell <- length(grid$lon)
   } else {
     stop(paste0("Output file ",
                 output_files$grid,
@@ -190,16 +203,63 @@ classify_biomes <- function(path_data,
       lon = lon,
       lat = lat
       )
-    if (!is.null(savanna_proxy_name)) {
+    if (savanna_proxy_name == "vegc") {
       savanna_proxy_data <- lpjmliotools::netcdfCFT2lpjarray(
         ncInFile = files$vegc,
         var = "VegC",
         lon = lon,
         lat = lat
       )
+    } else if (savanna_proxy_name == "pft_lai") {
+      fpc <- lpjmliotools::netcdfCFT2lpjarray(
+        ncInFile = output_files$pft_lai,
+        var = "pft_lai", # TODO: check if name is correct
+        lon = lon,
+        lat = lat
+      )
     }
   } else if (file_type %in% c("raw", "clm")) {
-    # TODO: implement raw, clm grid handling
+    fpc <- lpjmliotools::readCFToutput(inFile = output_files$fpc,
+                                      startyear = read_details$firstyear,
+                                      stopyear = timeframe[2],
+                                      size = 4, #TODO add parameter in function?
+                                      headersize = read_details$header_size,
+                                      getyearstart = timeframe[1],
+                                      getyearstop = timeframe[2],
+                                      ncells = read_details$ncell,
+                                      bands = read_details$fpc_nbands)
+    # TODO specify dimnames
+    if (file.exists(output_files$temp)) {
+      temp <- lpjmliotools::readDaily(inFile = output_files$temp,
+                                      startyear = read_details$firstyear,
+                                      stopyear = timeframe[2],
+                                      size = 4,
+                                      headersize = read_details$header_size,
+                                      getyearstart = timeframe[1],
+                                      getyearstop = timeframe[2],
+                                      ncells = read_details$ncell)
+    }
+    if (savanna_proxy_name == "vegc") {
+      savanna_proxy_data <- lpjmliotools::readYearly(inFile = output_files$vegc,
+                                      startyear = read_details$firstyear,
+                                      stopyear = timeframe[2],
+                                      size = 4,
+                                      headersize = read_details$header_size,
+                                      getyearstart = timeframe[1],
+                                      getyearstop = timeframe[2],
+                                      ncells = read_details$ncell)
+    } else if (savanna_proxy_name == "pft_lai") {
+      savanna_proxy_data <- lpjmliotools::readCFToutput(inFile = output_files$pft_lai, #nolint
+                                      startyear = read_details$firstyear,
+                                      stopyear = timeframe[2],
+                                      size = 4,
+                                      headersize = read_details$header_size,
+                                      getyearstart = timeframe[1],
+                                      getyearstop = timeframe[2],
+                                      ncells = read_details$ncell,
+                                      fpc_nbands = c(read_details$fpc_nbands -
+                                                     1 + 16 * 2))
+    }
   } else {
       stop(paste0("Unknown file ending (",
                   fpc_ending,
@@ -376,7 +436,7 @@ classify_biomes <- function(path_data,
   # use vegc 7500 gC/m2 or natLAI 6 as proxy threshold for forest/savanna
   #   "boundary
   if (!is.null(savanna_proxy)) {
-    if (savanna_proxy == "natLAI") {
+    if (savanna_proxy_name == "pft_lai") {
       # TODO: dynamic subsetting
       avg_savanna_proxy_data <- rowSums(
         avg_savanna_proxy_data[, 1:npft] * avg_fpc[, 2:(npft + 1)] * avg_fpc[, 1] # nolint
