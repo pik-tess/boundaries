@@ -268,6 +268,14 @@ classify_biomes <- function(path_data,
                   fpc_ending,
                   "). Aborting."))
   }
+
+  if (!is.null(input_files$temp)) {
+    temp <- lpjmliotools::autoReadInput(inFile = input_files$temp,
+                        getyearstart = timespan[1], getyearstop = timespan[2])
+    # monthly temperature
+    # TODO has to be processed to yearly?
+  }
+
   if(!file_type %in% c("raw", "clm")) {
     fpc_nbands <- dim(fpc)[["nbands"]]
   }
@@ -289,7 +297,7 @@ classify_biomes <- function(path_data,
     )
   }
 
-  # average fpc
+  # average temp
   avg_temp %<-% do.call(
     average_nyear_window,
     append(list(x = fix_dimnames(temp, "temp", ncell, npft)),
