@@ -778,19 +778,24 @@ fix_dimnames <- function(data,
   } else if (name == "fpc") {
     # process foliage projected cover (fpc)
     dim(data) <- c(cell = ncell,
-                   band = npft + 1)
+                   band = npft + 1,
+                   year = length(timespan[1]:timespan[2]))
     dimnames(data) <- list(cell = seq_len(ncell),
-                           band = fpc_names)
-  } else if (name == "vegc" || name == "temp" ){
-      dim(data) <- c(cell = ncell)
-      dimnames(data) <- list(cell = seq_len(ncell))
-  } else if (name == "pft_lai"){
+                           band = fpc_names,
+                           year = c(timespan[1]:timespan[2]))
+  } else if (name == "vegc" || name == "temp" ) {
+      dim(data) <- c(cell = ncell,  year = length(timespan[1]:timespan[2]))
+      dimnames(data) <- list(cell = seq_len(ncell),
+                             year = c(timespan[1]:timespan[2]))
+  } else if (name == "pft_lai") {
       # process pft_lai input
       pre_dims <- dim(pft_lai)
       dim(data) <- c(cell = pre_dims[1],
-                     band = pre_dims[2])
+                     band = pre_dims[2],
+                     year = length(timespan[1]:timespan[2]))
       dimnames(data) <- list(cell = seq_len(pre_dims[1]),
-                             band = c(fpc_names[2:(npft + 1)],(npft + 1):pre_dims[2]))
+                             band = c(fpc_names[2:(npft + 1)],(npft + 1):pre_dims[2]),
+                             year = c(timespan[1]:timespan[2]))
   }
   return(data)
 }
