@@ -178,7 +178,7 @@ classify_biomes <- function(path_data,
       getyearstart = timespan[1],
       getyearstop = timespan[2]
     )
-    if (file.exists(output_files$temp & is.null(input_files$temp))) {
+    if (file.exists(output_files$temp) && is.null(input_files$temp)) {
       temp <- lpjmliotools::autoReadMetaOutput(
         metaFile = output_files$temp,
         getyearstart = timespan[1],
@@ -199,7 +199,7 @@ classify_biomes <- function(path_data,
       lon = lon,
       lat = lat
     )
-    if (file.exists(output_files$temp & is.null(input_files$temp))) {
+    if (file.exists(output_files$temp) && is.null(input_files$temp)) {
       temp <- lpjmliotools::netcdfCFT2lpjarray(
         ncInFile = output_files$temp,
         var = "temp",
@@ -232,7 +232,7 @@ classify_biomes <- function(path_data,
                                       getyearstop = timespan[2],
                                       ncells = read_args$ncell,
                                       bands = read_args$fpc_nbands)
-    if (file.exists(output_files$temp) & is.null(input_files$temp)) {
+    if (file.exists(output_files$temp) && is.null(input_files$temp)) {
       temp <- lpjmliotools::readDaily(inFile = output_files$temp,
                                       startyear = read_args$firstyear,
                                       stopyear = timespan[2],
