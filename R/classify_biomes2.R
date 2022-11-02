@@ -19,7 +19,7 @@
 #'
 #' @md
 #' @export
-classify_biomes <- function(path_data,
+classify_biomes2 <- function(path_data,
                             time_span = c(1982, 2011),
                             vegc_proxy = TRUE,
                             avg_nyear_args = list(),
