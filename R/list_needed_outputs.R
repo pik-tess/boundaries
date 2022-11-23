@@ -7,7 +7,8 @@
 #' the computation of the metrics M-COL, M-ECO, the biome classification
 #' and/or planetary boundary calculations
 #'
-#' @param metric string: which metric? "meco", "mcol", "biome", "all_pbs",
+#' @param metric string/list of strings, containing name of metric to get
+#'        required outputs for. Pick from "meco", "mcol", "biome", "all_pbs",
 #'               "pb_n", "pb_w", "pb_b", "pb_lsc", "all" (default)
 #'
 #' @param withNitrogen logical: include nitrogen outputs? default: TRUE
@@ -19,12 +20,14 @@
 #'
 #' }
 #' @export
-list_needed_outputs <- function(metric="all", with_nitrogen = TRUE) {
+list_needed_outputs <- function(metric = "all", with_nitrogen = TRUE) {
 
   optional_metrics <- c("meco", "mcol", "biome", "all_pbs", "pb_n",
                         "pb_w", "pb_b", "pb_lsc", "all")
-  metrics <- match.arg(metric, optional_metrics)
-
+  notin <- metric[!metric %in% optional_metrics]
+  if (length(notin) > 0) {
+    stop(paste("Metrics not available:", notin, collapse = ", "))
+  }
   varsGAMMA <- c("grid", "fpc", "fpc_bft", "cftfrac", "firec", "rh_harvest",
                  "npp", "runoff", "transp", "vegc", "firef", "rh", "harvestc",
                  "evap", "interc", "soilc", "litc", "swc")
@@ -39,38 +42,49 @@ list_needed_outputs <- function(metric="all", with_nitrogen = TRUE) {
   vars_pb_lsc <- varsBiome
   vars_pb_b <- c()
 
-  if (metric == "all") {
+  outs <- c()
+  tsteps <- c() # todo: add timestep functionality - needs to be clever
+
+  if ("all" %in% metric) {
     if (with_nitrogen) {
-      return(unique(sort(c(varsGAMMA, varsGAMMAnitrogen, varsHANPP, varsBiome,
-                           vars_pb_n, vars_pb_w, vars_pb_lsc, vars_pb_b))))
+      outs <- c(outs,varsGAMMA, varsGAMMAnitrogen, varsHANPP, varsBiome,
+                           vars_pb_n, vars_pb_w, vars_pb_lsc, vars_pb_b)
     } else {
-      return(unique(sort(c(varsGAMMA, varsHANPP, varsBiome, vars_pb_w,
-                           vars_pb_lsc, vars_pb_b))))
+      outs <- c(outs,varsGAMMA, varsHANPP, varsBiome, vars_pb_w, vars_pb_lsc,
+                vars_pb_b)
     }
-  } else if (metric == "meco") {
-    if (with_nitrogen) {
-      return(unique(sort(c(varsGAMMA, varsGAMMAnitrogen))))
-    } else {
-      return(unique(sort(varsGAMMA)))
-    }
-  } else if (metric == "biome") {
-    return(unique(sort(varsBiome)))
-  } else if (metric == "mcol") {
-    return(unique(sort(varsHANPP)))
-  } else if (metric == "all_pbs") {
-    if (with_nitrogen) {
-      return(unique(sort(varsBiome, vars_pb_n, vars_pb_w, vars_pb_lsc,
-                         vars_pb_b)))
-    } else {
-      return(unique(sort(varsBiome, vars_pb_w, vars_pb_lsc, vars_pb_b)))
-    }
-  } else if (metric == "pb_n") {
-    return(unique(sort(vars_pb_n)))
-  } else if (metric == "pb_w") {
-    return(unique(sort(vars_pb_w)))
-  } else if (metric == "pb_lsc") {
-    return(unique(sort(vars_pb_lsc)))
-  } else if (metric == "pb_b") {
-    return(unique(sort(vars_pb_b)))
   }
+  if ("meco" %in% metric) {
+    if (with_nitrogen) {
+      outs <- c(outs,varsGAMMA, varsGAMMAnitrogen)
+    } else {
+      outs <- c(outs,varsGAMMA)
+    }
+  }
+  if ("biome" %in% metric) {
+    outs <- c(outs,varsBiome)
+  }
+  if ("mcol" %in% metric) {
+    outs <- c(outs,varsHANPP)
+  }
+  if ("all_pbs" %in% metric) {
+    if (with_nitrogen) {
+      outs <- c(outs,varsBiome, vars_pb_n, vars_pb_w, vars_pb_lsc, vars_pb_b)
+    } else {
+      outs <- c(outs,varsBiome, vars_pb_w, vars_pb_lsc, vars_pb_b)
+    }
+  }
+  if ("pb_n" %in% metric) {
+    outs <- c(outs,vars_pb_n)
+  }
+  if ("pb_w" %in% metric) {
+    outs <- c(outs,vars_pb_w)
+  }
+  if ("pb_lsc" %in% metric) {
+    outs <- c(outs,vars_pb_lsc)
+  }
+  if ("pb_b" %in% metric ) {
+    outs <- c(outs,vars_pb_b)
+  }
+  return(list(outputs = unique(sort(outs)), timesteps = tsteps))
 }

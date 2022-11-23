@@ -171,9 +171,9 @@ calcGamma <- function(folderRef, folderRef2 = NULL, folderScen, readPreviouslySa
    # calc total gamma as the average of the 4 components
    gammaFull <- (delta + lc + gc + eb)/4 #check for NAs
    #
-   ###
-   gamma = expression(gamma, deltav, local, global, balance,
-                      cstocks, cfluxes, wfluxes, nstocks, nfluxes)
+   ### FS: 2022-11-09 removed
+   #gamma = expression(gamma, deltav, local, global, balance,
+   #                  cstocks, cfluxes, wfluxes, nstocks, nfluxes)
    if (nitrogen) {
      gamma <- list(gamma_total = gammaFull, deltaV = delta, local_change = lc, global_change = gc, ecosystem_balance = eb,
                    carbon_stocks = cs, carbon_fluxes = cf, water_fluxes = wf, nitrogen_stocks = ns, nitrogen_fluxes = nf)
@@ -1278,7 +1278,8 @@ evaluateGamma <- function(dataFileIn, dataFileOut, temperature, pft_lai, elevati
   data_bc <- list(lat = lat, lon = lon, fpc = apply(fpc_ref, c(1,2), mean),
                   vegc = mean_state_ref[,8],temp = temperature,
                   pft_lai = pft_lai, elevation = elevation)
-  biome_classes <- classify_biomes(data = data_bc, readOutput = F)
+
+  biome_classes <- NULL # todo: replace with new cb function classify_biomes(data = data_bc, readOutput = F)
   ref_cells <- which(biome_classes$biome_id == refBiom)
 
   # first set all scen vars to the ref vars
@@ -1342,7 +1343,7 @@ gammaCrossTable <- function(dataFileIn, dataFileOut, temperature, pft_lai, eleva
   data_bc <- list(lat = lat, lon = lon, fpc = apply(fpc_ref, c(1,2), mean),
                   vegc = mean_state_ref[,8],temp = temperature,
                   pft_lai = pft_lai, elevation = elevation)
-  biome_classes <- classify_biomes(data = data_bc, readOutput = F)
+  biome_classes <- NULL # todo: replace with new cb function classify_biomes(data = data_bc, readOutput = F)
 
   #save scenario state vectors, they contain relevant data (ref can go)
   state_scen_sav <- state_scen
