@@ -1772,6 +1772,23 @@ plotGammaRadial4 <- function(data, biomeNames, file, eps = FALSE, quantile=T) {
   dev.off()
 }
 
+#' Plot radial gamma plot to file with 4/16 biomes
+#'
+#' Function to plot an aggregated radial status of gamma values [0-1]
+#' for the different sub-categories to file
+#'
+#' @param data gamma data array c(4[biomes],[ngammacomponents],3[min,median,max])
+#' @param file to write into
+#' @param title character string title for plot
+#' @param eps write as eps or png
+#'
+#' @return None
+#'
+#' @examples
+#' \dontrun{
+#'
+#' }
+#' @export
 plotBiomesToScreen <- function(biome_ids, biome_class_names, title,
                                titleSize = 2, legYes = T, leg_scale = 0.5) {
    require(raster)
@@ -1801,6 +1818,23 @@ plotBiomesToScreen <- function(biome_ids, biome_class_names, title,
    maps::map('world', add = TRUE, res = 0.4, lwd = 0.25, ylim = c(-60,90))
 }
 
+#' Plot radial gamma plot to file with 4/16 biomes
+#'
+#' Function to plot an aggregated radial status of gamma values [0-1]
+#' for the different sub-categories to file
+#'
+#' @param data gamma data array c(4[biomes],[ngammacomponents],3[min,median,max])
+#' @param file to write into
+#' @param title character string title for plot
+#' @param eps write as eps or png
+#'
+#' @return None
+#'
+#' @examples
+#' \dontrun{
+#'
+#' }
+#' @export
 plotBiomes <- function(biome_ids, biome_class_names, file, title, titleSize = 2,
                        legYes = T, leg_scale = 1, eps = FALSE) {
    #---- plotting ----------------------------------------------------------------#
@@ -1816,15 +1850,26 @@ plotBiomes <- function(biome_ids, biome_class_names, file, title, titleSize = 2,
    dev.off()
 }
 
+#' Plot radial gamma plot to file with 4/16 biomes
+#'
+#' Function to plot an aggregated radial status of gamma values [0-1]
+#' for the different sub-categories to file
+#'
+#' @param data input data with dimension c(nbiome_classes,3) -- Q10,Q50,Q90 each
+#' @param biome_class_names to write into
+#' @param title character string title for plot
+#' @param titleSize character string title for plot
+#' @param leg_scale character string title for plot
+#'
+#' @return None
+#'
+#' @examples
+#' \dontrun{
+#'
+#' }
+#' @export
 plotBiomesAveragesToScreen <- function(data, biome_class_names, title,
                                titleSize = 2, leg_scale = 0.5) {
-  #' @param data input data with dimension c(nbiome_classes,3) 3 -> c(Q10,Q50,Q90)
-  #' @param biome_class_names
-  #' @param title
-  #' @param titleSize
-  #' @param legYes
-  #' @param leg_scale
-
   require(raster)
   require(RColorBrewer)
   #---- setting up colors and biome names ----------------------------------------------------------------#
@@ -1839,7 +1884,27 @@ plotBiomesAveragesToScreen <- function(data, biome_class_names, title,
   legend(x = 0, y = 1, legend = biome_class_names, fill = palette[colIndex], col = palette[colIndex],border = palette[colIndex], cex = leg_scale, bg = "white", bty = "o")
 }
 
-plotBiomesAverage <- function(data, biome_class_names, file, title, titleSize = 2,
+#' Plot radial gamma plot to file with 4/16 biomes
+#'
+#' Function to plot an aggregated radial status of gamma values [0-1]
+#' for the different sub-categories to file
+#'
+#' @param data gamma data array c(4[biomes],[ngammacomponents],3[min,median,max])
+#' @param file to write into
+#' @param biome_class_names to write into
+#' @param title character string title for plot
+#' @param titleSize character string title for plot
+#' @param leg_scale character string title for plot
+#' @param eps write as eps or png
+#'
+#' @return None
+#'
+#' @examples
+#' \dontrun{
+#'
+#' }
+#' @export
+plotBiomesAverage <- function(data, file, biome_class_names, title, titleSize = 2,
                       leg_scale = 1, eps = FALSE) {
   #---- plotting ----------------------------------------------------------------#
   if (eps) {
@@ -1854,7 +1919,22 @@ plotBiomesAverage <- function(data, biome_class_names, file, title, titleSize = 
   dev.off()
 }
 
-plotGammaCrossTableToScreen <- function(data, lmar=3) {
+#' Plot crosstable showing (dis-)similarity between average biome pixels
+#'
+#' Function to plot a crosstable showing (dis-)similarity between average
+#' biome pixels based on M-ECO (former Gamma) metric from LPJmL simulations
+#'
+#' @param data crosstable data as array with [nbiomes,nbiomes] and row/colnames
+#' @param lmar left margin for plot in lines (default: 3)
+#'
+#' @return None
+#'
+#' @examples
+#' \dontrun{
+#'
+#' }
+#' @export
+plotGammaCrossTableToScreen <- function(data, lmar = 3) {
   #data prep
   data <- round(data,digits = 2)
   x = 1:ncol(data)
@@ -1891,6 +1971,23 @@ plotGammaCrossTableToScreen <- function(data, lmar=3) {
   abline(v=x + 0.5)
 }
 
+#' Plot crosstable to file showing (dis-)similarity between average biome pixels
+#'
+#' Function to plot to file a crosstable showing (dis-)similarity between average
+#' biome pixels based on M-ECO (former Gamma) metric from LPJmL simulations
+#'
+#' @param data crosstable data as array with [nbiomes,nbiomes] and row/colnames
+#' @param file to write into
+#' @param lmar left margin for plot in lines (default: 3)
+#' @param eps write as eps or png
+#'
+#' @return None
+#'
+#' @examples
+#' \dontrun{
+#'
+#' }
+#' @export
 plotGammaCrossTable <- function(data, file, lmar=3, eps = FALSE) {
   #---- plotting ----------------------------------------------------------------#
   if (eps) {

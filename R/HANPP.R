@@ -197,6 +197,36 @@ readHANPPdata <- function(inFol_lu, inFol_pnv, startyr, stopyr, gridbased = T,
 
     ynpp = apply(npp, c(1,3), sum) #gC/m2
     ynpp_potential = apply(npp_potential, c(1,3), sum) #gC/m2
+  }else if (fileType == "meta") {
+      nppFile = paste0(inFol_lu, varnames["npp","outname"])
+      if (varnames["npp","timestep"] == "Y") {
+        ynpp = autoReadMetaOutput (metaFile = nppFile, getyearstart = startyr, getyearstop = stopyr,suppressReadPrint = T,headersize = headersize)[,1,]
+      }else if (varnames["npp","timestep"] == "M") {
+        npp = autoReadMetaOutput (metaFile = nppFile, getyearstart = startyr, getyearstop = stopyr,suppressReadPrint = T,headersize = headersize)[,1,,]
+        ynpp = apply(npp, c(1,3), sum) #gC/m2
+      }
+      pft_nppFile = paste0(inFol_lu,varnames["pft_npp","outname"])
+      pftnpp = autoReadMetaOutput(metaFile = pft_nppFile,getyearstart = startyr, getyearstop = stopyr,suppressReadPrint = T,headersize = headersize)
+      harvfile = paste0(inFol_lu,varnames["pft_harvest","outname"])
+      rharvfile = paste0(inFol_lu,varnames["pft_rharvest","outname"])
+      harvest = autoReadMetaOutput(metaFile = harvfile,getyearstart = startyr, getyearstop = stopyr,suppressReadPrint = T,headersize = headersize)
+      rharvest = autoReadMetaOutput(metaFile = rharvfile,getyearstart = startyr, getyearstop = stopyr,suppressReadPrint = T,headersize = headersize)
+      timberFile = paste0(inFol_lu,varnames["timber_harvest","outname"])
+      timber = autoReadMetaOutput(metaFile = timberFile,getyearstart = startyr, getyearstop = stopyr,suppressReadPrint = T,headersize = headersize)
+      fireFile = paste0(inFol_lu,varnames["firec","outname"])
+      fire = autoReadMetaOutput(metaFile = timberFile,getyearstart = startyr, getyearstop = stopyr,suppressReadPrint = T,headersize = headersize)
+      cftFile = paste0(inFol_lu,varnames["cftfrac","outname"])
+      cftfrac = autoReadMetaOutput(metaFile = timberFile,getyearstart = startyr, getyearstop = stopyr,suppressReadPrint = T,headersize = headersize)
+      pnv_nppFile = paste0(inFol_pnv,varnames["npp","outname"])
+      if (varnames["npp","timestep"] == "Y") {
+        ynpp_potential = autoReadMetaOutput(metaFile = pnv_nppFile,getyearstart = startyr, getyearstop = stopyr,suppressReadPrint = T,headersize = headersize)[,1,]
+      }else if (varnames["npp","timestep"] == "M") {
+        npp_potential = autoReadMetaOutput(metaFile = pnv_nppFile,getyearstart = startyr, getyearstop = stopyr,suppressReadPrint = T,headersize = headersize)[,1,,]
+        ynpp_potential = apply(npp_potential, c(1,3), sum) #gC/m2
+      }
+      fpcFile = paste0(inFol_lu,varnames["fpc","outname"])
+      fpc = autoReadMetaOutput(metaFile = fpcFile,getyearstart = startyr, getyearstop = stopyr,suppressReadPrint = T,headersize = headersize)
+
   }else{
     print(paste0("Unrecognized file type (",fileType,")"))
     break
@@ -210,7 +240,7 @@ readHANPPdata <- function(inFol_lu, inFol_pnv, startyr, stopyr, gridbased = T,
     harvest_cft = apply(harvest[,,], c(1,3), sum) #gC/m2
     rharvest_cft = apply(rharvest[,,], c(1,3), sum) #gC/m2
     pftnpp_nat = apply(pftnpp[,1:(pftbands),], c(1,3), sum) #gC/m2
-  }else{
+  }else{# todo: complete this part
     pftnpp_cft = apply(pftnpp[,(totalbands - cftbands + 1):totalbands,]*cftfrac,c(1,3),sum) #gC/m2
     pftnpp_nat = apply(pftnpp[,1:(pftbands),],c(1,3),sum)*fpc[,1,] #gC/m2
   }
@@ -224,7 +254,7 @@ readHANPPdata <- function(inFol_lu, inFol_pnv, startyr, stopyr, gridbased = T,
       save(ynpp_potential,ynpp,pftnpp_cft,pftnpp_nat,pftnpp_grasslands,pftnpp_bioenergy,harvest_cft,rharvest_cft,fire,timber,cftfrac,fpc,file = dataFile)
     }
   }
-  #print(paste0("export variables to global environment"))
+  # return variables to calcHANPP
   return(list(ynpp_potential = ynpp_potential, ynpp = ynpp, pftnpp_cft = pftnpp_cft,
               pftnpp_nat = pftnpp_nat, pftnpp_grasslands = pftnpp_grasslands,
               pftnpp_bioenergy = pftnpp_bioenergy, harvest_cft = harvest_cft,
@@ -232,9 +262,40 @@ readHANPPdata <- function(inFol_lu, inFol_pnv, startyr, stopyr, gridbased = T,
               cftfrac = cftfrac, fpc = fpc))
 
 } # end of readHANPPdata
+
+#' Calculate the ecosystem change metric gamma between 2 simulations/timesteps
+#'
+#' Function to calculate the ecosystem change metric gamma according
+#' to Sykes (1999), Heyder (2011), and Ostberg (2015,2018).
+#' This is a reformulated version in R, not producing 100% similar values
+#' than the C/bash version from Ostberg 2018, but following their methodology.
+#'
+#' @param inFol_pnv folder of pnv reference run
+#' @param inFol_lu folder of landuse scenario run
+#' @param startyr first year of simulations
+#' @param stopyr last year of simulations
+#' @param gridbased logical are pft outputs gridbased or pft-based?
+#' @param pftbands number of natural plant functional types (== bands in fpc - 1)
+#' @param cftbands number of crop functional types
+#' @param p fraction of pasture band to take
+#' @param readPreviouslySavedData flag whether to read previously saved data
+#'        instead of reading it in from output files (default F)
+#' @param saveDataFile whether to save input data to file (default T)
+#' @param dataFile file to save computed hanpp data to (default NULL)
+#' @param ncells number of cells in lpjml grid
+#' @param fileType type of output files - one of "clm", "nc", "meta" (default: "clm")
+#' @param headersize headersize of the output files (default 0)
+#' @param varnames data.frame with names of output files -- can be specified to account for variable file names (default NULL -- standard names are used)
+#'
+#' @return list data object containing arrays of ...
+#'
+#' @examples
+#' \dontrun{
+#' }
+#' @export
 calcHANPP <- function(inFol_lu, inFol_pnv, startyr, stopyr, gridbased = T,
-                      pftbands = 11, cftbands = 32, p = 1, readPreviouslySavedData,
-                      dataFile, saveDataFile = T, ncells = 67420, fileType = "clm",
+                      pftbands = 11, cftbands = 32, p = 1, readPreviouslySavedData = F,
+                      saveDataFile = T, dataFile, ncells = 67420, fileType = "clm",
                       headersize = 0, varnames){
   # reading required data
   if (readPreviouslySavedData) {

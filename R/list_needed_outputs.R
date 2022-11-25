@@ -34,8 +34,8 @@ list_needed_outputs <- function(metric = "all", with_nitrogen = TRUE) {
   varsGAMMAnitrogen <- c("vegn", "soilnh4", "soilno3", "leaching", "n2o_denit",
                          "n2o_nit", "n2o_denit", "n2_emis", "bnf",
                          "n_volatilization")
-  varsHANPP <- c("grid", "mnpp", "pft_npp", "pft_harvest", "pft_rharvest",
-                 "firec", "timber_harvest", "cftfrac", "fpc")
+  varsHANPP <- c("grid", "npp", "pft_npp", "pft_harvestc", "pft_rharvestc",
+                 "firec", "timber_harvestc", "cftfrac", "fpc")
   varsBiome <- c("grid", "fpc", "vegc", "pft_lai", "temp")
   vars_pb_n <- c("grid", "runoff", "leaching", "pet", "prec")
   vars_pb_w <- c("grid", "discharge", "irrig", "drainage")
