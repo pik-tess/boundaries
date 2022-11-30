@@ -1,6 +1,6 @@
-Package: pbfunctions
+Package: boundaries
 Title: Functions to calculate the Planetary boundary status in an LPJmL sim
-Version: 0.0.0.9003
+Version: 0.0.0.9004
 Authors@R: 
     person(given = "Jannes",
            family = "Breier",
@@ -12,7 +12,12 @@ Authors@R:
            role = c("aut", "cre"),
            email = "stenzel@pik-potsdam.de",
            comment = c(ORCID = "0000-0002-5109-0048"))
-Description: Provide calculation and optimize functions for planetary boundaries
+    person(given = "Johanna",
+           family = "Braun",
+           role = c("aut", "cre"),
+           email = "jobraun@pik-potsdam.de",
+           comment = c(ORCID = "0000-0002-????-????"))
+Description: Provide calculation & visualizations functions for planetary boundaries
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
