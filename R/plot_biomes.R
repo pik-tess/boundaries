@@ -5,7 +5,7 @@
 #'
 #' @param biome_data output (list) from classify_biomes()
 #'
-#' @param plotpath directory for saving the plot (character string)
+#' @param file_name directory for saving the plot (character string)
 #'
 #' @param to_robinson logical to define if robinson projection should be used
 #' for plotting
@@ -30,12 +30,12 @@ plot_biomes <- function(biome_data,
   lpjml_extent <- c(-180, 180, -60, 85)
 
   bounding_box <- system.file("extdata", "ne_110m_wgs84_bounding_box.shp",
-                              package = "pbfunctions") %>%
+                              package = "boundaries") %>%
       rgdal::readOGR(layer = "ne_110m_wgs84_bounding_box", verbose = FALSE) %>%
       { if(to_robinson) sp::spTransform(., sp::CRS("+proj=robin")) else . } # nolint
 
   countries <- system.file("extdata", "ne_110m_admin_0_countries.shp",
-                              package = "pbfunctions") %>%
+                              package = "boundaries") %>%
       rgdal::readOGR(layer = "ne_110m_admin_0_countries", verbose = FALSE) %>%
       crop(., lpjml_extent) %>%
       { if(to_robinson) sp::spTransform(., CRS("+proj=robin")) else . } # nolint
@@ -47,7 +47,7 @@ plot_biomes <- function(biome_data,
                    "#FFFFD4", "white", "#dad4d4")
 
   biome_mapping <- system.file("extdata", "biomes.csv",
-                              package = "pbfunctions") %>%
+                              package = "boundaries") %>%
                    readr::read_csv2()
   names(biome_cols) <- biome_mapping$short_name
 

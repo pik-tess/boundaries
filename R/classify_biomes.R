@@ -141,13 +141,14 @@ classify_biomes <- function(path_data,
   montane_arctic_proxy_name <- match.arg(names(montane_arctic_proxy),
                                          c(NA, "elevation", "latitude"))
 
-  if (file.exists(output_files$grid) && file_type == "meta") {
+  if (file.exists(output_files$grid) && file_type == "meta" &&
+      is.null(input_files$grid)) {
       grid <- lpjmliotools::autoReadMetaOutput(
         metaFile = output_files$grid
       )
-      ncell <- length(grid) / 2
-      lon   <- grid[c(1:ncell) * 2 - 1]
-      lat   <- grid[c(1:ncell) * 2]
+      ncell <- length(grid$lon)
+      lon   <- grid$lon
+      lat   <- grid$lat
   } else if (file_type %in% c("nc", "cdf", "nc4")) {
     # if nc output is defined, we need an lpjml grid to convert to 
     # the correct array size, this needs to be given in input_files$grid
@@ -326,7 +327,7 @@ classify_biomes <- function(path_data,
   # biome names
   biome_mapping <- system.file("extdata",
                                "biomes.csv",
-                               package = "pbfunctions") %>%
+                               package = "boundaries") %>%
                    readr::read_delim(col_types = readr::cols(), delim = ";")
   biome_names <- biome_mapping$id
   names(biome_names) <- biome_mapping$name
@@ -334,7 +335,7 @@ classify_biomes <- function(path_data,
 
   pft_categories <- system.file("extdata",
                                 "pft_categories.csv",
-                                package = "pbfunctions") %>%
+                                package = "boundaries") %>%
     read_pft_categories() %>%
     {
       if (file_type != "meta") {
@@ -344,12 +345,13 @@ classify_biomes <- function(path_data,
       }
     }
   fpc_names <- dplyr::filter(pft_categories, category == "natural")$pft
-
-  if (file_type != "meta") {
+  # TODO if lpjmlkit is used, fpc names are read in and do not have to be
+  # defined here
+  # if (file_type != "meta") {
     dimnames(avg_fpc)$band <- c("natural stand fraction", fpc_names)
-  } else {
-    dimnames(avg_fpc)$band <- tolower(dimnames(avg_fpc)$band)
-  }
+  # } else {
+  #  dimnames(avg_fpc)$band <- tolower(dimnames(avg_fpc)$band)
+  # }
   # indices (when estimation only via npft possible) or names for pft subsets
   fpc_temperate_trees <- dplyr::filter(
     pft_categories,
@@ -791,10 +793,15 @@ read_pft_categories <- function(file_path) {
 rename_step2month <- function(data) {
 
   dim_names <- dimnames(data)
-  if ("step" %in% names(dim_names)) {
+  if ("step" %in% names(dim_names) && dim(data)["step"] > 1) {
     names(dim_names)[which(names(dim_names) == "step")] <- "month"
     names(dim(data)) <- names(dim_names)
     dimnames(data) <- dim_names
+  } else if ("step" %in% names(dim_names) && dim(data)["step"] == 1) {
+    dim_names[which(names(dim_names) == "step")] <- NULL
+    data <- array(data,
+                  dim = setNames(sapply(dim_names, length), names(dim_names)),
+                  dimnames = dim_names)
   }
   return(data)
 }
