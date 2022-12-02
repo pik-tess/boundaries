@@ -244,6 +244,7 @@ classify_biomes <- function(path_data,
                                       getyearstart = timespan[1],
                                       getyearstop = timespan[2],
                                       ncells = read_args$ncell)
+      #TODO has to be converted to monthly with matching dim names?
     }
     if (savanna_proxy_name == "vegc") {
       savanna_proxy_data <- lpjmliotools::readYearly(inFile = output_files$vegc,
@@ -278,8 +279,8 @@ classify_biomes <- function(path_data,
       getyearstart = timespan[1],
       getyearstop = timespan[2]
     ) %>% rename_step2month()
-    # monthly temperature
-    # TODO has to be processed to yearly?
+    # TODO the actual problem is that the "month" dimension is called "band"
+    temp <- apply(temp, c(2, 3), mean)
   }
 
   fpc_nbands <- dim(fpc)[["band"]]
@@ -360,7 +361,7 @@ classify_biomes <- function(path_data,
 
   fpc_tropical_trees <- dplyr::filter(
     pft_categories,
-    type == "tree" & zone == "temperate" & category == "natural"
+    type == "tree" & zone == "tropical" & category == "natural"
   )$pft
 
   fpc_boreal_trees <- dplyr::filter(

@@ -37,7 +37,7 @@ plot_biomes <- function(biome_data,
   countries <- system.file("extdata", "ne_110m_admin_0_countries.shp",
                               package = "boundaries") %>%
       rgdal::readOGR(layer = "ne_110m_admin_0_countries", verbose = FALSE) %>%
-      crop(., lpjml_extent) %>%
+      raster::crop(., lpjml_extent) %>%
       { if(to_robinson) sp::spTransform(., CRS("+proj=robin")) else . } # nolint
 
   biome_cols <-  c("#993404", "#D95F0E", "#004529", "#238443",
@@ -48,7 +48,7 @@ plot_biomes <- function(biome_data,
 
   biome_mapping <- system.file("extdata", "biomes.csv",
                               package = "boundaries") %>%
-                   readr::read_csv2()
+                   readr::read_delim(delim = ";", col_types = readr::cols())
   names(biome_cols) <- biome_mapping$short_name
 
   order_legend <- c(1, 2, 9, 10, 11, 3, 4, 5, 6, 12, 13, 14, 7, 8, 15, 16, 17,
