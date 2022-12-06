@@ -6,7 +6,7 @@ temperate broadleaved evergreen tree;tree;0;1;0;1;0;1;4;4;NA
 temperate broadleaved summergreen tree;tree;0;1;0;0;0;1;5;5;NA
 boreal needleleaved evergreen tree;tree;0;0;1;1;1;1;6;6;NA
 boreal broadleaved summergreen tree;tree;0;0;1;0;0;1;7;7;NA
-boreal needleleaved summergreen tree;tree;0;0;1;1;1;1;NA;8;NA
+boreal needleleaved summergreen tree;tree;0;0;1;0;1;1;NA;8;NA
 tropical c4 grass;grass;1;0;0;0;0;1;8;9;NA
 temperate c3 grass;grass;0;1;0;0;0;1;9;10;NA
 polar c3 grass;grass;0;0;1;0;0;1;NA;11;NA
