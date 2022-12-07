@@ -26,7 +26,7 @@ calc_continents_mask <- function(path_output, eurasia = TRUE) {
   # read continents from shapefile as sfc
   continents <- system.file("extdata",
                             "world_continents.shp",
-                            package = "pbfunctions") %>%
+                            package = "boundaries") %>%
     sf::st_read(crs = "epsg:4326", quiet = TRUE)
 
   # intersect both for coastal points that do not intersect calculate nearest

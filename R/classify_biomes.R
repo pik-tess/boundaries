@@ -15,7 +15,7 @@
 #' @param diff_output_files optional list for specification of output file names
 #'        differing from default, which is list(grid = "grid.bin", fpc = "fpc.bin",# nolint
 #'        vegc = "vegc.bin", pft_lai = "pft_lai.bin", temp = "temp.bin")
-#' @param file_ending replace default file ending. default: ".bin"
+#' @param file_type replace default file type. default: "raw"
 #' @param savanna_proxy `list` with either "pft_lai" or "vegc" as
 #'        name/key and value in m2/m2 for pft_lai (default = 6) and gC/m2 for
 #'        vegc (default would be 7500), Set to `NULL` if no proxy is used.
