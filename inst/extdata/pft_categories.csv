@@ -1,0 +1,28 @@
+pft;type;zone_tropical;zone_temperate;zone_boreal;category_evergreen;category_needle;category_natural;lpjml_index_npft_9;lpjml_index_npft_11;lpjml_index_npft_NA
+tropical broadleaved evergreen tree;tree;1;0;0;1;0;1;1;1;NA
+tropical broadleaved raingreen tree;tree;1;0;0;0;0;1;2;2;NA
+temperate needleleaved evergreen tree;tree;0;1;0;1;1;1;3;3;NA
+temperate broadleaved evergreen tree;tree;0;1;0;1;0;1;4;4;NA
+temperate broadleaved summergreen tree;tree;0;1;0;0;0;1;5;5;NA
+boreal needleleaved evergreen tree;tree;0;0;1;1;1;1;6;6;NA
+boreal broadleaved summergreen tree;tree;0;0;1;0;0;1;7;7;NA
+boreal needleleaved summergreen tree;tree;0;0;1;0;1;1;NA;8;NA
+tropical c4 grass;grass;1;0;0;0;0;1;8;9;NA
+temperate c3 grass;grass;0;1;0;0;0;1;9;10;NA
+polar c3 grass;grass;0;0;1;0;0;1;NA;11;NA
+temperate cereals;grass;0;1;0;0;0;0;1;1;NA
+rice;grass;1;0;0;0;0;0;2;2;NA
+maize;grass;1;0;0;0;0;0;3;3;NA
+tropical cereals;grass;1;0;0;0;0;0;4;4;NA
+pulses;grass;0.5;0.5;0;0;0;0;5;5;NA
+temperate roots;grass;1;0;0;0;0;0;6;6;NA
+tropical roots;grass;1;0;0;0;0;0;7;7;NA
+oil crops sunflower;grass;0;1;0;0;0;0;8;8;NA
+oil crops soybean;grass;0.5;0.5;0;0;0;0;9;9;NA
+oil crops groundnut;grass;1;0;0;0;0;0;10;10;NA
+oil crops rapeseed;grass;0;1;0;0;0;0;11;11;NA
+sugarcane;grass;1;0;0;0;0;0;12;12;NA
+others;grass;0.5;0.5;0;0;0;0;13;13;NA
+grassland;grass;NA;NA;0;0;0;0;14;14;NA
+biomass grass;grass;NA;NA;0;0;0;0;15;15;NA
+biomass tree;grass;NA;NA;0;0;0;0;16;16;NA

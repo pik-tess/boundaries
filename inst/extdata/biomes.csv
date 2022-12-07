@@ -1,0 +1,20 @@
+id;name;short_name;abbreviation;category_forest;zone_tropical;zone_temperate;zone_boreal
+1;Tropical Rainforest;Tropical Rain.;TrRF;1;1;0;0
+2;Tropical Seasonal & Deciduous Forest;Tropical Decid. Forest;TrDF;1;1;0;0
+3;Temperate Broadleaved Evergreen Forest;Temp. Broad. Ever. Forest;TeBE;1;0;1;0
+4;Temperate Broadleaved Deciduous Forest;Temp. Broad. Decid. Forest;TeBD;1;0;1;0
+5;Mixed Forest;Mixed Forest;MF;1;0;1;0
+6;Temperate Coniferous Forest;Temp. Conif. Forest;TeCF;1;0;1;0
+7;Boreal Evergreen Forest;Bor. Ever. Forest;BoEF;1;0;0;1
+8;Boreal Deciduous Forest;Bor. Decid. Forest;BoDF;1;0;0;1
+9;Warm Woody Savanna, Woodland & Shrubland;Warm Woodland;WaWo;0;1;0;0
+10;Warm Savanna & Open Shrubland;Warm Savanna;WaSa;0;1;0;0
+11;Warm Grassland;Warm Grassland;WaGr;0;1;0;0
+12;Temperate Woody Savanna, Woodland & Shrubland;Temp. Woodland;TeWo;0;0;1;0
+13;Temperate Savanna & Open Shrubland;Temp. Savanna;TeSa;0;0;1;0
+14;Temperate Grassland;Temp. Grassland;TeGr;0;0;1;0
+15;Montane Grassland;Montane Grassland;MoGr;0;0;0;1
+16;Arctic Tundra;Arctic Tundra;ArTu;0;0;0;1
+17;Desert;Desert;Des;0;0;0;0
+18;Rocks and Ice;Rocks and Ice;RoIc;0;0;0;0
+19;Water;Water;Wat;0;0;0;0

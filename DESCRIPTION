@@ -1,6 +1,6 @@
-Package: pbfunctions
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9002
+Package: boundaries
+Title: Functions to calculate the Planetary boundary status in an LPJmL sim
+Version: 0.0.0.9005
 Authors@R: 
     person(given = "Jannes",
            family = "Breier",
@@ -12,14 +12,32 @@ Authors@R:
            role = c("aut", "cre"),
            email = "stenzel@pik-potsdam.de",
            comment = c(ORCID = "0000-0002-5109-0048"))
-Description: Provide calculation and optimize functions for planetary boundaries
+    person(given = "Johanna",
+           family = "Braun",
+           role = c("aut", "cre"),
+           email = "jobraun@pik-potsdam.de",
+           comment = c(ORCID = "0000-0002-????-????"))
+Description: Provide calculation & visualizations functions for planetary boundaries
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.0
+RoxygenNote: 7.2.2
 Depends:
     lpjmliotools (>= 0.2.17)
+Imports:
+    magrittr,
+    tibble,
+    dplyr,
+    future,
+    zoo,
+    sf,
+    reshape2,
+    lpjmlKit,
+    lpjmliotools,
+    sp,
+    rgdal,
+    raster
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3

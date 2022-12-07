@@ -1,21 +1,23 @@
-# pbfunctions <a href=''><img src='man/figures/logo.png' align="right" height="139" /></a>
+# boundaries <a href=''><img src='man/figures/logo.png' align="right" height="139" /></a>
 
 
-*The goal of pbfunctions is to provide a toolset of functions that can be used   
+*The goal of boundaries is to provide a toolset of functions that can be used   
 to calculate and optimize the status of a planetary boundary (PB)  
 in connection with [LPJmL](https://gitlab.pik-potsdam.de/lpjml/LPJmL_internal).*
 
 The boundaries considered here are
 
 * **freshwater use**, tag *freshwater*
-* **land-system change**, tag *landuse*
+    * **bluewater use**, tag *bluewater*
+    * **greenwater use**, tag *greenwater*
+* **land-system change**, tag *lsc*
 * **biosphere integrity**, tag *biosphere*
 * **nitrogen flows**, tag *nitrogen*
 
 
 ## Installation
 
-You can install `pbfunctions` by git cloning this repository ...
+You can install `boundaries` by git cloning this repository ...
 
 ```bash
 git clone https://gitlab.pik-potsdam.de/tess/pbfunctions.git
@@ -23,9 +25,9 @@ git clone https://gitlab.pik-potsdam.de/tess/pbfunctions.git
 
 and install via  [`devtools`](https://rawgit.com/rstudio/cheatsheets/master/package-development.pdf) ...
 ```R
-devtools::install("<path_to_pbfunctions>/pbfunctions")
+devtools::install("<path_to_pbfunctions>/boundaries")
 
-library("pbfunctions")
+library("boundaries")
 ```
 
 ## Scripts
@@ -39,7 +41,7 @@ scripts that are stored at `./scripts`
 This is a basic example which shows you how to solve a common problem:
 
 ``` r
-library(pbfunctions)
+library(boundaries)
 ## basic example code
 ```
 

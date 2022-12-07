@@ -5,79 +5,86 @@
 \title{Classify biomes}
 \usage{
 classify_biomes(
-  data = NULL,
-  readOutput = F,
-  folder = NULL,
-  files = NULL,
-  timespan = NULL,
-  savannaProxy = "natLAI",
-  lai_threshold = 6,
-  vegc_threshold = 7500,
-  montaneArcticProxy = "elevation",
-  elevation_threshold = 2000,
-  latitude_threshold = 55,
-  tree_cover_thresholds = c(0.6, 0.3, 0.1),
-  lpjGridInput = "/p/projects/lpjml/input/historical/input_VERSION2/grid.bin",
-  elevationInput = "/p/projects/lpjml/input/historical/input_VERSION2/elevation.bin",
-  lpjGridHeaderSize = 43,
-  lpjCells = 67420
+  path_data,
+  timespan,
+  input_files = NULL,
+  diff_output_files = NULL,
+  file_type = "raw",
+  savanna_proxy = list(pft_lai = 6),
+  montane_arctic_proxy = list(elevation = 1000),
+  tree_cover_thresholds = list(),
+  avg_nyear_args = list(),
+  read_args = list(header_size = 0, ncell = 67420, firstyear = 1901, fpc_nbands = 12,
+    size = 4)
 )
 }
 \arguments{
-\item{data}{list object. Contains all relevant data for computation of the
-biome classes as yearly averages of monthly values.
-fpc \link{dim=c(ncells,npfts+1)},pft_lai \link{dim=c(ncells,npfts+ncfts)},
-lat, lon, vegc, temp \link{all dim=c(ncells)} e.g. list(lat = lat67420,
-lon = lon67420, fpc = apply(fpc_scen, c(1,2), mean),
-vegc = mean_state_scen\link{,8},temp = average_annual_temperature_1916)}
+\item{path_data}{output directory (character string) of the LPJmL run to read
+default outputs from (fpc, grid, vegc, pft_lai, temp)}
 
-\item{readOutput}{read output from folder or use supplied data
-(requires folder and timespan to be set)}
+\item{timespan}{time span to be used, defined as an integer vector, e.g.
+\code{c(1982,2011)}, to average over (default over all years, else see
+\link[pbfunctions]{average_nyear_window})}
 
-\item{folder}{to read outputs from}
+\item{input_files}{optional \code{list} containing additional input (!) files,
+not in the \code{path_data}, e.g. if temp was not written out:
+\code{list(grid=..., temp = ..., elevation = ...)}}
 
-\item{files}{to read as list list(grid="grid.bin",fpc="fpc.bin")}
+\item{diff_output_files}{optional list for specification of output file names
+differing from default, which is list(grid = "grid.bin", fpc = "fpc.bin",# nolint
+vegc = "vegc.bin", pft_lai = "pft_lai.bin", temp = "temp.bin")}
 
-\item{timespan}{as c(startyear,stopyear) to use for averaging outputs over}
+\item{file_type}{Set file ending if different from default. (default: "raw")
+all options: "raw" -> ".bin", meta -> ".bin.json", clm -> ".clm",
+nc -> ".nc", nc4 -> ".nc4", cdf -> ".nc"}
 
-\item{savannaProxy}{"vegc" or "natLAI". Use vegetation carbon or LAI in natural
-vegetation as a proxy threshold to distinguish forests and savannahs}
+\item{savanna_proxy}{\code{list} with either pft_lai or vegc as
+key and value in m2/m2 for pft_lai (default = 6) and gC/m2 for
+vegc (default would be 7500), Set to \code{NULL} if no proxy should be used.}
 
-\item{lai_threshold}{threshold for "natLAI" proxy (default: 6 m2/m2)}
+\item{montane_arctic_proxy}{\code{list} with either "elevation" or "latitude" as
+name/key and value in m for elevation (default 1000) and degree for
+latitude (default would be 55), Set to \code{NULL} if no proxy is used.}
 
-\item{vegc_threshold}{threshold for "vegc" proxy (default: 7500 gC/m2)}
+\item{tree_cover_thresholds}{list with minimum tree cover thresholds for
+definition of forest, woodland, savanna and grassland. Only changes to
+the default have to be included in the list, for the rest the default
+is used. Default values:
+"boreal forest" = 0.6
+"temperate forest" = 0.6
+"temperate woodland" = 0.3
+"temperate savanna" = 0.1
+"tropical forest" = 0.6
+"tropical woodland" = 0.3
+"tropical savanna" = 0.1
+In the boreal zone, there is no woodland, everything below the
+boreal forest threshold will be classified as boreal tundra.}
 
-\item{montaneArcticProxy}{"elevation" or "latitude". Use elevation or latitude
-as a proxy threshold to distinguish arctic tundra and montane grassland}
+\item{avg_nyear_args}{list of arguments to be passed to
+\link[pbfunctions]{average_nyear_window} (see for more info). To be used for # nolint
+time series analysis}
 
-\item{lpjGridInput}{path to lpjml grid input to be used for conversion
-only required for nc input
-(default: "/p/projects/lpjml/input/historical/input_VERSION2/grid.bin")}
-
-\item{elevationInput}{path to lpjml elevation input to be used as proxy
-(default: "/p/projects/lpjml/input/historical/input_VERSION2/elevation.bin")}
-
-\item{lpjGridHeaderSize}{header size for lpjml grid input (default: 43)
-only required for nc input}
-
-\item{lpjCells}{number of grid cells in lpjml grid input (default: 67420)
-only required for nc input}
+\item{read_args}{list of arguments for reading input/output. only required
+for:
+nc output: specification of header_size and ncell to read in
+lpjml grid input
+raw/clm output: specification of header_size, ncell, firstyear and
+fpc_nbands (12 or 10)}
 }
 \value{
-list object containing biome_id (main biome per grid cell \link{dim=c(ncells)}),
-and list of respective biome_names, biome_names_short, biomes_abbrv \link{dim=c(nbiomes)}
+list object containing biome_id (main biome per grid cell \link{dim=c(ncells)}), # nolint
+and list of respective biome_names\link{dim=c(nbiomes)}
 }
 \description{
-Classify biomes based on foliage protected cover (FPC) LPJmL output
-and temperature output plus either vegetation carbon or pft_lai depending on
-the savannaProxy option and elevation if montaneArcticProxy requires this
+Classify biomes based on foliage protected cover (FPC) and temperature
+LPJmL output plus either vegetation carbon or pft_lai depending on
+the savanna_proxy option and elevation if montane_arctic_proxy requires this
 }
 \examples{
 \dontrun{
-classify_biomes(readOutput = T, timespan = c(1982,2011)
-     folder = "/p/projects/open/Fabian/runs/Gamma/output/historic_gamma/",
-     files = list(grid = "grid.bin", fpc = "fpc.bin", vegc = "vegc.bin", 
-     pft_lai = "pft_lai.bin", temp = "temp.bin"))
+classify_biomes(
+  path_data = "/p/projects/open/Fabian/runs/Gamma/output/historic_gamma"
+  timespan = c(1982,2011))
 }
 
 }
