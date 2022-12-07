@@ -19,7 +19,7 @@ classify_biomes(
 )
 }
 \arguments{
-\item{path_data}{output directory (character string) of the LPJmL run o read
+\item{path_data}{output directory (character string) of the LPJmL run to read
 default outputs from (fpc, grid, vegc, pft_lai, temp)}
 
 \item{timespan}{time span to be used, defined as an integer vector, e.g.
@@ -34,9 +34,13 @@ not in the \code{path_data}, e.g. if temp was not written out:
 differing from default, which is list(grid = "grid.bin", fpc = "fpc.bin",# nolint
 vegc = "vegc.bin", pft_lai = "pft_lai.bin", temp = "temp.bin")}
 
-\item{savanna_proxy}{\code{list} with either "pft_lai" or "vegc" as
-name/key and value in m2/m2 for pft_lai (default = 6) and gC/m2 for
-vegc (default would be 7500), Set to \code{NULL} if no proxy is used.}
+\item{file_type}{Set file ending if different from default. (default: "raw")
+all options: "raw" -> ".bin", meta -> ".bin.json", clm -> ".clm",
+nc -> ".nc", nc4 -> ".nc4", cdf -> ".nc"}
+
+\item{savanna_proxy}{\code{list} with either pft_lai or vegc as
+key and value in m2/m2 for pft_lai (default = 6) and gC/m2 for
+vegc (default would be 7500), Set to \code{NULL} if no proxy should be used.}
 
 \item{montane_arctic_proxy}{\code{list} with either "elevation" or "latitude" as
 name/key and value in m for elevation (default 1000) and degree for
@@ -52,7 +56,9 @@ is used. Default values:
 "temperate savanna" = 0.1
 "tropical forest" = 0.6
 "tropical woodland" = 0.3
-"tropical savanna" = 0.1}
+"tropical savanna" = 0.1
+In the boreal zone, there is no woodland, everything below the
+boreal forest threshold will be classified as boreal tundra.}
 
 \item{avg_nyear_args}{list of arguments to be passed to
 \link[pbfunctions]{average_nyear_window} (see for more info). To be used for # nolint
@@ -64,8 +70,6 @@ nc output: specification of header_size and ncell to read in
 lpjml grid input
 raw/clm output: specification of header_size, ncell, firstyear and
 fpc_nbands (12 or 10)}
-
-\item{file_ending}{replace default file ending. default: ".bin"}
 }
 \value{
 list object containing biome_id (main biome per grid cell \link{dim=c(ncells)}), # nolint

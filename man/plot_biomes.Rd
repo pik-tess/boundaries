@@ -9,12 +9,12 @@ plot_biomes(biome_data, file_name = NULL, to_robinson = TRUE, bg_col = NA)
 \arguments{
 \item{biome_data}{output (list) from classify_biomes()}
 
+\item{file_name}{directory for saving the plot (character string)}
+
 \item{to_robinson}{logical to define if robinson projection should be used
 for plotting}
 
 \item{bg_col}{character, specify background possible (\code{NA} for transparent)#}
-
-\item{plotpath}{directory for saving the plot (character string)}
 }
 \description{
 Plots a map with the biome distribution as derived from a lpjml run based

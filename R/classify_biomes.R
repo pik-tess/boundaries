@@ -4,7 +4,7 @@
 #' LPJmL output plus either vegetation carbon or pft_lai depending on
 #' the savanna_proxy option and elevation if montane_arctic_proxy requires this
 #'
-#' @param path_data output directory (character string) of the LPJmL run o read
+#' @param path_data output directory (character string) of the LPJmL run to read
 #'        default outputs from (fpc, grid, vegc, pft_lai, temp)
 #' @param timespan time span to be used, defined as an integer vector, e.g.
 #'       `c(1982,2011)`, to average over (default over all years, else see
@@ -15,10 +15,12 @@
 #' @param diff_output_files optional list for specification of output file names
 #'        differing from default, which is list(grid = "grid.bin", fpc = "fpc.bin",# nolint
 #'        vegc = "vegc.bin", pft_lai = "pft_lai.bin", temp = "temp.bin")
-#' @param file_ending replace default file ending. default: ".bin"
-#' @param savanna_proxy `list` with either "pft_lai" or "vegc" as
-#'        name/key and value in m2/m2 for pft_lai (default = 6) and gC/m2 for
-#'        vegc (default would be 7500), Set to `NULL` if no proxy is used.
+#' @param file_type Set file ending if different from default. (default: "raw")
+#'        all options: "raw" -> ".bin", meta -> ".bin.json", clm -> ".clm",
+#'        nc -> ".nc", nc4 -> ".nc4", cdf -> ".nc"
+#' @param savanna_proxy `list` with either pft_lai or vegc as
+#'        key and value in m2/m2 for pft_lai (default = 6) and gC/m2 for
+#'        vegc (default would be 7500), Set to `NULL` if no proxy should be used.
 #' @param montane_arctic_proxy `list` with either "elevation" or "latitude" as
 #'        name/key and value in m for elevation (default 1000) and degree for
 #'        latitude (default would be 55), Set to `NULL` if no proxy is used.
@@ -33,6 +35,8 @@
 #'        "tropical forest" = 0.6
 #'        "tropical woodland" = 0.3
 #'        "tropical savanna" = 0.1
+#'        In the boreal zone, there is no woodland, everything below the
+#'        boreal forest threshold will be classified as boreal tundra.
 #' @param avg_nyear_args list of arguments to be passed to
 #'        \link[pbfunctions]{average_nyear_window} (see for more info). To be used for # nolint
 #'        time series analysis
@@ -40,7 +44,7 @@
 #'        for:
 #'        nc output: specification of header_size and ncell to read in
 #'                   lpjml grid input
-#'        raw/clm output: specification of header_size, ncell, firstyear and 
+#'        raw/clm output: specification of header_size, ncell, firstyear and
 #'                   fpc_nbands (12 or 10)
 #' @return list object containing biome_id (main biome per grid cell [dim=c(ncells)]), # nolint
 #' and list of respective biome_names[dim=c(nbiomes)]
@@ -150,7 +154,7 @@ classify_biomes <- function(path_data,
       lon   <- grid$lon
       lat   <- grid$lat
   } else if (file_type %in% c("nc", "cdf", "nc4")) {
-    # if nc output is defined, we need an lpjml grid to convert to 
+    # if nc output is defined, we need an lpjml grid to convert to
     # the correct array size, this needs to be given in input_files$grid
     message("Reading of netcdf output is still preliminary. Please specify LPJmL grid input.") # nolint
     grid <- lpjmliotools::readGridInputBin(inFile = input_files$grid,
@@ -256,16 +260,22 @@ classify_biomes <- function(path_data,
                                       getyearstop = timespan[2],
                                       ncells = read_args$ncell) %>% rename_step2month() # nolint
     } else if (savanna_proxy_name == "pft_lai") {
-      savanna_proxy_data <- lpjmliotools::readCFToutput(inFile = output_files$pft_lai, # nolint
-                                      startyear = read_args$firstyear,
-                                      stopyear = timespan[2],
-                                      size = read_args$size,
-                                      headersize = read_args$header_size,
-                                      getyearstart = timespan[1],
-                                      getyearstop = timespan[2],
-                                      ncells = read_args$ncell,
-                                      bands = c(read_args$fpc_nbands -
-                                                     1 + 16 * 2)) %>% rename_step2month() # nolint
+      if (file_type == "meta") {
+        savanna_proxy_data <- lpjmliotools::autoReadMetaOutput(metaFile = output_files$pft_lai,
+                              getyearstart = timespan[1],
+                              getyearstop = timespan[2]) %>% rename_step2month() # nolint
+      }else {
+        savanna_proxy_data <- lpjmliotools::readCFToutput(inFile = output_files$pft_lai, #nolint
+                                        startyear = read_args$firstyear,
+                                        stopyear = timespan[2],
+                                        size = read_args$size,
+                                        headersize = read_args$header_size,
+                                        getyearstart = timespan[1],
+                                        getyearstop = timespan[2],
+                                        ncells = read_args$ncell,
+                                        bands = c(read_args$fpc_nbands -
+                                        1 + 16 * 2)) %>% rename_step2month() # nolint
+      }
     }
   } else {
       stop(paste0("Unknown file ending (",
@@ -792,7 +802,6 @@ read_pft_categories <- function(file_path) {
 }
 
 rename_step2month <- function(data) {
-
   dim_names <- dimnames(data)
   if ("step" %in% names(dim_names) && dim(data)["step"] > 1) {
     names(dim_names)[which(names(dim_names) == "step")] <- "month"
