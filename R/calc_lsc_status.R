@@ -141,8 +141,8 @@ calc_lsc_status <- function(path_scenario,
       input_files = input_files,
       diff_output_files = diff_output_files,
       file_type = file_type,
-      read_args = read_args #,
-      #...
+      read_args = read_args,
+      ...
       )
     biome_classes <- biome_classes$biome_id
   } else {
