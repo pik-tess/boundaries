@@ -47,11 +47,9 @@
 #'        for:
 #'        nc output: specification of header_size and ncell to read in
 #'                   lpjml grid input
-#'        raw/clm output: specification of header_size, ncell, firstyear and 
+#'        raw/clm output: specification of header_size, ncell, firstyear and
 #'                   fpc_nbands (12 or 10)
-#' @param ... additional parameters can be specified for classify_biomes for
-#'        definition of forest biomes within calc_lsc_status (see documentation
-#'        of classify_biomes)
+#' @param ... arguments forwarded to \link[boundaries](classify_biomes)
 #'
 #' @examples
 #' \dontrun{
