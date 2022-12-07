@@ -78,9 +78,9 @@ plotMCOLmap <- function(data, file, title, legendtitle, zeroThreshold = 0.1, eps
 #' }
 #' @export
 plotMCOLovertime <- function(mcolData, file, firstyr, plotyrs, highlightyrs = 2000, minVal = 0,
-                            maxVal = 100, legendpos = "topleft", ext = FALSE, eps = FALSE){
+                            maxVal = 100, legendpos = "topleft", ext = FALSE, eps = FALSE, ref = "pi"){
   lastyr = firstyr + length(mcolData$npp_act_overtime) - 1
-  colz = c("slateblue","gold","green3","red3","darkorange","black")
+  colz = c("slateblue","gold","green3","darkorange","black","red3")
   if (eps) {
     file = strsplit(file,".",fixed=TRUE)[[1]]
     file = paste(c(file[1:(length(file) - 1)],"eps"),collapse=".")
@@ -90,29 +90,33 @@ plotMCOLovertime <- function(mcolData, file, firstyr, plotyrs, highlightyrs = 20
     png(file, width=3.5,  height = 3, units = "in", res = 300, pointsize = 6,type="cairo")
   }
   par(bty="o",oma=c(0,0,0,0),mar=c(4,5,1,3))
-  plot(x=seq(firstyr,lastyr,1),y=mcolData$npp_pot_overtime,ylab="GtC/yr",xlab="Year",xlim=plotyrs,
-       ylim=c(minVal, maxVal),type = "l",col=colz[1],xaxs="i",yaxs="i")
+  plot(NA,ylab="GtC/yr",xlab="Year",xlim=plotyrs,
+       ylim=c(minVal, maxVal),xaxs="i",yaxs="i")
+  grid()
+  lines(x=seq(firstyr,lastyr,1),y=mcolData$npp_pot_overtime,type = "l",col=colz[1])
   lines(x=seq(firstyr,lastyr,1),y=mcolData$npp_act_overtime,type = "l",col=colz[2])
   lines(x=seq(firstyr,lastyr,1),y=mcolData$npp_eco_overtime,type = "l",col=colz[3])
-
+  lines(x=seq(firstyr,lastyr,1),y=mcolData$npp_luc_overtime,type = "l",col=colz[4])
+  lines(x=seq(firstyr,lastyr,1),y=mcolData$mcol_overtime,type = "l",col=colz[5])
+  
   par(bty="n",oma=c(0,0,0,0),mar=c(4,5,1,3), new = T)
   if (ref == "pi") {
     plot(x=seq(firstyr,lastyr,1),y=mcolData$mcol_overtime_perc_piref,ylab="",xlab="",xlim=plotyrs,
-         ylim=c(10, 30),type = "l",col=colz[4],xaxs="i", yaxs="i", axes = F)
+         ylim=c(10, 30),type = "l",col=colz[6],xaxs="i", yaxs="i", axes = F)
   } else if (ref == "act") {
     plot(x=seq(firstyr,lastyr,1),y=mcolData$mcol_overtime,ylab="",xlab="",xlim=plotyrs,
-         ylim=c(10, 30),type = "l",col=colz[4],xaxs="i", yaxs="i", axes = F)
+         ylim=c(10, 30),type = "l",col=colz[6],xaxs="i", yaxs="i", axes = F)
   }else stop(paste0("Unknown value for parameter ref: ",ref," - Aborting."))
 
-  axis(side = 4, col = colz[4],col.axis = colz[4])
-  mtext(text = "%", col=colz[4], side = 4,line = 2)
+  axis(side = 4, col = colz[6],col.axis = colz[6])
+  mtext(text = "%", col=colz[6], side = 4,line = 2)
 
   if (!is.null(highlightyrs)){
     for (y in highlightyrs){
       lines(x=c(y,y),y=c(minVal,maxVal),col="grey40")
     }
   }
-  legend(legendpos,legend = c("NPPpot (PNV)","NPPact (landuse)","NPPeco","M-COL [% NPPpi]"),col=colz[1:4] ,lty=1,cex=1)
+  legend(legendpos,legend = c("NPPpot (PNV)","NPPact (landuse)","NPPeco","NPPluc","M-COLabs","M-COL [% NPPpi]"),col=colz ,lty=1,cex=1)
   dev.off()
 }
 #' Calculate the ecosystem change metric gamma between 2 simulations/timesteps
@@ -510,13 +514,15 @@ calcMCOL <- function(inFol_lu, inFol_pnv, startyr, stopyr, gridbased = T, npp_th
   timber_harvest_overtime <- colSums(timber*cellarea)/10^15 # from gC/m2 to GtC
   fire_overtime <- colSums(fire*cellarea)/10^15 # from gC/m2 to GtC
 
-
   mcol_overtime <- harvest_cft_overtime + rharvest_cft_overtime +
                     harvest_grasslands_overtime + harvest_bioenergy_overtime +
                     timber_harvest_overtime + fire_overtime + npp_luc_overtime
   mcol_overtime_perc_piref <- mcol_overtime/mean(npp_pot_overtime[1:10])*100
-  mcol <- harvest_cft + rharvest_cft + harvest_grasslands + harvest_bioenergy + timber + fire + ynpp_potential - ynpp
-  mcol[ynpp_potential<npp_threshold] <- 0 # set to 0 below lower threshold of NPP
+  mcol_luc <- ynpp_potential - ynpp
+  mcol_luc_piref <- rep(rowMeans(ynpp_potential[,1:10]),times = length(ynpp[1,])) - ynpp # always compare to pi_ref
+  mcol_harvest <- harvest_cft + rharvest_cft + harvest_grasslands + harvest_bioenergy + timber + fire
+  mcol <- mcol_harvest + mcol_luc
+  mcol[abs(ynpp_potential)<npp_threshold] <- 0 # set to 0 below lower threshold of NPP
   mcol_perc <- mcol/ynpp_potential*100 #actual NPPpot as ref
   mcol_perc_piref <- mcol/rowMeans(ynpp_potential[,1:10])*100 # NPPpi as ref
 
@@ -529,7 +535,8 @@ calcMCOL <- function(inFol_lu, inFol_pnv, startyr, stopyr, gridbased = T, npp_th
                 harvest_cft_overtime = harvest_cft_overtime, npp_luc_overtime = npp_luc_overtime,
                 rharvest_cft_overtime = rharvest_cft_overtime, fire_overtime = fire_overtime,
                 timber_harvest_overtime = timber_harvest_overtime, harvest_cft = harvest_cft,
-                grassland_scaling_factor_cellwise = grassland_scaling_factor_cellwise))
+                grassland_scaling_factor_cellwise = grassland_scaling_factor_cellwise,
+                mcol_harvest = mcol_harvest, mcol_luc = mcol_luc, mcol_luc_piref = mcol_luc_piref))
   }else{
     return(list(mcol_overtime = mcol_overtime, mcol = mcol, mcol_perc = mcol_perc,
                 mcol_overtime_perc_piref = mcol_overtime_perc_piref,
@@ -538,9 +545,9 @@ calcMCOL <- function(inFol_lu, inFol_pnv, startyr, stopyr, gridbased = T, npp_th
                 npp_eco_overtime = npp_eco_overtime, #npp_bioenergy_overtime = npp_bioenergy_overtime,
                 harvest_cft_overtime = harvest_cft_overtime, npp_luc_overtime = npp_luc_overtime,
                 rharvest_cft_overtime = rharvest_cft_overtime, fire_overtime = fire_overtime,
-                timber_harvest_overtime = timber_harvest_overtime, harvest_cft = harvest_cft))
+                timber_harvest_overtime = timber_harvest_overtime, harvest_cft = harvest_cft,
+                mcol_harvest = mcol_harvest, mcol_luc = mcol_luc, mcol_luc_piref = mcol_luc_piref))
   }
-
 }
 
 #' Plot absolute MCOL, overtime, maps, and npp into given folder
@@ -575,19 +582,34 @@ plotMCOL <- function(mcolData, outFol, plotyears, minVal, maxVal, legendpos,
   print(paste0("Plotting MCOL figures"))
   dir.create(file.path(outFol),showWarnings = F)
   lpjmliotools::plotGlobal(data = rowMeans(mcolData$mcol[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
-             file = paste0(outFol,"MCOL",mapyear,"_absolute.png"),
-             title = paste0("MCOL in ",mapyear), min = 0, max = 1000,
-             legendtitle = "GtC", legYes = T, onlyPos = F, eps = eps, type = "lin")
+             file = paste0(outFol,"MCOL",mapyear,"_absolute.png"), type = "exp",
+             title = paste0("MCOL_abs in ",mapyear), pow2min = 0, pow2max = 12,
+             legendtitle = "GtC", legYes = T, onlyPos = F, eps = eps)
+  lpjmliotools::plotGlobal(data = rowMeans(mcolData$mcol_luc[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
+                           file = paste0(outFol,"MCOL",mapyear,"_luc.png"), type = "exp",
+                           title = paste0("MCOL_luc in ",mapyear), pow2min = 0, pow2max = 12,
+                           legendtitle = "GtC", legYes = T, onlyPos = F, eps = eps)
+  lpjmliotools::plotGlobal(data = rowMeans(mcolData$mcol_luc_piref[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
+                           file = paste0(outFol,"MCOL",mapyear,"_luc_piref.png"), type = "exp",
+                           title = paste0("MCOL_luc piref in ",mapyear), pow2min = 0, pow2max = 12,
+                           legendtitle = "GtC", legYes = T, onlyPos = F, eps = eps)
+  lpjmliotools::plotGlobal(data = rowMeans(mcolData$mcol_harvest[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
+                           file = paste0(outFol,"MCOL",mapyear,"_harv.png"), type = "exp",
+                           title = paste0("MCOL_harv in ",mapyear), pow2min = 0, pow2max = 12,
+                           legendtitle = "GtC", legYes = T, onlyPos = F, eps = eps)
   plotMCOLovertime(mcolData = mcolData, file = paste0(outFol,"MCOL_overtime_LPJmL_",plotyears[1],"-",plotyears[2],".png"),
                   firstyr = startyr, plotyrs = plotyears, minVal = minVal, ref = "pi",
                   legendpos = legendpos, maxVal = maxVal, eps = eps, highlightyrs = highlightyear)
   plotMCOLmap(data = rowMeans(mcolData$mcol_perc[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
                file = paste0(outFol,"MCOL",mapyear,"_LPJmL.png"),legendtitle = "% of NPPpot", eps = eps,
-               title = paste0(mapindex-mapyear_buffer, " - ",mapindex+mapyear_buffer) )
+               title = paste0("MCOL_perc ",mapyear-mapyear_buffer, " - ",mapyear+mapyear_buffer) )
   plotMCOLmap(data = rowMeans(mcolData$mcol_perc_piref[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
                file = paste0(outFol,"MCOL_piref_",mapyear,"_LPJmL.png"),
-               title = paste0(mapindex-mapyear_buffer, " - ",mapindex+mapyear_buffer),legendtitle = "% of NPPpi", eps = eps)
-  lpjmliotools::plotGlobalMan(data = rowMeans(mcolData$ynpp[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),file = paste0(outFol,"NPP",mapyear,"_LPJmL.png"), brks = seq(0,1000,100),
+               title = paste0("MCOL_perc ",mapyear-mapyear_buffer, " - ",mapyear+mapyear_buffer),legendtitle = "% of NPPpi", eps = eps)
+  lpjmliotools::plotGlobalMan(data = rowMeans(mcolData$ynpp[,(mapindex-mapyear_buffer):(mapindex+mapyear_buffer)]),
+                file = paste0(outFol,"NPP",mapyear,"_LPJmL.png"), brks = seq(0,1000,100),
                 palette = c("orangered4","orangered","orange","gold","greenyellow","limegreen","green4","darkcyan","darkslategrey","navy"),
-                title = paste0("NPP average ",mapindex-mapyear_buffer, "-",mapindex+mapyear_buffer),legendtitle = "gC/m2",legYes = T)
+                title = paste0("NPP average ",mapyear-mapyear_buffer, "-",mapyear+mapyear_buffer),
+                legendtitle = "gC/m2",legYes = T)
+  
 } # end of plotMCOL
