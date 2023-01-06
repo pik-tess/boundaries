@@ -57,7 +57,8 @@ calc_bluewater_status <- function(path_scenario,
                                   prefix_monthly_output = "",
                                   avg_nyear_args = list(),
                                   # to be replaced by lpjmlKit::read_output
-                                  start_year = 1901,
+                                  read_args = list(start_year = 1901,
+                                                  headersize = 0),
                                   irrmask_basin = TRUE) {
   # verify available methods
   method <- match.arg(method, c("gerten2020",
@@ -98,7 +99,8 @@ calc_bluewater_status <- function(path_scenario,
                        prefix_monthly_output,
                        "discharge.bin"),
     time_span = time_span_reference,
-    start_year = start_year,
+    start_year = read_args$start_year,
+    headersize = read_args$headersize,
     nstep = 12,
     ncell = 67420,
     nbands = 1,
@@ -115,7 +117,8 @@ calc_bluewater_status <- function(path_scenario,
                        prefix_monthly_output,
                        "discharge.bin"),
     time_span = time_span_scenario,
-    start_year = start_year,
+    start_year = read_args$start_year,
+    headersize = read_args$headersize,
     nstep = 12,
     ncell = 67420,
     nbands = 1,
@@ -224,7 +227,7 @@ calc_bluewater_status <- function(path_scenario,
                                               time_span = time_span_scenario,
                                               prefix_monthly_output = prefix_monthly_output, # nolint
                                               avg_nyear_args = avg_nyear_args,
-                                              start_year = start_year)
+                                              start_year = read_args$start_year)
         pb_status[irrmask_basin == 0] <- 1
       }
     },
