@@ -35,6 +35,9 @@
 #' groundwater denitrification losses. Defaults to TRUE ( = simulated leaching
 #' is multiplied with 0.71 based on simulated denitrification losses in ground
 #' water from Bouwman et al 2013)
+#' 
+#' @param pb_thresholds list with upper and lower threshold for N concentration
+#' (mg N/l) in runoff to surface water (default: upper = 2.5, lower = 1)
 #'
 #' @param prefix_monthly_output character. Provide a prefix if required for
 #' monthly LPJmL output files, e.g. `"m"` for `"mdischarge.bin"` instead of
@@ -43,6 +46,8 @@
 #' @param avg_nyear_args list of arguments to be passed to
 #' \link[pbfunctions]{average_nyear_window} (see for more info). To be used for
 #' time series analysis
+#' 
+#' @param read_args list of arguments for reading output.
 #'
 #' @examples
 #' \dontrun{
@@ -50,21 +55,25 @@
 #' }
 #'
 #' @md
-#' @importFrom future %<-%
+#' @importFrom future <-
 #' @export
 calc_nitrogen_status <- function(path_scenario,
                                  path_reference,
                                  time_span_scenario = c(1982, 2011),
                                  time_span_reference = NULL,
+                                 input_files = list(prec = "/p/projects/lpjml/input/historical/CRUDATA_TS3_23/gpcc_v7_cruts3_23_precip_1901_2013.clm"), #nolint
                                  method = "braun2022",
                                  temporal_resolution = "annual",
                                  cut_arid = 0.2,
                                  cut_runoff = 0,
                                  with_groundwater_denit = TRUE,
+                                 pb_thresholds = list(lower = 1, upper = 2.5),
                                  prefix_monthly_output = "",
                                  avg_nyear_args = list(),
                                  # to be replaced by lpjmlKit::read_output
-                                 start_year = 1901) {
+                                 read_args = list(start_year = 1901,
+                                                  headersize = 0)
+                                 ) {
   # verify available methods
   method <- match.arg(method, c("braun2022",
                                 "braun2022_minusref"))
@@ -100,45 +109,47 @@ calc_nitrogen_status <- function(path_scenario,
     dimnames(lpjml_grid) <- list(coordinate = c("lon", "lat"),
                                  cell = seq_len(ncell))
     # ------------------------------------------------------------------------ #
-    cell_area <-  lpjmlKit::calc_cellarea(
-      lpjmlKit::subset_array(lpjml_grid, list(coordinate = "lat"))
-    )
+    cell_area <- lpjmliotools::cellarea #lpjmlKit::calc_cellarea(
+      #lpjmlKit::subset_array(lpjml_grid, list(coordinate = "lat"))
+    #)
 
     # TO BE REPLACED BY lpjmlKit::read_output -------------------------------- #
     #   hardcoded values to be internally replaced
     # read runoff
-    runoff %<-% tmp_read_monthly(
+    runoff <- tmp_read_monthly(
       file_name = paste0(path_data, "/", prefix_monthly_output, "runoff.bin"),
       time_span = time_span,
-      start_year = start_year,
+      start_year = read_args$start_year,
       nstep = 12,
       ncell = 67420,
       nbands = 1,
-      size = 4
+      size = 4,
+      headersize = read_args$headersize
     )
     # ------------------------------------------------------------------------ #
 
     # TO BE REPLACED BY lpjmlKit::read_output -------------------------------- #
     #   hardcoded values to be internally replaced
     # read leaching
-    leaching %<-% tmp_read_monthly(
+    leaching <- tmp_read_monthly(
       file_name = paste0(path_data, "/", prefix_monthly_output, "leaching.bin"),
       time_span = time_span,
-      start_year = start_year,
+      start_year = read_args$start_year,
       nstep = 12,
       ncell = 67420,
       nbands = 1,
-      size = 4
+      size = 4,
+      headersize = read_args$headersize
     )
     # ------------------------------------------------------------------------ #
 
     # average runoff
-    monthly_runoff %<-% do.call(average_nyear_window,
+    monthly_runoff <- do.call(average_nyear_window,
                           append(list(x = runoff),
                                  avg_nyear_args))
 
     # average leaching
-    monthly_leaching %<-% do.call(average_nyear_window,
+    monthly_leaching <- do.call(average_nyear_window,
                             append(list(x = leaching),
                                    avg_nyear_args))
 
@@ -218,7 +229,7 @@ calc_nitrogen_status <- function(path_scenario,
         prefix_monthly_output = prefix_monthly_output,
         avg_nyear_args = avg_nyear_args,
         # to be replaced by lpjmlKit::read_output
-        start_year = start_year)
+        start_year = read_args$start_year)
     },
     braun2022_minusref = {
       # check time_spans of scenario and reference runs
@@ -237,7 +248,7 @@ calc_nitrogen_status <- function(path_scenario,
         }
       }
       # calculate leaching concentration and loss rate for scenario output
-      status_frac_scenario %<-% calc_nitrogen_leach(
+      status_frac_scenario <- calc_nitrogen_leach(
         path_data = path_scenario,
         time_span = time_span_scenario,
         temporal_resolution = temporal_resolution,
@@ -245,14 +256,14 @@ calc_nitrogen_status <- function(path_scenario,
         prefix_monthly_output = prefix_monthly_output,
         avg_nyear_args = avg_nyear_args,
         # to be replaced by lpjmlKit::read_output
-        start_year = start_year)
+        start_year = read_args$start_year)
 
       if (!is.null(nyear_ref)) {
         avg_nyear_args["nyear_reference"] <- nyear_ref
       }
 
       # calculate leaching concentration and loss rate for reference output
-      status_frac_reference %<-% calc_nitrogen_leach(
+      status_frac_reference <- calc_nitrogen_leach(
         path_data = path_reference,
         time_span = time_span_reference,
         temporal_resolution = temporal_resolution,
@@ -260,7 +271,7 @@ calc_nitrogen_status <- function(path_scenario,
         prefix_monthly_output = prefix_monthly_output,
         avg_nyear_args = avg_nyear_args,
         # to be replaced by lpjmlKit::read_output
-        start_year = start_year)
+        start_year = read_args$start_year)
 
       # subtract scenario leaching concentration and loss rate from reference
       status_frac <- status_frac_scenario - status_frac_reference
@@ -271,42 +282,60 @@ calc_nitrogen_status <- function(path_scenario,
   # TO BE REPLACED BY lpjmlKit::read_output -------------------------------- #
   #   hardcoded values to be internally replaced
   # read potential evapotranspiration
-  pet %<-% tmp_read_monthly(
+  pet <- tmp_read_monthly(
     file_name = paste0(path_scenario, "/", prefix_monthly_output, "pet.bin"),
     time_span = time_span_scenario,
-    start_year = start_year,
+    start_year = read_args$start_year,
     nstep = 12,
     ncell = 67420,
     nbands = 1,
-    size = 4
+    size = 4,
+    headersize = read_args$headersize
   )
   # ------------------------------------------------------------------------ #
 
   # TO BE REPLACED BY lpjmlKit::read_output -------------------------------- #
   #   hardcoded values to be internally replaced
   # read precipitation
-  prec %<-% tmp_read_monthly(
-    file_name = paste0(path_scenario, "/", prefix_monthly_output, "prec.bin"),
-    time_span = time_span_scenario,
-    start_year = start_year,
-    nstep = 12,
-    ncell = 67420,
-    nbands = 1,
-    size = 4
+  if (is.null(input_files$prec)) {
+    prec <- tmp_read_monthly(
+      file_name = paste0(path_scenario, "/", prefix_monthly_output, "prec.bin"),
+      time_span = time_span_scenario,
+      start_year = read_args$start_year,
+      nstep = 12,
+      ncell = 67420,
+      nbands = 1,
+      size = 4,
+      headersize = read_args$headersize
   )
+  } else {
+    prec <- lpjmliotools::autoReadInput(inFile = input_files$prec,
+                                       getyearstart = time_span_scenario[1],
+                                       getyearstop = time_span_scenario[2]) %>%
+            rename_step2month()
+    prec <- aperm(prec, c(2, 1, 3))
+    dim_names <- list("cell" = as.character(as.numeric(dimnames(prec)[["cell"]]) + 1),
+                            "month" = dimnames(prec)[["band"]],
+                            "year" = dimnames(prec)[["year"]])
+    prec <- array(prec,
+                  dim = setNames(sapply(dim_names, length), names(dim_names)),
+                  dimnames = dim_names)
+
+    # TODO the actual problem is that the "month" dimension is called "band"
+  }
   # ------------------------------------------------------------------------ #
   # average pet
-  avg_pet %<-% do.call(average_nyear_window,
+  avg_pet <- do.call(average_nyear_window,
                      append(list(x = pet),
                             avg_nyear_args))
 
   # average precipitation
-  avg_prec %<-% do.call(average_nyear_window,
+  avg_prec <- do.call(average_nyear_window,
                      append(list(x = prec),
                             avg_nyear_args))
 
   # calculate annual potential evapotranspiration mean
-  avg_pet_annual %<-% apply(
+  avg_pet_annual <- apply(
     avg_pet,
     names(dim(avg_pet))[
       names(dim(avg_pet)) %in% c("cell", third_dim)
@@ -315,7 +344,7 @@ calc_nitrogen_status <- function(path_scenario,
     na.rm = TRUE)
 
   # calculate annual precipiation mean
-  avg_prec_annual %<-% apply(
+  avg_prec_annual <- apply(
     avg_prec,
     names(dim(avg_prec))[
       names(dim(avg_prec)) %in% c("cell", third_dim)
@@ -337,23 +366,24 @@ calc_nitrogen_status <- function(path_scenario,
   # TO BE REPLACED BY lpjmlKit::read_output -------------------------------- #
   # hardcoded values to be internally replaced
   # read runoff
-  runoff %<-% tmp_read_monthly(
+  runoff <- tmp_read_monthly(
       file_name = paste0(path_scenario, "/", prefix_monthly_output, "runoff.bin"),
       time_span = time_span_scenario,
-      start_year = start_year,
+      start_year = read_args$start_year,
       nstep = 12,
       ncell = 67420,
       nbands = 1,
-      size = 4
+      size = 4,
+      headersize = read_args$headersize
   )
 
   # average runoff
-  runoff_monthly %<-% do.call(average_nyear_window,
+  runoff_monthly <- do.call(average_nyear_window,
                           append(list(x = runoff),
                                  avg_nyear_args))
 
   # calculate annual runoff
-  runoff_annual %<-% apply(
+  runoff_annual <- apply(
     runoff_monthly,
     names(dim(runoff_monthly))[
       names(dim(runoff_monthly)) %in% c("cell", third_dim)
@@ -376,11 +406,12 @@ calc_nitrogen_status <- function(path_scenario,
   # init pb_status based on status_frac
   pb_status <- status_frac
   # high risk
-  pb_status[status_frac >= 2.5] <- 3
+  pb_status[status_frac >= pb_thresholds$upper] <- 3
   # increasing risk
-  pb_status[status_frac < 2.5 & status_frac >= 1] <- 2
+  pb_status[status_frac < pb_thresholds$upper &
+            status_frac >= pb_thresholds$lower] <- 2
   # safe zone
-  pb_status[status_frac < 1] <- 1
+  pb_status[status_frac < pb_thresholds$lower] <- 1
   # non applicable cells
   pb_status[cells_arid] <- 0
   pb_status[cells_low_runoff] <- 0
@@ -396,12 +427,13 @@ tmp_read_monthly <- function(file_name,
                              nstep,
                              ncell,
                              nbands,
-                             size) {
+                             size,
+                             headersize) {
   # scenario runofv
   file_con <- file(file_name,
                    "rb")
   seek(file_con,
-       where = (time_span[1] - start_year) *
+       where = headersize + (time_span[1] - start_year) *
                nstep * nbands * ncell * size,
        origin = "start")
   lpjml_data <- readBin(file_con,
