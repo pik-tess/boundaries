@@ -321,13 +321,14 @@ classify_biomes <- function(path_data,
            avg_nyear_args)
   )
 
-
-  if (montane_arctic_proxy_name == "elevation") {
-    elevation <- drop(
-      lpjmliotools::autoReadInput(
-        inFile = input_files$elevation
-      ) %>% rename_step2month()
-    )
+  if (!is.na(montane_arctic_proxy_name)) {
+    if (montane_arctic_proxy_name == "elevation") {
+      elevation <- drop(
+        lpjmliotools::autoReadInput(
+          inFile = input_files$elevation
+        ) %>% rename_step2month()
+      )
+    }
   }
 
   # biome_names after biome classification in Ostberg et al. 2013
@@ -501,14 +502,16 @@ classify_biomes <- function(path_data,
   }
 
   # montane (for classification of montane grassland)
-  if (montane_arctic_proxy_name == "elevation") {
-    is_montane_artic <- elevation > montane_arctic_proxy[[
-      montane_arctic_proxy_name
-    ]]
-  } else if (montane_arctic_proxy_name == "latitude") {
-    is_montane_artic <- !(abs(latitudes) > montane_arctic_proxy[[
-      montane_arctic_proxy_name
-    ]])
+  if (!is.na(montane_arctic_proxy_name)) {
+      if (montane_arctic_proxy_name == "elevation") {
+        is_montane_artic <- elevation > montane_arctic_proxy[[
+          montane_arctic_proxy_name
+        ]]
+      } else if (montane_arctic_proxy_name == "latitude") {
+        is_montane_artic <- !(abs(latitudes) > montane_arctic_proxy[[
+          montane_arctic_proxy_name
+        ]])
+      }
   }
 
   # FORESTS ------------------------------------------------------------------ #
