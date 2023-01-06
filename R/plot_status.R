@@ -143,7 +143,7 @@ plot_status <- function(file_name = NULL,
     image(plotvar, asp = 1, xaxt = "n",
           yaxt = "n", xlab = "", ylab = "", col = cols, breaks = brk,
           lwd = 0.1, bty = "n", add = TRUE)
-    plot(countries, add = TRUE, lwd = 0.3, border = "#33333366",
+    raster::plot(countries, add = TRUE, lwd = 0.3, border = "#33333366",
          usePolypath = FALSE)
     mtext(pb_names[i], 1, -3, cex = textcex, font = 1,
           adj = 0.57)

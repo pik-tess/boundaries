@@ -89,7 +89,7 @@ plot_biomes <- function(biome_data,
   image(biomes_lpjml, asp = 1, xaxt = "n", yaxt = "n",
           xlab = "", ylab = "", col = biome_cols, breaks = brk, lwd = 0.1,
           bty = "n")
-  plot(countries, add = TRUE, lwd = 0.3,
+  raster::plot(countries, add = TRUE, lwd = 0.3,
          border = "#5c565667", usePolypath = FALSE)
   legend(0, y = -6736039, xjust = 0.45, yjust = 1, cex = 0.8,
     biome_names_legend[1:19],
