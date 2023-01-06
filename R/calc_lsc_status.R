@@ -66,7 +66,7 @@ calc_lsc_status <- function(path_scenario,
                             eurasia = TRUE,
                             biome_classification = NULL,
                             avg_nyear_args = list(),
-                            input_files = list(),
+                            input_files = list(temp = "/p/projects/lpjml/input/historical/CRUDATA_TS3_23/cru_ts3.23.1901.2014.tmp.dat.clm"), #nolint
                             diff_output_files = list(),
                             file_type = "raw",
                             read_args = list(
@@ -140,6 +140,7 @@ calc_lsc_status <- function(path_scenario,
       diff_output_files = diff_output_files,
       file_type = file_type,
       read_args = read_args,
+      montane_arctic_proxy = NULL,
       ...
       )
     biome_classes <- biome_classes$biome_id
