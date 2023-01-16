@@ -297,7 +297,7 @@ classify_biomes <- function(path_data,
   npft <- fpc_nbands - 1
 
   # average fpc
-  avg_fpc %<-% do.call(
+  avg_fpc <- do.call(
     average_nyear_window,
     append(list(x = fpc), # fix_dimnames(fpc, "fpc", timespan, ncell, npft, fpc_nbands)), # nolint
            avg_nyear_args)
@@ -305,7 +305,7 @@ classify_biomes <- function(path_data,
 
   # average vegc or pft_lai
   if (!is.na(savanna_proxy_name)) {
-    avg_savanna_proxy_data %<-% drop(
+    avg_savanna_proxy_data <- drop(
       do.call(
         average_nyear_window,
         append(list(x = savanna_proxy_data), # fix_dimnames(savanna_proxy_data, savanna_proxy_name, timespan, ncell, npft, fpc_nbands)), # nolint
@@ -315,7 +315,7 @@ classify_biomes <- function(path_data,
   }
 
   # average temp
-  avg_temp %<-% do.call(
+  avg_temp <- do.call(
     average_nyear_window,
     append(list(x = temp), # fix_dimnames(temp, "temp", timespan, ncell, npft)),
            avg_nyear_args)

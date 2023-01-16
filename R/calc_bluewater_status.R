@@ -93,7 +93,7 @@ calc_bluewater_status <- function(path_scenario,
   # reference discharge
   # TO BE REPLACED BY lpjmlKit::read_output ---------------------------------- #
   #   hardcoded values to be internally replaced
-  discharge_reference %<-% tmp_read_monthly(
+  discharge_reference <- tmp_read_monthly(
     file_name = paste0(path_reference,
                        "/",
                        prefix_monthly_output,
@@ -111,7 +111,7 @@ calc_bluewater_status <- function(path_scenario,
   # scenario discharge
   # TO BE REPLACED BY lpjmlKit::read_output ---------------------------------- #
   #   hardcoded values to be internally replaced
-  discharge_scenario %<-% tmp_read_monthly(
+  discharge_scenario <- tmp_read_monthly(
     file_name = paste0(path_scenario,
                        "/",
                        prefix_monthly_output,
@@ -127,13 +127,13 @@ calc_bluewater_status <- function(path_scenario,
   # -------------------------------------------------------------------------- #
 
   # average discharge reference
-  avg_discharge_reference %<-% do.call(average_nyear_window,
+  avg_discharge_reference <- do.call(average_nyear_window,
                                        append(list(x = discharge_reference,
                                                    nyear_reference = nyear_ref),
                                               avg_nyear_args))
 
   # average discharge reference
-  avg_discharge_scenario %<-% do.call(average_nyear_window,
+  avg_discharge_scenario <- do.call(average_nyear_window,
                                       append(list(x = discharge_scenario),
                                              avg_nyear_args))
 
@@ -142,10 +142,10 @@ calc_bluewater_status <- function(path_scenario,
     # "gerten2020" - Gerten et al. 2020
     gerten2020 = {
       # calc efrs for vmf_min and vmf_max
-      efr_uncertain %<-% calc_efrs(discharge_reference,
+      efr_uncertain <- calc_efrs(discharge_reference,
                                    "vmf_min",
                                    avg_nyear_args)
-      efr_safe %<-% calc_efrs(discharge_reference,
+      efr_safe <- calc_efrs(discharge_reference,
                               "vmf_max",
                               avg_nyear_args)
       # calculation of EFR transgressions = EFR deficits in LU run

@@ -42,7 +42,7 @@ calc_irrigation_mask <- function(path_output,
   # -------------------------------------------------------------------------- #
 
   # average discharge reference
-  avg_irrigation_scenario %<-% do.call(average_nyear_window,
+  avg_irrigation_scenario <- do.call(average_nyear_window,
                                        append(list(x = irrigation_scenario),
                                               avg_nyear_args))
 

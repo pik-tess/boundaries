@@ -55,7 +55,7 @@
 #' }
 #'
 #' @md
-#' @importFrom future <-
+#' @importFrom future %<-%
 #' @export
 calc_nitrogen_status <- function(path_scenario,
                                  path_reference,

@@ -132,7 +132,7 @@ calc_lsc_status <- function(path_scenario,
 
   # classify biomes based on foliage projected cover (FPC) output
   if (is.null(biome_classification)) {
-    biome_classes %<-% classify_biomes(
+    biome_classes <- classify_biomes(
       path_data = path_reference,
       timespan = time_span_reference,
       avg_nyear_args = avg_nyear_args,
@@ -149,7 +149,7 @@ calc_lsc_status <- function(path_scenario,
   }
   if (spatial_resolution == "biome") {
     # get continents mask - pass arg of whether to merge europe and asia
-    continent_grid %<-% calc_continents_mask(path_reference, eurasia = eurasia)
+    continent_grid <- calc_continents_mask(path_reference, eurasia = eurasia)
   }
 
   # read in biome mapping
@@ -230,7 +230,7 @@ calc_lsc_status <- function(path_scenario,
       lat = lat
     ) %>% rename_step2month()
   } else if (file_type %in% c("raw", "clm")) {
-    fpc_scenario %<-% lpjmliotools::readCFToutput(inFile = output_files_scenario$fpc,
+    fpc_scenario <- lpjmliotools::readCFToutput(inFile = output_files_scenario$fpc,
                                       startyear = read_args$firstyear,
                                       stopyear = time_span_scenario[2],
                                       size = read_args$size,
@@ -239,7 +239,7 @@ calc_lsc_status <- function(path_scenario,
                                       getyearstop = time_span_scenario[2],
                                       ncells = read_args$ncell,
                                       bands = read_args$fpc_nbands) %>% rename_step2month() # nolint
-    fpc_reference %<-% lpjmliotools::readCFToutput(inFile = output_files_reference$fpc,
+    fpc_reference <- lpjmliotools::readCFToutput(inFile = output_files_reference$fpc,
                                       startyear = read_args$firstyear,
                                       stopyear = time_span_reference[2],
                                       size = read_args$size,
@@ -304,16 +304,16 @@ calc_lsc_status <- function(path_scenario,
          dim = dim(tree_share_reference)) * cell_area
   )
   # sum tree pfts for forest cover
-  all_tree_cover_scenario %<-% apply(tree_cover_scenario,
+  all_tree_cover_scenario <- apply(tree_cover_scenario,
                                      c("cell", "year"),
                                      sum,
                                      na.rm = TRUE)
-  all_tree_cover_reference %<-% apply(tree_cover_reference,
+  all_tree_cover_reference <- apply(tree_cover_reference,
                                       c("cell", "year"),
                                       sum,
                                       na.rm = TRUE)
   # average forest over time
-  avg_trees_scenario %<-% do.call(average_nyear_window,
+  avg_trees_scenario <- do.call(average_nyear_window,
                                   append(list(x = all_tree_cover_scenario),
                                          avg_nyear_args))
   if (!is.null(nyear_ref)) {
@@ -321,7 +321,7 @@ calc_lsc_status <- function(path_scenario,
   }
 
   # average forest over time
-  avg_trees_reference %<-% do.call(average_nyear_window,
+  avg_trees_reference <- do.call(average_nyear_window,
                                    append(list(x = all_tree_cover_reference),
                                           avg_nyear_args))
 
