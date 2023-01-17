@@ -91,7 +91,12 @@ plot_biomes <- function(biome_data,
           bty = "n")
   raster::plot(countries, add = TRUE, lwd = 0.3,
          border = "#5c565667", usePolypath = FALSE)
-  legend(0, y = -6736039, xjust = 0.45, yjust = 1, cex = 0.8,
+  if (to_robinson == TRUE) {
+   ypoint <- (-6736039)
+  } else {
+   ypoint <- (-67)
+  }
+  legend(0, y = ypoint, xjust = 0.45, yjust = 1, cex = 0.8,
     biome_names_legend[1:19],
     fill = biome_cols_legend[1:19],
     horiz = F, border = NULL, bty = "o", box.col = "white",
