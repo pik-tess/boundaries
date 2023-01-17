@@ -20,10 +20,6 @@
 #' method is `c("gerten2020")` based on
 #' [Gerten et al. 2020](https://doi.org/10.1038/s41893-019-0465-1).
 #'
-#' @param temporal_resolution character. Temporal resolution, available options
-#' are `"annual"` (default) and `"monthly"`. `"annual"` describes the mean only
-#' over months that are transgressed.
-#'
 #' @param cut_min double. Exclude boundary calculations for Q < cut_min
 #'
 #' @param prefix_monthly_output character. Provide a prefix if required for
