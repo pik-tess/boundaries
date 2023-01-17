@@ -51,21 +51,17 @@ calc_bluewater_status <- function(path_scenario,
                                   time_span_scenario = c(1982, 2011),
                                   time_span_reference = NULL,
                                   method = "gerten2020",
-                                  temporal_resolution = "annual",
                                   # Q < 1m³/s
                                   cut_min = 0.0864,
                                   prefix_monthly_output = "",
                                   avg_nyear_args = list(),
                                   # to be replaced by lpjmlKit::read_output
                                   read_args = list(start_year = 1901,
-                                                  headersize = 0),
+                                                   headersize = 0),
                                   irrmask_basin = TRUE) {
   # verify available methods
   method <- match.arg(method, c("gerten2020",
                                 "steffen2015"))
-  # verify available temporal resolution
-  temporal_resolution <- match.arg(temporal_resolution, c("annual",
-                                                          "monthly"))
 
   if (.Platform$OS.type == "windows") {
     future_plan <- future::plan("multisession")
@@ -174,27 +170,23 @@ calc_bluewater_status <- function(path_scenario,
         if (rlang::is_empty(.)) NULL else .
       }
 
-      if (temporal_resolution == "annual") {
-        # to average the ratio only over months which are not "safe"
-        status_frac_monthly[status_frac_monthly <= 0.05] <- NA
-        status_frac <- apply(
-          status_frac_monthly,
-          names(dim(status_frac_monthly))[
-            names(dim(status_frac_monthly)) %in% c("cell", third_dim)
-          ],
-          mean,
-          na.rm = TRUE)
+      # to average the ratio only over months which are not "safe"
+      status_frac_monthly[status_frac_monthly <= 0.05] <- NA
+      status_frac <- apply(
+        status_frac_monthly,
+        names(dim(status_frac_monthly))[
+          names(dim(status_frac_monthly)) %in% c("cell", third_dim)
+        ],
+        mean,
+        na.rm = TRUE)
 
-        # check if vector was returned (loss if dimnames) -> reconvert to array
-        if (is.null(dim(status_frac))) {
-          status_frac <- array(
-            status_frac,
-            dim = c(cell = dim(status_frac_monthly)[["cell"]], 1),
-            dimnames = list(cell = dimnames(status_frac_monthly)[["cell"]], 1)
-          )
-        }
-      } else {
-        status_frac <- status_frac_monthly
+      # check if vector was returned (loss if dimnames) -> reconvert to array
+      if (is.null(dim(status_frac))) {
+        status_frac <- array(
+          status_frac,
+          dim = c(cell = dim(status_frac_monthly)[["cell"]], 1),
+          dimnames = list(cell = dimnames(status_frac_monthly)[["cell"]], 1)
+        )
       }
 
       # to display cell with marginal discharge in other color (grey):
