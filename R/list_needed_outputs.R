@@ -28,22 +28,61 @@ list_needed_outputs <- function(metric = "all", with_nitrogen = TRUE) {
   if (length(notin) > 0) {
     stop(paste("Metrics not available:", notin, collapse = ", "))
   }
-  varsGAMMA <- c("grid", "fpc", "fpc_bft", "cftfrac", "firec", "rh_harvest",
-                 "npp", "runoff", "transp", "vegc", "firef", "rh", "harvestc",
-                 "evap", "interc", "soilc", "litc", "swc")
-  varsGAMMAnitrogen <- c("vegn", "soilnh4", "soilno3", "leaching", "n2o_denit",
-                         "n2o_nit", "n2o_denit", "n2_emis", "bnf",
-                         "n_volatilization")
-  varsHANPP <- c("grid", "npp", "pft_npp", "pft_harvestc", "pft_rharvestc",
-                 "firec", "timber_harvestc", "cftfrac", "fpc")
-  varsBiome <- c("grid", "fpc", "vegc", "pft_lai", "temp")
-  vars_pb_n <- c("grid", "runoff", "leaching", "pet", "prec")
-  vars_pb_w <- c("grid", "discharge", "irrig", "drainage")
+  varsGAMMA <- list(grid = "annual", 
+                    fpc = "annual", 
+                    fpc_bft = "annual", 
+                    cftfrac = "annual", 
+                    firec = "annual", 
+                    npp = "annual",
+                    runoff = "annual", 
+                    transp = "annual", 
+                    vegc = "annual",
+                    firef = "annual", 
+                    rh = "annual", 
+                    harvestc = "annual",
+                    evap = "annual", 
+                    interc = "annual", 
+                    soilc = "annual",
+                    litc = "annual", 
+                    swc = "annual")
+  varsGAMMAnitrogen <- list(vegn = "annual", 
+                            soilnh4 = "annual", 
+                            soilno3 = "annual", 
+                            leaching = "annual", 
+                            n2o_denit = "annual",
+                            n2o_nit = "annual", 
+                            n2o_denit = "annual", 
+                            n2_emis = "annual", 
+                            bnf = "annual",
+                            n_volatilization = "annual")
+  varsHANPP <- list(grid = "annual", 
+                    npp = "annual", 
+                    pft_npp = "annual", 
+                    pft_harvestc = "annual", 
+                    pft_rharvestc = "annual",
+                    firec = "annual", 
+                    timber_harvestc = "annual", 
+                    cftfrac = "annual", 
+                    fpc = "annual")
+  varsBiome <- list(grid = "annual", 
+                    fpc = "annual", 
+                    vegc = "annual", 
+                    pft_lai = "annual", 
+                    temp = "annual")
+  vars_pb_n <- list(grid = "annual", 
+                    runoff = "annual", 
+                    leaching = "annual", 
+                    pet = "annual", 
+                    prec = "annual")
+  vars_pb_w <- list(grid = "annual", 
+                    discharge = "monthly", 
+                    irrig = "monthly", 
+                    drainage = "annual")
   vars_pb_lsc <- varsBiome
-  vars_pb_b <- c()
+  vars_pb_b <- c(varsGAMMA,varsHANPP)
+  if (with_nitrogen) vars_pb_b <- c(vars_pb_b,varsGAMMAnitrogen)
 
   outs <- c()
-  tsteps <- c() # todo: add timestep functionality - needs to be clever
 
   if ("all" %in% metric) {
     if (with_nitrogen) {
@@ -86,5 +125,29 @@ list_needed_outputs <- function(metric = "all", with_nitrogen = TRUE) {
   if ("pb_b" %in% metric ) {
     outs <- c(outs,vars_pb_b)
   }
-  return(list(outputs = unique(sort(outs)), timesteps = tsteps))
+  out <- unify_list(outs)
+  return(list(outputs = names(out), timesteps = unname(unlist(out)) ) )
+}
+
+# for input list a, all duplicate keys are unified, taking the value with 
+#     highest temporal resolution (daily>monthly>annual)
+unify_list <- function(a){
+  merged_list = list()
+  for (item in unique(names(a))){ # iterate over all unique keys 
+    values <- a[which(names(a) == item)] # get the values for the current key
+    merged_list <- c(merged_list, 
+                     setNames(highest_temporal_res(values), item) )
+  }
+  return(merged_list)
+}
+
+# among list of input values a, return that with highest temporal resolution (daily>monthly>annual)
+highest_temporal_res <- function(a){
+  if ("daily" %in% a){
+    return("daily")
+  }else if ("monthly" %in% a){
+    return("monthly")
+  }else{
+    return("annual")
+  }
 }
