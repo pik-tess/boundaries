@@ -83,13 +83,6 @@ calc_lsc_status <- function(path_scenario,
   spatial_resolution <- match.arg(spatial_resolution, c("biome",
                                                         "grid"))
 
-  if (.Platform$OS.type == "windows") {
-    future_plan <- future::plan("multisession")
-  } else {
-    future_plan <- future::plan("multicore")
-  }
-  on.exit(future::plan(future_plan))
-
   # check time_spans of scenario and reference runs
   if (is.null(time_span_reference)) {
     time_span_reference <- time_span_scenario

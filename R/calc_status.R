@@ -36,10 +36,29 @@
 #' @export
 calc_status <- function(boundary,
                         path_scenario,
-                        path_reference,
+                        path_reference = NULL,
                         time_span_scenario = c(1982, 2011),
                         time_span_reference = NULL,
+                        avg_nyear_args = list(),
+                        input_files = list(),
+                        diff_output_files = list(),
+                        read_args = list(),
+                        in_parallel = TRUE,
+                        # args that use all get prefix like lsc.method or
+                        #   lsc.threshold
                         ...) {
+
+  file_type <- get_file_type(path_scenario)
+
+  # if in_parallel use future package for asynchronous parallelization
+  if (in_parallel) {
+    if (.Platform$OS.type == "windows") {
+      future_plan <- future::plan("multisession")
+    } else {
+      future_plan <- future::plan("multicore")
+    }
+    on.exit(future::plan(future_plan))
+  }
 
   all_status <- list()
   # utility functions
@@ -54,4 +73,55 @@ calc_status <- function(boundary,
   }
 
   return(all_status)
+}
+
+
+get_file_type <- function(path) {
+  # get all files in path
+  all_files <- list.files(
+    path,
+    full.names = TRUE
+  )
+
+  # get file extensions
+  all_file_types <- all_files %>%
+  strsplit("^([^\\.]+)") %>%
+    sapply(function(x) {
+      y <- x[2]
+      return(y)
+    }) %>%
+    substr(2, nchar(.))
+
+  # get most frequent file types
+  most_frequent <- all_file_types %>%
+    factor() %>%
+    table() %>%
+    names() %>%
+    .[1:5]
+
+  # 5 exemplaric files to detect type
+  files_to_check <- sapply(
+    most_frequent,
+    function(x, y, z) {
+      y[which(z == x)[1]]
+    },
+    y = all_files,
+    z = all_file_types)
+
+  # detect actual LPJmL data type
+  types <- sapply(
+    files_to_check,
+    lpjmlkit:::detect_type
+  )
+
+  # assign file type after ranking which is available
+  #   first preferable: "meta", second: "clm", last: "raw"
+  if ("meta" %in% types) {
+   file_type <- "meta"
+  } else if ("clm" %in% types){
+   file_type <- "clm"
+  } else if ("raw" %in% types){
+   file_type <- "raw"
+  }
+  return(file_type)
 }
