@@ -21,9 +21,6 @@
 #' Second method option is `"braun2022_minusref"` to subtract reference run
 #' output
 #'
-#' @param temporal_resolution character. Temporal resolution, available options
-#' are `"annual"` (default) and `"monthly"`
-#'
 #' @param cut_arid double. Exclude boundary calculations below the defined
 #' threshold for aridity (annual precipitation / annual potential
 #' evapotranspiration); Default: 0.2
@@ -37,7 +34,15 @@
 #' water from Bouwman et al 2013)
 #' 
 #' @param pb_thresholds list with upper and lower threshold for N concentration
-#' (mg N/l) in runoff to surface water (default: upper = 2.5, lower = 1)
+#' (mg N/l) in runoff to surface water
+#' Default: upper = 2.5, lower = 1
+#' (based on de Vries et al. 2013, https://doi.org/10.1016/j.cosust.2013.07.004)
+#' Alternative: upper = 5, lower = 2
+#' (based on Schulte-Uebbing et al. 2022,
+#' https://doi.org/10.1038/s41586-022-05158-2:
+#' "we used a threshold for N concentration in run-off to surface water. This
+#' threshold was set to 5.0 mgN/l, based on the assumption that on average 50%
+#' of N entering surface water is removed through retention and sedimentation"))
 #'
 #' @param prefix_monthly_output character. Provide a prefix if required for
 #' monthly LPJmL output files, e.g. `"m"` for `"mdischarge.bin"` instead of
@@ -63,7 +68,6 @@ calc_nitrogen_status <- function(path_scenario,
                                  time_span_reference = NULL,
                                  input_files = list(prec = "/p/projects/lpjml/input/historical/CRUDATA_TS3_23/gpcc_v7_cruts3_23_precip_1901_2013.clm"), #nolint
                                  method = "braun2022",
-                                 temporal_resolution = "annual",
                                  cut_arid = 0.2,
                                  cut_runoff = 0,
                                  with_groundwater_denit = TRUE,
@@ -77,9 +81,6 @@ calc_nitrogen_status <- function(path_scenario,
   # verify available methods
   method <- match.arg(method, c("braun2022",
                                 "braun2022_minusref"))
-  # verify available temporal resolution
-  temporal_resolution <- match.arg(temporal_resolution, c("annual",
-                                                          "monthly"))
 
   if (.Platform$OS.type == "windows") {
     future_plan <- future::plan("multisession")
@@ -91,7 +92,6 @@ calc_nitrogen_status <- function(path_scenario,
   # sub function to be used for scenario and reference run (braun2022_minusref)
   calc_nitrogen_leach <- function(path_data,
                                   time_span,
-                                  temporal_resolution,
                                   with_groundwater_denit,
                                   prefix_monthly_output,
                                   avg_nyear_args,
@@ -177,38 +177,33 @@ calc_nitrogen_status <- function(path_scenario,
     }
     third_dim <<- third_dim
 
-    if (temporal_resolution == "annual") {
-      avg_runoff <- apply(
-        monthly_runoff,
-        names(dim(monthly_runoff))[
-          names(dim(monthly_runoff)) %in% c("cell", third_dim)
-        ],
-        sum,
-        na.rm = TRUE)
-      avg_leaching <- apply(
-        monthly_leaching,
-        names(dim(monthly_leaching))[
-          names(dim(monthly_leaching)) %in% c("cell", third_dim)
-        ],
-        sum,
-        na.rm = TRUE)
+    avg_runoff <- apply(
+      monthly_runoff,
+      names(dim(monthly_runoff))[
+        names(dim(monthly_runoff)) %in% c("cell", third_dim)
+      ],
+      sum,
+      na.rm = TRUE)
+    avg_leaching <- apply(
+      monthly_leaching,
+      names(dim(monthly_leaching))[
+        names(dim(monthly_leaching)) %in% c("cell", third_dim)
+      ],
+      sum,
+      na.rm = TRUE)
 
-      # check if vector was returned (loss if dimnames) -> reconvert to array
-      if (is.null(dim(avg_runoff))) {
-        avg_runoff <- array(
-          avg_runoff,
-          dim = c(cell = dim(monthly_runoff)[["cell"]], 1),
-          dimnames = list(cell = dimnames(monthly_runoff)[["cell"]], 1)
-        )
-        avg_leaching <- array(
-          avg_leaching,
-          dim = c(cell = dim(monthly_leaching)[["cell"]], 1),
-          dimnames = list(cell = dimnames(monthly_leaching)[["cell"]], 1)
-        )
-      }
-    } else {
-      avg_runoff <- monthly_runoff
-      avg_leaching <- monthly_leaching
+    # check if vector was returned (loss if dimnames) -> reconvert to array
+    if (is.null(dim(avg_runoff))) {
+      avg_runoff <- array(
+        avg_runoff,
+        dim = c(cell = dim(monthly_runoff)[["cell"]], 1),
+        dimnames = list(cell = dimnames(monthly_runoff)[["cell"]], 1)
+      )
+      avg_leaching <- array(
+        avg_leaching,
+        dim = c(cell = dim(monthly_leaching)[["cell"]], 1),
+        dimnames = list(cell = dimnames(monthly_leaching)[["cell"]], 1)
+      )
     }
 
     status_frac <- ifelse(avg_runoff > 0,
@@ -224,7 +219,6 @@ calc_nitrogen_status <- function(path_scenario,
       status_frac <- calc_nitrogen_leach(
         path_data = path_scenario,
         time_span = time_span_scenario,
-        temporal_resolution = temporal_resolution,
         with_groundwater_denit = with_groundwater_denit,
         prefix_monthly_output = prefix_monthly_output,
         avg_nyear_args = avg_nyear_args,
@@ -251,7 +245,6 @@ calc_nitrogen_status <- function(path_scenario,
       status_frac_scenario <- calc_nitrogen_leach(
         path_data = path_scenario,
         time_span = time_span_scenario,
-        temporal_resolution = temporal_resolution,
         with_groundwater_denit = with_groundwater_denit,
         prefix_monthly_output = prefix_monthly_output,
         avg_nyear_args = avg_nyear_args,
@@ -266,7 +259,6 @@ calc_nitrogen_status <- function(path_scenario,
       status_frac_reference <- calc_nitrogen_leach(
         path_data = path_reference,
         time_span = time_span_reference,
-        temporal_resolution = temporal_resolution,
         with_groundwater_denit = with_groundwater_denit,
         prefix_monthly_output = prefix_monthly_output,
         avg_nyear_args = avg_nyear_args,
