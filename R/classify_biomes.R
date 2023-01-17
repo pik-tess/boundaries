@@ -27,7 +27,8 @@
 #' @param tree_cover_thresholds list with minimum tree cover thresholds for
 #'        definition of forest, woodland, savanna and grassland. Only changes to
 #'        the default have to be included in the list, for the rest the default
-#'        is used. Default values:
+#'        is used.
+#'        Default values, based on the IGBP land cover classification system:
 #'        "boreal forest" = 0.6
 #'        "temperate forest" = 0.6
 #'        "temperate woodland" = 0.3
