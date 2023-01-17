@@ -37,7 +37,15 @@
 #' water from Bouwman et al 2013)
 #' 
 #' @param pb_thresholds list with upper and lower threshold for N concentration
-#' (mg N/l) in runoff to surface water (default: upper = 2.5, lower = 1)
+#' (mg N/l) in runoff to surface water
+#' Default: upper = 2.5, lower = 1
+#' (based on de Vries et al. 2013, https://doi.org/10.1016/j.cosust.2013.07.004)
+#' Alternative: upper = 5, lower = 2
+#' (based on Schulte-Uebbing et al. 2022,
+#' https://doi.org/10.1038/s41586-022-05158-2:
+#' "we used a threshold for N concentration in run-off to surface water. This
+#' threshold was set to 5.0 mgN/l, based on the assumption that on average 50%
+#' of N entering surface water is removed through retention and sedimentation"))
 #'
 #' @param prefix_monthly_output character. Provide a prefix if required for
 #' monthly LPJmL output files, e.g. `"m"` for `"mdischarge.bin"` instead of
