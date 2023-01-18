@@ -25,24 +25,35 @@
 #'        Defaults to `TRUE`
 #'
 #' @param biome_classification default to NULL, if biomes are to be calculated
-#' within this function based on classify_biomes. Can be set to list with 
+#' within this function based on classify_biomes. Can be set to list with
 #' already defined biomes (xx$biome_id = numeric with ncells; xx$biome_names =
 #' biome names) if biomes were already calculated with classify_biomes()
 #'
+#' @param lsc_thresholds list with deforestation thresholds for defining safe,
+#' increasing risk and high risk zone for temperate/temperate/boreal forest
+#' biomes, Default based on Steffen et al. 2015
+#' (https://doi.org/10.1126/science.1259855):
+#' list(boreal = list(lower = 0.5, upper = 0.7),
+#'      temperate = list(lower = 0.15, upper = 0.4),
+#'      tropical = list(lower = 0.15, upper = 0.4))
+#' lower = threshold between safe zone and increasing risk zone (e.g. 50% for
+#'         boreal forest with default value)
+#' upper = threshold between increasing risk and high risk zone
+#'
 #' @param avg_nyear_args list of arguments to be passed to
-#'        \link[pbfunctions]{average_nyear_window} (see for more info). To be used for
-#'        time series analysis
-#' 
+#'        \link[pbfunctions]{average_nyear_window} (see for more info).
+#'        To be used for time series analysis
+#'
 #' @param input_files optional `list` containing additional input (!) files,
 #'        not in the `path_data`, e.g. if temp was not written out:
 #'        `list(grid=..., temp = ..., elevation = ...)`
-#' 
+#'
 #' @param diff_output_files optional list for specification of output file names
 #'        differing from default, which is list(grid = "grid.bin", fpc = "fpc.bin",# nolint
 #'        vegc = "vegc.bin", pft_lai = "pft_lai.bin", temp = "temp.bin")
-#' 
+#'
 #' @param file_type replace default file type. default: ""raw
-#' 
+#'
 #' @param read_args list of arguments for reading input/output. only required
 #'        for:
 #'        nc output: specification of header_size and ncell to read in
@@ -65,6 +76,10 @@ calc_lsc_status <- function(path_scenario,
                             spatial_resolution = "biome",
                             eurasia = TRUE,
                             biome_classification = NULL,
+                            lsc_thresholds = list(
+                              temperate = list(lower = 0.5, upper = 0.7),
+                              boreal = list(lower = 0.15, upper = 0.4),
+                              tropical = list(lower = 0.15, upper = 0.4)),
                             avg_nyear_args = list(),
                             input_files = list(temp = "/p/projects/lpjml/input/historical/CRUDATA_TS3_23/cru_ts3.23.1901.2014.tmp.dat.clm"), #nolint
                             diff_output_files = list(),
@@ -406,49 +421,58 @@ calc_lsc_status <- function(path_scenario,
   pb_status <- array(0,
                      dim = dim(deforestation),
                      dimnames = dimnames(deforestation))
-  # boundaries for tropical forest and boreal forest after Steffen et al. 2015
-  #   (https://doi.org/10.1126/science.1259855)
-  #   share for safe space <= 0.15, uncertainty zone < 0.4 & >0.15 and
-  #   for high risk >= 0.4
+  ## tropical forest
   # high risk
   pb_status[
-    (is_tropical_forest |
-    is_boreal_forest) &
-    deforestation >= 0.4
+    is_tropical_forest &
+    deforestation >= lsc_thresholds$tropical$upper
   ] <- 3
   # uncertainty zone
   pb_status[
-    (is_tropical_forest |
-    is_boreal_forest) &
-    deforestation < 0.4 &
-    deforestation > 0.15
+    is_tropical_forest &
+    deforestation < lsc_thresholds$tropical$upper &
+    deforestation > lsc_thresholds$tropical$lower
   ] <- 2
   # safe space
   pb_status[
-    (is_tropical_forest |
-    is_boreal_forest) &
-    deforestation <= 0.15
+    is_tropical_forest &
+    deforestation <= lsc_thresholds$tropical$lower
   ] <- 1
 
-  # boundaries for temperate forest after Steffen et al. 2015
-  #   (https://doi.org/10.1126/science.1259855)
-  #   share for safe space <= 0.5, uncertainty zone < 0.7 & >0.5 and
-  #   for high risk >= 0.7
+  ## temperate forest
   # high risk
   pb_status[
     is_temperate_forest &
-    deforestation >= 0.7
+    deforestation >= lsc_thresholds$temperate$upper
   ] <- 3
   # uncertainty zone
   pb_status[
     is_temperate_forest &
-    deforestation < 0.7 &
-    deforestation > 0.5
+    deforestation < lsc_thresholds$temperate$upper &
+    deforestation > lsc_thresholds$temperate$lower
   ] <- 2
   # safe space
   pb_status[
     is_temperate_forest &
-    deforestation <= 0.5
+    deforestation <= lsc_thresholds$temperate$lower
+  ] <- 1
+
+  ## boreal forest
+  # high risk
+  pb_status[
+    is_boreal_forest &
+    deforestation >= lsc_thresholds$boreal$upper
+  ] <- 3
+  # uncertainty zone
+  pb_status[
+    is_boreal_forest &
+    deforestation < lsc_thresholds$boreal$upper &
+    deforestation > lsc_thresholds$boreal$lower
+  ] <- 2
+  # safe space
+  pb_status[
+    is_boreal_forest &
+    deforestation <= lsc_thresholds$boreal$lower
   ] <- 1
 
   return(pb_status)

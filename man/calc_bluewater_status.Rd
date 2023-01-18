@@ -10,11 +10,10 @@ calc_bluewater_status(
   time_span_scenario = c(1982, 2011),
   time_span_reference = NULL,
   method = "gerten2020",
-  temporal_resolution = "annual",
   cut_min = 0.0864,
   prefix_monthly_output = "",
   avg_nyear_args = list(),
-  start_year = 1901,
+  read_args = list(start_year = 1901, headersize = 0),
   irrmask_basin = TRUE
 )
 }
@@ -35,10 +34,6 @@ as an integer vector, e.g. \code{1901:1930}. Can differ in offset and length fro
 \item{method}{method (character string) to be used , currently available
 method is \code{c("gerten2020")} based on
 \href{https://doi.org/10.1038/s41893-019-0465-1}{Gerten et al. 2020}.}
-
-\item{temporal_resolution}{character. Temporal resolution, available options
-are \code{"annual"} (default) and \code{"monthly"}. \code{"annual"} describes the mean only
-over months that are transgressed.}
 
 \item{cut_min}{double. Exclude boundary calculations for Q < cut_min}
 
