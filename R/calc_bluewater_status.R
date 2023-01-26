@@ -3,11 +3,14 @@
 #' Calculate the PB status for the bluewater (former freshwater) boundary based
 #' on a scenario LPJmL run and a reference LPJmL run.
 #'
-#' @param path_scenario output directory (character string) of the scenario
-#' LPJmL run where binary files (soon with metafiles) are written
+#' @param files_scenario list with variable names and corresponding file paths
+#' (character string) of the scenario LPJmL run. All needed files are
+#' provided in XXX. E.g.: list(leaching = "/temp/leaching.bin.json")
 #'
-#' @param path_reference output directory (character string) of the reference
-#' LPJmL run where binary files (soon with metafiles) are written
+#' @param files_reference list with variable names and corresponding file paths
+#' (character string) of the reference LPJmL run. All needed files are
+#' provided in XXX. E.g.: list(leaching = "/temp/leaching.bin.json"). If not
+#' needed for the applied method, set to NULL.
 #'
 #' @param time_span_scenario time span to be used for the scenario run, defined
 #' as an integer vector, e.g. `1982:2011` (default)
@@ -20,59 +23,34 @@
 #' method is `c("gerten2020")` based on
 #' [Gerten et al. 2020](https://doi.org/10.1038/s41893-019-0465-1).
 #'
-#' @param temporal_resolution character. Temporal resolution, available options
-#' are `"annual"` (default) and `"monthly"`. `"annual"` describes the mean only
-#' over months that are transgressed.
-#'
-#' @param cut_min double. Exclude boundary calculations for Q < cut_min
-#'
-#' @param prefix_monthly_output character. Provide a prefix if required for
-#' monthly LPJmL output files, e.g. `"m"` for `"mdischarge.bin"` instead of
-#' `"discharge.bin"` (default is `""`)
+#' @param cut_min double. Exclude boundary calculations for Q < cut_min,
+#' Default: 0.0864 hm3/day (=1 m³/s)
 #'
 #' @param avg_nyear_args list of arguments to be passed to
 #' \link[pbfunctions]{average_nyear_window} (see for more info). To be used for
 #' time series analysis
-#'
-#' @param startyear first year of simulation
 #'
 #' @param irrmask_basin logical, if true: all cells in river basins without
 #' irrigation will be masked (= no boundary transgression)
 #'
 #' @examples
 #' \dontrun{
-#'  calc_bluewater_status(path_scenario, path_reference)
+#'  calc_bluewater_status(files_scenario, files_reference)
 #' }
 #'
 #' @md
 #' @export
-calc_bluewater_status <- function(path_scenario,
-                                  path_reference,
-                                  time_span_scenario = c(1982, 2011),
+calc_bluewater_status <- function(files_scenario,
+                                  files_reference,
+                                  time_span_scenario = c(1982:2011),
                                   time_span_reference = NULL,
                                   method = "gerten2020",
-                                  temporal_resolution = "annual",
-                                  # Q < 1m³/s
                                   cut_min = 0.0864,
-                                  prefix_monthly_output = "",
                                   avg_nyear_args = list(),
-                                  # to be replaced by lpjmlKit::read_output
-                                  read_args = list(start_year = 1901,
-                                                  headersize = 0),
                                   irrmask_basin = TRUE) {
   # verify available methods
   method <- match.arg(method, c("gerten2020",
                                 "steffen2015"))
-  # verify available temporal resolution
-  temporal_resolution <- match.arg(temporal_resolution, c("annual",
-                                                          "monthly"))
-
-  if (.Platform$OS.type == "windows") {
-    future_plan <- future::plan("multisession")
-  } else {
-    future_plan <- future::plan("multicore")
-  }
-  on.exit(future::plan(future_plan))
 
   # check time_spans of scenario and reference runs
   if (is.null(time_span_reference)) {
@@ -90,40 +68,22 @@ calc_bluewater_status <- function(path_scenario,
     }
   }
 
-  # reference discharge
-  # TO BE REPLACED BY lpjmlKit::read_output ---------------------------------- #
-  #   hardcoded values to be internally replaced
-  discharge_reference <- tmp_read_monthly(
-    file_name = paste0(path_reference,
-                       "/",
-                       prefix_monthly_output,
-                       "discharge.bin"),
-    time_span = time_span_reference,
-    start_year = read_args$start_year,
-    headersize = read_args$headersize,
-    nstep = 12,
-    ncell = 67420,
-    nbands = 1,
-    size = 4
-  )
-  # -------------------------------------------------------------------------- #
+  # reference discharge ------------------------------------------------------ #
+  discharge_reference <- lpjmlkit::read_io(
+      files_reference$discharge, subset = list(year = time_span_scenario)
+      ) %>%
+      lpjmlkit::transform(to = c("year_month_day")) %>%
+      lpjmlkit::as_array(aggregate = list(band = sum)) %>%
+      suppressWarnings()
+  #TODO add warning, if discharge output is not monthly but yearly?
+  # scenario discharge ------------------------------------------------------- #
 
-  # scenario discharge
-  # TO BE REPLACED BY lpjmlKit::read_output ---------------------------------- #
-  #   hardcoded values to be internally replaced
-  discharge_scenario <- tmp_read_monthly(
-    file_name = paste0(path_scenario,
-                       "/",
-                       prefix_monthly_output,
-                       "discharge.bin"),
-    time_span = time_span_scenario,
-    start_year = read_args$start_year,
-    headersize = read_args$headersize,
-    nstep = 12,
-    ncell = 67420,
-    nbands = 1,
-    size = 4
-  )
+  discharge_scenario <- lpjmlkit::read_io(
+      files_scenario$discharge, subset = list(year = time_span_scenario)
+      ) %>%
+      lpjmlkit::transform(to = c("year_month_day")) %>%
+      lpjmlkit::as_array(aggregate = list(band = sum)) %>%
+      suppressWarnings()
   # -------------------------------------------------------------------------- #
 
   # average discharge reference
@@ -132,7 +92,7 @@ calc_bluewater_status <- function(path_scenario,
                                                    nyear_reference = nyear_ref),
                                               avg_nyear_args))
 
-  # average discharge reference
+  # average discharge scenario
   avg_discharge_scenario <- do.call(average_nyear_window,
                                       append(list(x = discharge_scenario),
                                              avg_nyear_args))
@@ -174,27 +134,23 @@ calc_bluewater_status <- function(path_scenario,
         if (rlang::is_empty(.)) NULL else .
       }
 
-      if (temporal_resolution == "annual") {
-        # to average the ratio only over months which are not "safe"
-        status_frac_monthly[status_frac_monthly <= 0.05] <- NA
-        status_frac <- apply(
-          status_frac_monthly,
-          names(dim(status_frac_monthly))[
-            names(dim(status_frac_monthly)) %in% c("cell", third_dim)
-          ],
-          mean,
-          na.rm = TRUE)
+      # to average the ratio only over months which are not "safe"
+      status_frac_monthly[status_frac_monthly <= 0.05] <- NA
+      status_frac <- apply(
+        status_frac_monthly,
+        names(dim(status_frac_monthly))[
+          names(dim(status_frac_monthly)) %in% c("cell", third_dim)
+        ],
+        mean,
+        na.rm = TRUE)
 
-        # check if vector was returned (loss if dimnames) -> reconvert to array
-        if (is.null(dim(status_frac))) {
-          status_frac <- array(
-            status_frac,
-            dim = c(cell = dim(status_frac_monthly)[["cell"]], 1),
-            dimnames = list(cell = dimnames(status_frac_monthly)[["cell"]], 1)
-          )
-        }
-      } else {
-        status_frac <- status_frac_monthly
+      # check if vector was returned (loss if dimnames) -> reconvert to array
+      if (is.null(dim(status_frac))) {
+        status_frac <- array(
+          status_frac,
+          dim = c(cell = dim(status_frac_monthly)[["cell"]], 1),
+          dimnames = list(cell = dimnames(status_frac_monthly)[["cell"]], 1)
+        )
       }
 
       # to display cell with marginal discharge in other color (grey):
@@ -223,11 +179,9 @@ calc_bluewater_status <- function(path_scenario,
 
       if (irrmask_basin) {
         # calc irrigation mask to exclude non irrigated basins
-        irrmask_basin <- calc_irrigation_mask(path_scenario,
+        irrmask_basin <- calc_irrigation_mask(files_scenario,
                                               time_span = time_span_scenario,
-                                              prefix_monthly_output = prefix_monthly_output, # nolint
-                                              avg_nyear_args = avg_nyear_args,
-                                              start_year = read_args$start_year)
+                                              avg_nyear_args = avg_nyear_args)
         pb_status[irrmask_basin == 0] <- 1
       }
     },

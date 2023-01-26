@@ -23,8 +23,6 @@ Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.2
-Depends:
-    lpjmliotools (>= 0.2.17)
 Imports:
     magrittr,
     tibble,
@@ -33,7 +31,7 @@ Imports:
     zoo,
     sf,
     reshape2,
-    lpjmlKit,
+    lpjmlkit,
     lpjmliotools,
     sp,
     rgdal,

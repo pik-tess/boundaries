@@ -9,14 +9,16 @@ calc_nitrogen_status(
   path_reference,
   time_span_scenario = c(1982, 2011),
   time_span_reference = NULL,
+  input_files = list(prec =
+    "/p/projects/lpjml/input/historical/CRUDATA_TS3_23/gpcc_v7_cruts3_23_precip_1901_2013.clm"),
   method = "braun2022",
-  temporal_resolution = "annual",
   cut_arid = 0.2,
   cut_runoff = 0,
   with_groundwater_denit = TRUE,
+  pb_thresholds = list(lower = 1, upper = 2.5),
   prefix_monthly_output = "",
   avg_nyear_args = list(),
-  start_year = 1901
+  read_args = list(start_year = 1901, headersize = 0)
 )
 }
 \arguments{
@@ -40,9 +42,6 @@ method is \code{"braun2022"} based on unpublished suggestion by Johanna Braun.
 Second method option is \code{"braun2022_minusref"} to subtract reference run
 output}
 
-\item{temporal_resolution}{character. Temporal resolution, available options
-are \code{"annual"} (default) and \code{"monthly"}}
-
 \item{cut_arid}{double. Exclude boundary calculations below the defined
 threshold for aridity (annual precipitation / annual potential
 evapotranspiration); Default: 0.2}
@@ -55,6 +54,17 @@ groundwater denitrification losses. Defaults to TRUE ( = simulated leaching
 is multiplied with 0.71 based on simulated denitrification losses in ground
 water from Bouwman et al 2013)}
 
+\item{pb_thresholds}{list with upper and lower threshold for N concentration
+(mg N/l) in runoff to surface water
+Default: upper = 2.5, lower = 1
+(based on de Vries et al. 2013, https://doi.org/10.1016/j.cosust.2013.07.004)
+Alternative: upper = 5, lower = 2
+(based on Schulte-Uebbing et al. 2022,
+https://doi.org/10.1038/s41586-022-05158-2:
+"we used a threshold for N concentration in run-off to surface water. This
+threshold was set to 5.0 mgN/l, based on the assumption that on average 50\%
+of N entering surface water is removed through retention and sedimentation"))}
+
 \item{prefix_monthly_output}{character. Provide a prefix if required for
 monthly LPJmL output files, e.g. \code{"m"} for \code{"mdischarge.bin"} instead of
 \code{"discharge.bin"} (default is \code{""})}
@@ -62,6 +72,8 @@ monthly LPJmL output files, e.g. \code{"m"} for \code{"mdischarge.bin"} instead 
 \item{avg_nyear_args}{list of arguments to be passed to
 \link[pbfunctions]{average_nyear_window} (see for more info). To be used for
 time series analysis}
+
+\item{read_args}{list of arguments for reading output.}
 }
 \description{
 Calculate the PB status for the nitrogen boundary based on a scenario LPJmL
