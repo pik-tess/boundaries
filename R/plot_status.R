@@ -101,7 +101,8 @@ plot_status <- function(file_name = NULL,
   }
   fig_params <- definefig(n_row, n_col, lfrac)
   if (!is.null(file_name)) {
-    file_extension <- strsplit(file_name, split = "\\.")[[1]][-1]
+    # [[1]] removed, since it did not work, if the path contained a "."
+    file_extension <- strsplit(file_name, split = "\\.")[-1]
     switch(file_extension,
       `png` = {
         png(file_name,
