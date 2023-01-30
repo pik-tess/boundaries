@@ -178,13 +178,13 @@ classify_biomes <- function(path_data,
                 "use diff_output_files to specify them. "))
   }
   lpjml_grid <- rbind(lon, lat)
-  # TODO: convert to yearly if output is monthly
   if (file_type == "meta") {
     fpc <- lpjmliotools::autoReadMetaOutput(
       metaFile = output_files$fpc,
       getyearstart = timespan[1],
       getyearstop = timespan[2]
     ) %>% rename_step2month()
+    # todo: not working for yearly temperate output, currently temp input has to be used
     if (file.exists(output_files$temp) && is.null(input_files$temp)) {
       temp <- lpjmliotools::autoReadMetaOutput(
         metaFile = output_files$temp,
@@ -289,7 +289,7 @@ classify_biomes <- function(path_data,
       getyearstart = timespan[1],
       getyearstop = timespan[2]
     ) %>% rename_step2month()
-    # TODO the actual problem is that the "month" dimension is called "band"
+    # TODO the actual problem is that the "month" dimension is called "band" (e.g. in the CRU) input files
     temp <- apply(temp, c(2, 3), mean)
   }
 
