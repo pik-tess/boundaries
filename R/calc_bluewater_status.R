@@ -76,6 +76,7 @@ calc_bluewater_status <- function(files_scenario,
       lpjmlkit::as_array(aggregate = list(band = sum)) %>%
       suppressWarnings()
   #TODO add warning, if discharge output is not monthly but yearly?
+  #TODO not yet working for header files (month dimension is calles band)
   # scenario discharge ------------------------------------------------------- #
 
   discharge_scenario <- lpjmlkit::read_io(

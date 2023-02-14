@@ -61,7 +61,7 @@
 #' @export
 calc_nitrogen_status <- function(files_scenario,
                                  files_reference,
-                                 time_span_scenario = c(1982, 2011),
+                                 time_span_scenario = c(1982:2011),
                                  time_span_reference = NULL,
                                  method = "braun2022",
                                  cut_arid = 0.2,
