@@ -8,8 +8,8 @@
 #' and/or planetary boundary calculations
 #'
 #' @param metric string/list of strings, containing name of metric to get
-#'        required outputs for. Pick from "meco", "mcol", "biome", "all_pbs",
-#'               "pb_n", "pb_w", "pb_b", "pb_lsc", "all" (default)
+#'        required outputs for. Pick from "meco", "mcol", "biome", "nitrogen",
+#'      "lsc", "bluewater", "greenwater", "water", "biosphere", "all" (default)
 #'
 #' @param withNitrogen logical: include nitrogen outputs? default: TRUE
 #'
@@ -22,112 +22,65 @@
 #' @export
 list_needed_outputs <- function(metric = "all", with_nitrogen = TRUE) {
 
-  optional_metrics <- c("meco", "mcol", "biome", "all_pbs", "nitrogen",
-                        "bluewater", "greenwater", "biosphere", "lsc", "all")
+  optional_metrics <- c("meco", "mcol", "biome", "nitrogen", "lsc",
+                        "bluewater", "greenwater", "water", "biosphere", "all")
   notin <- metric[!metric %in% optional_metrics]
   if (length(notin) > 0) {
     stop(paste("Metrics not available:", notin, collapse = ", "))
   }
-  # TODO: camelCase to snake_case
-  varsGAMMA <- list(grid = "annual",
-                    fpc = "annual",
-                    fpc_bft = "annual",
-                    cftfrac = "annual",
-                    firec = "annual",
-                    npp = "annual",
-                    runoff = "annual",
-                    transp = "annual",
-                    vegc = "annual",
-                    firef = "annual",
-                    rh = "annual",
-                    harvestc = "annual",
-                    evap = "annual",
-                    interc = "annual",
-                    soilc = "annual",
-                    litc = "annual",
-                    swc = "annual")
-  varsGAMMAnitrogen <- list(vegn = "annual",
-                            soilnh4 = "annual",
-                            soilno3 = "annual",
-                            leaching = "annual",
-                            n2o_denit = "annual",
-                            n2o_nit = "annual",
-                            n2o_denit = "annual",
-                            n2_emis = "annual",
-                            bnf = "annual",
-                            n_volatilization = "annual")
-  varsHANPP <- list(grid = "annual",
-                    npp = "annual",
-                    pft_npp = "annual",
-                    pft_harvestc = "annual",
-                    pft_rharvestc = "annual",
-                    firec = "annual",
-                    timber_harvestc = "annual",
-                    cftfrac = "annual",
-                    fpc = "annual")
-  varsBiome <- list(grid = "annual",
-                    fpc = "annual",
-                    vegc = "annual",
-                    pft_lai = "annual",
-                    temp = "annual")
-  vars_pb_n <- list(grid = "annual",
-                    runoff = "annual",
-                    leaching = "annual",
-                    pet = "annual",
-                    prec = "annual")
-  vars_pb_w <- list(grid = "annual",
-                    discharge = "monthly",
-                    irrig = "monthly",
-                    drainage = "annual")
-  vars_pb_lsc <- varsBiome
-  vars_pb_b <- c(varsGAMMA, varsHANPP)
-  if (with_nitrogen) vars_pb_b <- c(vars_pb_b, varsGAMMAnitrogen)
+
+  requirements <- system.file("extdata",
+                               "metric_files.yaml",
+                               package = "boundaries") %>%
+    yaml::read_yaml()
 
   outs <- c()
-
-  if ("all" %in% metric) {
-    if (with_nitrogen) {
-      outs <- c(outs, varsGAMMA, varsGAMMAnitrogen, varsHANPP, varsBiome,
-                           vars_pb_n, vars_pb_w, vars_pb_lsc, vars_pb_b)
-    } else {
-      outs <- c(outs, varsGAMMA, varsHANPP, varsBiome, vars_pb_w, vars_pb_lsc,
-                vars_pb_b)
-    }
-  }
   if ("meco" %in% metric) {
     if (with_nitrogen) {
-      outs <- c(outs, varsGAMMA, varsGAMMAnitrogen)
+      outs <- c(outs, requirements[["meco"]], requirements[["meco_nitrogen"]])
     } else {
-      outs <- c(outs, varsGAMMA)
+      outs <- c(outs, requirements[["meco"]])
     }
-  }
-  if ("biome" %in% metric) {
-    outs <- c(outs,varsBiome)
   }
   if ("mcol" %in% metric) {
-    outs <- c(outs, varsHANPP)
+    outs <- c(outs, requirements[["mcol"]])
   }
-  if ("all_pbs" %in% metric) {
+  if ("biome" %in% metric) {
+    outs <- c(outs,requirements[["biome"]])
+  }
+  if ("nitrogen" %in% metric) {
+    if (!with_nitrogen) stop("You requested the nitrogen boundary without nitrogen?! Aborting.")
+    outs <- c(outs, requirements[["nitrogen"]])
+  }
+  if ("lsc" %in% metric) {
+    outs <- c(outs, requirements[["lsc"]])
+  }
+  if ("bluewater" %in% metric) {
+    outs <- c(outs, requirements[["bluewater"]])
+  }
+  if ("greenwater" %in% metric) {
+    outs <- c(outs, requirements[["greenwater"]])
+  }
+  if ("water" %in% metric) {
+    outs <- c(outs, requirements[["bluewater"]], requirements[["greenwater"]])
+  }
+  if ("biosphere" %in% metric) {
+    outs <- c(outs, requirements[["mcol"]], requirements[["meco"]])
+  }
+  if ("all" %in% metric) {
     if (with_nitrogen) {
-      outs <- c(outs, varsBiome, vars_pb_n, vars_pb_w, vars_pb_lsc, vars_pb_b)
+      outs <- c(outs, requirements[["meco"]], requirements[["mcol"]],
+                requirements[["meco_nitrogen"]], requirements[["nitrogen"]],
+                requirements[["biome"]], requirements[["bluewater"]],
+                requirements[["greenwater"]], requirements[["lsc"]])
     } else {
-      outs <- c(outs, varsBiome, vars_pb_w, vars_pb_lsc, vars_pb_b)
+      outs <- c(outs, requirements[["meco"]], requirements[["mcol"]],
+                requirements[["biome"]], requirements[["bluewater"]],
+                requirements[["greenwater"]], requirements[["lsc"]])
     }
   }
-  if ("pb_n" %in% metric) {
-    outs <- c(outs, vars_pb_n)
-  }
-  if ("pb_w" %in% metric) {
-    outs <- c(outs, vars_pb_w)
-  }
-  if ("pb_lsc" %in% metric) {
-    outs <- c(outs, vars_pb_lsc)
-  }
-  if ("pb_b" %in% metric) {
-    outs <- c(outs, vars_pb_b)
-  }
   out <- unify_list(outs)
-  return(list(outputs = names(out), timesteps = unname(unlist(out))))
+  return(list(outputs = sapply(out,function(x) x[["file_name"]][1]), timesteps = sapply(out,function(x) x[["resolution"]])))
 }
 
 # for input list a, all duplicate keys are unified, taking the value with
@@ -135,9 +88,11 @@ list_needed_outputs <- function(metric = "all", with_nitrogen = TRUE) {
 unify_list <- function(a) {
   merged_list <- list()
   for (item in unique(names(a))){ # iterate over all unique keys
-    values <- a[which(names(a) == item)] # get the values for the current key
-    merged_list <- c(merged_list,
-                     setNames(highest_temporal_res(values), item))
+    indices <- which(names(a) == item)
+    values <- sapply(a[indices],function(x) x[["resolution"]]) # get the values for the current key
+    outval <- a[indices[1]]
+    outval[[item]]$resolution <- highest_temporal_res(values)
+    merged_list <- c(merged_list, outval)
   }
   return(merged_list)
 }
