@@ -3,31 +3,28 @@
 #' Calculate the PB status for the LSC (land-system change) boundary based
 #' on a scenario LPJmL run and a reference LPJmL run.
 #'
-#' @param path_scenario output directory (character string) of the scenario
-#'        LPJmL run where binary files (soon with metafiles) are written
+#' @param files_scenario list with variable names and corresponding file paths
+#' (character string) of the scenario LPJmL run. All needed files are
+#' provided in XXX. E.g.: list(leaching = "/temp/leaching.bin.json")
 #'
-#' @param path_reference output directory (character string) of the reference
-#'        LPJmL run where binary files (soon with metafiles) are written
+#' @param files_reference list with variable names and corresponding file paths
+#' (character string) of the reference LPJmL run. All needed files are
+#' provided in XXX. E.g.: list(leaching = "/temp/leaching.bin.json"). If not
+#' needed for the applied method, set to NULL.
 #'
 #' @param time_span_scenario time span to be used for the scenario run, defined
-#'        as an integer vector, e.g. `1982:2011` (default)
+#' as an integer vector, e.g. `1982:2011` (default)
 #'
 #' @param time_span_reference time span to be used for the scenario run, defined
-#'        as an integer vector, e.g. `1901:1930`. Can differ in offset and
-#'        length from `time_span_scenario`! If `NULL` value of
-#'        `time_span_scenario` is used
+#' as an integer vector, e.g. `1901:1930`. Can differ in offset and length from
+#' `time_span_scenario`! If `NULL` value of `time_span_scenario` is used
 #'
-#' @param spatial_resolution character. Spatial resolution, available options
+#' @param lsc_spatial_resolution character. Spatial resolution, available options
 #'        are `"biome"` (default) and `"grid"`
 #'
-#' @param eurasia logical. If `spatial_resolution` = `"biome"` merge continents
+#' @param eurasia logical. If `lsc_spatial_resolution` = `"biome"` merge continents
 #'        Europe and Asia to avoid arbitrary biome cut at europe/asia border.
 #'        Defaults to `TRUE`
-#'
-#' @param biome_classification default to NULL, if biomes are to be calculated
-#' within this function based on classify_biomes. Can be set to list with
-#' already defined biomes (xx$biome_id = numeric with ncells; xx$biome_names =
-#' biome names) if biomes were already calculated with classify_biomes()
 #'
 #' @param lsc_thresholds list with deforestation thresholds for defining safe,
 #' increasing risk and high risk zone for temperate/temperate/boreal forest
@@ -44,58 +41,31 @@
 #'        \link[pbfunctions]{average_nyear_window} (see for more info).
 #'        To be used for time series analysis
 #'
-#' @param input_files optional `list` containing additional input (!) files,
-#'        not in the `path_data`, e.g. if temp was not written out:
-#'        `list(grid=..., temp = ..., elevation = ...)`
-#'
-#' @param diff_output_files optional list for specification of output file names
-#'        differing from default, which is list(grid = "grid.bin", fpc = "fpc.bin",# nolint
-#'        vegc = "vegc.bin", pft_lai = "pft_lai.bin", temp = "temp.bin")
-#'
-#' @param file_type replace default file type. default: ""raw
-#'
-#' @param read_args list of arguments for reading input/output. only required
-#'        for:
-#'        nc output: specification of header_size and ncell to read in
-#'                   lpjml grid input
-#'        raw/clm output: specification of header_size, ncell, firstyear and
-#'                   fpc_nbands (12 or 10)
 #' @param ... arguments forwarded to \link[boundaries](classify_biomes)
 #'
 #' @examples
 #' \dontrun{
-#'  calc_lsc_status(path_scenario, path_reference)
+#'  calc_lsc_status(files_scenario, files_reference)
 #' }
 #'
 #' @md
 #' @export
-calc_lsc_status <- function(path_scenario,
-                            path_reference,
-                            time_span_scenario = c(1982, 2011),
+calc_lsc_status <- function(files_scenario,
+                            files_reference,
+                            time_span_scenario = c(1982:2011),
                             time_span_reference = NULL,
-                            spatial_resolution = "biome",
+                            lsc_spatial_resolution = "biome",
                             eurasia = TRUE,
-                            biome_classification = NULL,
                             lsc_thresholds = list(
                               temperate = list(lower = 0.5, upper = 0.7),
                               boreal = list(lower = 0.15, upper = 0.4),
                               tropical = list(lower = 0.15, upper = 0.4)),
                             avg_nyear_args = list(),
-                            input_files = list(temp = "/p/projects/lpjml/input/historical/CRUDATA_TS3_23/cru_ts3.23.1901.2014.tmp.dat.clm"), #nolint
-                            diff_output_files = list(),
-                            file_type = "raw",
-                            read_args = list(
-                              header_size = 0,
-                              ncell = 67420,
-                              firstyear = 1901,
-                              fpc_nbands = 12,
-                              size = 4
-                            ),
                             ...
                             ) {
 
   # verify available temporal resolution
-  spatial_resolution <- match.arg(spatial_resolution, c("biome",
+  lsc_spatial_resolution <- match.arg(lsc_spatial_resolution, c("biome",
                                                         "grid"))
 
   # check time_spans of scenario and reference runs
@@ -114,50 +84,19 @@ calc_lsc_status <- function(path_scenario,
     }
   }
 
-  # define file paths
-  file_extension <- switch(file_type,
-                           raw = ".bin",
-                           meta = ".bin.json",
-                           clm = ".clm",
-                           nc = ".nc",
-                           nc4 = ".nc4",
-                           cdf = ".nc")
-  # default output files with defined file_extension
-  output_files <- list(grid = "grid",
-                       fpc = "fpc") %>%
-                  lapply(paste0, file_extension)
-  #  concatenate path_data and output_files
-  output_files_scenario <- lapply(output_files,
-                                  function(x, path_data) {
-                                  paste(path_data, x, sep = "/")
-                                  },
-                                  path_data = path_scenario)
-  output_files_reference <- lapply(output_files,
-                                  function(x, path_data) {
-                                  paste(path_data, x, sep = "/")
-                                  },
-                                  path_data = path_reference)
-
   # classify biomes based on foliage projected cover (FPC) output
-  if (is.null(biome_classification)) {
-    biome_classes <- classify_biomes(
-      path_data = path_reference,
-      timespan = time_span_reference,
-      avg_nyear_args = avg_nyear_args,
-      input_files = input_files,
-      diff_output_files = diff_output_files,
-      file_type = file_type,
-      read_args = read_args,
-      montane_arctic_proxy = NULL,
-      ...
-      )
-    biome_classes <- biome_classes$biome_id
-  } else {
-    biome_classes <- biome_classification$biome_id
-  }
-  if (spatial_resolution == "biome") {
+  biome_classes <- classify_biomes(
+    files_reference = files_reference,
+    time_span_reference = time_span_reference,
+    avg_nyear_args = avg_nyear_args,
+    montane_arctic_proxy = NULL,
+    ...
+    )
+  biome_classes <- biome_classes$biome_id
+
+  if (lsc_spatial_resolution == "biome") {
     # get continents mask - pass arg of whether to merge europe and asia
-    continent_grid <- calc_continents_mask(path_reference, eurasia = eurasia)
+    continent_grid <- calc_continents_mask(files_reference$grid, eurasia = eurasia)
   }
 
   # read in biome mapping
@@ -165,102 +104,30 @@ calc_lsc_status <- function(path_scenario,
                                "biomes.csv",
                                package = "boundaries"))
 
-  # TO BE REPLACED BY lpjmlKit::read_io
   # read grid
-  if (file.exists(output_files_scenario$grid) && file_type == "meta" &&
-      is.null(input_files$grid)) {
-      grid <- lpjmliotools::autoReadMetaOutput(
-        metaFile = output_files_scenario$grid
-      )
-      ncell <- length(grid$lon)
-      lon   <- grid$lon
-      lat   <- grid$lat
-  } else if (file_type %in% c("nc", "cdf", "nc4")) {
-    # if nc output is defined, we need an lpjml grid to convert to 
-    # the correct array size, this needs to be given in input_files$grid
-    message("Reading of netcdf output is still preliminary. Please specify LPJmL grid input.") # nolint
-    grid <- lpjmliotools::readGridInputBin(inFile = input_files$grid,
-                             headersize = read_args$header_size,
-                             ncells = read_args$ncell)
-    lon <- grid$lon
-    lat <- grid$lat
-    ncell <- length(grid$lon)
-  } else if (file.exists(output_files_scenario$grid) &&
-             file_type %in% c("raw", "clm")) {
-    grid <- lpjmliotools::readGridOutputBin(inFile = output_files_scenario$grid,
-                                            headersize = read_args$header_size, #nolint
-                                            ncells = read_args$ncell) %>%
-            rename_step2month()
-    lon <- grid$lon
-    lat <- grid$lat
-    ncell <- length(grid$lon)
-  } else {
-    stop(paste0("Output file ",
-                output_files_scenario$grid,
-                " does not exist. Make sure the specified input path_data is ",
-                "correct. If your file names differ from the default, please ",
-                "use diff_output_files to specify them. "))
-  }
-  # calculate cell area
-  lpjml_grid <- rbind(lon, lat)
-  cell_area <- lpjmliotools::cellarea
-  # TODO replace with lpjmlkit function to calculate cellarea for the respective
-  # grid
-  # cell_area <-  lpjmlKit::calc_cellarea(
-  # lpjmliotools::subset_array(lpjml_grid, list(coordinate = "lat"))
-  # )
+  grid <- lpjmlkit::read_io(
+      files_reference$grid,
+      silent = TRUE
+      )$data %>% drop()
 
+  # calculate cell area
+  cell_area <- lpjmlkit::calc_cellarea(grid[, 2])
 
   # read fpc
-  # TODO: convert to yearly if output is monthly
-  if (file_type == "meta") {
-    fpc_scenario <- lpjmliotools::autoReadMetaOutput(
-      metaFile = output_files_scenario$fpc,
-      getyearstart = time_span_scenario[1],
-      getyearstop = time_span_reference[2]
-    ) %>% rename_step2month()
-    fpc_reference <- lpjmliotools::autoReadMetaOutput(
-      metaFile = output_files_reference$fpc,
-      getyearstart = time_span_reference[1],
-      getyearstop = time_span_reference[2]
-    ) %>% rename_step2month()
-  } else if (file_type %in% c("nc", "nc4", "cdf")) {
-    fpc_scenario <- lpjmliotools::netcdfCFT2lpjarray(
-      ncInFile = output_files_scenario$fpc,
-      var = "FPC",
-      lon = lon,
-      lat = lat
-    ) %>% rename_step2month()
-    fpc_reference <- lpjmliotools::netcdfCFT2lpjarray(
-      ncInFile = output_files_reference$fpc,
-      var = "FPC",
-      lon = lon,
-      lat = lat
-    ) %>% rename_step2month()
-  } else if (file_type %in% c("raw", "clm")) {
-    fpc_scenario <- lpjmliotools::readCFToutput(inFile = output_files_scenario$fpc,
-                                      startyear = read_args$firstyear,
-                                      stopyear = time_span_scenario[2],
-                                      size = read_args$size,
-                                      headersize = read_args$header_size,
-                                      getyearstart = time_span_scenario[1],
-                                      getyearstop = time_span_scenario[2],
-                                      ncells = read_args$ncell,
-                                      bands = read_args$fpc_nbands) %>% rename_step2month() # nolint
-    fpc_reference <- lpjmliotools::readCFToutput(inFile = output_files_reference$fpc,
-                                      startyear = read_args$firstyear,
-                                      stopyear = time_span_reference[2],
-                                      size = read_args$size,
-                                      headersize = read_args$header_size,
-                                      getyearstart = time_span_reference[1],
-                                      getyearstop = time_span_reference[2],
-                                      ncells = read_args$ncell,
-                                      bands = read_args$fpc_nbands) %>% rename_step2month() # nolint
-  } else {
-      stop(paste0("Unknown file ending (",
-                  fpc_ending,
-                  "). Aborting."))
-  }
+  fpc_scenario <- lpjmlkit::read_io(
+      files_scenario$fpc,
+      subset = list(year = as.character(time_span_scenario)),
+      silent = TRUE
+      ) %>%
+      lpjmlkit::transform(to = c("year_month_day")) %>%
+      as_array()
+  fpc_reference <- lpjmlkit::read_io(
+      files_reference$fpc,
+      subset = list(year = as.character(time_span_reference)),
+      silent = TRUE
+      ) %>%
+      lpjmlkit::transform(to = c("year_month_day")) %>%
+      as_array()
 
   fpc_nbands <- dim(fpc_scenario)[["band"]]
   npft <- fpc_nbands - 1
@@ -269,18 +136,11 @@ calc_lsc_status <- function(path_scenario,
                                 "pft_categories.csv",
                                 package = "boundaries") %>%
     read_pft_categories() %>%
-    {
-      if (file_type != "meta") {
-        dplyr::filter(., npft_proxy == npft)
-      } else {
-        dplyr::filter(., is.na(npft_proxy))
-      }
-    }
+    dplyr::filter(., npft_proxy == npft)
+
   fpc_names <- dplyr::filter(pft_categories, category == "natural")$pft
 
-  # TODO if lpjmlkit is used, fpc names are read in and do not have to be
-  # defined here
-  # if (file_type != "meta") {
+  # only needed for header files: 
   dimnames(fpc_scenario)$band <- c("natural stand fraction", fpc_names)
   dimnames(fpc_reference)$band <- c("natural stand fraction", fpc_names)
 
@@ -290,25 +150,25 @@ calc_lsc_status <- function(path_scenario,
     type == "tree" & category == "natural"
   )$pft
 
-  tree_share_scenario <- lpjmliotools::subset_array(
+  tree_share_scenario <- lpjmlkit::asub(
     fpc_scenario,
-    list(band = fpc_trees)
+    band = fpc_trees
   )
-  tree_share_reference <- lpjmliotools::subset_array(
+  tree_share_reference <- lpjmlkit::asub(
     fpc_reference,
-    list(band = fpc_trees)
+    band = fpc_trees
   )
   # calculate actual tree cover area
   tree_cover_scenario <- (
     tree_share_scenario *
-    array(lpjmliotools::subset_array(fpc_scenario,
-                    list(band = c("natural stand fraction"))),
+    array(lpjmlkit::asub(fpc_scenario,
+                         band = c("natural stand fraction")),
          dim = dim(tree_share_scenario)) * cell_area
   )
   tree_cover_reference <- (
     tree_share_reference *
-    array(lpjmliotools::subset_array(fpc_reference,
-                    list(band = c("natural stand fraction"))),
+    array(lpjmlkit::asub(fpc_reference,
+                         band = c("natural stand fraction")),
          dim = dim(tree_share_reference)) * cell_area
   )
   # sum tree pfts for forest cover
@@ -382,10 +242,11 @@ calc_lsc_status <- function(path_scenario,
     !names(dim(deforestation)) %in% c("cell")
   ]
 
-  if (spatial_resolution == "biome") {
+  if (lsc_spatial_resolution == "biome") {
     # create space of combinations to loop over (even though not all make sense)
     comb <- expand.grid(
-      continent = sort(unique(lpjmliotools::subset_array(continent_grid, list(coordinate = "continent")))), # nolint
+      continent = sort(unique(lpjmlkit::asub(continent_grid,
+                                             band = "continent"))),
       forest = sort(unique(factor(forest_type)))[-1]
     )
     for (idx in seq_len(nrow(comb))) {
@@ -396,7 +257,7 @@ calc_lsc_status <- function(path_scenario,
         forest_type == comb$forest[idx] &
         # match continent for cells
         array(
-          lpjmliotools::subset_array(continent_grid, list(coordinate = "continent"), drop = FALSE) == comb$continent[idx], # nolint
+          lpjmlkit::asub(continent_grid, band = "continent", drop = FALSE) == comb$continent[idx], # nolint
           dim = dim(deforestation),
           dimnames = dimnames(deforestation)
         )

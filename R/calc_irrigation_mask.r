@@ -4,74 +4,42 @@
 #   returns lpjml output with either just cell or + year/window
 calc_irrigation_mask <- function(path_output,
                                  time_span,
-                                 prefix_monthly_output = "",
                                  avg_nyear_args=list(),
-                                 start_year = 1901,
                                  path_input = (
                                   paste0("/p/projects/lpjml/input/historical",
                                          "/input_VERSION2/")
                                  )) {
 
-  # TO BE REPLACED BY lpjmlKit::read_output ---------------------------------- #
-  #   hardcoded values to be internally replaced
+#TODO should "path_input" be part of "files_scenario", or should the parameter
+# be also defined in calc_bluewater_status?
 
-  nstep <- 12
-  nbands <- 1
-  ncell <- 67420
-  size <- 4
-
-  s_path <- file(paste0(path_output, "/", prefix_monthly_output, "irrig.bin"),
-                 "rb")
-  seek(s_path,
-       where = (time_span[1] - start_year) *
-               nstep * nbands * ncell * size,
-       origin = "start")
-  irrigation_scenario <- readBin(s_path,
-                                 double(),
-                                  n = (ncell * nstep * nbands *
-                                       (time_span[2] - time_span[1] + 1)),
-                                 size = size)
-  close(s_path)
-  dim(irrigation_scenario) <- c(cell = ncell,
-                                month = nstep,
-                                year = (time_span[2] - time_span[1]) + 1)
-  dimnames(irrigation_scenario) <- list(cell = seq_len(ncell),
-                                        month = seq_len(nstep),
-                                        year = seq(time_span[1],
-                                                    time_span[2]))
+  # -------------------------------------------------------------------------- #
+  irrigation_scenario <- lpjmlkit::read_io(
+      files_scenario$irrig, subset = list(year = time_span)
+      ) %>%
+      lpjmlkit::transform(to = c("year_month_day")) %>%
+      lpjmlkit::as_array(aggregate = list(month = sum, band = sum)) %>%
+      suppressWarnings()
   # -------------------------------------------------------------------------- #
 
-  # average discharge reference
+  # average irrigation
   avg_irrigation_scenario <- do.call(average_nyear_window,
                                        append(list(x = irrigation_scenario),
                                               avg_nyear_args))
 
-  # TO BE REPLACED BY lpjmlKit::read_input ----------------------------------- #
-  #   hardcoded values to be internally replaced
-  input_data_size <- 4
-  header <- suppressWarnings(lpjmlKit::read_header(
-    filename = paste(path_input, "drainage.bin", sep = "/")
-  ))
-  headersize <- lpjmlKit::get_headersize(header)
-  input_file <- file(paste(path_input, "drainage.bin", sep = "/"), "rb")
-  seek(input_file, where = headersize, origin = "start")
-  drainage <- readBin(input_file,
-                    integer(),
-                    n = lpjmlKit::get_header_item(header, "nyear") *
-                        lpjmlKit::get_header_item(header, "ncell") *
-                        lpjmlKit::get_header_item(header, "nbands"),
-                  size = input_data_size) *
-              lpjmlKit::get_header_item(header, "scalar")
-  close(input_file)      #remove to save space
-  dim(drainage) <- c(band = lpjmlKit::get_header_item(header, "nbands"),
-                     cell = lpjmlKit::get_header_item(header, "ncell"))
-  dimnames(drainage) <- list(
-    band = seq_len(lpjmlKit::get_header_item(header, "nbands")),
-    cell = seq_len(lpjmlKit::get_header_item(header, "ncell")))
+  # ------------------------------------------------------------------------- #
+
+  drainage <- lpjmlkit::read_io(
+    paste(path_input, "drainage.bin", sep = "/"), datatype = 2
+    )$data %>%
+    suppressWarnings() %>%
+    drop()
+
   # -------------------------------------------------------------------------- #
 
   # add 1 since in C indexing starts at 0 but in R at 1
-  routing <- drainage[1, ] + 1
+  routing <- drainage[, 1] + 1
+  ncell <- dim(avg_irrigation_scenario)["cell"]
   endcell <- array(0, dim = ncell)
   cellindex <- endcell
   for (cell in 1:ncell) {
@@ -99,26 +67,22 @@ calc_irrigation_mask <- function(path_output,
     basincell <- which(endcell == basin_ids[id])
     if (is.null(third_dim) | length(dim(drop(avg_irrigation_scenario))) < 3) {
       check_gt0 <- sum(
-        lpjmlKit::subset_array(avg_irrigation_scenario,
+        lpjmlkit::subset_array(avg_irrigation_scenario,
                                list("cell" = basincell))
       )
     } else {
       check_gt0 <- apply(
-        lpjmlKit::subset_array(avg_irrigation_scenario,
+        lpjmlkit::subset_array(avg_irrigation_scenario,
                                list(cell = basincell)),
         third_dim,
         sum
       )
     }
-    basin_replace <- lpjmlKit::subset_array(irrmask_basin,
+    basin_replace <- lpjmlkit::subset_array(irrmask_basin,
                                             list(cell = basincell)) %>%
       `[<-`(check_gt0 > 0, value = 1)
 
-    irrmask_basin <- lpjmlKit::replace_array(
-      x = irrmask_basin,
-      subset_list = list(cell = basincell),
-      y = basin_replace
-    )
+    lpjmlkit::asub(x = irrmask_basin, cell = basincell) <- basin_replace
   }
   return(irrmask_basin)
 }
