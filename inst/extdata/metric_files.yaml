@@ -1,0 +1,34 @@
+nitrogen:
+    leaching: 
+        resolution: "annual"
+        file_name: ["leaching"]
+    runoff:
+        resolution: "annual"
+        file_name: ["runoff"]
+    pet:
+        resolution: "annual"
+        file_name: ["pet"]
+    prec:
+        resolution: "annual"
+        file_name: ["prec"]
+
+lsc:
+    fpc:
+        resolution: "annual"
+        file_name: ["fpc"]
+    fpc:
+        resolution: "annual"
+        file_name: ["fpc"]
+
+biosphere:
+    fpc:
+        resolution: "annual"
+        file_name: ["fpc"]
+
+bluewater:
+
+greenwater:
+
+
+
+

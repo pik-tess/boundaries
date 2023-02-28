@@ -42,7 +42,6 @@ calc_status <- function(boundary,
                         avg_nyear_args = list(),
                         input_files = list(),
                         diff_output_files = list(),
-                        read_args = list(),
                         in_parallel = TRUE,
                         # args that use all get prefix like lsc.method or
                         #   lsc.threshold
