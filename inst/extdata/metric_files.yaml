@@ -16,9 +16,6 @@ lsc:
     fpc:
         resolution: "annual"
         file_name: ["fpc"]
-    fpc:
-        resolution: "annual"
-        file_name: ["fpc"]
 
 biosphere:
     fpc:
