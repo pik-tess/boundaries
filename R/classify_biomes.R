@@ -9,8 +9,7 @@
 #' provided in XXX. E.g.: list(leaching = "/temp/leaching.bin.json"). If not
 #' needed for the applied method, set to NULL.
 #' @param time_span_reference time span to be used for the scenario run, defined
-#' as an integer vector, e.g. `1901:1930`. Can differ in offset and length from
-#' `time_span_scenario`! If `NULL` value of `time_span_scenario` is used
+#' as an character string, e.g. `as.character(1901:1930)`.
 #' @param savanna_proxy `list` with either pft_lai or vegc as
 #'        key and value in m2/m2 for pft_lai (default = 6) and gC/m2 for
 #'        vegc (default would be 7500), Set to `NULL` if no proxy should be used.
@@ -54,7 +53,6 @@ classify_biomes <- function(files_reference,
                             ) {
 
   # test if provided proxies are valid
-  #TODO not working with NULL
   savanna_proxy_name <- match.arg(names(savanna_proxy), c(NA, "vegc", "pft_lai"))
   montane_arctic_proxy_name <- match.arg(names(montane_arctic_proxy),
                                          c(NA, "elevation", "latitude"))
@@ -99,10 +97,9 @@ classify_biomes <- function(files_reference,
   lat <- grid[, 2]
   ncell <- length(lon)
   lpjml_grid <- rbind(lon, lat)
-  #TODO timespan as character or numeric?
   fpc <- lpjmlkit::read_io(
       files_reference$fpc,
-      subset = list(year = as.character(time_span_reference)),
+      subset = list(year = time_span_reference),
       silent = TRUE
       ) %>%
       lpjmlkit::transform(to = c("year_month_day")) %>%
@@ -110,7 +107,7 @@ classify_biomes <- function(files_reference,
 
   temp <- lpjmlkit::read_io(
       files_reference$temp,
-      subset = list(year = as.character(time_span_reference)),
+      subset = list(year = time_span_reference),
       silent = TRUE
       ) %>%
       lpjmlkit::transform(to = c("year_month_day")) %>%
@@ -121,7 +118,7 @@ classify_biomes <- function(files_reference,
   if (!is.na(savanna_proxy_name)) {
     savanna_proxy_data <- lpjmlkit::read_io(
       files_reference[[savanna_proxy_name]],
-      subset = list(year = as.character(time_span_reference)),
+      subset = list(year = time_span_reference),
       silent = TRUE
       ) %>%
       lpjmlkit::transform(to = c("year_month_day")) %>%
@@ -161,6 +158,8 @@ classify_biomes <- function(files_reference,
   }
 
   # average temp
+  # TODO understand why additional dimension is added here but not for fpc
+  # (67420, 1)
   avg_temp <- do.call(
     average_nyear_window,
     append(list(x = temp), # fix_dimnames(temp, "temp", timespan, ncell, npft)),
@@ -308,11 +307,11 @@ classify_biomes <- function(files_reference,
     is_savanna_proxy <- avg_savanna_proxy_data < savanna_proxy[[savanna_proxy_name]] # nolint
   } else {
     is_tropical_proxy <- array(TRUE,
-                               dim = c(fpc_total),
-                               dimnames = dimnames(fpc_total))
+                               dim = dim(avg_temp),
+                               dimnames = dimnames(avg_temp))
     is_savanna_proxy <- array(FALSE,
-                               dim = c(fpc_total),
-                               dimnames = dimnames(fpc_total))
+                               dim = dim(avg_temp),
+                               dimnames = dimnames(avg_temp))
   }
 
   # Desert
