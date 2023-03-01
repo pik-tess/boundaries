@@ -136,12 +136,12 @@ calc_nitrogen_status <- function(files_scenario,
         time_span_reference <- time_span_scenario
         nyear_ref <- NULL
       } else {
-        if (diff(time_span_reference) > diff(time_span_scenario)) {
+        if (length(time_span_reference) > length(time_span_scenario)) {
           stop(paste0("time_span_reference is longer than time_span_scenario.",
                       "Define a time_span_reference that is shorter than",
                       "time_span_scenario"))
-        } else if (diff(time_span_reference) < diff(time_span_scenario)) {
-          nyear_ref <- length(time_span_scenario[1]:time_span_scenario[2])
+        } else if (length(time_span_reference) < length(time_span_scenario)) {
+          nyear_ref <- length(time_span_scenario)
         } else {
           nyear_ref <- NULL
         }
