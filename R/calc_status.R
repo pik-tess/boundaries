@@ -74,7 +74,7 @@ calc_status <- function(boundary,
   output_files <- list_needed_outputs(boundary)
 
   files_scenario <- get_filenames(
-    path = path_scenario
+    path = path_scenario,
     output_files = output_files,
     diff_output_files = diff_output_files,
     input_files = input_files,
