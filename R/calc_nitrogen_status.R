@@ -13,11 +13,12 @@
 #' needed for the applied method, set to NULL.
 #'
 #' @param time_span_scenario time span to be used for the scenario run, defined
-#' as an integer vector, e.g. `1982:2011` (default)
+#' as character string, e.g. `as.character(1982:2011)` (default)
 #'
 #' @param time_span_reference time span to be used if scenario run used, defined
-#' as an integer vector, e.g. `1901:1930`. Can differ in offset and length from
-#' `time_span_scenario`! If `NULL` value of `time_span_scenario` is used
+#' as character string, e.g. `as.character(1901:1930)`. Can differ in offset and
+#' length from `time_span_scenario`! If `NULL` value of `time_span_scenario` is
+#' used
 #'
 #' @param method method (character string) to be used , currently available
 #' method is `"braun2022"` based on unpublished suggestion by Johanna Braun.
@@ -61,7 +62,7 @@
 #' @export
 calc_nitrogen_status <- function(files_scenario,
                                  files_reference,
-                                 time_span_scenario = c(1982:2011),
+                                 time_span_scenario = as.character(1982:2011),
                                  time_span_reference = NULL,
                                  method = "braun2022",
                                  cut_arid = 0.2,

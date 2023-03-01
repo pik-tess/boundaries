@@ -13,11 +13,12 @@
 #' needed for the applied method, set to NULL.
 #'
 #' @param time_span_scenario time span to be used for the scenario run, defined
-#' as an integer vector, e.g. `1982:2011` (default)
+#' as a character string, e.g. `as.character(1982:2011)` (default)
 #'
 #' @param time_span_reference time span to be used for the scenario run, defined
-#' as an integer vector, e.g. `1901:1930`. Can differ in offset and length from
-#' `time_span_scenario`! If `NULL` value of `time_span_scenario` is used
+#' as an integer vector, e.g. `as.character(1901:1930)`. Can differ in offset
+#' and length from `time_span_scenario`! If `NULL` value of `time_span_scenario`
+#' is used
 #'
 #' @param lsc_spatial_resolution character. Spatial resolution, available options
 #'        are `"biome"` (default) and `"grid"`
@@ -52,7 +53,7 @@
 #' @export
 calc_lsc_status <- function(files_scenario,
                             files_reference,
-                            time_span_scenario = c(1982:2011),
+                            time_span_scenario = as.character(1982:2011),
                             time_span_reference = NULL,
                             lsc_spatial_resolution = "biome",
                             eurasia = TRUE,
@@ -73,12 +74,12 @@ calc_lsc_status <- function(files_scenario,
     time_span_reference <- time_span_scenario
     nyear_ref <- NULL
   } else {
-    if (diff(time_span_reference) > diff(time_span_scenario)) {
+    if (length(time_span_reference) > length(time_span_scenario)) {
       stop(paste0("time_span_reference is longer than time_span_scenario.",
                   "Define a time_span_reference that is shorter than",
                   "time_span_scenario"))
-    } else if (diff(time_span_reference) < diff(time_span_scenario)) {
-      nyear_ref <- length(time_span_scenario[1]:time_span_scenario[2])
+    } else if (length(time_span_reference) < length(time_span_scenario)) {
+      nyear_ref <- length(time_span_scenario)
     } else {
       nyear_ref <- NULL
     }
@@ -116,14 +117,14 @@ calc_lsc_status <- function(files_scenario,
   # read fpc
   fpc_scenario <- lpjmlkit::read_io(
       files_scenario$fpc,
-      subset = list(year = as.character(time_span_scenario)),
+      subset = list(year = time_span_scenario),
       silent = TRUE
       ) %>%
       lpjmlkit::transform(to = c("year_month_day")) %>%
       as_array()
   fpc_reference <- lpjmlkit::read_io(
       files_reference$fpc,
-      subset = list(year = as.character(time_span_reference)),
+      subset = list(year = time_span_reference),
       silent = TRUE
       ) %>%
       lpjmlkit::transform(to = c("year_month_day")) %>%
