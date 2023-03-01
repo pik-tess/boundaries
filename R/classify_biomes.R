@@ -55,14 +55,20 @@ classify_biomes <- function(files_reference,
 
   # test if provided proxies are valid
   #TODO not working with NULL
-  savanna_proxy_name <- match.arg(names(savanna_proxy), c(NA, "vegc", "pft_lai"))
+  savanna_proxy_name <- match.arg(
+    names(savanna_proxy),
+    c(NA, "vegc", "pft_lai")
+  )
   montane_arctic_proxy_name <- match.arg(names(montane_arctic_proxy),
                                          c(NA, "elevation", "latitude"))
 
   # define default minimum tree cover for forest / woodland / savanna
-  min_tree_cover <- list("boreal forest" = 0.6, "temperate forest" = 0.6,
-                         "temperate woodland" = 0.3, "temperate savanna" = 0.1,
-                         "tropical forest" = 0.6, "tropical woodland" = 0.3,
+  min_tree_cover <- list("boreal forest" = 0.6,
+                         "temperate forest" = 0.6,
+                         "temperate woodland" = 0.3,
+                         "temperate savanna" = 0.1,
+                         "tropical forest" = 0.6,
+                         "tropical woodland" = 0.3,
                          "tropical savanna" = 0.1)
 
   # replace default values by values defined in tree_cover_thresholds
@@ -92,31 +98,29 @@ classify_biomes <- function(files_reference,
   # -------------------------------------------------------------------------- #
   # read in relevant data
   grid <- lpjmlkit::read_io(
-      files_reference$grid,
-      silent = TRUE
-      )$data %>% drop()
-  lon <- grid[, 1]
-  lat <- grid[, 2]
-  ncell <- length(lon)
-  lpjml_grid <- rbind(lon, lat)
+    files_reference$grid,
+    silent = TRUE
+  )
+
+  lat <- lpjmlkit::as_array(grid subset = list(band = 2)) %>%
+    drop()
   #TODO timespan as character or numeric?
   fpc <- lpjmlkit::read_io(
-      files_reference$fpc,
-      subset = list(year = as.character(time_span_reference)),
-      silent = TRUE
-      ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      as_array()
-
+    files_reference$fpc,
+    subset = list(year = as.character(time_span_reference)),
+    silent = TRUE
+  ) %>%
+    lpjmlkit::transform(to = c("year_month_day")) %>%
+    as_array()
   temp <- lpjmlkit::read_io(
-      files_reference$temp,
-      subset = list(year = as.character(time_span_reference)),
-      silent = TRUE
-      ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate =
-                           list(month = sum, day = sum, band = sum)) %>%
-      suppressWarnings()
+    files_reference$temp,
+    subset = list(year = as.character(time_span_reference)),
+    silent = TRUE
+  ) %>%
+    lpjmlkit::transform(to = c("year_month_day")) %>%
+    lpjmlkit::as_array(aggregate =
+                         list(month = sum, day = sum, band = sum)) %>%
+    suppressWarnings()
 
   if (!is.na(savanna_proxy_name)) {
     savanna_proxy_data <- lpjmlkit::read_io(
@@ -548,7 +552,9 @@ classify_biomes <- function(files_reference,
   # CLASSIFY BIOMES ---------------------------------------------------------- #
 
   # initiate biome_class array
-  biome_class <- array(NA, dim = c(ncell), dimnames = dimnames(fpc_total))
+  biome_class <- array(NA,
+                       dim = c(grid$meta$ncell),
+                       dimnames = dimnames(fpc_total))
 
   biome_class[is_desert] <- biome_names["Desert"]
 

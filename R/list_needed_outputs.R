@@ -20,7 +20,8 @@
 #'
 #' }
 #' @export
-list_needed_outputs <- function(metric = "all", with_nitrogen = TRUE) {
+list_needed_outputs <- function(metric = "all",
+                                with_nitrogen = TRUE) {
 
   optional_metrics <- c("meco", "mcol", "biome", "nitrogen", "lsc",
                         "bluewater", "greenwater", "water", "biosphere", "all")
@@ -30,8 +31,8 @@ list_needed_outputs <- function(metric = "all", with_nitrogen = TRUE) {
   }
 
   requirements <- system.file("extdata",
-                               "metric_files.yaml",
-                               package = "boundaries") %>%
+                              "metric_files.yaml",
+                              package = "boundaries") %>%
     yaml::read_yaml()
 
   outs <- c()
@@ -49,7 +50,8 @@ list_needed_outputs <- function(metric = "all", with_nitrogen = TRUE) {
     outs <- c(outs,requirements[["biome"]])
   }
   if ("nitrogen" %in% metric) {
-    if (!with_nitrogen) stop("You requested the nitrogen boundary without nitrogen?! Aborting.")
+    if (!with_nitrogen)
+      stop("You requested the nitrogen boundary without nitrogen?! Aborting.")
     outs <- c(outs, requirements[["nitrogen"]])
   }
   if ("lsc" %in% metric) {
@@ -80,16 +82,23 @@ list_needed_outputs <- function(metric = "all", with_nitrogen = TRUE) {
     }
   }
   out <- unify_list(outs)
-  return(list(outputs = sapply(out,function(x) x[["file_name"]][1]), timesteps = sapply(out,function(x) x[["resolution"]])))
+  return(
+    list(
+      outputs = sapply(out, function(x) x[["file_name"]][1]),
+      timesteps = sapply(out, function(x) x[["resolution"]])
+    )
+  )
 }
 
 # for input list a, all duplicate keys are unified, taking the value with
 #     highest temporal resolution (daily>monthly>annual)
 unify_list <- function(a) {
   merged_list <- list()
-  for (item in unique(names(a))){ # iterate over all unique keys
+  # Iterate over all unique keys
+  for (item in unique(names(a))){
     indices <- which(names(a) == item)
-    values <- sapply(a[indices],function(x) x[["resolution"]]) # get the values for the current key
+    # Get the values for the current key
+    values <- sapply(a[indices], function(x) x[["resolution"]])
     outval <- a[indices[1]]
     outval[[item]]$resolution <- highest_temporal_res(values)
     merged_list <- c(merged_list, outval)
@@ -97,7 +106,8 @@ unify_list <- function(a) {
   return(merged_list)
 }
 
-# among list of input values a, return that with highest temporal resolution (daily>monthly>annual) # nolint
+# Among list of input values a, return that with highest temporal resolution
+# (daily>monthly>annual)
 highest_temporal_res <- function(a) {
   if ("daily" %in% a) {
     return("daily")
