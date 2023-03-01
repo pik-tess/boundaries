@@ -24,7 +24,7 @@
 plot_biomes <- function(biome_data,
                         file_name = NULL,
                         to_robinson = TRUE,
-                        bg_col = NA) {
+                        bg_col = "white") {
 
   # load required data: bbox, countries
   lpjml_extent <- c(-180, 180, -60, 85)
@@ -41,7 +41,7 @@ plot_biomes <- function(biome_data,
       { if(to_robinson) sp::spTransform(., CRS("+proj=robin")) else . } # nolint
 
   biome_cols <-  c("#993404", "#D95F0E", "#004529", "#238443",
-                   "#78C679", "#D9F0A3", "#4EB3D3", "#2B8CBE",
+                   "#D9F0A3", "#4EB3D3", "#2B8CBE", "#c4e2f4",
                    "#FE9929", "#FEC44F", "#FEE391", "#A8DDB5",
                    "#E0F3DB", "#F7FCF0", "#c79999", "#0868AC",
                    "#FFFFD4", "white", "#dad4d4")
@@ -51,8 +51,8 @@ plot_biomes <- function(biome_data,
                    readr::read_delim(delim = ";", col_types = readr::cols())
   names(biome_cols) <- biome_mapping$short_name
 
-  order_legend <- c(1, 2, 9, 10, 11, 3, 4, 5, 6, 12, 13, 14, 7, 8, 15, 16, 17,
-                      18, 19)
+  order_legend <- c(1, 2, 9, 10, 11, 3, 4, 5, 12, 13, 14, 6, 7, 8, 15, 16,
+                     17, 18, 19)
 
   biome_cols_legend <- biome_cols[order_legend]
 
@@ -84,7 +84,8 @@ plot_biomes <- function(biome_data,
       }
     )
   }
-  brk <- seq(0.5, 19.5, 1)
+  brk <- seq(min(biome_mapping$id) - 0.5,
+             max(biome_mapping$id, na.rm = TRUE) + 0.5, 1)
   par(mar = c(4, 0, 0, 0), xpd = T, bg = bg_col)
   image(biomes_lpjml, asp = 1, xaxt = "n", yaxt = "n",
           xlab = "", ylab = "", col = biome_cols, breaks = brk, lwd = 0.1,
