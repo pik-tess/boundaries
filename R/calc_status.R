@@ -205,7 +205,7 @@ get_filenames <- function(path,
           paste0(
             "Required temporal resolution (nstep = ", nstep, ") ",
             "not supported by file ", dQuote(file_name),
-            " (", meta$nstep, ")".
+            " (", meta$nstep, ")"
           )
         )
       }
@@ -237,7 +237,7 @@ get_filenames <- function(path,
             paste0(
               "No matching output for ", dQuote(ofile) ,
               " with required temporal resolution (nstep = ", nstep, ") ",
-              "found at path ", dQuote(path), ".".
+              "found at path ", dQuote(path), "."
             )
           )
         }
