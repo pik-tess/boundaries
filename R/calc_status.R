@@ -158,7 +158,7 @@ get_file_ext <- function(path) {
 }
 
 
-get_filenames <- function(path
+get_filenames <- function(path,
                           output_files,
                           diff_output_files,
                           input_files,
