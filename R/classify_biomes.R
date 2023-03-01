@@ -53,14 +53,20 @@ classify_biomes <- function(files_reference,
                             ) {
 
   # test if provided proxies are valid
-  savanna_proxy_name <- match.arg(names(savanna_proxy), c(NA, "vegc", "pft_lai"))
+  savanna_proxy_name <- match.arg(
+    names(savanna_proxy),
+    c(NA, "vegc", "pft_lai")
+  )
   montane_arctic_proxy_name <- match.arg(names(montane_arctic_proxy),
                                          c(NA, "elevation", "latitude"))
 
   # define default minimum tree cover for forest / woodland / savanna
-  min_tree_cover <- list("boreal forest" = 0.6, "temperate forest" = 0.6,
-                         "temperate woodland" = 0.3, "temperate savanna" = 0.1,
-                         "tropical forest" = 0.6, "tropical woodland" = 0.3,
+  min_tree_cover <- list("boreal forest" = 0.6,
+                         "temperate forest" = 0.6,
+                         "temperate woodland" = 0.3,
+                         "temperate savanna" = 0.1,
+                         "tropical forest" = 0.6,
+                         "tropical woodland" = 0.3,
                          "tropical savanna" = 0.1)
 
   # replace default values by values defined in tree_cover_thresholds
@@ -90,13 +96,12 @@ classify_biomes <- function(files_reference,
   # -------------------------------------------------------------------------- #
   # read in relevant data
   grid <- lpjmlkit::read_io(
-      files_reference$grid,
-      silent = TRUE
-      )$data %>% drop()
-  lon <- grid[, 1]
-  lat <- grid[, 2]
-  ncell <- length(lon)
-  lpjml_grid <- rbind(lon, lat)
+    files_reference$grid,
+    silent = TRUE
+  )
+
+  lat <- lpjmlkit::as_array(grid, subset = list(band = 2)) %>%
+    drop()
   fpc <- lpjmlkit::read_io(
       files_reference$fpc,
       subset = list(year = time_span_reference),
@@ -527,7 +532,9 @@ classify_biomes <- function(files_reference,
   # CLASSIFY BIOMES ---------------------------------------------------------- #
 
   # initiate biome_class array
-  biome_class <- array(NA, dim = c(ncell), dimnames = dimnames(fpc_total))
+  biome_class <- array(NA,
+                       dim = c(grid$meta$ncell),
+                       dimnames = dimnames(fpc_total))
 
   biome_class[is_desert] <- biome_names["Desert"]
 

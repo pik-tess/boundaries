@@ -20,16 +20,29 @@
 #' as an integer vector, e.g. `1901:1930`. Can differ in offset and length from
 #' `time_span_scenario`! If `NULL` value of `time_span_scenario` is used
 #'
+#' @param avg_nyear_args list of arguments to be passed to
+#' \link[pbfunctions]{average_nyear_window} (see for more info). To be used for # nolint
+#' time series analysis
+#'
+#' @param input_files list of required file(s) using ID (e.g. `prec`, `runoff`)
+#' and an absolute file path to the corresponding input file
+#'
+#' @param diff_output_files list of required file(s) using ID 
+#' (e.g. prec, runoff) and the alternative writing (e.g. `"my_runoff"`)
+#'
+#' @param in_parallel if parallel (asynchronous) execution of code should be
+#' used(future package) to speed up boundary status calculation
+#'
 #' @param ... further arguments to be passed to each calc_* function
 #'
 #' @return list with data array for each `boundary`
 #'
 #' @examples
-#' \dontrun{ 
+#'
+#' \dontrun{
 #'  boundary_status <- calc_status(
-#'    boundary = 
-#'    path_scenario = "./my_scenario/output",
-#'    path_reference = "./my_reference/output")
+#'    boundary = "nitrogen"
+#'    path_scenario = "./my_scenario/output")
 #' }
 #'
 #' @md
@@ -43,13 +56,9 @@ calc_status <- function(boundary,
                         input_files = list(),
                         diff_output_files = list(),
                         in_parallel = TRUE,
-                        # args that use all get prefix like lsc.method or
-                        #   lsc.threshold
                         ...) {
 
-  file_type <- get_file_type(path_scenario)
-
-  # if in_parallel use future package for asynchronous parallelization
+  # If in_parallel use future package for asynchronous parallelization
   if (in_parallel) {
     if (.Platform$OS.type == "windows") {
       future_plan <- future::plan("multisession")
@@ -59,15 +68,37 @@ calc_status <- function(boundary,
     on.exit(future::plan(future_plan))
   }
 
+  # Get main file type (meta, clm)
+  file_ext <- get_file_type(path_scenario)
+
+  output_files <- list_needed_outputs(boundary)
+
+  files_scenario <- get_filenames(
+    path = path_scenario
+    output_files = output_files,
+    diff_output_files = diff_output_files,
+    input_files = input_files,
+    file_ext = file_ext
+  )
+
+  files_reference <- get_filenames(
+    path = path_scenario
+    output_files = output_files,
+    diff_output_files = diff_output_files,
+    input_files = input_files,
+    file_ext = file_ext
+  )
+
   all_status <- list()
-  # utility functions
+  # Utility functions
   for (bound in boundary) {
     all_status[[boundary]] <- do.call(
       paste0("calc_", boundary, "_status"),
-      args = list(path_scenario = path_scenario,
-                  path_reference = path_reference,
+      args = list(files_scenario = files_scenario,
+                  files_reference = files_reference,
                   time_span_scenario = time_span_scenario,
-                  time_span_reference = time_span_reference)
+                  time_span_reference = time_span_reference,
+                  ...)
     )
   }
 
@@ -75,14 +106,14 @@ calc_status <- function(boundary,
 }
 
 
-get_file_type <- function(path) {
-  # get all files in path
+get_file_ext <- function(path) {
+  # Get all files in path
   all_files <- list.files(
     path,
     full.names = TRUE
   )
 
-  # get file extensions
+  # Get file extensions
   all_file_types <- all_files %>%
   strsplit("^([^\\.]+)") %>%
     sapply(function(x) {
@@ -91,7 +122,7 @@ get_file_type <- function(path) {
     }) %>%
     substr(2, nchar(.))
 
-  # get most frequent file types
+  # Get most frequent file types
   most_frequent <- all_file_types %>%
     factor() %>%
     table() %>%
@@ -107,20 +138,115 @@ get_file_type <- function(path) {
     y = all_files,
     z = all_file_types)
 
-  # detect actual LPJmL data type
+  # Detect actual LPJmL data type
   types <- sapply(
     files_to_check,
     lpjmlkit:::detect_type
-  )
+  ) %>%
+  setNames(names(.), .)
 
-  # assign file type after ranking which is available
-  #   first preferable: "meta", second: "clm", last: "raw"
-  if ("meta" %in% types) {
-   file_type <- "meta"
-  } else if ("clm" %in% types){
-   file_type <- "clm"
-  } else if ("raw" %in% types){
-   file_type <- "raw"
+  # Assign file type after ranking which is available
+  # first preferable: "meta", second: "clm", last: "raw"
+  if ("meta" %in% names(types)) {
+   file_type <- types["meta"]
+  } else if ("clm" %in% names(types)) {
+   file_type <- types["clm"]
+  } else if ("raw" %in% names(types)) {
+   file_type <- types["raw"]
   }
   return(file_type)
 }
+
+
+get_filenames <- function(path
+                          output_files,
+                          diff_output_files,
+                          input_files,
+                          file_ext) {
+
+  file_names <- c()
+  # Iterate over required outputs
+  for (ofile in names(output_files$outputs)) {
+
+  # Get required max. temporal resolution and convert to nstep
+    resolution <- output_files[[ofile]]$timesteps
+    nstep <- switch(
+      resolution,
+      annual = 1,
+      monthly = 12,
+      daily = 365,
+      stop(paste0("Not supported time resolution: ",dQuote(nstep), "."))
+    )
+
+    # If input file supplied use it as first priority
+    if (ofile %in% names(input_files)) {
+      file_name <- input_files[[ofile]]
+
+    } else if (ofile %in% names(diff_output_files)) {
+
+      # If different output file should be used - as second priority
+      file_name <- paste0(
+        path, "/",
+        diff_output_files[[ofile]], ".",
+        file_ext
+      )
+    } else {
+      file_name <- NULL
+    }
+
+    if (!is.null(file_name)) {
+
+      # Check if data could be read in
+      meta <- read_meta(file_name)
+
+      # Then check if temporal resultion of file matches required nstep
+      if (nstep != meta$nstep && nstep != meta$nbands) {
+        stop(
+          paste0(
+            "Required temporal resolution (nstep = ", nstep, ") ",
+            "not supported by file ", dQuote(file_name),
+            " (", meta$nstep, ")".
+          )
+        )
+      }
+
+    # If nothing specified try to read required files from provided path
+    } else {
+
+      # Iterate over different used file name options (e.g. runoff, mrunoff, ...) # nolint
+      for (cfile in seq_len(output_files$outputs[[ofile]])) {
+        file_name <- paste0(
+          path, "/",
+          output_files$outputs[[ofile]][cfile], ".",
+          file_ext
+        )
+
+        # Check if file exists and if so check required temporal resolution
+        # else next
+        if (file.exists(file_name)) {
+          meta <- read_meta(file_name)
+          if (nstep == meta$nstep || nstep == meta$nbands) {
+            # Matching file found, break and use current file_name
+            break
+          }
+        }
+
+        # At end of iteraton raise error that no matching file_name was found
+        if (cfile == length(output_files$outputs[[ofile]])) {
+          stop(
+            paste0(
+              "No matching output for ", dQuote(ofile) ,
+              " with required temporal resolution (nstep = ", nstep, ") ",
+              "found at path ", dQuote(path), ".".
+            )
+          )
+        }
+      }
+    }
+    file_names <- append(file_names, file_name)
+  }
+  file_names
+}
+
+# Avoid note for "."...
+utils::globalVariables(".") # nolint:undesirable_function_linter
