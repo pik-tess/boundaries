@@ -1,0 +1,169 @@
+bluewater: &refbluewater
+    grid:
+        resolution: "annual"
+        file_name: ["grid"]
+    discharge:
+        resolution: "monthly"
+        file_name: ["discharge"]
+    irrig:
+        resolution: "monthly"
+        file_name: ["irrig"]
+
+greenwater: &refgreenwater
+    grid:
+        resolution: "annual"
+        file_name: ["grid"]
+    rootmoist:
+        resolution: "monthly"
+        file_name: ["rootmoist"]
+    swc:
+        resolution: "monthly"
+        file_name: ["swc"]
+
+meco: &refmeco
+    grid:
+        resolution: "annual"
+        file_name: ["grid"]
+    fpc:
+        resolution: "annual"
+        file_name: ["fpc"]
+    fpc_bft:
+        resolution: "annual"
+        file_name: ["fpc_bft"]
+    cftfrac:
+        resolution: "annual"
+        file_name: ["cftfrac"]
+    firec:
+        resolution: "annual"
+        file_name: ["firec"]
+    npp:
+        resolution: "annual"
+        file_name: ["npp"]
+    runoff:
+        resolution: "annual"
+        file_name: ["runoff"]
+    transp:
+        resolution: "annual"
+        file_name: ["transp"]
+    vegc:
+        resolution: "annual"
+        file_name: ["vegc"]
+    firef:
+        resolution: "annual"
+        file_name: ["firef"]
+    rh:
+        resolution: "annual"
+        file_name: ["rh"]
+    harvestc:
+        resolution: "annual"
+        file_name: ["harvestc"]
+    evap:
+        resolution: "annual"
+        file_name: ["evap"]    
+    interc:
+        resolution: "annual"
+        file_name: ["interc"]
+    soilc:
+        resolution: "annual"
+        file_name: ["soilc"]
+    litc:
+        resolution: "annual"
+        file_name: ["litc"]
+    swc:
+        resolution: "annual"
+        file_name: ["swc"]
+
+meco_nitrogen: &refmecon
+    vegn:
+        resolution: "annual"
+        file_name: ["vegn"]
+    soilnh4:
+        resolution: "annual"
+        file_name: ["soilnh4"]
+    soilno3:
+        resolution: "annual"
+        file_name: ["soilno3"]
+    leaching:
+        resolution: "annual"
+        file_name: ["leaching"]
+    n2o_denit:
+        resolution: "annual"
+        file_name: ["n2o_denit"]
+    n2o_nit:
+        resolution: "annual"
+        file_name: ["n2o_nit"]
+    n2_emis:
+        resolution: "annual"
+        file_name: ["n2_emis"]
+    bnf:
+        resolution: "annual"
+        file_name: ["bnf"]
+    n_volatilization:
+        resolution: "annual"
+        file_name: ["n_volatilization"]
+
+mcol: &refmcol
+    grid:
+        resolution: "annual"
+        file_name: ["grid"]
+    npp:
+        resolution: "annual"
+        file_name: ["npp"]
+    pft_npp:
+        resolution: "annual"
+        file_name: ["pft_npp"]
+    pft_harvestc:
+        resolution: "annual"
+        file_name: ["pft_harvestc"]
+    pft_rharvestc:
+        resolution: "annual"
+        file_name: ["pft_rharvestc"]
+    firec:
+        resolution: "annual"
+        file_name: ["firec"]
+    timber_harvestc:
+        resolution: "annual"
+        file_name: ["timber_harvestc"]
+    cftfrac:
+        resolution: "annual"
+        file_name: ["cftfrac"]
+    fpc:
+        resolution: "annual"
+        file_name: ["fpc"]
+
+biome: &refbiome
+    grid:
+        resolution: "annual"
+        file_name: ["grid"]
+    fpc:
+        resolution: "annual"
+        file_name: ["fpc"]
+    vegc:
+        resolution: "annual"
+        file_name: ["vegc"]
+    pft_lai:
+        resolution: "annual"
+        file_name: ["pft_lai"]
+    temp:
+        resolution: "annual"
+        file_name: ["temp"]
+
+nitrogen: &refnitrogen
+    grid:
+        resolution: "annual"
+        file_name: ["grid"]
+    runoff:
+        resolution: "annual"
+        file_name: ["runoff"]
+    leaching:
+        resolution: "annual"
+        file_name: ["leaching"]
+    pet:
+        resolution: "annual"
+        file_name: ["pet"]
+    prec:
+        resolution: "annual"
+        file_name: ["prec","mprec"]
+
+lsc: *refbiome
+
