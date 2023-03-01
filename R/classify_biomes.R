@@ -353,37 +353,37 @@ classify_biomes <- function(files_reference,
     is_boreal_forest &
     lpjmlkit::asub(
       avg_fpc, band = "boreal needleleaved evergreen tree"
-    ) == max_share_trees &
-    fpc_tree_broadleaf < (0.4 * fpc_tree_total)
+    ) == max_share_trees
   }
 
   if (npft == 9) {
-    # Boreal Deciduous
-    is_boreal_deciduous <- {
+    # Boreal Broadleaved Deciduous
+    # no simulation of boreal needleleaved summergreen trees
+    is_boreal_broad_deciduous <- {
       is_boreal_forest &
       (
         lpjmlkit::asub(
           avg_fpc,
           band = "boreal broadleaved summergreen tree"
         ) == max_share_trees
-      ) &
-      fpc_tree_evergreen < (0.4 * fpc_tree_total)
+      )
     }
   } else {
-    # Boreal Deciduous
-    is_boreal_deciduous <- {
+ # Boreal Deciduous
+    is_boreal_broad_deciduous <- {
       is_boreal_forest &
-      (
-        lpjmlkit::asub(
-          avg_fpc,
-          band = "boreal broadleaved summergreen tree"
-        ) == max_share_trees |
-        lpjmlkit::asub(
-          avg_fpc,
-          band = "boreal needleleaved summergreen tree"
-        ) == max_share_trees
-      ) &
-      fpc_tree_evergreen < (0.4 * fpc_tree_total)
+      lpjmlkit::asub(
+        avg_fpc,
+        band = "boreal broadleaved summergreen tree"
+      ) == max_share_trees 
+    }
+
+    is_boreal_needle_deciduous <- {
+      is_boreal_forest &
+      lpjmlkit::asub(
+        avg_fpc,
+        band = "boreal needleleaved summergreen tree"
+      ) == max_share_trees
     }
   }
 
@@ -393,8 +393,7 @@ classify_biomes <- function(files_reference,
     lpjmlkit::asub(
       avg_fpc,
       band = "temperate needleleaved evergreen tree"
-    ) == max_share_trees &
-    fpc_tree_broadleaf < (0.4 * fpc_tree_total)
+    ) == max_share_trees
   }
   # Temperate Broadleaved Evergreen Forest
   is_temperate_broadleaved_evergreen <- { # nolint
@@ -402,9 +401,7 @@ classify_biomes <- function(files_reference,
     lpjmlkit::asub(
       avg_fpc,
       band = "temperate broadleaved evergreen tree"
-    ) == max_share_trees &
-    fpc_tree_tropical < (0.4 * fpc_tree_total) &
-    fpc_tree_needle < (0.4 * fpc_tree_total)
+    ) == max_share_trees
   }
   # Temperate Broadleaved Deciduous Forest
   is_temperate_broadleaved_deciduous <- { # nolint
@@ -412,9 +409,7 @@ classify_biomes <- function(files_reference,
     lpjmlkit::asub(
       avg_fpc,
       band = "temperate broadleaved summergreen tree"
-    ) == max_share_trees &
-    fpc_tree_tropical < (0.4 * fpc_tree_total) &
-    fpc_tree_needle < (0.4 * fpc_tree_total)
+    ) == max_share_trees
   }
 
   # Tropical Rainforest
@@ -424,7 +419,6 @@ classify_biomes <- function(files_reference,
       avg_fpc,
       band = "tropical broadleaved evergreen tree"
     ) == max_share_trees &
-    (fpc_tree_boreal + fpc_tree_temperate) < (0.4 * fpc_tree_total) &
     is_tropical_proxy
   }
 
@@ -435,7 +429,6 @@ classify_biomes <- function(files_reference,
       avg_fpc,
       band = "tropical broadleaved raingreen tree"
     ) == max_share_trees) &
-    (fpc_tree_boreal + fpc_tree_temperate) < (0.4 * fpc_tree_total) &
     is_tropical_proxy
   }
   # Warm Woody Savanna, Woodland & Shrubland
@@ -451,19 +444,7 @@ classify_biomes <- function(files_reference,
         band = "tropical broadleaved raingreen tree"
       ) == max_share_trees
     ) &
-    (fpc_tree_boreal + fpc_tree_temperate) < (0.4 * fpc_tree_total) &
     is_savanna_proxy
-  }
-  is_mixed_forest <- {
-    is_temperate_forest &
-      !is_boreal_evergreen &
-      !is_boreal_deciduous &
-      !is_temperate_coniferous &
-      !is_temperate_broadleaved_evergreen &
-      !is_temperate_broadleaved_deciduous &
-      !is_tropical_evergreen &
-      !is_tropical_raingreen &
-      !is_tropical_forest_savanna
   }
 
   # WOODY savanna ----------------------------------------------------------- #
@@ -507,7 +488,7 @@ classify_biomes <- function(files_reference,
 
   # GRASSLAND ---------------------------------------------------------------- #
 
-  # Temperate Savanna & Open Shrubland
+  # Temperate grassland
   is_temperate_grassland <- {
     fpc_total > 0.05 &
     fpc_tree_total <= min_tree_cover[["temperate savanna"]] &
@@ -516,7 +497,7 @@ classify_biomes <- function(files_reference,
     avg_temp >= 0 #-2 &
     #lat < 55
   }
-  # Warm Savanna & Open Shrubland
+  # Warm grassland
   is_tropical_grassland <- {
     fpc_total > 0.05 &
     fpc_tree_total <= min_tree_cover[["tropical savanna"]] &
@@ -527,9 +508,8 @@ classify_biomes <- function(files_reference,
 
   # Arctic Tundra ------------------------------------------------------------ #
   is_arctic_tundra <- {
-    (!is_boreal_evergreen &
-    !is_boreal_deciduous &
-    !is_temperate_forest &
+    (!is_boreal_forest &
+     !is_temperate_forest &
     (
       avg_temp < 0 |
       lpjmlkit::asub(avg_fpc, band = "temperate c3 grass") ==
@@ -560,14 +540,14 @@ classify_biomes <- function(files_reference,
 
   # forests
   biome_class[is_boreal_evergreen] <- biome_names["Boreal Evergreen Forest"]
-  biome_class[is_boreal_deciduous] <- biome_names["Boreal Deciduous Forest"]
+  biome_class[is_boreal_broad_deciduous] <- biome_names["Boreal Broadleaved Deciduous Forest"]
+  biome_class[is_boreal_needle_deciduous] <- biome_names["Boreal Needleleaved Deciduous Forest"]
   biome_class[is_temperate_coniferous] <- biome_names["Temperate Coniferous Forest"] # nolint
   biome_class[is_temperate_broadleaved_evergreen] <- biome_names["Temperate Broadleaved Evergreen Forest"] # nolint
   biome_class[is_temperate_broadleaved_deciduous] <- biome_names["Temperate Broadleaved Deciduous Forest"] # nolint
   biome_class[is_tropical_evergreen] <- biome_names["Tropical Rainforest"]
   biome_class[is_tropical_raingreen] <- biome_names["Tropical Seasonal & Deciduous Forest"] # nolint
   biome_class[is_tropical_forest_savanna] <- biome_names["Warm Woody Savanna, Woodland & Shrubland"] # nolint
-  biome_class[is_mixed_forest] <- biome_names["Mixed Forest"]
 
   # woody savanna
   biome_class[is_temperate_woody_savanna] <- biome_names["Temperate Woody Savanna, Woodland & Shrubland"] # nolint

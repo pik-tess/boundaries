@@ -20,8 +20,8 @@
 #'
 #' }
 #' @export
-list_needed_outputs <- function(metric = "all",
-                                with_nitrogen = TRUE) {
+list_needed_outputs <- function(metric = "all", with_nitrogen = TRUE,
+                                only_first_filename = TRUE) {
 
   optional_metrics <- c("meco", "mcol", "biome", "nitrogen", "lsc",
                         "bluewater", "greenwater", "water", "biosphere", "all")
@@ -82,12 +82,14 @@ list_needed_outputs <- function(metric = "all",
     }
   }
   out <- unify_list(outs)
-  return(
-    list(
-      outputs = sapply(out, function(x) x[["file_name"]][1]),
-      timesteps = sapply(out, function(x) x[["resolution"]])
-    )
-  )
+
+  if (only_first_filename){
+    output_filenames <- lapply(out,function(x) x[["file_name"]][1])
+  }else{
+    output_filenames <- lapply(out,function(x) x[["file_name"]])
+  }
+  return(list(outputs = output_filenames,
+              timesteps = sapply(out,function(x) x[["resolution"]])))
 }
 
 # for input list a, all duplicate keys are unified, taking the value with
