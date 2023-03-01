@@ -82,7 +82,7 @@ calc_status <- function(boundary,
   )
 
   files_reference <- get_filenames(
-    path = path_scenario
+    path = path_scenario,
     output_files = output_files,
     diff_output_files = diff_output_files,
     input_files = input_files,
