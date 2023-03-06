@@ -23,7 +23,7 @@
 list_needed_outputs <- function(metric = "all", with_nitrogen = TRUE,
                                 only_first_filename = TRUE) {
 
-  optional_metrics <- c("meco", "mcol", "biome", "nitrogen", "lsc",
+  optional_metrics <- c("meco", "mcol", "biome", "nitrogen", "lsc", "benchmark",
                         "bluewater", "greenwater", "water", "biosphere", "all")
   notin <- metric[!metric %in% optional_metrics]
   if (length(notin) > 0) {
@@ -79,6 +79,9 @@ list_needed_outputs <- function(metric = "all", with_nitrogen = TRUE,
                 requirements[["biome"]], requirements[["bluewater"]],
                 requirements[["greenwater"]], requirements[["lsc"]])
     }
+  }
+  if ("benchmark" %in% metric){
+    outs <- c(requirements[["benchmark"]])
   }
   out <- unify_list(outs)
   browser()
