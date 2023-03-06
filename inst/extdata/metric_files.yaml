@@ -167,3 +167,313 @@ nitrogen: &refnitrogen
 
 lsc: *refbiome
 
+benchmark: &benchmark
+    grid:
+        resolution: "annual"
+        file_name: ["grid"]
+    fpc:
+        resolution: "annual"
+        file_name: ["fpc"]
+    globalflux:
+        resolution: "annual"
+        file_name: ["globalflux"]
+    npp:
+        resolution: "annual"
+        file_name: ["npp"]
+    gpp:
+        resolution: "annual"
+        file_name: ["gpp"]
+    rh:
+        resolution: "annual"
+        file_name: ["rh"]
+    fapar:
+        resolution: "annual"
+        file_name: ["fapar"]
+    transp:
+        resolution: "annual"
+        file_name: ["transp"]
+    runoff:
+        resolution: "annual"
+        file_name: ["runoff"]
+    evap:
+        resolution: "annual"
+        file_name: ["evap"]
+    interc:
+        resolution: "annual"
+        file_name: ["interc"]
+    swc1:
+        resolution: "annual"
+        file_name: ["swc1"]
+    swc2:
+        resolution: "annual"
+        file_name: ["swc2"]
+    firef:
+        resolution: "annual"
+        file_name: ["firef"]
+    vegc:
+        resolution: "annual"
+        file_name: ["vegc"]
+    soilc:
+        resolution: "annual"
+        file_name: ["soilc"]
+    litc:
+        resolution: "annual"
+        file_name: ["litc"]
+    flux_estabc:
+        resolution: "annual"
+        file_name: ["flux_estabc"]
+    pft_vegc:
+        resolution: "annual"
+        file_name: ["pft_vegc"]
+    phen_tmin:
+        resolution: "annual"
+        file_name: ["phen_tmin"]
+    phen_tmax:
+        resolution: "annual"
+        file_name: ["phen_tmax"]
+    phen_light:
+        resolution: "annual"
+        file_name: ["phen_light"]
+    phen_water:
+        resolution: "annual"
+        file_name: ["phen_water"]
+    vegn:
+        resolution: "annual"
+        file_name: ["vegn"]
+    soiln:
+        resolution: "annual"
+        file_name: ["soiln"]
+    litn:
+        resolution: "annual"
+        file_name: ["litn"]
+    soiln_layer:
+        resolution: "annual"
+        file_name: ["soiln_layer"]
+    soilno3_layer:
+        resolution: "annual"
+        file_name: ["soilno3_layer"]
+    soilnh4_layer:
+        resolution: "annual"
+        file_name: ["soilnh4_layer"]
+    soiln_slow:
+        resolution: "annual"
+        file_name: ["soiln_slow"]
+    soilnh4:
+        resolution: "annual"
+        file_name: ["soilnh4"]
+    soilno3:
+        resolution: "annual"
+        file_name: ["soilno3"]
+    pft_nuptake:
+        resolution: "annual"
+        file_name: ["pft_nuptake"]
+    nuptake:
+        resolution: "annual"
+        file_name: ["nuptake"]
+    leaching:
+        resolution: "annual"
+        file_name: ["leaching"]
+    n2o_denit:
+        resolution: "annual"
+        file_name: ["n2o_denit"]
+    n2o_nit:
+        resolution: "annual"
+        file_name: ["n2o_nit"]
+    n2_emis:
+        resolution: "annual"
+        file_name: ["n2_emis"]
+    bnf:
+        resolution: "annual"
+        file_name: ["bnf"]
+    n_immo:
+        resolution: "annual"
+        file_name: ["n_immo"]
+    pft_ndemand:
+        resolution: "annual"
+        file_name: ["pft_ndemand"]
+    firen:
+        resolution: "annual"
+        file_name: ["firen"]
+    n_mineralization:
+        resolution: "annual"
+        file_name: ["n_mineralization"]
+    n_volatilization:
+        resolution: "annual"
+        file_name: ["n_volatilization"]
+    pft_nlimit:
+        resolution: "annual"
+        file_name: ["pft_nlimit"]
+    pft_vegn:
+        resolution: "annual"
+        file_name: ["pft_vegn"]
+    pft_cleaf:
+        resolution: "annual"
+        file_name: ["pft_cleaf"]
+    pft_nleaf:
+        resolution: "annual"
+        file_name: ["pft_nleaf"]
+    pft_laimax:
+        resolution: "annual"
+        file_name: ["pft_laimax"]
+    pft_croot:
+        resolution: "annual"
+        file_name: ["pft_croot"]
+    pft_nroot:
+        resolution: "annual"
+        file_name: ["pft_nroot"]
+    pft_csapw:
+        resolution: "annual"
+        file_name: ["pft_csapw"]
+    pft_nsapw:
+        resolution: "annual"
+        file_name: ["pft_nsapw"]
+    pft_chawo:
+        resolution: "annual"
+        file_name: ["pft_chawo"]
+    pft_nhawo:
+        resolution: "annual"
+        file_name: ["pft_nhawo"]
+    firec:
+        resolution: "annual"
+        file_name: ["firec"]
+    discharge:
+        resolution: "annual"
+        file_name: ["discharge"]
+    wateramount:
+        resolution: "annual"
+        file_name: ["wateramount"]
+    harvestc:
+        resolution: "annual"
+        file_name: ["harvestc"]
+    sdate:
+        resolution: "annual"
+        file_name: ["sdate"]
+    pft_harvestc:
+        resolution: "annual"
+        file_name: ["pft_harvestc"]
+    pft_rharvestc:
+        resolution: "annual"
+        file_name: ["pft_rharvestc"]
+    cftfrac:
+        resolution: "annual"
+        file_name: ["cftfrac"]
+    seasonality:
+        resolution: "annual"
+        file_name: ["seasonality"]
+    pet:
+        resolution: "annual"
+        file_name: ["pet"]
+    albedo:
+        resolution: "annual"
+        file_name: ["albedo"]
+    maxthaw_depth:
+        resolution: "annual"
+        file_name: ["maxthaw_depth"]
+    perc:
+        resolution: "annual"
+        file_name: ["perc"]
+    soiltemp1:
+        resolution: "annual"
+        file_name: ["soiltemp1"]
+    soiltemp2:
+        resolution: "annual"
+        file_name: ["soiltemp2"]
+    soiltemp3:
+        resolution: "annual"
+        file_name: ["soiltemp3"]
+    soilc_layer:
+        resolution: "annual"
+        file_name: ["soilc_layer"]
+    agb:
+        resolution: "annual"
+        file_name: ["agb"]
+    agb_tree:
+        resolution: "annual"
+        file_name: ["agb_tree"]
+    return_flow_b:
+        resolution: "annual"
+        file_name: ["return_flow_b"]
+    transp_b:
+        resolution: "annual"
+        file_name: ["transp_b"]
+    evap_b:
+        resolution: "annual"
+        file_name: ["evap_b"]
+    interc_b:
+        resolution: "annual"
+        file_name: ["interc_b"]
+    prod_turnover:
+        resolution: "annual"
+        file_name: ["prod_turnover"]
+    deforest_emis:
+        resolution: "annual"
+        file_name: ["deforest_emis"]
+    conv_loss_evap:
+        resolution: "annual"
+        file_name: ["conv_loss_evap"]
+    conv_loss_drain:
+        resolution: "annual"
+        file_name: ["conv_loss_drain"]
+    irrig:
+        resolution: "annual"
+        file_name: ["irrig"]
+    harvestn:
+        resolution: "annual"
+        file_name: ["harvestn"]
+    pft_harvestn:
+        resolution: "annual"
+        file_name: ["pft_harvestn"]
+    pft_rharvestn:
+        resolution: "annual"
+        file_name: ["pft_rharvestn"]
+    bnf_agr:
+        resolution: "annual"
+        file_name: ["bnf_agr"]
+    nfert_agr:
+        resolution: "annual"
+        file_name: ["nfert_agr"]
+    nmanure_agr:
+        resolution: "annual"
+        file_name: ["nmanure_agr"]
+    ndepo_agr:
+        resolution: "annual"
+        file_name: ["ndepo_agr"]
+    nmineralization_agr:
+        resolution: "annual"
+        file_name: ["nmineralization_agr"]
+    nimmobilization_agr:
+        resolution: "annual"
+        file_name: ["nimmobilization_agr"]
+    nuptake_agr:
+        resolution: "annual"
+        file_name: ["nuptake_agr"]
+    nleaching_agr:
+        resolution: "annual"
+        file_name: ["nleaching_agr"]
+    n2o_denit_agr:
+        resolution: "annual"
+        file_name: ["n2o_denit_agr"]
+    n2o_nit_agr:
+        resolution: "annual"
+        file_name: ["n2o_nit_agr"]
+    nh3_agr:
+        resolution: "annual"
+        file_name: ["nh3_agr"]
+    n2_agr:
+        resolution: "annual"
+        file_name: ["n2_agr"]
+    harvestn_agr:
+        resolution: "annual"
+        file_name: ["harvestn_agr"]
+    harvestc_agr:
+        resolution: "annual"
+        file_name: ["harvestc_agr"]
+    seedn_agr:
+        resolution: "annual"
+        file_name: ["seedn_agr"]
+    cellfrac_agr:
+        resolution: "annual"
+        file_name: ["cellfrac_agr"]
+    litfalln_agr:
+        resolution: "annual"
+        file_name: ["litfalln_agr"]
