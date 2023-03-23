@@ -4,10 +4,10 @@ bluewater: &refbluewater
         file_name: ["grid"]
     discharge:
         resolution: "monthly"
-        file_name: ["discharge"]
+        file_name: ["discharge", "mdischarge"]
     irrig:
         resolution: "monthly"
-        file_name: ["irrig"]
+        file_name: ["irrig", "mirrig"]
 
 greenwater: &refgreenwater
     grid:
@@ -15,10 +15,10 @@ greenwater: &refgreenwater
         file_name: ["grid"]
     rootmoist:
         resolution: "monthly"
-        file_name: ["rootmoist"]
+        file_name: ["rootmoist", "mrootmoist"]
     swc:
         resolution: "monthly"
-        file_name: ["swc"]
+        file_name: ["swc", "mswc"]
 
 meco: &refmeco
     grid:
@@ -59,7 +59,7 @@ meco: &refmeco
         file_name: ["harvestc"]
     evap:
         resolution: "annual"
-        file_name: ["evap"]    
+        file_name: ["evap"]
     interc:
         resolution: "annual"
         file_name: ["interc"]

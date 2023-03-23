@@ -51,7 +51,7 @@ calc_status <- function(boundary,
                         path_scenario,
                         path_reference = NULL,
                         time_span_scenario = as.character(1982:2011),
-                        time_span_reference = NULL,
+                        time_span_reference = time_span_scenario,
                         avg_nyear_args = list(),
                         input_files = list(),
                         diff_output_files = list(),
@@ -71,7 +71,8 @@ calc_status <- function(boundary,
   # Get main file type (meta, clm)
   file_ext <- get_file_ext(path_scenario)
 
-  output_files <- list_needed_outputs(boundary)
+  output_files <- list_needed_outputs(boundary,
+                                      only_first_filename = FALSE)
 
   files_scenario <- get_filenames(
     path = path_scenario,
@@ -128,7 +129,6 @@ get_file_ext <- function(path) {
     factor() %>%
     table() %>%
     names() %>%
-    sort() %>%
     .[1:5]
 
   # 5 exemplaric files to detect type
@@ -171,13 +171,13 @@ get_filenames <- function(path,
   for (ofile in names(output_files$outputs)) {
 
   # Get required max. temporal resolution and convert to nstep
-    resolution <- output_files[[ofile]]$timesteps
+    resolution <- output_files$timesteps[[ofile]]
     nstep <- switch(
       resolution,
       annual = 1,
       monthly = 12,
       daily = 365,
-      stop(paste0("Not supported time resolution: ",dQuote(nstep), "."))
+      stop(paste0("Not supported time resolution: ", dQuote(nstep), "."))
     )
 
     # If input file supplied use it as first priority
@@ -199,7 +199,7 @@ get_filenames <- function(path,
     if (!is.null(file_name)) {
 
       # Check if data could be read in
-      meta <- read_meta(file_name)
+      meta <- lpjmlkit::read_meta(file_name)
 
       # Then check if temporal resultion of file matches required nstep
       if (nstep != meta$nstep && nstep != meta$nbands) {
@@ -216,7 +216,7 @@ get_filenames <- function(path,
     } else {
 
       # Iterate over different used file name options (e.g. runoff, mrunoff, ...) # nolint
-      for (cfile in seq_len(output_files$outputs[[ofile]])) {
+      for (cfile in seq_along(output_files$outputs[[ofile]])) {
         file_name <- paste0(
           path, "/",
           output_files$outputs[[ofile]][cfile], ".",
@@ -226,7 +226,7 @@ get_filenames <- function(path,
         # Check if file exists and if so check required temporal resolution
         # else next
         if (file.exists(file_name)) {
-          meta <- read_meta(file_name)
+          meta <- lpjmlkit::read_meta(file_name)
           if (nstep == meta$nstep || nstep == meta$nbands) {
             # Matching file found, break and use current file_name
             break

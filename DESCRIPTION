@@ -32,7 +32,6 @@ Imports:
     sf,
     reshape2,
     lpjmlkit,
-    lpjmliotools,
     sp,
     rgdal,
     raster
