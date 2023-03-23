@@ -38,7 +38,7 @@ plot_biomes <- function(biome_data,
                               package = "boundaries") %>%
       rgdal::readOGR(layer = "ne_110m_admin_0_countries", verbose = FALSE) %>%
       raster::crop(., lpjml_extent) %>%
-      { if(to_robinson) sp::spTransform(., CRS("+proj=robin")) else . } # nolint
+      { if(to_robinson) sp::spTransform(., sp::CRS("+proj=robin")) else . } # nolint
 
   biome_cols <-  c("#993404", "#D95F0E", "#004529", "#238443",
                    "#D9F0A3", "#4EB3D3", "#2B8CBE", "#c4e2f4",

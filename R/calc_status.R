@@ -50,7 +50,7 @@
 calc_status <- function(boundary,
                         path_scenario,
                         path_reference = NULL,
-                        time_span_scenario = c(1982, 2011),
+                        time_span_scenario = as.character(1982:2011),
                         time_span_reference = NULL,
                         avg_nyear_args = list(),
                         input_files = list(),
@@ -69,7 +69,7 @@ calc_status <- function(boundary,
   }
 
   # Get main file type (meta, clm)
-  file_ext <- get_file_type(path_scenario)
+  file_ext <- get_file_ext(path_scenario)
 
   output_files <- list_needed_outputs(boundary)
 
@@ -123,10 +123,12 @@ get_file_ext <- function(path) {
     substr(2, nchar(.))
 
   # Get most frequent file types
+  #TODO not yet working
   most_frequent <- all_file_types %>%
     factor() %>%
     table() %>%
     names() %>%
+    sort() %>%
     .[1:5]
 
   # 5 exemplaric files to detect type
@@ -141,7 +143,7 @@ get_file_ext <- function(path) {
   # Detect actual LPJmL data type
   types <- sapply(
     files_to_check,
-    lpjmlkit:::detect_type
+    lpjmlkit:::detect_io_type
   ) %>%
   setNames(names(.), .)
 
