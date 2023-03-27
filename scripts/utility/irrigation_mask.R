@@ -86,22 +86,19 @@ for (id in seq_len(length(basin_ids))) {
   basincell <- which(endcell == basin_ids[id])
   if (is.na(third_dim)) {
     check_gt0 <- sum(
-      asub(avg_irrigation_scenario,
-           list(cells = basincell))
+      lpjmlkit::asub(avg_irrigation_scenario, cells = basincell)
     )
   } else {
     check_gt0 <- apply(
-      asub(avg_irrigation_scenario,
-           list(cells = basincell)),
+      lpjmlkit::asub(avg_irrigation_scenario, cells = basincell),
       "",
       sum
     )
   }
-  basin_replace <- asub(irrmask_basin,
-                        list(cells = basincell)) %>%
+  basin_replace <- lpjmlkit::asub(irrmask_basin, cells = basincell) %>%
     `[<-`(check_gt0 > 0, value = 1)
 
-  irrmask_basin <- asub_replace(irrmask_basin,
+  irrmask_basin <- lpjmlkit::asub(irrmask_basin,
                       which(names(dimnames(irrmask_basin)) == "cells"),
                       basincell,
                       basin_replace)

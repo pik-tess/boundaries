@@ -71,8 +71,8 @@ calc_status <- function(boundary,
   # Get main file type (meta, clm)
   file_ext <- get_file_ext(path_scenario)
 
-  output_files <- list_needed_outputs(boundary,
-                                      only_first_filename = FALSE)
+  output_files <- list_outputs(boundary,
+                               only_first_filename = FALSE)
 
   files_scenario <- get_filenames(
     path = path_scenario,
@@ -90,16 +90,33 @@ calc_status <- function(boundary,
     file_ext = file_ext
   )
 
+  fun_args <- list_functions(boundary)
+  dot_args <- list(...)
+
   all_status <- list()
   # Utility functions
   for (bound in boundary) {
-    all_status[[boundary]] <- do.call(
-      paste0("calc_", boundary, "_status"),
-      args = list(files_scenario = files_scenario,
-                  files_reference = files_reference,
-                  time_span_scenario = time_span_scenario,
-                  time_span_reference = time_span_reference,
-                  ...)
+    fun_name <- paste0("calc_", bound, "_status")
+
+    sub_dots <- list()
+    for (dot_i in seq_along(dot_args)) {
+      name_arg <- names(dot_args[dot_i])
+      if (name_arg %in% fun_args[[fun_name]]) {
+        sub_dots <- c(sub_dots, dot_args[dot_i])
+      }
+    }
+
+    all_status[[bound]] <- do.call(
+      fun_name,
+      args = c(
+        list(
+          files_scenario = files_scenario,
+          files_reference = files_reference,
+          time_span_scenario = time_span_scenario,
+          time_span_reference = time_span_reference
+        ),
+        sub_dots
+      )
     )
   }
 
@@ -166,12 +183,12 @@ get_filenames <- function(path,
                           input_files,
                           file_ext) {
 
-  file_names <- c()
+  file_names <- list()
   # Iterate over required outputs
-  for (ofile in names(output_files$outputs)) {
+  for (ofile in names(output_files)) {
 
   # Get required max. temporal resolution and convert to nstep
-    resolution <- output_files$timesteps[[ofile]]
+    resolution <- output_files[[ofile]]$resolution
     nstep <- switch(
       resolution,
       annual = 1,
@@ -216,10 +233,10 @@ get_filenames <- function(path,
     } else {
 
       # Iterate over different used file name options (e.g. runoff, mrunoff, ...) # nolint
-      for (cfile in seq_along(output_files$outputs[[ofile]])) {
+      for (cfile in seq_along(output_files[[ofile]]$file_name)) {
         file_name <- paste0(
           path, "/",
-          output_files$outputs[[ofile]][cfile], ".",
+          output_files[[ofile]]$file_name[cfile], ".",
           file_ext
         )
 
@@ -234,10 +251,10 @@ get_filenames <- function(path,
         }
 
         # At end of iteraton raise error that no matching file_name was found
-        if (cfile == length(output_files$outputs[[ofile]])) {
+        if (cfile == length(output_files[[ofile]]$file_name)) {
           stop(
             paste0(
-              "No matching output for ", dQuote(ofile) ,
+              "No matching output for ", dQuote(ofile),
               " with required temporal resolution (nstep = ", nstep, ") ",
               "found at path ", dQuote(path), "."
             )
@@ -245,7 +262,7 @@ get_filenames <- function(path,
         }
       }
     }
-    file_names <- append(file_names, file_name)
+    file_names[[ofile]] <- file_name
   }
   file_names
 }

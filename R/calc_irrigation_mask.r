@@ -67,22 +67,19 @@ calc_irrigation_mask <- function(path_output,
     basincell <- which(endcell == basin_ids[id])
     if (is.null(third_dim) | length(dim(drop(avg_irrigation_scenario))) < 3) {
       check_gt0 <- sum(
-        lpjmlkit::subset_array(avg_irrigation_scenario,
-                               list("cell" = basincell))
+        lpjmlkit::asub(avg_irrigation_scenario, cell = basincell)
       )
     } else {
       check_gt0 <- apply(
-        lpjmlkit::subset_array(avg_irrigation_scenario,
-                               list(cell = basincell)),
+        lpjmlkit::asub(avg_irrigation_scenario, cell = basincell),
         third_dim,
         sum
       )
     }
-    basin_replace <- lpjmlkit::subset_array(irrmask_basin,
-                                            list(cell = basincell)) %>%
+    basin_replace <- lpjmlkit::asub(irrmask_basin, cell = basincell) %>%
       `[<-`(check_gt0 > 0, value = 1)
 
-    lpjmlkit::asub(x = irrmask_basin, cell = basincell) <- basin_replace
+    lpjmlkit:::asub(x = irrmask_basin, cell = basincell) <- basin_replace
   }
   return(irrmask_basin)
 }

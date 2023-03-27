@@ -96,6 +96,110 @@ list_needed_outputs <- function(metric = "all",
               timesteps = sapply(out, function(x) x[["resolution"]])))
 }
 
+
+list_outputs <- function(metric = "all",
+                        with_nitrogen = TRUE,
+                        only_first_filename = TRUE) {
+
+  metric <- process_metric(metric = metric,
+                           with_nitrogen = TRUE)
+
+  system.file(
+    "extdata",
+    "metric_filefun.yml",
+    package = "boundaries"
+  ) %>%
+    yaml::read_yaml() %>%
+    get_outputs(metric, only_first_filename)
+
+}
+
+
+list_functions <- function(metric = "all",
+                           with_nitrogen = TRUE) {
+
+  metric <- process_metric(metric = metric,
+                           with_nitrogen = TRUE)
+
+  system.file(
+    "extdata",
+    "metric_filefun.yml",
+    package = "boundaries"
+  ) %>%
+    yaml::read_yaml() %>%
+    get_function_args(metric)
+
+}
+
+process_metric <- function(metric = "all",
+                           with_nitrogen = TRUE) {
+  all_metrics <- c(
+    "meco", "mcol", "biome", "nitrogen", "lsc",
+    "bluewater", "greenwater", "water", "biosphere"
+  )
+
+  if ("all" %in% metric) {
+    metric <- all_metrics
+  }
+
+  metric <- match.arg(
+    arg = metric,
+    choices = all_metrics,
+    several.ok = TRUE
+  )
+
+  if (with_nitrogen && "meco" %in% metric) {
+    metric[metric == "meco"] <- "meco_nitrogen"
+  }
+
+  metric
+}
+
+
+# for input list a, all duplicate keys are unified, taking the value with
+#     highest temporal resolution (daily>monthly>annual)
+get_outputs <- function(x, metric_name, only_first_filename) {
+
+  outputs <- list()
+  for (metric in x$metric[metric_name]) {
+
+    # Iterate over all unique keys
+    for (item in names(metric$output)) {
+
+      # Check if output is already in list or if it has higher resolution
+      if (!item %in% names(outputs) ||
+          (item %in% names(outputs) &&
+          higher_res(metric$output[[item]], outputs[[item]]$resolution))) {
+
+        outputs[[item]]$resolution <- metric$output[[item]]
+
+        if (only_first_filename) {
+          outputs[[item]]$file_name <- x$file_name[[item]][1]
+        } else {
+          outputs[[item]]$file_name <- x$file_name[[item]]
+        }
+      }
+    }
+  }
+  return(outputs)
+}
+
+
+get_function_args <- function(x, metric_name) {
+
+  # List functions of metrics (metric_name)
+  funs <- c()
+  for (metric in x$metric[metric_name]) {
+    funs <- append(funs, unlist(metric$fun))
+  }
+  # Get arguments of functions
+  funs %>%
+    unique() %>%
+    sapply(function(x) formalArgs(get(x)))
+}
+
+
+
 # for input list a, all duplicate keys are unified, taking the value with
 #     highest temporal resolution (daily>monthly>annual)
 unify_list <- function(a) {
@@ -121,5 +225,18 @@ highest_temporal_res <- function(a) {
     return("monthly")
   } else {
     return("annual")
+  }
+}
+
+
+higher_res <- function(x, y) {
+  levels <- c("annual", "monthly", "daily")
+  resolution_x <- match(match.arg(x, levels), levels)
+  resolution_y <- match(match.arg(y, levels), levels)
+
+  if (resolution_x > resolution_y) {
+    return(TRUE)
+  } else {
+    return(FALSE)
   }
 }
