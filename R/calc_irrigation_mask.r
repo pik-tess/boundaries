@@ -2,7 +2,7 @@
 #   output to exclude non irrigated basins
 #   also works with average_nyear_window
 #   returns lpjml output with either just cell or + year/window
-calc_irrigation_mask <- function(path_output,
+calc_irrigation_mask <- function(files_scenario,
                                  time_span,
                                  avg_nyear_args=list(),
                                  path_input = (
