@@ -5,37 +5,35 @@
 \title{Calculate the planetary boundary status for the nitrogen boundary}
 \usage{
 calc_nitrogen_status(
-  path_scenario,
-  path_reference,
-  time_span_scenario = c(1982, 2011),
+  files_scenario,
+  files_reference,
+  time_span_scenario = as.character(1982:2011),
   time_span_reference = NULL,
-  input_files = list(prec =
-    "/p/projects/lpjml/input/historical/CRUDATA_TS3_23/gpcc_v7_cruts3_23_precip_1901_2013.clm"),
   method = "braun2022",
   cut_arid = 0.2,
   cut_runoff = 0,
   with_groundwater_denit = TRUE,
-  pb_thresholds = list(lower = 1, upper = 2.5),
-  prefix_monthly_output = "",
-  avg_nyear_args = list(),
-  read_args = list(start_year = 1901, headersize = 0)
+  n_thresholds = list(lower = 1, upper = 2.5),
+  avg_nyear_args = list()
 )
 }
 \arguments{
-\item{path_scenario}{output directory (character string) of the scenario
-LPJmL run where binary files (soon with metafiles) are written}
+\item{files_scenario}{list with variable names and corresponding file paths
+(character string) of the scenario LPJmL run. All needed files are
+provided in XXX. E.g.: list(leaching = "/temp/leaching.bin.json")}
 
-\item{path_reference}{output directory (character string) of the reference
-\itemize{
-\item if used - \verb{method == "braun2022_minusref}
-}}
+\item{files_reference}{list with variable names and corresponding file paths
+(character string) of the reference LPJmL run. All needed files are
+provided in XXX. E.g.: list(leaching = "/temp/leaching.bin.json"). If not
+needed for the applied method, set to NULL.}
 
 \item{time_span_scenario}{time span to be used for the scenario run, defined
-as an integer vector, e.g. \code{1982:2011} (default)}
+as character string, e.g. \code{as.character(1982:2011)} (default)}
 
 \item{time_span_reference}{time span to be used if scenario run used, defined
-as an integer vector, e.g. \code{1901:1930}. Can differ in offset and length from
-\code{time_span_scenario}! If \code{NULL} value of \code{time_span_scenario} is used}
+as character string, e.g. \code{as.character(1901:1930)}. Can differ in offset and
+length from \code{time_span_scenario}! If \code{NULL} value of \code{time_span_scenario} is
+used}
 
 \item{method}{method (character string) to be used , currently available
 method is \code{"braun2022"} based on unpublished suggestion by Johanna Braun.
@@ -54,7 +52,7 @@ groundwater denitrification losses. Defaults to TRUE ( = simulated leaching
 is multiplied with 0.71 based on simulated denitrification losses in ground
 water from Bouwman et al 2013)}
 
-\item{pb_thresholds}{list with upper and lower threshold for N concentration
+\item{n_thresholds}{list with upper and lower threshold for N concentration
 (mg N/l) in runoff to surface water
 Default: upper = 2.5, lower = 1
 (based on de Vries et al. 2013, https://doi.org/10.1016/j.cosust.2013.07.004)
@@ -65,15 +63,9 @@ https://doi.org/10.1038/s41586-022-05158-2:
 threshold was set to 5.0 mgN/l, based on the assumption that on average 50\%
 of N entering surface water is removed through retention and sedimentation"))}
 
-\item{prefix_monthly_output}{character. Provide a prefix if required for
-monthly LPJmL output files, e.g. \code{"m"} for \code{"mdischarge.bin"} instead of
-\code{"discharge.bin"} (default is \code{""})}
-
 \item{avg_nyear_args}{list of arguments to be passed to
 \link[pbfunctions]{average_nyear_window} (see for more info). To be used for
 time series analysis}
-
-\item{read_args}{list of arguments for reading output.}
 }
 \description{
 Calculate the PB status for the nitrogen boundary based on a scenario LPJmL
@@ -81,7 +73,7 @@ run and if \code{method == "braun2022_minusref"} a reference LPJmL run.
 }
 \examples{
 \dontrun{
- calc_nitrogen_status(path_scenario, path_reference)
+ calc_nitrogen_status(files_scenario, files_reference)
 }
 
 }

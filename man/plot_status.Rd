@@ -9,7 +9,7 @@ plot_status(
   status_data = list(biosphere = NA, lsc = NA, bluewater = NA, nitrogen = NA),
   colors = c(`safe zone` = "#74bca9e1", `increasing risk` = "#f6ee0f", `high risk` =
     "#e23a50"),
-  bg_col = NA,
+  bg_col = "white",
   to_robinson = TRUE,
   legend = TRUE
 )

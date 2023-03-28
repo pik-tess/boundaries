@@ -5,51 +5,42 @@
 \title{Calculate the planetary boundary status for the land-system change boundary}
 \usage{
 calc_lsc_status(
-  path_scenario,
-  path_reference,
-  time_span_scenario = c(1982, 2011),
+  files_scenario,
+  files_reference,
+  time_span_scenario = as.character(1982:2011),
   time_span_reference = NULL,
-  spatial_resolution = "biome",
+  lsc_spatial_resolution = "biome",
   eurasia = TRUE,
-  biome_classification = NULL,
-  lsc_thresholds = list(temperate = list(lower = 0.5, upper = 0.7), boreal = list(lower
-    = 0.15, upper = 0.4), tropical = list(lower = 0.15, upper = 0.4)),
+  lsc_thresholds = list(temperate = list(lower = 0.5, upper = 0.7), boreal = list(lower =
+    0.15, upper = 0.4), tropical = list(lower = 0.15, upper = 0.4)),
   avg_nyear_args = list(),
-  input_files = list(temp =
-    "/p/projects/lpjml/input/historical/CRUDATA_TS3_23/cru_ts3.23.1901.2014.tmp.dat.clm"),
-  diff_output_files = list(),
-  file_type = "raw",
-  read_args = list(header_size = 0, ncell = 67420, firstyear = 1901, fpc_nbands = 12,
-    size = 4),
   ...
 )
 }
 \arguments{
-\item{path_scenario}{output directory (character string) of the scenario
-LPJmL run where binary files (soon with metafiles) are written}
+\item{files_scenario}{list with variable names and corresponding file paths
+(character string) of the scenario LPJmL run. All needed files are
+provided in XXX. E.g.: list(leaching = "/temp/leaching.bin.json")}
 
-\item{path_reference}{output directory (character string) of the reference
-LPJmL run where binary files (soon with metafiles) are written}
+\item{files_reference}{list with variable names and corresponding file paths
+(character string) of the reference LPJmL run. All needed files are
+provided in XXX. E.g.: list(leaching = "/temp/leaching.bin.json"). If not
+needed for the applied method, set to NULL.}
 
 \item{time_span_scenario}{time span to be used for the scenario run, defined
-as an integer vector, e.g. \code{1982:2011} (default)}
+as a character string, e.g. \code{as.character(1982:2011)} (default)}
 
 \item{time_span_reference}{time span to be used for the scenario run, defined
-as an integer vector, e.g. \code{1901:1930}. Can differ in offset and
-length from \code{time_span_scenario}! If \code{NULL} value of
-\code{time_span_scenario} is used}
+as an integer vector, e.g. \code{as.character(1901:1930)}. Can differ in offset
+and length from \code{time_span_scenario}! If \code{NULL} value of \code{time_span_scenario}
+is used}
 
-\item{spatial_resolution}{character. Spatial resolution, available options
+\item{lsc_spatial_resolution}{character. Spatial resolution, available options
 are \code{"biome"} (default) and \code{"grid"}}
 
-\item{eurasia}{logical. If \code{spatial_resolution} = \code{"biome"} merge continents
+\item{eurasia}{logical. If \code{lsc_spatial_resolution} = \code{"biome"} merge continents
 Europe and Asia to avoid arbitrary biome cut at europe/asia border.
 Defaults to \code{TRUE}}
-
-\item{biome_classification}{default to NULL, if biomes are to be calculated
-within this function based on classify_biomes. Can be set to list with
-already defined biomes (xx$biome_id = numeric with ncells; xx$biome_names =
-biome names) if biomes were already calculated with classify_biomes()}
 
 \item{lsc_thresholds}{list with deforestation thresholds for defining safe,
 increasing risk and high risk zone for temperate/temperate/boreal forest
@@ -66,23 +57,6 @@ upper = threshold between increasing risk and high risk zone}
 \link[pbfunctions]{average_nyear_window} (see for more info).
 To be used for time series analysis}
 
-\item{input_files}{optional \code{list} containing additional input (!) files,
-not in the \code{path_data}, e.g. if temp was not written out:
-\code{list(grid=..., temp = ..., elevation = ...)}}
-
-\item{diff_output_files}{optional list for specification of output file names
-differing from default, which is list(grid = "grid.bin", fpc = "fpc.bin",# nolint
-vegc = "vegc.bin", pft_lai = "pft_lai.bin", temp = "temp.bin")}
-
-\item{file_type}{replace default file type. default: ""raw}
-
-\item{read_args}{list of arguments for reading input/output. only required
-for:
-nc output: specification of header_size and ncell to read in
-lpjml grid input
-raw/clm output: specification of header_size, ncell, firstyear and
-fpc_nbands (12 or 10)}
-
 \item{...}{arguments forwarded to \link\href{classify_biomes}{boundaries}}
 }
 \description{
@@ -91,7 +65,7 @@ on a scenario LPJmL run and a reference LPJmL run.
 }
 \examples{
 \dontrun{
- calc_lsc_status(path_scenario, path_reference)
+ calc_lsc_status(files_scenario, files_reference)
 }
 
 }

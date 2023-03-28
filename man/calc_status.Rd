@@ -7,9 +7,13 @@
 calc_status(
   boundary,
   path_scenario,
-  path_reference,
-  time_span_scenario = c(1982, 2011),
-  time_span_reference = NULL,
+  path_reference = NULL,
+  time_span_scenario = as.character(1982:2011),
+  time_span_reference = time_span_scenario,
+  avg_nyear_args = list(),
+  input_files = list(),
+  diff_output_files = list(),
+  in_parallel = TRUE,
   ...
 )
 }
@@ -31,6 +35,19 @@ as an integer vector, e.g. \code{1982:2011} (default)}
 as an integer vector, e.g. \code{1901:1930}. Can differ in offset and length from
 \code{time_span_scenario}! If \code{NULL} value of \code{time_span_scenario} is used}
 
+\item{avg_nyear_args}{list of arguments to be passed to
+\link[pbfunctions]{average_nyear_window} (see for more info). To be used for # nolint
+time series analysis}
+
+\item{input_files}{list of required file(s) using ID (e.g. \code{prec}, \code{runoff})
+and an absolute file path to the corresponding input file}
+
+\item{diff_output_files}{list of required file(s) using ID
+(e.g. prec, runoff) and the alternative writing (e.g. \code{"my_runoff"})}
+
+\item{in_parallel}{if parallel (asynchronous) execution of code should be
+used(future package) to speed up boundary status calculation}
+
 \item{...}{further arguments to be passed to each calc_* function}
 }
 \value{
@@ -41,11 +58,11 @@ Calculate the PB status for a defined planetary boundary based
 on a scenario LPJmL run and a reference LPJmL run.
 }
 \examples{
-\dontrun{ 
+
+\dontrun{
  boundary_status <- calc_status(
-   boundary = 
-   path_scenario = "./my_scenario/output",
-   path_reference = "./my_reference/output")
+   boundary = "nitrogen"
+   path_scenario = "./my_scenario/output")
 }
 
 }

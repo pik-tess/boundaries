@@ -71,9 +71,11 @@ calc_status <- function(boundary,
   # Get main file type (meta, clm)
   file_ext <- get_file_ext(path_scenario)
 
+  # List required output files for each boundary
   output_files <- list_outputs(boundary,
                                only_first_filename = FALSE)
 
+  # Get filenames for scenario and reference
   files_scenario <- get_filenames(
     path = path_scenario,
     output_files = output_files,
@@ -81,7 +83,6 @@ calc_status <- function(boundary,
     input_files = input_files,
     file_ext = file_ext
   )
-
   files_reference <- get_filenames(
     path = path_scenario,
     output_files = output_files,
@@ -90,22 +91,21 @@ calc_status <- function(boundary,
     file_ext = file_ext
   )
 
-  fun_args <- list_functions(boundary)
-  dot_args <- list(...)
+  # Get arguments for each boundary function
+  fun_args <- list_function_args(boundary)
 
+  dot_args <- check_args <- list(...)
   all_status <- list()
-  # Utility functions
+
+  # Loop over boundaries and calculate status
   for (bound in boundary) {
     fun_name <- paste0("calc_", bound, "_status")
 
-    sub_dots <- list()
-    for (dot_i in seq_along(dot_args)) {
-      name_arg <- names(dot_args[dot_i])
-      if (name_arg %in% fun_args[[fun_name]]) {
-        sub_dots <- c(sub_dots, dot_args[dot_i])
-      }
-    }
+    # Get arguments for each boundary function
+    sub_dots <- get_dots(fun_name, fun_args, dot_args)
+    check_args[names(sub_dots)] <- NULL
 
+    # Calculate status
     all_status[[bound]] <- do.call(
       fun_name,
       args = c(
@@ -118,6 +118,11 @@ calc_status <- function(boundary,
         sub_dots
       )
     )
+    # Check if all arguments were used
+    if (length(check_args) != 0) {
+      warning(paste0("The following arguments were not used: ",
+                     paste0("`", names(check_args), "`", collapse = ", ")))
+    }
   }
 
   return(all_status)
@@ -266,6 +271,18 @@ get_filenames <- function(path,
   }
   file_names
 }
+
+get_dots <- function(fun_name, fun_args, dot_args) {
+  sub_dots <- list()
+  for (dot_i in seq_along(dot_args)) {
+    name_arg <- names(dot_args[dot_i])
+    if (name_arg %in% fun_args[[fun_name]]) {
+      sub_dots <- c(sub_dots, dot_args[dot_i])
+    }
+  }
+  sub_dots
+}
+
 
 # Avoid note for "."...
 utils::globalVariables(".") # nolint:undesirable_function_linter

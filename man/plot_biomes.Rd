@@ -4,7 +4,7 @@
 \alias{plot_biomes}
 \title{Plot global distribution of lpjml simulated biomes}
 \usage{
-plot_biomes(biome_data, file_name = NULL, to_robinson = TRUE, bg_col = NA)
+plot_biomes(biome_data, file_name = NULL, to_robinson = TRUE, bg_col = "white")
 }
 \arguments{
 \item{biome_data}{output (list) from classify_biomes()}
