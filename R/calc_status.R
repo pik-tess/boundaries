@@ -249,14 +249,15 @@ get_filenames <- function(path,
         # else next
         if (file.exists(file_name)) {
           meta <- lpjmlkit::read_meta(file_name)
-          if (nstep == meta$nstep || nstep == meta$nbands) {
+          if (nstep <= meta$nstep || nstep == meta$nbands) {
             # Matching file found, break and use current file_name
             break
           }
         }
 
         # At end of iteraton raise error that no matching file_name was found
-        if (cfile == length(output_files[[ofile]]$file_name)) {
+        if (cfile == length(output_files[[ofile]]$file_name) &&
+            !output_files[[ofile]]$optional) {
           stop(
             paste0(
               "No matching output for ", dQuote(ofile),

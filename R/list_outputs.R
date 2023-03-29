@@ -89,11 +89,12 @@ get_outputs <- function(x, metric_name, only_first_filename) {
       # Check if output is already in list or if it has higher resolution
       if (!item %in% names(outputs) ||
           (item %in% names(outputs) &&
-          higher_res(metric$output[[item]], outputs[[item]]$resolution))) {
-
+           higher_res(metric$output[[item]]$resolution,
+                      outputs[[item]]$resolution))
+      ) {
         # Assign output resolution from metric file
-        outputs[[item]]$resolution <- metric$output[[item]]
-
+        outputs[[item]]$resolution <- metric$output[[item]]$resolution
+        outputs[[item]]$optional <- metric$output[[item]]$optional
         # Assign output file name from metric file
         if (only_first_filename) {
           outputs[[item]]$file_name <- x$file_name[[item]][1]
