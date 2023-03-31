@@ -68,8 +68,8 @@ plot_status <- function(file_name = NULL,
   countries <- system.file("extdata", "ne_110m_admin_0_countries.shp",
                               package = "boundaries") %>%
       rgdal::readOGR(layer = "ne_110m_admin_0_countries", verbose = FALSE) %>%
-      crop(., lpjml_extent) %>%
-      { if(to_robinson) sp::spTransform(., CRS("+proj=robin")) else . } # nolint
+      raster::crop(., lpjml_extent) %>%
+      { if(to_robinson) sp::spTransform(., sp::CRS("+proj=robin")) else . } # nolint
 
   pb_names <- names(status_data)
 
@@ -101,7 +101,8 @@ plot_status <- function(file_name = NULL,
   }
   fig_params <- definefig(n_row, n_col, lfrac)
   if (!is.null(file_name)) {
-    file_extension <- strsplit(file_name, split = "\\.")[[1]][-1]
+    file_extension <- strsplit(file_name, split = "\\.")[[1]][-1] %>%
+                      tail(1)
     switch(file_extension,
       `png` = {
         png(file_name,

@@ -84,7 +84,7 @@ calc_status <- function(boundary,
     file_ext = file_ext
   )
   files_reference <- get_filenames(
-    path = path_scenario,
+    path = path_reference,
     output_files = output_files,
     diff_output_files = diff_output_files,
     input_files = input_files,
@@ -138,6 +138,8 @@ get_file_ext <- function(path) {
 
   # Get file extensions
   all_file_types <- all_files %>%
+  strsplit("/") %>%
+  sapply(tail, 1) %>%
   strsplit("^([^\\.]+)") %>%
     sapply(function(x) {
       y <- x[2]
