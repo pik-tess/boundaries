@@ -1,7 +1,7 @@
 #' Calculate the planetary boundary status for the nitrogen boundary
 #'
 #' Calculate the PB status for the nitrogen boundary based on a scenario LPJmL
-#' run and if `method == "braun2022_minusref"` a reference LPJmL run.
+#' run and if `n_method == "braun2022_minusref"` a reference LPJmL run.
 #'
 #' @param files_scenario list with variable names and corresponding file paths
 #' (character string) of the scenario LPJmL run. All needed files are
@@ -20,7 +20,7 @@
 #' length from `time_span_scenario`! If `NULL` value of `time_span_scenario` is
 #' used
 #'
-#' @param method method (character string) to be used , currently available
+#' @param n_method method (character string) to be used , currently available
 #' method is `"braun2022"` based on unpublished suggestion by Johanna Braun.
 #' Second method option is `"braun2022_minusref"` to subtract reference run
 #' output
@@ -64,7 +64,7 @@ calc_nitrogen_status <- function(files_scenario,
                                  files_reference,
                                  time_span_scenario = as.character(1982:2011),
                                  time_span_reference = NULL,
-                                 method = "braun2022",
+                                 n_method = "braun2022",
                                  cut_arid = 0.2,
                                  cut_runoff = 0,
                                  with_groundwater_denit = TRUE,
@@ -72,7 +72,7 @@ calc_nitrogen_status <- function(files_scenario,
                                  avg_nyear_args = list()
                                  ) {
   # verify available methods
-  method <- match.arg(method, c("braun2022",
+  n_method <- match.arg(n_method, c("braun2022",
                                 "braun2022_minusref"))
 
   # sub function to be used for scenario and reference run (braun2022_minusref)
@@ -122,7 +122,7 @@ calc_nitrogen_status <- function(files_scenario,
   }
 
   # apply defined method
-  switch(method,
+  switch(n_method,
     braun2022 = {
       status_frac <- calc_nitrogen_leach(
         path_data = files_scenario,
