@@ -39,13 +39,15 @@ calc_greenwater_status <- function(files_scenario,
                                    time_span_scenario = as.character(1982:2011),
                                    time_span_reference = NULL,
                                    method = "wang-erlandsson2022",
-                                   avg_nyear_args = list()
+                                   avg_nyear_args = list(),
+                                   spatial_resolution
                                    ) {
-  # verify available methods
-  method <- match.arg(method, c("wang-erlandsson2022"))
-  # TODO implement second method: monthly, not based on driest/wettest month
+   # verify available methods
+  method <- match.arg(method, c("wang-erlandsson2022", "porkka_2023"))
+   # verify available spatial resolution
+  spatial_resolution <- match.arg(spatial_resolution, c("grid", "global"))
   # TODO not yet compatible with avg_nyear_args
-  # TODO make function generic to also be applicable to bluewater
+
 
   # check time_spans of scenario and reference runs
   if (is.null(time_span_reference)) {
@@ -64,110 +66,52 @@ calc_greenwater_status <- function(files_scenario,
   }
 
   # -------------------------------------------------------------------------- #
-  # reference rootmoisture
-  rootmoist_reference <- lpjmlkit::read_io(
-      files_reference$rootmoist, subset = list(year = time_span_reference)
-      ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(band = sum)) %>%
-      suppressWarnings()
+  # calc deviations for rootmoisture
+  deviations_rootmoisture <- calc_deviations(
+    file_scenario = files_scenario$rootmoist,
+    file_reference = files_reference$rootmoist,
+    grid_path = files_reference$grid,
+    time_span_scenario = time_span_scenario,
+    time_span_reference =  time_span_reference,
+    method = method,
+    avg_nyear_args = avg_nyear_args,
+    spatial_resolution = spatial_resolution
+  )
 
-  # scenario rootmoisture
-  rootmoist_scenario <- lpjmlkit::read_io(
-      files_scenario$rootmoist, subset = list(year = time_span_scenario)
-      ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(band = sum)) %>%
-      suppressWarnings()
+  if (spatial_resolution == "grid") {
+    #prop.test to test for significance in departure increases
+    # TODO make function that can also be used for bluewater
+    p_dry <- p_wet <- array(NA, length(grid$data[, , 2]))
+    if (method == "wang-erlandsson2022")
+      trials <- c(length(time_span_reference), length(time_span_scenario))
+    else if (method == "porkka_2023") {
+      trials <- c(length(time_span_reference) * 12,
+                   length(time_span_scenario) * 12)
+    }
+    for (i in seq_len(length(grid$data[, , 2]))) {
+      test_dry <- prop.test(x = c(ref_n_depart$dry[i], scen_n_depart$dry[i]),
+                              n = trials,
+                              alternative = "less") #TODO verify!
+      p_dry[i] <- test_dry$p.value
 
-  # grid for cellarea
-  grid <- lpjmlkit::read_io(
-      files_scenario$grid,
-      silent = TRUE
-      )
-  cell_area <- lpjmlkit::calc_cellarea(grid)
-
-  # -------------------------------------------------------------------------- #
-  #calculate the green water 5% and 95% quantiles of the baseline period
-  quants <- calc_water_baseline(rootmoist_reference)
-
-  # calculate number of years with GW dry & wet departures
-
-  ref_n_depart <- calc_n_water_depart(rootmoist_reference, quants)
-  scen_n_depart <- calc_n_water_depart(rootmoist_scenario, quants)
-
-  #prop.test to test for significance in departure increases
-  p_dry <- p_wet <- array(NA, length(grid$data[, , 2]))
-  for (i in seq_len(length(grid$data[, , 2]))) {
-    test_dry <- prop.test(x = c(ref_n_depart$dry[i], scen_n_depart$dry[i]),
-                            n = c(length(time_span_reference),
-                                  length(time_span_scenario)),
-                            alternative = "less") #TODO verify!
-    p_dry[i] <- test_dry$p.value
-
-    test_wet <- prop.test(x = c(ref_n_depart$wet[i], scen_n_depart$wet[i]),
-                            n = c(length(time_span_reference),
-                                  length(time_span_scenario)),
-                            alternative = "less") #TODO verify!
-    p_wet[i] <- test_wet$p.value
+      test_wet <- prop.test(x = c(ref_n_depart$wet[i], scen_n_depart$wet[i]),
+                              n = trials,
+                              alternative = "less") #TODO verify!
+      p_wet[i] <- test_wet$p.value
+    }
+    #TODO understand where NA values come from
+    p_wet[is.na(p_wet)] <- 1
+    p_dry[is.na(p_dry)] <- 1
+    #TODO translation into PB status only prelimary. Thresholds should be
+    # definable in function parameters
+    pb_status <- array(0,
+                       dim = dim(p_dry))
+    pb_status[p_wet < 0.05 | p_dry < 0.05] <- 2
+    pb_status[p_wet < 0.05 & p_dry < 0.05] <- 3
+    pb_status[p_wet >= 0.05 & p_dry >= 0.05] <- 1
+  } else if (spatial_resolution == "global") {
+    # TODO translate into pb status
+    pb_status <- deviations_rootmoisture$scenario
   }
-  #TODO understand where NA values come from
-  p_wet[is.na(p_wet)] <- 1
-  p_dry[is.na(p_dry)] <- 1
-  pb_status <- array(0,
-                     dim = dim(p_dry))
-  pb_status[p_wet < 0.05 | p_dry < 0.05] <- 2
-  pb_status[p_wet < 0.05 & p_dry < 0.05] <- 3
-  pb_status[p_wet >= 0.05 & p_dry >= 0.05] <- 1
-
-  #TODO translation into PB status only prelimary. Thresholds should be
-  # definable in function parameters
   return(pb_status)
-}
-
-
-
-# quantile functions
-q5  <- function(x) quantile(x, probs = 0.05, na.rm = T)
-q95 <- function(x) quantile(x, probs = 0.95, na.rm = T)
-
-# calculate the baseline quantiles
-calc_water_baseline <- function(file_reference) {
-  dry_base_yr <- apply(file_reference, c(1, 3), min)
-  wet_base_yr <- apply(file_reference, c(1, 3), max)
-
-  # calc 5% and 95% percentile for each cell
-  # for each year over all months over baseline period
-  q5_base  <- apply(dry_base_yr, 1, q5)
-  q95_base <- apply(wet_base_yr, 1, q95)
-  quants <- list(q5_base, q95_base)
-  return(quants)
-}
-
-# calculate GW dry & wet departures and return mean annual area of departure
-calc_n_water_depart <- function(file_scenario, quants) {
-
-  q5_base <- unlist(quants[1])
-  q95_base <- unlist(quants[2])
-
-  result <- list()
-  # for each hist year calc area of rootmoist wet & dry departures
-  # identify cells with dry departures
-  # driest month per gridcell for year i
-  dry <- apply(file_scenario, c(1, 3), min)
-  dry[dry >= q5_base] <- NA
-  dry[dry >= 0] <- 1
-  n_depart <- function(x) {
-    length(which(x == 1))
-  }
-  result$dry <- apply(dry, 1, n_depart)
-
-  #identify cells with wet departures
-  #wettest month per gridcell for year i -> ignores which month
-  wet       <- apply(file_scenario, c(1, 3), max)
-  wet[wet <= q95_base] <- NA
-  wet[wet >= 0] <- 1
-  result$wet <- apply(wet, 1, n_depart)
-
-  return(result)
 }
