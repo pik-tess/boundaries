@@ -69,22 +69,6 @@ calc_lsc_status <- function(files_scenario,
   lsc_spatial_resolution <- match.arg(lsc_spatial_resolution, c("biome",
                                                         "grid"))
 
-  # check time_spans of scenario and reference runs
-  if (is.null(time_span_reference)) {
-    time_span_reference <- time_span_scenario
-    nyear_ref <- NULL
-  } else {
-    if (length(time_span_reference) > length(time_span_scenario)) {
-      stop(paste0("time_span_reference is longer than time_span_scenario.",
-                  "Define a time_span_reference that is shorter than",
-                  "time_span_scenario"))
-    } else if (length(time_span_reference) < length(time_span_scenario)) {
-      nyear_ref <- length(time_span_scenario)
-    } else {
-      nyear_ref <- NULL
-    }
-  }
-
   # classify biomes based on foliage projected cover (FPC) output
   biome_classes <- classify_biomes(
     files_reference = files_reference,
@@ -185,8 +169,10 @@ calc_lsc_status <- function(files_scenario,
   avg_trees_scenario <- do.call(average_nyear_window,
                                   append(list(x = all_tree_cover_scenario),
                                          avg_nyear_args))
-  if (!is.null(nyear_ref)) {
-    avg_nyear_args["nyear_reference"] <- nyear_ref
+
+
+  if (length(time_span_reference) < length(time_span_scenario)) {
+    avg_nyear_args["nyear_reference"] <- length(time_span_scenario)
   }
 
   # average forest over time

@@ -53,7 +53,7 @@
 calc_bluewater_status <- function(files_scenario,
                                   files_reference,
                                   time_span_scenario = as.character(1982:2011),
-                                  time_span_reference = NULL,
+                                  time_span_reference = time_span_scenario,
                                   method = "gerten2020",
                                   cut_min = 0.0864,
                                   avg_nyear_args = list(),
@@ -63,22 +63,6 @@ calc_bluewater_status <- function(files_scenario,
   method <- match.arg(method, c("gerten2020",
                                 "wang-erlandsson2022",
                                 "porkka_2023"))
-
-  # check time_spans of scenario and reference runs
-  if (is.null(time_span_reference)) {
-    time_span_reference <- time_span_scenario
-    nyear_ref <- NULL
-  } else {
-    if (length(time_span_reference) > length(time_span_scenario)) {
-      stop(paste0("time_span_reference is longer than time_span_scenario.",
-                  "Define a time_span_reference that is shorter than",
-                  "time_span_scenario"))
-    } else if (length(time_span_reference) < length(time_span_scenario)) {
-      nyear_ref <- length(time_span_scenario)
-    } else {
-      nyear_ref <- NULL
-    }
-  }
 
   # apply defined method
   if (method == "gerten2020") {
@@ -106,8 +90,14 @@ calc_bluewater_status <- function(files_scenario,
       suppressWarnings()
     # ------------------------------------------------------------------------ #
 
-    # average discharge reference
-    avg_discharge_reference <- do.call(average_nyear_window,
+    if (length(time_span_reference) < length(time_span_scenario)) {
+      nyear_ref <- length(time_span_scenario)
+    } else {
+      nyear_ref <- NULL
+    }
+
+  # average discharge reference
+  avg_discharge_reference <- do.call(average_nyear_window,
                                        append(list(x = discharge_reference,
                                                    nyear_reference = nyear_ref),
                                               avg_nyear_args))

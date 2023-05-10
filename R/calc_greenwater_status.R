@@ -60,21 +60,10 @@ calc_greenwater_status <- function(files_scenario,
   spatial_resolution <- match.arg(spatial_resolution, c("grid", "global"))
   # TODO not yet compatible with avg_nyear_args
 
-
-  # check time_spans of scenario and reference runs
-  if (is.null(time_span_reference)) {
-    time_span_reference <- time_span_scenario
-    nyear_ref <- NULL
+  if (length(time_span_reference) < length(time_span_scenario)) {
+    nyear_ref <- length(time_span_scenario)
   } else {
-    if (length(time_span_reference) > length(time_span_scenario)) {
-      stop(paste0("time_span_reference is longer than time_span_scenario.",
-                  "Define a time_span_reference that is shorter than",
-                  "time_span_scenario"))
-    } else if (length(time_span_reference) < length(time_span_scenario)) {
-      nyear_ref <- length(time_span_scenario)
-    } else {
-      nyear_ref <- NULL
-    }
+    nyear_ref <- NULL
   }
 
   # -------------------------------------------------------------------------- #
