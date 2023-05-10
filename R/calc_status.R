@@ -54,7 +54,6 @@ calc_status <- function(boundary,
                         diff_output_files = list(),
                         in_parallel = TRUE,
                         ...) {
-  # test
   # If in_parallel use future package for asynchronous parallelization
   if (in_parallel) {
     if (.Platform$OS.type == "windows") {
@@ -63,6 +62,12 @@ calc_status <- function(boundary,
       future_plan <- future::plan("multicore")
     }
     on.exit(future::plan(future_plan))
+  }
+
+  if (length(time_span_reference) > length(time_span_scenario)) {
+    stop(paste0("time_span_reference is longer than time_span_scenario.",
+                "Define a time_span_reference that is shorter than",
+                "time_span_scenario"))
   }
 
   # Get main file type (meta, clm)

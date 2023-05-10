@@ -44,7 +44,7 @@
 calc_bluewater_status <- function(files_scenario,
                                   files_reference,
                                   time_span_scenario = as.character(1982:2011),
-                                  time_span_reference = NULL,
+                                  time_span_reference = time_span_scenario,
                                   method = "gerten2020",
                                   cut_min = 0.0864,
                                   avg_nyear_args = list(),
@@ -52,22 +52,6 @@ calc_bluewater_status <- function(files_scenario,
   # verify available methods
   method <- match.arg(method, c("gerten2020",
                                 "steffen2015"))
-
-  # check time_spans of scenario and reference runs
-  if (is.null(time_span_reference)) {
-    time_span_reference <- time_span_scenario
-    nyear_ref <- NULL
-  } else {
-    if (length(time_span_reference) > length(time_span_scenario)) {
-      stop(paste0("time_span_reference is longer than time_span_scenario.",
-                  "Define a time_span_reference that is shorter than",
-                  "time_span_scenario"))
-    } else if (length(time_span_reference) < length(time_span_scenario)) {
-      nyear_ref <- length(time_span_scenario)
-    } else {
-      nyear_ref <- NULL
-    }
-  }
 
   # reference discharge ------------------------------------------------------ #
   discharge_reference <- lpjmlkit::read_io(
@@ -87,6 +71,12 @@ calc_bluewater_status <- function(files_scenario,
       lpjmlkit::as_array(aggregate = list(band = sum)) %>%
       suppressWarnings()
   # -------------------------------------------------------------------------- #
+
+  if (length(time_span_reference) < length(time_span_scenario)) {
+    nyear_ref <- length(time_span_scenario)
+  } else {
+    nyear_ref <- NULL
+  }
 
   # average discharge reference
   avg_discharge_reference <- do.call(average_nyear_window,

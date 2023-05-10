@@ -133,20 +133,7 @@ calc_nitrogen_status <- function(files_scenario,
     braun2022_minusref = {
       # check time_spans of scenario and reference runs
       # TODO check if this is needed
-      if (is.null(time_span_reference)) {
-        time_span_reference <- time_span_scenario
-        nyear_ref <- NULL
-      } else {
-        if (length(time_span_reference) > length(time_span_scenario)) {
-          stop(paste0("time_span_reference is longer than time_span_scenario.",
-                      "Define a time_span_reference that is shorter than",
-                      "time_span_scenario"))
-        } else if (length(time_span_reference) < length(time_span_scenario)) {
-          nyear_ref <- length(time_span_scenario)
-        } else {
-          nyear_ref <- NULL
-        }
-      }
+
       # calculate leaching concentration and loss rate for scenario output
       status_frac_scenario <- calc_nitrogen_leach(
         path_data = files_scenario,
@@ -154,8 +141,9 @@ calc_nitrogen_status <- function(files_scenario,
         with_groundwater_denit = with_groundwater_denit,
         avg_nyear_args = avg_nyear_args)
 
-      if (!is.null(nyear_ref)) {
-        avg_nyear_args["nyear_reference"] <- nyear_ref
+
+      if (length(time_span_reference) < length(time_span_scenario)) {
+        avg_nyear_args["nyear_reference"] <- length(time_span_scenario)
       }
 
       # calculate leaching concentration and loss rate for reference output
