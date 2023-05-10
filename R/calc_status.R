@@ -54,7 +54,7 @@ calc_status <- function(boundary,
                         diff_output_files = list(),
                         in_parallel = TRUE,
                         ...) {
-
+  # test
   # If in_parallel use future package for asynchronous parallelization
   if (in_parallel) {
     if (.Platform$OS.type == "windows") {
