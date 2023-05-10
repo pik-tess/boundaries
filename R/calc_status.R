@@ -3,7 +3,7 @@
 #' Calculate the PB status for a defined planetary boundary based
 #' on a scenario LPJmL run and a reference LPJmL run.
 #'
-#' @param boundary character vector, boundary for which status is calculated. 
+#' @param boundary character vector, boundary for which status is calculated.
 #' Available terrestrial boundaries are c("bluewater", "greenwater", "lsc",
 #' "nitrogen")
 #'
@@ -29,9 +29,6 @@
 #'
 #' @param diff_output_files list of required file(s) using ID 
 #' (e.g. prec, runoff) and the alternative writing (e.g. `"my_runoff"`)
-#'
-#' @param in_parallel if parallel (asynchronous) execution of code should be
-#' used(future package) to speed up boundary status calculation
 #'
 #' @param ... further arguments to be passed to each calc_* function
 #'
@@ -104,7 +101,6 @@ calc_status <- function(boundary,
     # Get arguments for each boundary function
     sub_dots <- get_dots(fun_name, fun_args, dot_args)
     check_args[names(sub_dots)] <- NULL
-
     # Calculate status
     all_status[[bound]] <- do.call(
       fun_name,
@@ -118,13 +114,12 @@ calc_status <- function(boundary,
         sub_dots
       )
     )
-    # Check if all arguments were used
-    if (length(check_args) != 0) {
-      warning(paste0("The following arguments were not used: ",
-                     paste0("`", names(check_args), "`", collapse = ", ")))
-    }
   }
-
+  # Check if all arguments were used
+  if (length(check_args) != 0) {
+    warning(paste0("The following arguments were not used: ",
+                   paste0("`", names(check_args), "`", collapse = ", ")))
+  }
   return(all_status)
 }
 
