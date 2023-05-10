@@ -71,7 +71,7 @@ calc_bluewater_status <- function(files_scenario,
 
   # reference discharge ------------------------------------------------------ #
   discharge_reference <- lpjmlkit::read_io(
-      files_reference$discharge, subset = list(year = time_span_scenario)
+      files_reference$discharge, subset = list(year = time_span_reference)
       ) %>%
       lpjmlkit::transform(to = c("year_month_day")) %>%
       lpjmlkit::as_array(aggregate = list(band = sum)) %>%
