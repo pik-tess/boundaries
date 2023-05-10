@@ -4,15 +4,19 @@
 #' LPJmL output plus either vegetation carbon or pft_lai depending on
 #' the savanna_proxy option and elevation if montane_arctic_proxy requires this
 #'
+#' @param path_reference path to the reference LPJmL run. If not provided,
+#'        the path is extracted from the file paths provided in files_reference.
 #' @param files_reference list with variable names and corresponding file paths
-#' (character string) of the reference LPJmL run. All needed files are
-#' provided in XXX. E.g.: list(leaching = "/temp/leaching.bin.json"). If not
-#' needed for the applied method, set to NULL.
+#'        (character string) of the reference LPJmL run. All needed files are
+#'        provided as key value pairs, e.g.:
+#'        list(leaching = "/temp/leaching.bin.json"). If not needed for the
+#'        applied method, set to NULL.
 #' @param time_span_reference time span to be used for the scenario run, defined
-#' as an character string, e.g. `as.character(1901:1930)`.
+#'        as an character string, e.g. `as.character(1901:1930)`.
 #' @param savanna_proxy `list` with either pft_lai or vegc as
 #'        key and value in m2/m2 for pft_lai (default = 6) and gC/m2 for
-#'        vegc (default would be 7500), Set to `NULL` if no proxy should be used.
+#'        vegc (default would be 7500), Set to `NULL` if no proxy should be
+#'        used.
 #' @param montane_arctic_proxy `list` with either "elevation" or "latitude" as
 #'        name/key and value in m for elevation (default 1000) and degree for
 #'        latitude (default would be 55), Set to `NULL` if no proxy is used.
@@ -44,13 +48,35 @@
 #' }
 #'
 #' @export
-classify_biomes <- function(files_reference,
+classify_biomes <- function(path_reference = NULL,
+                            files_reference = NULL,
                             time_span_reference,
                             savanna_proxy = list(pft_lai = 6),
                             montane_arctic_proxy = list(elevation = 1000),
                             tree_cover_thresholds = list(),
-                            avg_nyear_args = list() # currently a place holder
-                            ) {
+                            avg_nyear_args = list(), # currently a place holder
+                            input_files = list(),
+                            diff_output_files = list()) {
+
+  if (is.null(files_reference) && is.null(path_reference)) {
+    stop("files_reference or path_reference must be provided")
+
+  } else if (!is.null(path_reference) && is.null(files_reference)) {
+    # Get main file type (meta, clm)
+    file_ext <- get_file_ext(path_reference)
+
+    # List required output files for each boundary
+    output_files <- list_outputs("biome",
+                                 only_first_filename = FALSE)
+
+    files_reference <- get_filenames(
+      path = path_reference,
+      output_files = output_files,
+      diff_output_files = diff_output_files,
+      input_files = input_files,
+      file_ext = file_ext
+    )
+  }
 
   # test if provided proxies are valid
   savanna_proxy_name <- match.arg(
@@ -108,7 +134,7 @@ classify_biomes <- function(files_reference,
       silent = TRUE
       ) %>%
       lpjmlkit::transform(to = c("year_month_day")) %>%
-      as_array()
+      lpjmlkit::as_array()
 
   temp <- lpjmlkit::read_io(
       files_reference$temp,
