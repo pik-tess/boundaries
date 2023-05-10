@@ -33,6 +33,15 @@
 #'
 #' @param irrmask_basin logical, if true: all cells in river basins without
 #' irrigation will be masked (= no boundary transgression)
+#' 
+#' @param spatial_resolution character string indicating spatial resolution
+#'        either "grid" for calculation of number of years with transgression
+#'        (for wang-erlandsson2022: dim(ncell, nyears); 
+#'         for porkka_2023: dim(ncell, nyears, months)) or
+#'        "global" for calculation of the share (%) of total global area with
+#'        deviations (either one value per year (wang-erlandsson2022) or one
+#'        value per year and month (porkka_2023)) - note: not applied for
+#'        the method "gerten2020" (only at the grid cell level)
 #'
 #' @examples
 #' \dontrun{
@@ -48,10 +57,12 @@ calc_bluewater_status <- function(files_scenario,
                                   method = "gerten2020",
                                   cut_min = 0.0864,
                                   avg_nyear_args = list(),
-                                  irrmask_basin = TRUE) {
+                                  irrmask_basin = TRUE,
+                                  spatial_resolution) {
   # verify available methods
   method <- match.arg(method, c("gerten2020",
-                                "steffen2015"))
+                                "wang-erlandsson2022",
+                                "porkka_2023"))
 
   # check time_spans of scenario and reference runs
   if (is.null(time_span_reference)) {
@@ -69,40 +80,43 @@ calc_bluewater_status <- function(files_scenario,
     }
   }
 
-  # reference discharge ------------------------------------------------------ #
-  discharge_reference <- lpjmlkit::read_io(
+  # apply defined method
+  if (method == "gerten2020") {
+    if (spatial_resolution == "global") {
+      stop(paste0("Global resolution not yet defined for method ", method, ". ",
+                  "For aggregation to global level use wang-erlandsson2020 or ",
+                  "porkka_2023"))
+    }
+    # reference discharge ---------------------------------------------------- #
+    discharge_reference <- lpjmlkit::read_io(
       files_reference$discharge, subset = list(year = time_span_reference)
       ) %>%
       lpjmlkit::transform(to = c("year_month_day")) %>%
       lpjmlkit::as_array(aggregate = list(band = sum)) %>%
       suppressWarnings()
-  #TODO add warning, if discharge output is not monthly but yearly?
-  #TODO not yet working for header files (month dimension is calles band)
-  # scenario discharge ------------------------------------------------------- #
+    #TODO add warning, if discharge output is not monthly but yearly?
+    #TODO not yet working for header files (month dimension is calles band)
+    # scenario discharge ----------------------------------------------------- #
 
-  discharge_scenario <- lpjmlkit::read_io(
+    discharge_scenario <- lpjmlkit::read_io(
       files_scenario$discharge, subset = list(year = time_span_scenario)
       ) %>%
       lpjmlkit::transform(to = c("year_month_day")) %>%
       lpjmlkit::as_array(aggregate = list(band = sum)) %>%
       suppressWarnings()
-  # -------------------------------------------------------------------------- #
+    # ------------------------------------------------------------------------ #
 
-  # average discharge reference
-  avg_discharge_reference <- do.call(average_nyear_window,
+    # average discharge reference
+    avg_discharge_reference <- do.call(average_nyear_window,
                                        append(list(x = discharge_reference,
                                                    nyear_reference = nyear_ref),
                                               avg_nyear_args))
 
-  # average discharge scenario
-  avg_discharge_scenario <- do.call(average_nyear_window,
+    # average discharge scenario
+    avg_discharge_scenario <- do.call(average_nyear_window,
                                       append(list(x = discharge_scenario),
                                              avg_nyear_args))
 
-  # apply defined method
-  switch(method,
-    # "gerten2020" - Gerten et al. 2020
-    gerten2020 = {
       # calc efrs for vmf_min and vmf_max
       efr_uncertain <- calc_efrs(discharge_reference,
                                    "vmf_min",
@@ -186,10 +200,18 @@ calc_bluewater_status <- function(files_scenario,
                                               avg_nyear_args = avg_nyear_args)
         pb_status[irrmask_basin == 0] <- 1
       }
-    },
-    steffen2015 = {
-      stop("This method is currently not defined.")
+    } else if (method %in% c("wang-erlandsson2022", "porkka_2023")) {
+      pb_status <- calc_water_status(
+       file_scenario = files_scenario$discharge,
+       file_reference = files_reference$discharge,
+       grid_path = files_reference$grid,
+       time_span_scenario = time_span_scenario,
+       time_span_reference =  time_span_reference,
+       method = method,
+       avg_nyear_args = avg_nyear_args,
+       spatial_resolution = spatial_resolution
+     )
     }
-  )
+
   return(pb_status)
 }
