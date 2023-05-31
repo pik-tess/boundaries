@@ -32,7 +32,7 @@
 #'        (referring to each month of a year)
 #' @param spatial_resolution character string indicating spatial resolution
 #'        either "grid" for calculation of number of years with transgression
-#'        (for wang-erlandsson2022: dim(ncell, nyears); 
+#'        (for wang-erlandsson2022: dim(ncell, nyears);
 #'         for porkka_2023: dim(ncell, nyears, months)) or
 #'        "global" for calculation of the share (%) of total global area with
 #'        deviations (either one value per year (wang-erlandsson2022) or one
@@ -119,19 +119,29 @@ calc_water_status <- function(file_scenario,
                          probs = 0.95, na.rm = T)
     q50_area <- quantile(deviations$reference$wet_or_dry,
                          probs = 0.5, na.rm = T)
-    pb_status <- list()
-    pb_status$control_variable <-
-      mean(deviations$scenario$wet_or_dry)
+    control_variable <- mean(deviations$scenario$wet_or_dry)
+
+    attr(control_variable,"thresholds") <- c(holocene = q50_area, pb = q95_area) # h: 0, pb: 1
+
+  }
+  return(control_variable)
+}
+
+# todo: finish
+as_risk_level <- function(control_variable, type = "continuous"){
+  thresholds <- attr(control_variable,"thresholds")
+  if (type == "continuous"){
+    # pb value normalized to 0-1, 1 is the
+    # threshold between safe and increasing risk, >1 is transgressed
     pb_status$continuous_normalized <- (pb_status$control_variable -
-    q50_area) / (q95_area - q50_area)
-    pb_status$traffic_light <- ifelse(pb_status$control_variable > q95_area,
-                                      2, 1) # only green and transgresssed
-    pb_status$thresholds <- c(holocene = q50_area, pb = q95_area)
+                                          thresholds[["hol"]]) / (thresholds[["pb"]] - thresholds[["hol"]])
+    pb_status$risk_level <- ifelse(pb_status$control_variable > q95_area,
+                                   2, 1) # only safe and transgressed
+  }else{ # type == "discrete"
+
   }
   return(pb_status)
 }
-
-
 
 calc_deviations <- function(file_scenario,
                             file_reference,
