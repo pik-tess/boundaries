@@ -169,7 +169,8 @@ to_raster <- function(lpjml_array, boundary_box, ext, to_robinson) {
 
   crs_init <- "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
   lpj_ras <- raster::raster(res = 0.5, crs = crs_init)
-  lpj_ras[cellFromXY(lpj_ras, cbind(lpjmliotools::lon, lpjmliotools::lat))] <-
+  #TODO replace lpjmliotools
+  lpj_ras[raster::cellFromXY(lpj_ras, cbind(lpjmliotools::lon, lpjmliotools::lat))] <-
         lpjml_array
   if (to_robinson) {
     ras_to <- raster(xmn = -18000000,

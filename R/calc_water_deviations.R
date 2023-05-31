@@ -167,10 +167,10 @@ calc_deviations <- function(file_scenario,
   # calculate number of months/years with dry & wet departures (grid resolution)
   # or area with dry/wet departures (global resolution)
 
-  ref_depart <- calc_water_depart(var_reference, quants,
+  ref_depart <- calc_water_depart(var_reference, grid_path, quants,
                                     spatial_resolution = spatial_resolution,
                                     method = method)
-  scen_depart <- calc_water_depart(var_scenario, quants,
+  scen_depart <- calc_water_depart(var_scenario, grid_path, quants,
                                      spatial_resolution = spatial_resolution,
                                      method = method)
 
@@ -204,8 +204,8 @@ calc_water_baseline <- function(file_reference, method) {
 # (global resolution) or number of years/months with wet/dry departures
 # (grid resolution)
 
-calc_water_depart <- function(file_scenario, quants, spatial_resolution,
-                              method) {
+calc_water_depart <- function(file_scenario, grid_path, quants,
+                              spatial_resolution, method) {
 
   q5_base <- rep(quants[["q5"]], dim(file_scenario)["year"])
   q95_base <- rep(quants[["q95"]], dim(file_scenario)["year"])
