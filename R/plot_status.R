@@ -133,8 +133,12 @@ plot_status <- function(file_name = NULL,
     } else {
       par(fig = fig_params[i, ], new = TRUE)
     }
+    # convert lpjml vector with continuous control variable status to risk level
+    # with discrete scale
+    plot_data <- status_data[[i]] %>%
+      as_risk_level(type = "discrete")
     # convert lpjml vector to raster with robinson projection
-    plotvar <- to_raster(lpjml_array = unlist(status_data[i]),
+    plotvar <- to_raster(lpjml_array = plot_data,
                          boundary_box = bounding_box,
                          ext = lpjml_extent,
                          to_robinson = to_robinson)

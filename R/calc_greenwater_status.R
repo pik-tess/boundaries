@@ -40,8 +40,8 @@
 #'
 #' @examples
 #' \dontrun{
-#'  calc_deviations(file_scenario, file_reference, grid_path,
-#'                 time_span_reference, spatial_resolution)
+#'  calc_greenwater_status(files_scenario, files_reference,
+#'                 time_span_reference, spatial_resolution = "grid")
 #' }
 #'
 #' @md

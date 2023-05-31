@@ -131,8 +131,6 @@ calc_nitrogen_status <- function(files_scenario,
         avg_nyear_args = avg_nyear_args)
     },
     braun2022_minusref = {
-      # check time_spans of scenario and reference runs
-      # TODO check if this is needed
 
       # calculate leaching concentration and loss rate for scenario output
       status_frac_scenario <- calc_nitrogen_leach(
@@ -209,16 +207,11 @@ calc_nitrogen_status <- function(files_scenario,
 
   # init pb_status based on status_frac
   pb_status <- status_frac
-  # high risk
-  pb_status[status_frac >= n_thresholds$upper] <- 3
-  # increasing risk
-  pb_status[status_frac < n_thresholds$upper &
-            status_frac >= n_thresholds$lower] <- 2
-  # safe zone
-  pb_status[status_frac < n_thresholds$lower] <- 1
+  attr(pb_status, "thresholds") <- c(holocene = 0, pb = n_thresholds$lower,
+                                         highrisk = n_thresholds$upper)
   # non applicable cells
-  pb_status[cells_arid] <- 0
-  pb_status[cells_low_runoff] <- 0
+  pb_status[cells_arid] <- NA
+  pb_status[cells_low_runoff] <- NA
 
   return(pb_status)
 }

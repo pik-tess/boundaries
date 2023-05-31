@@ -44,7 +44,7 @@
 #'
 #' @examples
 #' \dontrun{
-#'  calc_deviations(file_scenario, file_reference, grid_path,
+#'  calc_water_status(file_scenario, file_reference, grid_path,
 #'                 time_span_reference, spatial_resolution)
 #' }
 #'
@@ -64,96 +64,8 @@ calc_water_status <- function(file_scenario,
                                    ) {
 
   # -------------------------------------------------------------------------- #
-  # calc deviations, for global resolution referring to area with deviations;
-  # for grid resolution referring to number of years/months with deviations
-  deviations <- calc_deviations(
-    file_scenario = file_scenario,
-    file_reference = file_reference,
-    grid_path = grid_path,
-    time_span_scenario = time_span_scenario,
-    time_span_reference =  time_span_reference,
-    method = method,
-    avg_nyear_args = avg_nyear_args,
-    spatial_resolution = spatial_resolution
-  )
-
-  # -------------------------------------------------------------------------- #
-  if (spatial_resolution == "grid") {
-    #prop.test to test for significance in departure increases
-
-    p_dry <- p_wet <- array(NA, 67420) #TODO make flexible
-    if (method == "wang-erlandsson2022")
-      trials <- c(length(time_span_reference), length(time_span_scenario))
-    else if (method == "porkka_2023") {
-      trials <- c(length(time_span_reference) * 12,
-                   length(time_span_scenario) * 12)
-    }
-    for (i in seq_len(67420)) { #TODO make flexible
-      test_dry <- prop.test(x = c(deviations$reference$dry[i],
-                                  deviations$scenario$dry[i]),
-                              n = trials,
-                              alternative = "less") #TODO verify!
-      p_dry[i] <- test_dry$p.value
-
-      test_wet <- prop.test(x = c(deviations$reference$wet[i],
-                                  deviations$scenario$wet[i]),
-                              n = trials,
-                              alternative = "less")
-      p_wet[i] <- test_wet$p.value
-    }
-    #TODO understand where NA values come from
-    p_wet[is.na(p_wet)] <- 1
-    p_dry[is.na(p_dry)] <- 1
-    #TODO translation into PB status only prelimary. Thresholds should be
-    # definable in function parameters
-    pb_status <- array(0,
-                       dim = dim(p_dry))
-    pb_status[p_wet < 0.05 | p_dry < 0.05] <- 2
-    pb_status[p_wet < 0.05 & p_dry < 0.05] <- 3
-    pb_status[p_wet >= 0.05 & p_dry >= 0.05] <- 1
-
-  # -------------------------------------------------------------------------- #
-  } else if (spatial_resolution == "global") {
-    #calculate q95 for area with deviations in the reference
-    q95_area <- quantile(deviations$reference$wet_or_dry,
-                         probs = 0.95, na.rm = T)
-    q50_area <- quantile(deviations$reference$wet_or_dry,
-                         probs = 0.5, na.rm = T)
-    control_variable <- mean(deviations$scenario$wet_or_dry)
-
-    attr(control_variable,"thresholds") <- c(holocene = q50_area, pb = q95_area) # h: 0, pb: 1
-
-  }
-  return(control_variable)
-}
-
-# todo: finish
-as_risk_level <- function(control_variable, type = "continuous"){
-  thresholds <- attr(control_variable,"thresholds")
-  if (type == "continuous"){
-    # pb value normalized to 0-1, 1 is the
-    # threshold between safe and increasing risk, >1 is transgressed
-    pb_status$continuous_normalized <- (pb_status$control_variable -
-                                          thresholds[["hol"]]) / (thresholds[["pb"]] - thresholds[["hol"]])
-    pb_status$risk_level <- ifelse(pb_status$control_variable > q95_area,
-                                   2, 1) # only safe and transgressed
-  }else{ # type == "discrete"
-
-  }
-  return(pb_status)
-}
-
-calc_deviations <- function(file_scenario,
-                            file_reference,
-                            grid_path,
-                            time_span_scenario = as.character(1982:2011),
-                            time_span_reference = NULL,
-                            method = "porkka_2023",
-                            avg_nyear_args = list(),
-                            spatial_resolution
-                                   ) {
-
-# reference
+  # read in reference and scenario output
+  # reference
   var_reference <- lpjmlkit::read_io(
       file_reference, subset = list(year = time_span_reference)
       ) %>%
@@ -174,9 +86,9 @@ calc_deviations <- function(file_scenario,
   quants <- calc_water_baseline(var_reference,
                                 method = method)
 
+  # -------------------------------------------------------------------------- #
   # calculate number of months/years with dry & wet departures (grid resolution)
   # or area with dry/wet departures (global resolution)
-
   ref_depart <- calc_water_depart(var_reference, grid_path, quants,
                                     spatial_resolution = spatial_resolution,
                                     method = method)
@@ -184,7 +96,49 @@ calc_deviations <- function(file_scenario,
                                      spatial_resolution = spatial_resolution,
                                      method = method)
 
-  return(list(reference = ref_depart, scenario = scen_depart))
+
+  # -------------------------------------------------------------------------- #
+  if (spatial_resolution == "grid") {
+    #prop.test to test for significance in departure increases
+
+    p_dry <- p_wet <- p_wet_or_dry <- array(NA, 67420) #TODO make flexible
+    if (method == "wang-erlandsson2022") {
+      trials <- c(length(time_span_reference), length(time_span_scenario))
+    } else if (method == "porkka_2023") {
+      trials <- c(length(time_span_reference) * 12,
+                   length(time_span_scenario) * 12)
+    }
+    for (i in seq_len(67420)) { #TODO make flexible
+      test_wet_or_dry <- prop.test(x = c(ref_depart$wet_or_dry[i],
+                                  scen_depart$wet_or_dry[i]),
+                                  n = trials,
+                                  alternative = "less") #TODO verify!
+      p_wet_or_dry[i] <- test_wet_or_dry$p.value
+    }
+    #TODO understand where NA values come from
+    p_wet_or_dry[is.na(p_wet_or_dry)] <- 1
+
+    control_variable <- 1 - p_wet_or_dry #reverse to be compatible with other
+    # boundaries (holocene < pb < highrisk)
+    #TODO translation into PB status only prelimary. Thresholds should be
+    # definable in function parameters
+    attr(control_variable, "thresholds") <- c(holocene = 0, pb = 0.95,
+                                              highrisk = 0.99)
+
+  # -------------------------------------------------------------------------- #
+  } else if (spatial_resolution == "global") {
+    #calculate q95 for area with deviations in the reference
+    q95_area <- quantile(ref_depart$wet_or_dry,
+                         probs = 0.95, na.rm = TRUE)
+    q50_area <- quantile(ref_depart$wet_or_dry,
+                         probs = 0.5, na.rm = TRUE)
+    control_variable <- mean(scen_depart$wet_or_dry)
+
+    attr(control_variable, "thresholds") <- c(holocene = q50_area, pb = q95_area,
+                                             highrisk = NA) # h: 0, pb: 1
+
+  }
+  return(control_variable)
 }
 
 
@@ -192,6 +146,7 @@ calc_deviations <- function(file_scenario,
 # quantile functions
 q5  <- function(x) quantile(x, probs = 0.05, na.rm = T)
 q95 <- function(x) quantile(x, probs = 0.95, na.rm = T)
+
 
 # calculate the baseline quantiles
 calc_water_baseline <- function(file_reference, method) {
@@ -210,6 +165,7 @@ calc_water_baseline <- function(file_reference, method) {
   return(quants)
 }
 
+
 # calculate GW dry & wet departures and return mean annual area of departure
 # (global resolution) or number of years/months with wet/dry departures
 # (grid resolution)
@@ -225,7 +181,7 @@ calc_water_depart <- function(file_scenario, grid_path, quants,
     dry <- apply(file_scenario, c("cell", "year"), min)
     wet <- apply(file_scenario, c("cell", "year"), max)
   } else if (method == "porkka_2023") {
-    dry <- wet <- file_scenario
+    dry <- wet <- dry_or_wet <- file_scenario
   }
 
   # identify cells with dry/wet departures
@@ -235,13 +191,14 @@ calc_water_depart <- function(file_scenario, grid_path, quants,
   wet[wet >= 0] <- 1
   wet[is.na(wet)] <- 0
   dry[is.na(dry)] <- 0
+  dry_or_wet <- ifelse((dry == 1 | wet == 1), 1, 0)
 
   result <- list()
   if (spatial_resolution == "grid") {
     #dim_remain <- names(dim(dry))[names(dim(dry)) != "year"]
     result$dry <- apply(dry, "cell", sum)
     result$wet <- apply(wet, "cell", sum)
-
+    result$wet_or_dry <- apply(dry_or_wet, "cell", sum)
   } else if (spatial_resolution == "global") {
     grid <- lpjmlkit::read_io(
       grid_path,

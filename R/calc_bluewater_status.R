@@ -24,7 +24,8 @@
 #' method is `c("gerten2020")` based on
 #' [Gerten et al. 2020](https://doi.org/10.1038/s41893-019-0465-1).
 #'
-#' @param cut_min double. Exclude boundary calculations for Q < cut_min,
+#' @param cut_min double. Exclude boundary calculations for Q < cut_min and
+#' dismiss EFR transgresssions if < cut_min for "gerten2020" method,
 #' Default: 0.0864 hm3/day (=1 m³/s)
 #'
 #' @param avg_nyear_args list of arguments to be passed to
@@ -59,7 +60,7 @@ calc_bluewater_status <- function(files_scenario,
                                   method = "gerten2020",
                                   cut_min = 0.0864,
                                   avg_nyear_args = list(),
-                                  irrmask_basin = TRUE,
+                                  irrmask_basin = FALSE,
                                   spatial_resolution) {
   # verify available methods
   method <- match.arg(method, c("gerten2020",
@@ -98,8 +99,8 @@ calc_bluewater_status <- function(files_scenario,
       nyear_ref <- NULL
     }
 
-  # average discharge reference
-  avg_discharge_reference <- do.call(average_nyear_window,
+    # average discharge reference
+    avg_discharge_reference <- do.call(average_nyear_window,
                                        append(list(x = discharge_reference,
                                                    nyear_reference = nyear_ref),
                                               avg_nyear_args))
@@ -109,101 +110,100 @@ calc_bluewater_status <- function(files_scenario,
                                       append(list(x = discharge_scenario),
                                              avg_nyear_args))
 
-      # calc efrs for vmf_min and vmf_max
-      efr_uncertain <- calc_efrs(discharge_reference,
+    # calc efrs for vmf_min and vmf_max
+    efr_uncertain <- calc_efrs(discharge_reference,
                                    "vmf_min",
                                    avg_nyear_args)
-      efr_safe <- calc_efrs(discharge_reference,
+    efr_safe <- calc_efrs(discharge_reference,
                               "vmf_max",
                               avg_nyear_args)
-      # calculation of EFR transgressions = EFR deficits in LU run
-      safe_space <- efr_safe - avg_discharge_scenario
+    # calculation of EFR transgressions = EFR deficits in LU run
+    efr_deficit <- efr_safe - avg_discharge_scenario
+    # dismiss small EFR deficits #TODO check relevance
+    efr_deficit[efr_deficit < cut_min] <- 0
 
-      # calculation of uncertainty zone
-      uncertainty_zone <- efr_safe - efr_uncertain
+    # calculation of uncertainty zone
+    uncertainty_zone <- efr_safe - efr_uncertain
 
-      # dismiss boundary status calculation if PNV discharge is < 0.1 m^3/s
-      uncertainty_zone[avg_discharge_reference < cut_min] <- 0
-      safe_space[safe_space < cut_min] <- 0
-      safe_space[avg_discharge_reference < cut_min] <- 0
+    # calculate boundary status based on transgression to uncertainty ratio
+    # (as in Steffen 2015; degree to which EFRs are undermined)
 
-      # calculate boundary status based on transgression to uncertainty ratio
-      #   as in Steffen 2015: degree to which EFRs are undermined: expressed as
-      #   the transgression-to uncertainty ratio
-      #   if ratio is above >5%: within uncertainty range (yellow)
-      #   if ratio is above >75% transgression (red)
-      status_frac_monthly <- ifelse(uncertainty_zone > 0,
-                                    safe_space / uncertainty_zone,
+    status_frac_monthly <- ifelse(uncertainty_zone > 0,
+                                    efr_deficit / uncertainty_zone,
                                     0)
 
-      third_dim <- names(dim(status_frac_monthly))[
-        !names(dim(status_frac_monthly)) %in% c("cell", "month")
-      ] %>% {
-        if (rlang::is_empty(.)) NULL else .
-      }
-
-      # to average the ratio only over months which are not "safe"
-      status_frac_monthly[status_frac_monthly <= 0.05] <- NA
-      status_frac <- apply(
-        status_frac_monthly,
-        names(dim(status_frac_monthly))[
-          names(dim(status_frac_monthly)) %in% c("cell", third_dim)
-        ],
-        mean,
-        na.rm = TRUE)
-
-      # check if vector was returned (loss if dimnames) -> reconvert to array
-      if (is.null(dim(status_frac))) {
-        status_frac <- array(
-          status_frac,
-          dim = c(cell = dim(status_frac_monthly)[["cell"]], 1),
-          dimnames = list(cell = dimnames(status_frac_monthly)[["cell"]], 1)
-        )
-      }
-
-      # to display cell with marginal discharge in other color (grey):
-      cells_marginal_discharge <- array(FALSE,
-                                       dim = dim(status_frac),
-                                       dimnames = dimnames(status_frac))
-      cells_marginal_discharge[
-        which(
-          apply(
-            avg_discharge_scenario, c("cell", third_dim), mean
-          ) < cut_min
-        )
-      ] <- TRUE
-
-      # init pb_status based on status_frac
-      pb_status <- status_frac
-      # high risk
-      pb_status[status_frac >= 0.75] <- 3
-      # increasing risk
-      pb_status[status_frac < 0.75 & status_frac >= 0.05] <- 2
-      # safe zone
-      pb_status[status_frac < 0.05] <- 1
-      pb_status[is.na(status_frac)] <- 1
-      # non applicable cells
-      pb_status[cells_marginal_discharge] <- 0
-
-      if (irrmask_basin) {
-        # calc irrigation mask to exclude non irrigated basins
-        irrmask_basin <- calc_irrigation_mask(files_scenario,
-                                              time_span = time_span_scenario,
-                                              avg_nyear_args = avg_nyear_args)
-        pb_status[irrmask_basin == 0] <- 1
-      }
-    } else if (method %in% c("wang-erlandsson2022", "porkka_2023")) {
-      pb_status <- calc_water_status(
-       file_scenario = files_scenario$discharge,
-       file_reference = files_reference$discharge,
-       grid_path = files_reference$grid,
-       time_span_scenario = time_span_scenario,
-       time_span_reference =  time_span_reference,
-       method = method,
-       avg_nyear_args = avg_nyear_args,
-       spatial_resolution = spatial_resolution
-     )
+    third_dim <- names(dim(status_frac_monthly))[
+      !names(dim(status_frac_monthly)) %in% c("cell", "month")
+    ] %>% {
+      if (rlang::is_empty(.)) NULL else .
     }
+
+    # to average the ratio only over months which are not "safe"
+    status_frac_monthly[status_frac_monthly <= 0.05] <- NA
+    status_frac <- apply(
+      status_frac_monthly,
+      names(dim(status_frac_monthly))[
+        names(dim(status_frac_monthly)) %in% c("cell", third_dim)
+      ],
+      mean,
+      na.rm = TRUE)
+    # set cells with NA (all months safe) to 0
+    status_frac[is.na(status_frac)] <- 0
+
+    # check if vector was returned (loss if dimnames) -> reconvert to array
+    if (is.null(dim(status_frac))) {
+      status_frac <- array(
+        status_frac,
+        dim = c(cell = dim(status_frac_monthly)[["cell"]], 1),
+        dimnames = list(cell = dimnames(status_frac_monthly)[["cell"]], 1)
+      )
+    }
+
+    # ommit boundary status calculation if PNV discharge is < cut_min
+    # (marginal discharge)
+    cells_marginal_discharge <- array(FALSE,
+                                     dim = dim(status_frac),
+                                     dimnames = dimnames(status_frac))
+    cells_marginal_discharge[
+      which(
+        apply(
+          avg_discharge_scenario, c("cell", third_dim), mean
+        ) < cut_min
+      )
+    ] <- TRUE
+    status_frac[cells_marginal_discharge] <- NA
+
+    # ommit boundary status calculation in basins without irrigation?
+    if (irrmask_basin) {
+      # calc irrigation mask to exclude non irrigated basins
+      irrmask_basin <- calc_irrigation_mask(files_scenario,
+                                            time_span = time_span_scenario,
+                                            avg_nyear_args = avg_nyear_args)
+      status_frac[irrmask_basin == 0] <- NA
+    }
+
+    #   if ratio is above >5%: within uncertainty range (yellow)
+    #   if ratio is above >75% transgression (red)
+    # TODO define in parameter?
+    # define PB thresholds as attributes
+    attr(status_frac, "thresholds") <- c(holocene = 0, pb = 0.05,
+                                         highrisk = 0.75)
+
+    pb_status <- status_frac
+
+  } else if (method %in% c("wang-erlandsson2022", "porkka_2023")) {
+    #TODO also account for cut_min?
+    pb_status <- calc_water_status(
+     file_scenario = files_scenario$discharge,
+     file_reference = files_reference$discharge,
+     grid_path = files_reference$grid,
+     time_span_scenario = time_span_scenario,
+     time_span_reference =  time_span_reference,
+     method = method,
+     avg_nyear_args = avg_nyear_args,
+     spatial_resolution = spatial_resolution
+   )
+  }
 
   return(pb_status)
 }

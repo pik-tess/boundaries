@@ -54,7 +54,7 @@ metric:
                 optional: false
             swc:
                 resolution: "monthly"
-                optional: false
+                optional: true
         # Called boundaries functions
         fun:
             - calc_greenwater_status
