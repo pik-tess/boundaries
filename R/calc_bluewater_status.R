@@ -33,15 +33,17 @@
 #'
 #' @param irrmask_basin logical, if true: all cells in river basins without
 #' irrigation will be masked (= no boundary transgression)
-#' 
+#'
 #' @param spatial_resolution character string indicating spatial resolution
 #'        either "grid" for calculation of number of years with transgression
-#'        (for wang-erlandsson2022: dim(ncell, nyears); 
+#'        (for wang-erlandsson2022: dim(ncell, nyears);
 #'         for porkka_2023: dim(ncell, nyears, months)) or
 #'        "global" for calculation of the share (%) of total global area with
 #'        deviations (either one value per year (wang-erlandsson2022) or one
 #'        value per year and month (porkka_2023)) - note: not applied for
 #'        the method "gerten2020" (only at the grid cell level)
+#'
+#'@return todo: describe returned object
 #'
 #' @examples
 #' \dontrun{
