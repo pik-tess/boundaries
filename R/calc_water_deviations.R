@@ -2,10 +2,10 @@
 #'  from a corresponding monthly reference variable
 #'
 #' Calculate deviations (<q5 / >q95) for a monhtly variable in a scenario LPJmL
-#' run as compared to a reference LPJmL run, wither referring to global area
-#' share with deviations (spatial_resolution: global), or to number of years
-#' with deviations (spatial resolution: cell). From this, calculate a global or
-#' gridded PB status
+#' run as compared to a reference LPJmL run, either referring to global area
+#' share with deviations (spatial_resolution: global), or to number of months or
+#' years with deviations (spatial resolution: cell). From this, calculate a
+#' global or gridded PB status
 #'
 #' @param file_scenario character string with path to monthly variable of the
 #'         scenario LPJmL run.
@@ -18,7 +18,7 @@
 #' @param time_span_scenario time span to be used for the scenario run, defined
 #'        as a character string, e.g. `as.character(1982:2011)` (default)
 #'
-#' @param time_span_reference time span to be used for the reference run, defined
+#' @param time_span_reference time span to be used for the reference run,
 #'        defined as a character string (e.g. `as.character(1901:1930)`).
 #'        Can differ in offset and length from `time_span_scenario`!
 #'        If `NULL` value of `time_span_scenario` is used
@@ -30,6 +30,20 @@
 #'        `porkka_2023` based on
 #'        [Porkka et al. 2023](https://eartharxiv.org/repository/view/3438/)
 #'        (referring to each month of a year)
+#'
+#' @param w_thresholds named character string with thresholds to be used to
+#'        define the safe, increasing risk and high risk zone,
+#'        e.g. c(holocene = 0.5, pb = 0.95, highrisk = 0.99).
+#'        For spatial resolution = "grid", this refers to the p value
+#'        (significance level of increases in deviations) with the default:
+#'        c(holocene = 1, pb = 0.05, highrisk = 0.01).
+#'        For spatial resolution = "global", this refers to the quantiles of
+#'        the global area with deviations in the reference period. The dafault
+#'        for global resolution is: c(holocene = 0.5, pb = 0.95,
+#'        highrisk = 0.99).
+#'        If set to NULL, the respective default is taken (see above; matching
+#'        the spatial_resolution)
+#' 
 #' @param spatial_resolution character string indicating spatial resolution
 #'        either "grid" for calculation of number of years with transgression
 #'        (for wang-erlandsson2022: dim(ncell, nyears);
@@ -59,12 +73,14 @@ calc_water_status <- function(file_scenario,
                               time_span_scenario = as.character(1982:2011),
                               time_span_reference = NULL,
                               method = "wang-erlandsson2022",
+                              w_thresholds = NULL,
                               avg_nyear_args = list(),
-                              spatial_resolution
+                              spatial_resolution = "grid"
                                    ) {
 
   # -------------------------------------------------------------------------- #
   # read in reference and scenario output
+  #TODO what to do if time_span_reference is not defined?
   # reference
   var_reference <- lpjmlkit::read_io(
       file_reference, subset = list(year = time_span_reference)
@@ -82,13 +98,15 @@ calc_water_status <- function(file_scenario,
       suppressWarnings()
 
   # -------------------------------------------------------------------------- #
-  #calculate the 5% and 95% quantiles of the baseline period
+  # calculate the 5% and 95% quantiles of the baseline period for each cell
+  # either for each month of the year or only for driest/wettest month
+  # depending on the defined method
   quants <- calc_water_baseline(var_reference,
                                 method = method)
 
   # -------------------------------------------------------------------------- #
   # calculate number of months/years with dry & wet departures (grid resolution)
-  # or area with dry/wet departures (global resolution)
+  # or area with dry/wet departures (global resolution) for each cell
   ref_depart <- calc_water_depart(var_reference, grid_path, quants,
                                     spatial_resolution = spatial_resolution,
                                     method = method)
@@ -99,15 +117,22 @@ calc_water_status <- function(file_scenario,
 
   # -------------------------------------------------------------------------- #
   if (spatial_resolution == "grid") {
-    #prop.test to test for significance in departure increases
 
-    p_dry <- p_wet <- p_wet_or_dry <- array(NA, 67420) #TODO make flexible
+    # define the number of trials (= number of years or months within the
+    # reference and scenario timeframe)
     if (method == "wang-erlandsson2022") {
       trials <- c(length(time_span_reference), length(time_span_scenario))
+      # TODO adapt for timeseries analysis
     } else if (method == "porkka_2023") {
+      # calculate number of months within the time_span
       trials <- c(length(time_span_reference) * 12,
                    length(time_span_scenario) * 12)
     }
+
+    # test for significance in departure increases based on prop.test
+    p_dry <- p_wet <- p_wet_or_dry <- array(NA, 67420) #TODO make flexible
+    # TODO test if possible to hand over table/matrix for all cells instead
+    # of single cells
     for (i in seq_len(67420)) { #TODO make flexible
       test_wet_or_dry <- prop.test(x = c(ref_depart$wet_or_dry[i],
                                   scen_depart$wet_or_dry[i]),
@@ -118,24 +143,46 @@ calc_water_status <- function(file_scenario,
     #TODO understand where NA values come from
     p_wet_or_dry[is.na(p_wet_or_dry)] <- 1
 
-    control_variable <- 1 - p_wet_or_dry #reverse to be compatible with other
-    # boundaries (holocene < pb < highrisk)
-    #TODO translation into PB status only prelimary. Thresholds should be
-    # definable in function parameters
-    attr(control_variable, "thresholds") <- c(holocene = 0, pb = 0.95,
-                                              highrisk = 0.99)
+    # 1 - x to be compatible with other boundaries (holocene < pb < highrisk):
+    control_variable <- 1 - p_wet_or_dry
+
+    # thresholds for translation into pb status, set to default if w_thresholds
+    # are not explicitely defined
+    if (is.null(w_thresholds)) {
+      w_thresholds <- c(holocene = 1,
+                        pb = 0.05,
+                        highrisk = 0.01)
+    }
+
+    #TODO translation into PB status only prelimary.
+    attr(control_variable, "thresholds") <-
+      c(holocene = 1 - w_thresholds["holocene"],
+        pb =       1 - w_thresholds["pb"],
+        highrisk = 1 - w_thresholds["highrisk"])
 
   # -------------------------------------------------------------------------- #
   } else if (spatial_resolution == "global") {
-    #calculate q95 for area with deviations in the reference
-    q95_area <- quantile(ref_depart$wet_or_dry,
-                         probs = 0.95, na.rm = TRUE)
-    q50_area <- quantile(ref_depart$wet_or_dry,
-                         probs = 0.5, na.rm = TRUE)
+
+    # thresholds for translation into pb status, set to default if w_thresholds
+    # are not explicitely defined
+    if (is.null(w_thresholds)) {
+      w_thresholds <- c(holocene = 0.5,
+                        pb = 0.95,
+                        highrisk = 0.99)
+    }
+
+    # calculate areas corresponding to the quantiles defined in w_thresholds
+    area_high_risk <- quantile(ref_depart$wet_or_dry,
+                         probs = w_thresholds["highrisk"], na.rm = TRUE)
+    area_pb <- quantile(ref_depart$wet_or_dry,
+                         probs = w_thresholds["pb"], na.rm = TRUE)
+    area_holocene <- quantile(ref_depart$wet_or_dry,
+                         probs = w_thresholds["holocene"], na.rm = TRUE)
     control_variable <- mean(scen_depart$wet_or_dry)
 
-    attr(control_variable, "thresholds") <- c(holocene = q50_area, pb = q95_area,
-                                             highrisk = NA) # h: 0, pb: 1
+    attr(control_variable, "thresholds") <- c(holocene = area_holocene,
+                                              pb = area_pb,
+                                              highrisk = area_high_risk)
 
   }
   return(control_variable)
@@ -146,7 +193,7 @@ calc_water_status <- function(file_scenario,
 # quantile functions
 q5  <- function(x) quantile(x, probs = 0.05, na.rm = T)
 q95 <- function(x) quantile(x, probs = 0.95, na.rm = T)
-
+#TODO make q5/95 flexibel = parameters?
 
 # calculate the baseline quantiles
 calc_water_baseline <- function(file_reference, method) {
