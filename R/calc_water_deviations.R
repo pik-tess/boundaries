@@ -101,16 +101,16 @@ calc_water_status <- function(file_scenario,
   # calculate the 5% and 95% quantiles of the baseline period for each cell
   # either for each month of the year or only for driest/wettest month
   # depending on the defined method
-  quants <- calc_water_baseline(var_reference,
+  quants <- calc_baseline(var_reference,
                                 method = method)
 
   # -------------------------------------------------------------------------- #
   # calculate number of months/years with dry & wet departures (grid resolution)
   # or area with dry/wet departures (global resolution) for each cell
-  ref_depart <- calc_water_depart(var_reference, grid_path, quants,
+  ref_depart <- calc_departures(var_reference, grid_path, quants,
                                     spatial_resolution = spatial_resolution,
                                     method = method)
-  scen_depart <- calc_water_depart(var_scenario, grid_path, quants,
+  scen_depart <- calc_departures(var_scenario, grid_path, quants,
                                      spatial_resolution = spatial_resolution,
                                      method = method)
 
@@ -155,10 +155,7 @@ calc_water_status <- function(file_scenario,
     }
 
     #TODO translation into PB status only prelimary.
-    attr(control_variable, "thresholds") <-
-      c(holocene = 1 - w_thresholds["holocene"],
-        pb =       1 - w_thresholds["pb"],
-        highrisk = 1 - w_thresholds["highrisk"])
+    attr(control_variable, "thresholds") <-  1 - w_thresholds
 
   # -------------------------------------------------------------------------- #
   } else if (spatial_resolution == "global") {
@@ -196,7 +193,7 @@ q95 <- function(x) quantile(x, probs = 0.95, na.rm = T)
 #TODO make q5/95 flexibel = parameters?
 
 # calculate the baseline quantiles
-calc_water_baseline <- function(file_reference, method) {
+calc_baseline <- function(file_reference, method) {
   if (method == "wang-erlandsson2022") {
     dry_base_yr <- apply(file_reference, c(1, 3), min)
     wet_base_yr <- apply(file_reference, c(1, 3), max)
@@ -217,7 +214,7 @@ calc_water_baseline <- function(file_reference, method) {
 # (global resolution) or number of years/months with wet/dry departures
 # (grid resolution)
 
-calc_water_depart <- function(file_scenario, grid_path, quants,
+calc_departures <- function(file_scenario, grid_path, quants,
                               spatial_resolution, method) {
 
   q5_base <- rep(quants[["q5"]], dim(file_scenario)["year"])
