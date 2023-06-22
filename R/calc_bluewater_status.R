@@ -43,6 +43,19 @@
 #'        deviations (either one value per year (wang-erlandsson2022) or one
 #'        value per year and month (porkka_2023)) - note: not applied for
 #'        the method "gerten2020" (only at the grid cell level)
+#' 
+#' @param w_thresholds named character string with thresholds to be used to
+#'        define the safe, increasing risk and high risk zone,
+#'        e.g. c(holocene = 0.5, pb = 0.95, highrisk = 0.99).
+#'        For spatial resolution = "grid", this refers to the p value
+#'        (significance level of increases in deviations) with the default:
+#'        c(holocene = 1, pb = 0.05, highrisk = 0.01).
+#'        For spatial resolution = "global", this refers to the quantiles of
+#'        the global area with deviations in the reference period. The dafault
+#'        for global resolution is: c(holocene = 0.5, pb = 0.95,
+#'        highrisk = 0.99).
+#'        If set to NULL, the respective default is taken (see above; matching
+#'        the spatial_resolution)
 #'
 #'@return todo: describe returned object
 #'
@@ -61,7 +74,8 @@ calc_bluewater_status <- function(files_scenario,
                                   cut_min = 0.0864,
                                   avg_nyear_args = list(),
                                   irrmask_basin = FALSE,
-                                  spatial_resolution) {
+                                  spatial_resolution,
+                                  w_thresholds = NULL) {
   # verify available methods
   method <- match.arg(method, c("gerten2020",
                                 "wang-erlandsson2022",
@@ -81,7 +95,6 @@ calc_bluewater_status <- function(files_scenario,
       lpjmlkit::transform(to = c("year_month_day")) %>%
       lpjmlkit::as_array(aggregate = list(band = sum)) %>%
       suppressWarnings()
-    #TODO add warning, if discharge output is not monthly but yearly?
     #TODO not yet working for header files (month dimension is calles band)
     # scenario discharge ----------------------------------------------------- #
 
@@ -140,7 +153,7 @@ calc_bluewater_status <- function(files_scenario,
 
     # to average the ratio only over months which are not "safe"
     status_frac_monthly[status_frac_monthly <= 0.05] <- NA
-    status_frac <- apply(
+    pb_status <- apply(
       status_frac_monthly,
       names(dim(status_frac_monthly))[
         names(dim(status_frac_monthly)) %in% c("cell", third_dim)
@@ -148,30 +161,29 @@ calc_bluewater_status <- function(files_scenario,
       mean,
       na.rm = TRUE)
     # set cells with NA (all months safe) to 0
-    status_frac[is.na(status_frac)] <- 0
+    pb_status[is.na(pb_status)] <- 0
 
     # check if vector was returned (loss if dimnames) -> reconvert to array
-    if (is.null(dim(status_frac))) {
-      status_frac <- array(
-        status_frac,
+    if (is.null(dim(pb_status))) {
+      pb_status <- array(
+        pb_status,
         dim = c(cell = dim(status_frac_monthly)[["cell"]], 1),
         dimnames = list(cell = dimnames(status_frac_monthly)[["cell"]], 1)
       )
     }
-
     # ommit boundary status calculation if PNV discharge is < cut_min
     # (marginal discharge)
     cells_marginal_discharge <- array(FALSE,
-                                     dim = dim(status_frac),
-                                     dimnames = dimnames(status_frac))
+                                     dim = dim(pb_status),
+                                     dimnames = dimnames(pb_status))
     cells_marginal_discharge[
       which(
         apply(
-          avg_discharge_scenario, c("cell", third_dim), mean
+          avg_discharge_reference, c("cell", third_dim), mean
         ) < cut_min
       )
     ] <- TRUE
-    status_frac[cells_marginal_discharge] <- NA
+    pb_status[cells_marginal_discharge] <- NA
 
     # ommit boundary status calculation in basins without irrigation?
     if (irrmask_basin) {
@@ -179,17 +191,18 @@ calc_bluewater_status <- function(files_scenario,
       irrmask_basin <- calc_irrigation_mask(files_scenario,
                                             time_span = time_span_scenario,
                                             avg_nyear_args = avg_nyear_args)
-      status_frac[irrmask_basin == 0] <- NA
+      pb_status[irrmask_basin == 0] <- NA
     }
-
     #   if ratio is above >5%: within uncertainty range (yellow)
     #   if ratio is above >75% transgression (red)
-    # TODO define in parameter?
     # define PB thresholds as attributes
-    attr(status_frac, "thresholds") <- c(holocene = 0, pb = 0.05,
-                                         highrisk = 0.75)
+    if (is.null(w_thresholds)) {
+      w_thresholds <- c(holocene = 0,
+                        pb = 0.05,
+                        highrisk = 0.75)
+    }
+    attr(pb_status, "thresholds") <- w_thresholds
 
-    pb_status <- status_frac
 
   } else if (method %in% c("wang-erlandsson2022", "porkka_2023")) {
     #TODO also account for cut_min?
@@ -201,7 +214,8 @@ calc_bluewater_status <- function(files_scenario,
      time_span_reference =  time_span_reference,
      method = method,
      avg_nyear_args = avg_nyear_args,
-     spatial_resolution = spatial_resolution
+     spatial_resolution = spatial_resolution,
+     w_thresholds = NULL
    )
   }
 
