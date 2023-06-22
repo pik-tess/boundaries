@@ -401,7 +401,7 @@ classify_biomes <- function(path_reference = NULL,
       lpjmlkit::asub(
         avg_fpc,
         band = "boreal broadleaved summergreen tree"
-      ) == max_share_trees 
+      ) == max_share_trees
     }
 
     is_boreal_needle_deciduous <- {
@@ -565,10 +565,10 @@ classify_biomes <- function(path_reference = NULL,
   biome_class[is_desert] <- biome_names["Desert"]
 
   # forests
-  biome_class[is_boreal_evergreen] <- biome_names["Boreal Evergreen Forest"]
+  biome_class[is_boreal_evergreen] <- biome_names["Boreal Needleleaved Evergreen Forest"]
   biome_class[is_boreal_broad_deciduous] <- biome_names["Boreal Broadleaved Deciduous Forest"]
   biome_class[is_boreal_needle_deciduous] <- biome_names["Boreal Needleleaved Deciduous Forest"]
-  biome_class[is_temperate_coniferous] <- biome_names["Temperate Coniferous Forest"] # nolint
+  biome_class[is_temperate_coniferous] <- biome_names["Temperate Needleleaved Evergreen Forest"] # nolint
   biome_class[is_temperate_broadleaved_evergreen] <- biome_names["Temperate Broadleaved Evergreen Forest"] # nolint
   biome_class[is_temperate_broadleaved_deciduous] <- biome_names["Temperate Broadleaved Deciduous Forest"] # nolint
   biome_class[is_tropical_evergreen] <- biome_names["Tropical Rainforest"]
