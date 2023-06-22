@@ -201,9 +201,7 @@ calc_bluewater_status <- function(files_scenario,
                         pb = 0.05,
                         highrisk = 0.75)
     }
-    attr(pb_status, "thresholds") <- c(holocene = w_thresholds["holocene"],
-                                       pb = w_thresholds["pb"],
-                                      highrisk = w_thresholds["highrisk"])
+    attr(pb_status, "thresholds") <- w_thresholds
 
 
   } else if (method %in% c("wang-erlandsson2022", "porkka_2023")) {

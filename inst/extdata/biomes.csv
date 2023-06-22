@@ -3,8 +3,8 @@ id;name;short_name;abbreviation;category_forest;zone_tropical;zone_temperate;zon
 2;Tropical Seasonal & Deciduous Forest;Tropical Decid. Forest;TrDF;1;1;0;0
 3;Temperate Broadleaved Evergreen Forest;Temp. Broad. Ever. Forest;TeBE;1;0;1;0
 4;Temperate Broadleaved Deciduous Forest;Temp. Broad. Decid. Forest;TeBD;1;0;1;0
-5;Temperate Coniferous Forest;Temp. Conif. Forest;TeCF;1;0;1;0
-6;Boreal Evergreen Forest;Bor. Ever. Forest;BoNE;1;0;0;1
+5;Temperate Needleleaved Evergreen Forest;Temp. Needle. Ever. Forest;TeNE;1;0;1;0
+6;Boreal Needleleaved Evergreen Forest;Bor. Needle. Ever. Forest;BoNE;1;0;0;1
 7;Boreal Broadleaved Deciduous Forest;Bor. Broad. Decid. Forest;BoBD;1;0;0;1
 8;Boreal Needleleaved Deciduous Forest;Bor. Needle. Decid. Forest;BoND;1;0;0;1
 9;Warm Woody Savanna, Woodland & Shrubland;Warm Woodland;WaWo;0;1;0;0
