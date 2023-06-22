@@ -1,6 +1,6 @@
-#' Calculate MCOL based on a PNV run and LU run of LPJmL
+#' Calculate biosphere status based on MCOL from a PNV run and LU run of LPJmL
 #'
-#' Function to calculate MCOL based on a PNV run and LU run of LPJmL
+#' Calculate biosphere status based on MCOL from a PNV run and LU run of LPJmL
 #' @param files_scenario list with variable names and corresponding file paths
 #' (character string) of the scenario LPJmL run. All needed files are
 #' provided in XXX. E.g.: list(leaching = "/temp/leaching.bin.json")
