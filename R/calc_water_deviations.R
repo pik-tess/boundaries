@@ -31,7 +31,7 @@
 #'        [Porkka et al. 2023](https://eartharxiv.org/repository/view/3438/)
 #'        (referring to each month of a year)
 #'
-#' @param w_thresholds named character string with thresholds to be used to
+#' @param thresholds named character string with thresholds to be used to
 #'        define the safe, increasing risk and high risk zone,
 #'        e.g. c(holocene = 0.5, pb = 0.95, highrisk = 0.99).
 #'        For spatial resolution = "grid", this refers to the p value
@@ -64,23 +64,18 @@
 #'
 #' @md
 #' @export
-
-
-
 calc_water_status <- function(file_scenario,
                               file_reference,
                               grid_path,
                               time_span_scenario = as.character(1982:2011),
                               time_span_reference = NULL,
                               method = "wang-erlandsson2022",
-                              w_thresholds = NULL,
+                              thresholds = NULL,
                               avg_nyear_args = list(),
-                              spatial_resolution = "grid"
-                                   ) {
+                              spatial_resolution = "grid") {
 
-  # -------------------------------------------------------------------------- #
   # read in reference and scenario output
-  #TODO what to do if time_span_reference is not defined?
+  # TODO what to do if time_span_reference is not defined?
   # reference
   var_reference <- lpjmlkit::read_io(
       file_reference, subset = list(year = time_span_reference)
@@ -129,52 +124,64 @@ calc_water_status <- function(file_scenario,
                    length(time_span_scenario) * 12)
     }
 
-    # test for significance in departure increases based on prop.test
-    p_dry <- p_wet <- p_wet_or_dry <- array(NA, 67420) #TODO make flexible
-    # TODO test if possible to hand over table/matrix for all cells instead
-    # of single cells
-    for (i in seq_len(67420)) { #TODO make flexible
-      test_wet_or_dry <- prop.test(x = c(ref_depart$wet_or_dry[i],
-                                  scen_depart$wet_or_dry[i]),
-                                  n = trials,
-                                  alternative = "less") #TODO verify!
-      p_wet_or_dry[i] <- test_wet_or_dry$p.value
-    }
-    #TODO understand where NA values come from
-    p_wet_or_dry[is.na(p_wet_or_dry)] <- 1
+    ref_prop <- ref_depart$wet_or_dry / trials[1]
+    scen_prop <- scen_depart$wet_or_dry / trials[2]
 
-    # 1 - x to be compatible with other boundaries (holocene < pb < highrisk):
-    control_variable <- 1 - p_wet_or_dry
+    reference_se <- sqrt(ref_prop * (1 - ref_prop) / trials[1])
+    new_se <- sqrt(scen_prop * (1 - scen_prop) / trials[2])
 
-    # thresholds for translation into pb status, set to default if w_thresholds
+    z_scores <- (
+      scen_prop - ref_prop - 0.5 * (1 / trials[2] - 1 / trials[1])) /
+      sqrt(reference_se^2 + new_se^2 + (1 / trials[1] + 1 / trials[2]) * 0.25
+    )
+
+    control_variable <- pnorm(z_scores, lower.tail = TRUE)
+
+    # # test for significance in departure increases based on prop.test
+    # p_wet_or_dry <- array(NA, 67420) #TODO make flexible
+    # # TODO test if possible to hand over table/matrix for all cells instead
+    # # of single cells
+    # for (i in seq_len(67420)) { #TODO make flexible
+    #   test_wet_or_dry <- prop.test(x = c(ref_depart$wet_or_dry[i],
+    #                               scen_depart$wet_or_dry[i]),
+    #                               n = trials,
+    #                               alternative = "less") #TODO verify!
+    #   p_wet_or_dry[i] <- test_wet_or_dry$p.value
+    # }
+    # # remove NA values in polar regions
+    # p_wet_or_dry[is.na(p_wet_or_dry)] <- 1
+    # # 1 - x to be compatible with other boundaries (holocene < pb < highrisk):
+    # control_variable <- 1 - p_wet_or_dry
+
+    # thresholds for translation into pb status, set to default if thresholds
     # are not explicitely defined
-    if (is.null(w_thresholds)) {
-      w_thresholds <- c(holocene = 1,
+    if (is.null(thresholds)) {
+      thresholds <- c(holocene = 1,
                         pb = 0.05,
                         highrisk = 0.01)
     }
 
     #TODO translation into PB status only prelimary.
-    attr(control_variable, "thresholds") <-  1 - w_thresholds
+    attr(control_variable, "thresholds") <-  1 - thresholds
 
   # -------------------------------------------------------------------------- #
   } else if (spatial_resolution == "global") {
 
-    # thresholds for translation into pb status, set to default if w_thresholds
+    # thresholds for translation into pb status, set to default if thresholds
     # are not explicitely defined
-    if (is.null(w_thresholds)) {
-      w_thresholds <- c(holocene = 0.5,
+    if (is.null(thresholds)) {
+      thresholds <- c(holocene = 0.5,
                         pb = 0.95,
                         highrisk = 0.99)
     }
 
-    # calculate areas corresponding to the quantiles defined in w_thresholds
+    # calculate areas corresponding to the quantiles defined in thresholds
     area_high_risk <- quantile(ref_depart$wet_or_dry,
-                         probs = w_thresholds["highrisk"], na.rm = TRUE)
+                         probs = thresholds["highrisk"], na.rm = TRUE)
     area_pb <- quantile(ref_depart$wet_or_dry,
-                         probs = w_thresholds["pb"], na.rm = TRUE)
+                         probs = thresholds["pb"], na.rm = TRUE)
     area_holocene <- quantile(ref_depart$wet_or_dry,
-                         probs = w_thresholds["holocene"], na.rm = TRUE)
+                         probs = thresholds["holocene"], na.rm = TRUE)
     control_variable <- mean(scen_depart$wet_or_dry)
 
     attr(control_variable, "thresholds") <- c(holocene = area_holocene,

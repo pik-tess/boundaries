@@ -19,6 +19,10 @@
 #'        Can differ in offset and length from `time_span_scenario`!
 #'        If `NULL` value of `time_span_scenario` is used
 #'
+#' @param avg_nyear_args list of arguments to be passed to
+#'        \link[pbfunctions]{average_nyear_window} (see for more info).
+#'        To be used for time series analysis
+#'
 #' @param method method (character string) to be used , currently available
 #'        method is `c("wang-erlandsson2022")` based on
 #'        [Wang-Erlandsson et al. 2022](https://doi.org/10.1038/s43017-022-00287-8)
@@ -35,7 +39,7 @@
 #'        deviations (either one value per year (wang-erlandsson2022) or one
 #'        value per year and month (porkka_2023))
 #'
-#' #' @param w_thresholds named character string with thresholds to be used to
+#' #' @param thresholds named character string with thresholds to be used to
 #'        define the safe, increasing risk and high risk zone,
 #'        e.g. c(holocene = 0.5, pb = 0.95, highrisk = 0.99).
 #'        For spatial resolution = "grid", this refers to the p value
@@ -47,10 +51,6 @@
 #'        highrisk = 0.99).
 #'        If set to NULL, the respective default is taken (see above; matching
 #'        the spatial_resolution)
-#'
-#' @param avg_nyear_args list of arguments to be passed to
-#'        \link[pbfunctions]{average_nyear_window} (see for more info).
-#'        To be used for time series analysis
 #'
 #' @examples
 #' \dontrun{
@@ -64,10 +64,10 @@ calc_greenwater_status <- function(files_scenario,
                                    files_reference,
                                    time_span_scenario = as.character(1982:2011),
                                    time_span_reference = NULL,
-                                   method = "wang-erlandsson2022",
                                    avg_nyear_args = list(),
-                                   spatial_resolution,
-                                   w_thresholds = NULL
+                                   spatial_resolution = "grid",
+                                   method = "wang-erlandsson2022",
+                                   thresholds = NULL
                                    ) {
    # verify available methods
   method <- match.arg(method, c("wang-erlandsson2022", "porkka_2023"))
@@ -92,7 +92,7 @@ calc_greenwater_status <- function(files_scenario,
     method = method,
     avg_nyear_args = avg_nyear_args,
     spatial_resolution = spatial_resolution,
-    w_thresholds = w_thresholds
+    thresholds = thresholds
   )
 
   return(deviations_rootmoisture)

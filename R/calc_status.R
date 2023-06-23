@@ -30,6 +30,12 @@
 #' @param diff_output_files list of required file(s) using ID 
 #' (e.g. prec, runoff) and the alternative writing (e.g. `"my_runoff"`)
 #'
+#' @param method list of methods to be used for each boundary. If `NULL` the
+#' default method is used
+#'
+#' @param thresholds list of thresholds to be used for each boundary. If `NULL`
+#' the default thresholds are used
+#'
 #' @param ... further arguments to be passed to each calc_* function
 #'
 #' @return list with data array for each `boundary`
@@ -52,6 +58,8 @@ calc_status <- function(boundary,
                         avg_nyear_args = list(),
                         input_files = list(),
                         diff_output_files = list(),
+                        method = list(),
+                        thresholds = list(),
                         in_parallel = TRUE,
                         ...) {
   # If in_parallel use future package for asynchronous parallelization
@@ -114,7 +122,14 @@ calc_status <- function(boundary,
           files_scenario = files_scenario,
           files_reference = files_reference,
           time_span_scenario = time_span_scenario,
-          time_span_reference = time_span_reference
+          time_span_reference = time_span_reference,
+          avg_nyear_args = avg_nyear_args,
+          method = switch(length(method[[bound]]) == 0,
+                          NULL,
+                          method[[bound]]),
+          thresholds = switch(length(thresholds[[bound]]) == 0,
+                              NULL,
+                              thresholds[[bound]])
         ),
         sub_dots
       )
