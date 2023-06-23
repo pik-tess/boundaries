@@ -28,8 +28,8 @@ files_reference <- list(grid = paste0(inFol_pnv,varnames["grid","outname"]),
 pb_bi <- calc_biosphere_status(files_scenario = files_scenario,
                                files_reference = files_reference,
                                time_span_scenario = as.character(2000:2014),
-                               reference_npp_time_span = as.character(1510:1520),
+                               time_span_reference = as.character(1510:1520),
                                reference_npp_file = files_reference$npp,
-                               spatial_resolution = "global",
+                               spatial_resolution = "grid",
                                thresholds = NULL)
-pb_bi
+str(pb_bi)
