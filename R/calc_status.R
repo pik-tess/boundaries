@@ -124,12 +124,8 @@ calc_status <- function(boundary,
           time_span_scenario = time_span_scenario,
           time_span_reference = time_span_reference,
           avg_nyear_args = avg_nyear_args,
-          method = switch(length(method[[bound]]) == 0,
-                          NULL,
-                          method[[bound]]),
-          thresholds = switch(length(thresholds[[bound]]) == 0,
-                              NULL,
-                              thresholds[[bound]])
+          method = if (length(method[[bound]]) > 0) method[[bound]],
+          thresholds = if (length(thresholds[[bound]]) > 0) thresholds[[bound]]
         ),
         sub_dots
       )
