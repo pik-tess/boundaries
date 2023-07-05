@@ -44,7 +44,7 @@
 #'        value per year and month (porkka_2023)) - note: not applied for
 #'        the method "gerten2020" (only at the grid cell level)
 #' 
-#' @param w_thresholds named character string with thresholds to be used to
+#' @param thresholds named character string with thresholds to be used to
 #'        define the safe, increasing risk and high risk zone,
 #'        e.g. c(holocene = 0.5, pb = 0.95, highrisk = 0.99).
 #'        For spatial resolution = "grid", this refers to the p value
@@ -75,7 +75,7 @@ calc_bluewater_status <- function(files_scenario,
                                   avg_nyear_args = list(),
                                   irrmask_basin = FALSE,
                                   spatial_resolution,
-                                  w_thresholds = NULL) {
+                                  thresholds = NULL) {
   # verify available methods
   method <- match.arg(method, c("gerten2020",
                                 "wang-erlandsson2022",
@@ -196,12 +196,12 @@ calc_bluewater_status <- function(files_scenario,
     #   if ratio is above >5%: within uncertainty range (yellow)
     #   if ratio is above >75% transgression (red)
     # define PB thresholds as attributes
-    if (is.null(w_thresholds)) {
-      w_thresholds <- c(holocene = 0,
+    if (is.null(thresholds)) {
+      thresholds <- c(holocene = 0,
                         pb = 0.05,
                         highrisk = 0.75)
     }
-    attr(pb_status, "thresholds") <- w_thresholds
+    attr(pb_status, "thresholds") <- thresholds
 
 
   } else if (method %in% c("wang-erlandsson2022", "porkka_2023")) {
@@ -215,7 +215,7 @@ calc_bluewater_status <- function(files_scenario,
      method = method,
      avg_nyear_args = avg_nyear_args,
      spatial_resolution = spatial_resolution,
-     w_thresholds = NULL
+     thresholds = NULL
    )
   }
 
