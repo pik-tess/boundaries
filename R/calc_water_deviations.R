@@ -29,7 +29,7 @@
 #'        (referring only to the driest/wettest month of each year) or
 #'        `porkka_2023` based on
 #'        [Porkka et al. 2023](https://eartharxiv.org/repository/view/3438/)
-#'        (referring to each month of a year)
+#'        (referring to each month of a year; default)
 #'
 #' @param thresholds named character string with thresholds to be used to
 #'        define the safe, increasing risk and high risk zone,
@@ -68,14 +68,13 @@ calc_water_status <- function(file_scenario,
                               file_reference,
                               grid_path,
                               time_span_scenario = as.character(1982:2011),
-                              time_span_reference = NULL,
+                              time_span_reference,
                               method = "wang-erlandsson2022",
                               thresholds = NULL,
                               avg_nyear_args = list(),
                               spatial_resolution = "grid") {
 
   # read in reference and scenario output
-  # TODO what to do if time_span_reference is not defined?
   # reference
   var_reference <- lpjmlkit::read_io(
       file_reference, subset = list(year = time_span_reference)
@@ -123,20 +122,27 @@ calc_water_status <- function(file_scenario,
       trials <- c(length(time_span_reference) * 12,
                    length(time_span_scenario) * 12)
     }
+    # test for significance in departure increases,
+    # based on vectorized prop.test
 
+    # calculate the proportions
     ref_prop <- ref_depart$wet_or_dry / trials[1]
     scen_prop <- scen_depart$wet_or_dry / trials[2]
 
+    # Calculate the standard errors
     reference_se <- sqrt(ref_prop * (1 - ref_prop) / trials[1])
     new_se <- sqrt(scen_prop * (1 - scen_prop) / trials[2])
 
+    # Calculate the z-scores,  taking into account the variability of the
+    # proportions and the sample sizes
     z_scores <- (
       scen_prop - ref_prop - 0.5 * (1 / trials[2] - 1 / trials[1])) /
       sqrt(reference_se^2 + new_se^2 + (1 / trials[1] + 1 / trials[2]) * 0.25
     )
-
+    # Calculate the p-value
     control_variable <- pnorm(z_scores, lower.tail = TRUE)
 
+    # # old, non-vectorized calculation based on the prop.test
     # # test for significance in departure increases based on prop.test
     # p_wet_or_dry <- array(NA, 67420) #TODO make flexible
     # # TODO test if possible to hand over table/matrix for all cells instead
@@ -221,18 +227,18 @@ calc_baseline <- function(file_reference, method) {
 # (global resolution) or number of years/months with wet/dry departures
 # (grid resolution)
 
-calc_departures <- function(file_scenario, grid_path, quants,
+calc_departures <- function(data, grid_path, quants,
                               spatial_resolution, method) {
 
-  q5_base <- rep(quants[["q5"]], dim(file_scenario)["year"])
-  q95_base <- rep(quants[["q95"]], dim(file_scenario)["year"])
+  q5_base <- rep(quants[["q5"]], dim(data)["year"])
+  q95_base <- rep(quants[["q95"]], dim(data)["year"])
 
   if (method == "wang-erlandsson2022") {
     # driest/ wettest month per gridcell for each year -> ignores which month
-    dry <- apply(file_scenario, c("cell", "year"), min)
-    wet <- apply(file_scenario, c("cell", "year"), max)
+    dry <- apply(data, c("cell", "year"), min)
+    wet <- apply(data, c("cell", "year"), max)
   } else if (method == "porkka_2023") {
-    dry <- wet <- dry_or_wet <- file_scenario
+    dry <- wet <- dry_or_wet <- data
   }
 
   # identify cells with dry/wet departures
