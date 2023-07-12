@@ -69,7 +69,7 @@ calc_water_status <- function(file_scenario,
                               grid_path,
                               time_span_scenario = as.character(1982:2011),
                               time_span_reference,
-                              method = "wang-erlandsson2022",
+                              method = "porkka_2023",
                               thresholds = NULL,
                               avg_nyear_args = list(),
                               spatial_resolution = "grid") {
