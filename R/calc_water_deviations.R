@@ -31,7 +31,7 @@
 #'        [Porkka et al. 2023](https://eartharxiv.org/repository/view/3438/)
 #'        (referring to each month of a year; default)
 #'
-#' @param thresholds named character string with thresholds to be used to
+#' @param thresholds list with thresholds to be used to
 #'        define the safe, increasing risk and high risk zone,
 #'        e.g. c(holocene = 0.5, pb = 0.95, highrisk = 0.99).
 #'        For spatial resolution = "grid", this refers to the p value
@@ -183,14 +183,14 @@ calc_water_status <- function(file_scenario,
 
     # calculate areas corresponding to the quantiles defined in thresholds
     area_high_risk <- quantile(ref_depart$wet_or_dry,
-                         probs = thresholds["highrisk"], na.rm = TRUE)
+                         probs = thresholds[["highrisk"]], na.rm = TRUE)
     area_pb <- quantile(ref_depart$wet_or_dry,
-                         probs = thresholds["pb"], na.rm = TRUE)
+                         probs = thresholds[["pb"]], na.rm = TRUE)
     area_holocene <- quantile(ref_depart$wet_or_dry,
-                         probs = thresholds["holocene"], na.rm = TRUE)
+                         probs = thresholds[["holocene"]], na.rm = TRUE)
     control_variable <- mean(scen_depart$wet_or_dry)
 
-    attr(control_variable, "thresholds") <- c(holocene = area_holocene,
+    attr(control_variable, "thresholds") <- list(holocene = area_holocene,
                                               pb = area_pb,
                                               highrisk = area_high_risk)
 
