@@ -1,7 +1,7 @@
 #' Calculate the planetary boundary status for the nitrogen boundary
 #'
 #' Calculate the PB status for the nitrogen boundary based on a scenario LPJmL
-#' run and if `n_method == "braun2022_minusref"` a reference LPJmL run.
+#' run and if `method == "braun2022_minusref"` a reference LPJmL run.
 #'
 #' @param files_scenario list with variable names and corresponding file paths
 #' (character string) of the scenario LPJmL run. All needed files are
@@ -20,10 +20,13 @@
 #' length from `time_span_scenario`! If `NULL` value of `time_span_scenario` is
 #' used
 #'
-#' @param n_method method (character string) to be used , currently available
+#' @param method (character string) to be used , currently available
 #' method is `"braun2022"` based on unpublished suggestion by Johanna Braun.
 #' Second method option is `"braun2022_minusref"` to subtract reference run
 #' output
+#'
+#' @param spatial_resolution character. Spatial resolution, available options
+#'        are `"global"` and `"grid"`
 #'
 #' @param cut_arid double. Exclude boundary calculations below the defined
 #' threshold for aridity (annual precipitation / annual potential
@@ -37,11 +40,11 @@
 #' is multiplied with 0.71 based on simulated denitrification losses in ground
 #' water from Bouwman et al 2013)
 #' 
-#' @param n_thresholds list with upper and lower threshold for N concentration
+#' @param thresholds list with highrisk and pb threshold for N concentration
 #' (mg N/l) in runoff to surface water
-#' Default: upper = 2.5, lower = 1
+#' Default: highrisk = 2.5, pb = 1
 #' (based on de Vries et al. 2013, https://doi.org/10.1016/j.cosust.2013.07.004)
-#' Alternative: upper = 5, lower = 2
+#' Alternative: highrisk = 5, pb = 2
 #' (based on Schulte-Uebbing et al. 2022,
 #' https://doi.org/10.1038/s41586-022-05158-2:
 #' "we used a threshold for N concentration in run-off to surface water. This
@@ -64,156 +67,170 @@ calc_nitrogen_status <- function(files_scenario,
                                  files_reference,
                                  time_span_scenario = as.character(1982:2011),
                                  time_span_reference = NULL,
-                                 n_method = "braun2022",
+                                 method = "braun2022",
+                                 thresholds = list(pb = 1, highrisk = 2.5),
+                                 spatial_resolution,
                                  cut_arid = 0.2,
                                  cut_runoff = 0,
                                  with_groundwater_denit = TRUE,
-                                 n_thresholds = list(lower = 1, upper = 2.5),
                                  avg_nyear_args = list()
                                  ) {
-  # verify available methods
-  n_method <- match.arg(n_method, c("braun2022",
-                                "braun2022_minusref"))
 
-  # sub function to be used for scenario and reference run (braun2022_minusref)
-  calc_nitrogen_leach <- function(path_data,
-                                  time_span,
-                                  with_groundwater_denit,
-                                  avg_nyear_args
-                                  ) {
+  if (spatial_resolution == "grid") {
+    # verify available methods
+    method <- match.arg(method, c("braun2022",
+                                  "braun2022_minusref"))
 
-    # read runoff ------------------------------------------------------------ #
-    runoff <- read_file(file = path_data$runoff, timespan = time_span)
+    # sub function to be used for scenario and reference run
+    # (braun2022_minusref)
+    calc_nitrogen_leach <- function(path_data,
+                                    time_span,
+                                    with_groundwater_denit,
+                                    avg_nyear_args
+                                    ) {
 
-    # read leaching ---------------------------------------------------------- #
-    leaching <- read_file(file = path_data$leaching, timespan = time_span)
+      # read runoff ---------------------------------------------------------- #
+      runoff <- read_file(file = path_data$runoff, timespan = time_span)
 
-    # ------------------------------------------------------------------------ #
-    # average runoff
-    avg_runoff <- do.call(average_nyear_window,
-                          append(list(x = runoff),
-                                 avg_nyear_args))
+      # read leaching -------------------------------------------------------- #
+      leaching <- read_file(file = path_data$leaching, timespan = time_span)
 
-    # average leaching
-    avg_leaching <- do.call(average_nyear_window,
-                            append(list(x = leaching),
+      # ---------------------------------------------------------------------- #
+      # average runoff
+      avg_runoff <- do.call(average_nyear_window,
+                            append(list(x = runoff),
                                    avg_nyear_args))
 
+      # average leaching
+      avg_leaching <- do.call(average_nyear_window,
+                              append(list(x = leaching),
+                                     avg_nyear_args))
 
-
-    if (with_groundwater_denit) {
-      # temporary solution using shares of global losses after
-      # Bouwman et al 2013
-      # (figure 4) https://doi.org/10.1098/rstb.2013.0112
-      # net_flow = net soil N flow + net groundwater N flow (inflow - outflow)
-      net_flow <- 65 + 15 - 6
-      # gross_flow = gross soil & groundwater N flow + gross surface N flow
-      gross_flow <- 93 + 11
-      loss_factor <- net_flow / gross_flow
-    } else {
-      loss_factor <- 1
-    }
-
-    status_frac <- ifelse(avg_runoff > 0,
-                           (avg_leaching * 1e3 * loss_factor) /
-                           (avg_runoff), 0)
-
-    return(status_frac)
-  }
-
-  # apply defined method
-  switch(n_method,
-    braun2022 = {
-      status_frac <- calc_nitrogen_leach(
-        path_data = files_scenario,
-        time_span = time_span_scenario,
-        with_groundwater_denit = with_groundwater_denit,
-        avg_nyear_args = avg_nyear_args)
-    },
-    braun2022_minusref = {
-
-      # calculate leaching concentration and loss rate for scenario output
-      status_frac_scenario <- calc_nitrogen_leach(
-        path_data = files_scenario,
-        time_span = time_span_scenario,
-        with_groundwater_denit = with_groundwater_denit,
-        avg_nyear_args = avg_nyear_args)
-
-
-      if (length(time_span_reference) < length(time_span_scenario)) {
-        avg_nyear_args["nyear_reference"] <- length(time_span_scenario)
+      if (with_groundwater_denit) {
+        # temporary solution using shares of global losses after
+        # Bouwman et al 2013
+        # (figure 4) https://doi.org/10.1098/rstb.2013.0112
+        # net_flow = net soil N flow + net groundwater N flow (inflow - outflow)
+        net_flow <- 65 + 15 - 6
+        # gross_flow = gross soil & groundwater N flow + gross surface N flow
+        gross_flow <- 93 + 11
+        loss_factor <- net_flow / gross_flow
+      } else {
+        loss_factor <- 1
       }
 
-      # calculate leaching concentration and loss rate for reference output
-      status_frac_reference <- calc_nitrogen_leach(
-        path_data = files_reference,
-        time_span = time_span_reference,
-        with_groundwater_denit = with_groundwater_denit,
-        avg_nyear_args = avg_nyear_args)
-
-      # subtract scenario leaching concentration and loss rate from reference
-      status_frac <- status_frac_scenario - status_frac_reference
-      status_frac[status_frac < 0] <- 0
+      n_conc <- ifelse(avg_runoff > 0,
+                             (avg_leaching * 1e3 * loss_factor) /
+                             (avg_runoff), 0)
+  
+      return(n_conc)
     }
-  )
 
-  # read potential evapotranspiration ---------------------------------------- #
-  pet <- read_file(file = files_scenario$pet, timespan = time_span_scenario)
+    # apply defined method
+    switch(method,
+      braun2022 = {
+        n_conc <- calc_nitrogen_leach(
+          path_data = files_scenario,
+          time_span = time_span_scenario,
+          with_groundwater_denit = with_groundwater_denit,
+          avg_nyear_args = avg_nyear_args)
+      },
+      braun2022_minusref = {
 
-  # read precipitation ------------------------------------------------------- #
-  prec <- read_file(file = files_scenario$prec, timespan = time_span_scenario)
-  # ------------------------------------------------------------------------ #
-  # average pet
-  avg_pet <- do.call(average_nyear_window,
-                     append(list(x = pet),
-                            avg_nyear_args))
+        # calculate leaching concentration and loss rate for scenario output
+        n_conc_scenario <- calc_nitrogen_leach(
+          path_data = files_scenario,
+          time_span = time_span_scenario,
+          with_groundwater_denit = with_groundwater_denit,
+          avg_nyear_args = avg_nyear_args)
 
-  # average precipitation
-  avg_prec <- do.call(average_nyear_window,
-                     append(list(x = prec),
-                            avg_nyear_args))
 
-  # calculate global aridity index (AI) as an indicator for a level under which
-  #   the calculation of leaching just cannot show realistic behavior, see also
-  #   on the AI: https://doi.org/10.6084/m9.figshare.7504448.v4%C2%A0
-  #     & (first descr.) https://wedocs.unep.org/xmlui/handle/20.500.11822/30300
-  #   on nitrogen processes in arid areas: https://www.jstor.org/stable/45128683
-  #     -> indicates boundary to "arid" as thresholds (=< 0.2)
-  #   on "arid threshold" (indirectly): https://doi.org/10.1038/ncomms5799
-  #     -> threshold for behaviour change in nitrogen cycling (=< 0.32)
-  global_aridity_index <- avg_prec / avg_pet + 1e-9
+        if (length(time_span_reference) < length(time_span_scenario)) {
+          avg_nyear_args["nyear_reference"] <- length(time_span_scenario)
+        }
 
-  # ------------------------------------------------------------------------
-  # read runoff
-  runoff <- read_file(file = files_scenario$runoff,
-                      timespan = time_span_scenario)
+        # calculate leaching concentration and loss rate for reference output
+        n_conc_reference <- calc_nitrogen_leach(
+          path_data = files_reference,
+          time_span = time_span_reference,
+          with_groundwater_denit = with_groundwater_denit,
+          avg_nyear_args = avg_nyear_args)
 
-  # average runoff
-  runoff_annual <- do.call(average_nyear_window,
-                          append(list(x = runoff),
-                                 avg_nyear_args))
+        # subtract scenario leaching concentration and loss rate from reference
+        n_conc <- n_conc_scenario - n_conc_reference
+        n_conc[n_conc < 0] <- 0
+      }
+    )
 
-  # to display arid cells (leaching behaviour threshold) in other color (grey):
-  cells_arid <- array(FALSE,
-                      dim = dim(status_frac),
-                      dimnames = dimnames(status_frac))
-  cells_arid[which(global_aridity_index <= cut_arid)] <- TRUE
+    # read potential evapotranspiration -------------------------------------- #
+    pet <- read_file(file = files_scenario$pet, timespan = time_span_scenario)
 
-  # to display cells with low runoff in other color (grey):
-  cells_low_runoff <- array(FALSE,
-                            dim = dim(status_frac),
-                            dimnames = dimnames(status_frac))
-  cells_low_runoff[which(runoff_annual <= cut_runoff)] <- TRUE
+    # read precipitation ----------------------------------------------------- #
+    prec <- read_file(file = files_scenario$prec, timespan = time_span_scenario)
+    # ------------------------------------------------------------------------ #
+    # average pet
+    avg_pet <- do.call(average_nyear_window,
+                       append(list(x = pet),
+                              avg_nyear_args))
 
-  # init pb_status based on status_frac
-  pb_status <- status_frac
-  attr(pb_status, "thresholds") <- c(holocene = 0, pb = n_thresholds$lower,
-                                         highrisk = n_thresholds$upper)
-  # non applicable cells
-  pb_status[cells_arid] <- NA
-  pb_status[cells_low_runoff] <- NA
+    # average precipitation
+    avg_prec <- do.call(average_nyear_window,
+                       append(list(x = prec),
+                              avg_nyear_args))
 
-  return(pb_status)
+    # calculate global aridity index (AI) as an indicator for a level under which
+    #   the calculation of leaching just cannot show realistic behavior, see also
+    #   on the AI: https://doi.org/10.6084/m9.figshare.7504448.v4%C2%A0
+    #     & (first descr.) https://wedocs.unep.org/xmlui/handle/20.500.11822/30300
+    #   on nitrogen processes in arid areas: https://www.jstor.org/stable/45128683
+    #     -> indicates boundary to "arid" as thresholds (=< 0.2)
+    #   on "arid threshold" (indirectly): https://doi.org/10.1038/ncomms5799
+    #     -> threshold for behaviour change in nitrogen cycling (=< 0.32)
+    global_aridity_index <- avg_prec / avg_pet + 1e-9
+
+    # ------------------------------------------------------------------------
+    # read runoff
+    runoff <- read_file(file = files_scenario$runoff,
+                        timespan = time_span_scenario)
+
+    # average runoff
+    runoff_annual <- do.call(average_nyear_window,
+                            append(list(x = runoff),
+                                   avg_nyear_args))
+
+    # to display arid cells (leaching behaviour threshold) in other color (grey):
+    cells_arid <- array(FALSE,
+                        dim = dim(n_conc),
+                        dimnames = dimnames(n_conc))
+    cells_arid[which(global_aridity_index <= cut_arid)] <- TRUE
+
+    # to display cells with low runoff in other color (grey):
+    cells_low_runoff <- array(FALSE,
+                              dim = dim(n_conc),
+                              dimnames = dimnames(n_conc))
+    cells_low_runoff[which(runoff_annual <= cut_runoff)] <- TRUE
+
+    # add thresholds as attributes
+    control_variable <- n_conc
+    attr(n_conc, "thresholds") <- c(holocene = 0, thresholds[["pb"]],
+                                       thresholds[["highrisk"]])
+    # non applicable cells
+    control_variable[cells_arid] <- NA
+    control_variable[cells_low_runoff] <- NA
+
+  } else if (spatial_resolution == "global") {
+    # verify available methods
+    method <- match.arg(method, c("schulte-uebbing2022"))
+   # TODO: add surplus method
+   # add needed outputs in yml file (all cropland inputs minus harvest)
+   # fertilizer, manure, deposition, bnf, seedn, minus harvest
+
+
+
+
+
+  }
+  return(control_variable)
 }
 
 read_file <- function(file, timespan) {
