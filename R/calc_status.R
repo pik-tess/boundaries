@@ -72,12 +72,6 @@ calc_status <- function(boundary,
     on.exit(future::plan(future_plan))
   }
 
-  if (length(time_span_reference) > length(time_span_scenario)) {
-    stop(paste0("time_span_reference is longer than time_span_scenario.",
-                "Define a time_span_reference that is shorter than",
-                "time_span_scenario"))
-  }
-
   # Get main file type (meta, clm)
   file_ext <- get_file_ext(path_scenario)
 
@@ -163,10 +157,9 @@ get_file_ext <- function(path) {
   most_frequent <- all_file_types %>%
     factor() %>%
     table() %>%
-    names() %>%
-    .[1:5]
+    names()
 
-  # 5 exemplaric files to detect type
+  # exemplaric files to detect type
   files_to_check <- sapply(
     most_frequent,
     function(x, y, z) {
