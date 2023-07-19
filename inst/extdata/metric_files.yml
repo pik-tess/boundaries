@@ -22,7 +22,8 @@ metric:
                 resolution: "annual"
                 optional: true
         # Called boundaries functions
-        fun: &biome_fun
+        fun_name: "classify_biomes"
+        funs: &biome_fun
             - classify_biomes
 
     # Calculate bluewater boundary
@@ -38,8 +39,9 @@ metric:
             irrig: 
                 resolution: "monthly"
                 optional: true
+        fun_name: "calc_bluewater_status"
         # Called boundaries functions
-        fun:
+        funs:
             - calc_bluewater_status
 
     # Calculate greenwater boundary
@@ -55,8 +57,9 @@ metric:
             swc:
                 resolution: "monthly"
                 optional: true
-        # Called boundaries functions
-        fun:
+        # Called boundaries functions#
+        fun_name: "calc_greenwater_status"
+        funs:
             - calc_greenwater_status
 
     # Calculate nitrogen boundary
@@ -79,7 +82,8 @@ metric:
                 resolution: "monthly"
                 optional: true
         # Called boundaries functions
-        fun: &nitrogen_fun
+        fun_name: "calc_nitrogen_status"
+        funs: &nitrogen_fun
             - calc_nitrogen_status
 
     # Calculate lsc boundary
@@ -87,7 +91,8 @@ metric:
         # LPJmL output IDs with required resolution
         output:
             <<: *biome_output
-        fun:
+        fun_name: "calc_lsc_status"
+        funs:
             - *biome_fun
             - calc_lsc_status
 
@@ -148,7 +153,8 @@ metric:
                 resolution: "annual"
                 optional: false
         # Called boundaries functions
-        fun: &meco_output
+        fun_name: null
+        funs: &meco_output
             []
 
     # Calculate meco_nitrogen
@@ -184,7 +190,8 @@ metric:
                 resolution: "annual"
                 optional: false
         # Called boundaries functions
-        fun:
+        fun_name: null
+        funs:
             []
 
     # Calculate mcol
@@ -219,7 +226,8 @@ metric:
                 resolution: "annual"
                 optional: false
         # Called boundaries functions
-        fun:
+        fun_name: null
+        funs:
             []
 
     benchmark:

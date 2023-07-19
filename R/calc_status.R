@@ -161,10 +161,9 @@ get_file_ext <- function(path) {
   most_frequent <- all_file_types %>%
     factor() %>%
     table() %>%
-    names() %>%
-    .[1:5]
+    names()
 
-  # 5 exemplaric files to detect type
+  # exemplaric files to detect type
   files_to_check <- sapply(
     most_frequent,
     function(x, y, z) {

@@ -201,8 +201,8 @@ calc_water_status <- function(file_scenario,
 
 
 # quantile functions
-q5  <- function(x) quantile(x, probs = 0.05, na.rm = T)
-q95 <- function(x) quantile(x, probs = 0.95, na.rm = T)
+q5  <- function(x) quantile(x, probs = 0.05, na.rm = TRUE)
+q95 <- function(x) quantile(x, probs = 0.95, na.rm = TRUE)
 #TODO make q5/95 flexibel = parameters?
 
 # calculate the baseline quantiles

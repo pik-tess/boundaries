@@ -72,14 +72,20 @@ calc_lsc_status <- function(files_scenario,
                             ) {
 
 
+
+
+  # Filter out method and thresholds arguments from ellipsis
+  ellipsis_filtered <- list(...)
+  ellipsis_filtered$method <- NULL
+  ellipsis_filtered$thresholds <- NULL
+
   # classify biomes based on foliage projected cover (FPC) output
-  biome_classes <- classify_biomes(
-    files_reference = files_reference,
-    time_span_reference = time_span_reference,
-    avg_nyear_args = avg_nyear_args,
-    montane_arctic_proxy = NULL,
-    ...
-    )
+  do.call(classify_biomes,
+          append(list(files_reference = files_reference,
+                      time_span_reference = time_span_reference,
+                      avg_nyear_args = avg_nyear_args),
+                 ellipsis_filtered))
+
   biome_classes <- biome_classes$biome_id
 
   if (spatial_resolution == "subglobal") {

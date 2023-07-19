@@ -112,14 +112,17 @@ get_outputs <- function(x, metric_name, only_first_filename) {
 get_function_args <- function(x, metric_name) {
 
   # List functions of metrics (metric_name)
-  funs <- c()
+  funs <- list()
+
   for (metric in x$metric[metric_name]) {
-    funs <- append(funs, unlist(metric$fun))
+    funs[[metric$fun_name]] <- metric$funs
   }
+
   # Get arguments of functions
   funs %>%
-    unique() %>%
-    sapply(function(x) formalArgs(get(x)), simplify = FALSE)
+    lapply(function(x) {
+      unlist(lapply(mget(x, inherits = TRUE), formalArgs), use.names = FALSE)
+    })
 }
 
 
