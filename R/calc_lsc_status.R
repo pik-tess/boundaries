@@ -20,23 +20,24 @@
 #' and length from `time_span_scenario`! If `NULL` value of `time_span_scenario`
 #' is used
 #'
-#' @param lsc_spatial_resolution character. Spatial resolution, available options
-#'        are `"biome"` (default) and `"grid"`
+#' @param spatial_resolution character. Spatial resolution, available options
+#'        are `"subglobal"` (at the biome level, default), `"global"` and
+#'        `"grid"`
 #'
-#' @param eurasia logical. If `lsc_spatial_resolution` = `"biome"` merge continents
+#' @param eurasia logical. If `spatial_resolution` = `"biome"` merge continents
 #'        Europe and Asia to avoid arbitrary biome cut at europe/asia border.
 #'        Defaults to `TRUE`
 #'
-#' @param lsc_thresholds list with deforestation thresholds for defining safe,
+#' @param thresholds list with deforestation thresholds for defining safe,
 #' increasing risk and high risk zone for temperate/temperate/boreal forest
 #' biomes, Default based on Steffen et al. 2015
 #' (https://doi.org/10.1126/science.1259855):
-#' list(boreal = list(lower = 0.5, upper = 0.7),
-#'      temperate = list(lower = 0.15, upper = 0.4),
-#'      tropical = list(lower = 0.15, upper = 0.4))
-#' lower = threshold between safe zone and increasing risk zone (e.g. 50% for
+#' list(boreal = list(pb = 0.5, highrisk = 0.7),
+#'      temperate = list(pb = 0.15, highrisk = 0.4),
+#'      tropical = list(pb = 0.15, highrisk = 0.4))
+#' pb = threshold between safe zone and increasing risk zone (e.g. 50% for
 #'         boreal forest with default value)
-#' upper = threshold between increasing risk and high risk zone
+#' highrisk = threshold between increasing risk and high risk zone
 #'
 #' @param avg_nyear_args list of arguments to be passed to
 #'        \link[pbfunctions]{average_nyear_window} (see for more info).
@@ -55,19 +56,21 @@ calc_lsc_status <- function(files_scenario,
                             files_reference,
                             time_span_scenario = as.character(1982:2011),
                             time_span_reference = NULL,
-                            lsc_spatial_resolution = "biome",
+                            spatial_resolution = "subglobal",
                             eurasia = TRUE,
-                            lsc_thresholds = list(
-                              temperate = list(lower = 0.5, upper = 0.7),
-                              boreal = list(lower = 0.15, upper = 0.4),
-                              tropical = list(lower = 0.15, upper = 0.4)),
+                            thresholds = list(holocene = list(temperate = 0,
+                                                              tropical = 0,
+                                                              boreal = 0),
+                                              pb = list(temperate = 0.5,
+                                                        tropical = 0.15,
+                                                        boreal = 0.15),
+                                              highrisk = list(temperate = 0.7,
+                                                              tropical = 0.4,
+                                                              boreal = 0.4)),
                             avg_nyear_args = list(),
                             ...
                             ) {
 
-  # verify available temporal resolution
-  lsc_spatial_resolution <- match.arg(lsc_spatial_resolution, c("biome",
-                                                        "grid"))
 
   # classify biomes based on foliage projected cover (FPC) output
   biome_classes <- classify_biomes(
@@ -79,9 +82,10 @@ calc_lsc_status <- function(files_scenario,
     )
   biome_classes <- biome_classes$biome_id
 
-  if (lsc_spatial_resolution == "biome") {
+  if (spatial_resolution == "subglobal") {
     # get continents mask - pass arg of whether to merge europe and asia
-    continent_grid <- calc_continents_mask(files_reference$grid, eurasia = eurasia)
+    continent_grid <- calc_continents_mask(files_reference$grid,
+                                           eurasia = eurasia)
   }
 
   # read in biome mapping
@@ -89,14 +93,12 @@ calc_lsc_status <- function(files_scenario,
                                "biomes.csv",
                                package = "boundaries"))
 
-  # read grid
-  grid <- lpjmlkit::read_io(
+  # calculate cell area
+  cell_area <- lpjmlkit::read_io(
       files_reference$grid,
       silent = TRUE
-      )$data %>% drop()
-
-  # calculate cell area
-  cell_area <- lpjmlkit::calc_cellarea(grid[, 2])
+      ) %>% 
+      lpjmlkit::calc_cellarea()
 
   # read fpc
   fpc_scenario <- lpjmlkit::read_io(
@@ -117,17 +119,19 @@ calc_lsc_status <- function(files_scenario,
   fpc_nbands <- dim(fpc_scenario)[["band"]]
   npft <- fpc_nbands - 1
 
+  # read in pft mapping
   pft_categories <- system.file("extdata",
                                 "pft_categories.csv",
                                 package = "boundaries") %>%
     read_pft_categories() %>%
     dplyr::filter(., npft_proxy == npft)
 
-  fpc_names <- dplyr::filter(pft_categories, category == "natural")$pft
-
-  # only needed for header files: 
-  dimnames(fpc_scenario)$band <- c("natural stand fraction", fpc_names)
-  dimnames(fpc_reference)$band <- c("natural stand fraction", fpc_names)
+  # add band names for clm outputs
+  if(lpjmlkit::detect_io_type(files_reference$fpc) == "clm") {
+    fpc_names <- dplyr::filter(pft_categories, category == "natural")$pft
+    dimnames(fpc_scenario)$band <- c("natural stand fraction", fpc_names)
+    dimnames(fpc_reference)$band <- c("natural stand fraction", fpc_names)
+  }
 
   # subset only tree pfts
   fpc_trees <- dplyr::filter(
@@ -229,7 +233,7 @@ calc_lsc_status <- function(files_scenario,
     !names(dim(deforestation)) %in% c("cell")
   ]
 
-  if (lsc_spatial_resolution == "biome") {
+  if (spatial_resolution == "subglobal") {
     # create space of combinations to loop over (even though not all make sense)
     comb <- expand.grid(
       continent = sort(unique(lpjmlkit::asub(continent_grid,
@@ -265,65 +269,70 @@ calc_lsc_status <- function(files_scenario,
       deforestation[sub_cells] <- sub_deforest[sub_cells]
     }
   }
-  # init pb_status array with 0 = no data and initial dimensions
-  pb_status <- array(0,
-                     dim = dim(deforestation),
-                     dimnames = dimnames(deforestation))
-  ## tropical forest
-  # high risk
-  pb_status[
-    is_tropical_forest &
-    deforestation >= lsc_thresholds$tropical$upper
-  ] <- 3
-  # uncertainty zone
-  pb_status[
-    is_tropical_forest &
-    deforestation < lsc_thresholds$tropical$upper &
-    deforestation > lsc_thresholds$tropical$lower
-  ] <- 2
-  # safe space
-  pb_status[
-    is_tropical_forest &
-    deforestation <= lsc_thresholds$tropical$lower
-  ] <- 1
 
-  ## temperate forest
-  # high risk
-  pb_status[
-    is_temperate_forest &
-    deforestation >= lsc_thresholds$temperate$upper
-  ] <- 3
-  # uncertainty zone
-  pb_status[
-    is_temperate_forest &
-    deforestation < lsc_thresholds$temperate$upper &
-    deforestation > lsc_thresholds$temperate$lower
-  ] <- 2
-  # safe space
-  pb_status[
-    is_temperate_forest &
-    deforestation <= lsc_thresholds$temperate$lower
-  ] <- 1
+  if (spatial_resolution %in% c("grid", "subglobal")) {
+    # init threshold array with NA = no data and initial dimensions + threshold
+    # dimension
+    dim_names <- dimnames(deforestation)
+    dim_names$thresholds <- names(thresholds)
+    threshold_attr <- array(NA,
+                       dim = c(dim(deforestation), length(names(thresholds))),
+                       dimnames = dim_names)
+    ## tropical forest
+    # high risk
+    threshold_attr[
+      is_tropical_forest, "highrisk"
+    ] <- thresholds$highrisk$tropical
+    # pb
+    threshold_attr[
+      is_tropical_forest, "pb"
+    ] <- thresholds$pb$tropical
+    # holocene
+    threshold_attr[
+      is_tropical_forest, "holocene"
+    ] <- thresholds$holocene$tropical
 
-  ## boreal forest
-  # high risk
-  pb_status[
-    is_boreal_forest &
-    deforestation >= lsc_thresholds$boreal$upper
-  ] <- 3
-  # uncertainty zone
-  pb_status[
-    is_boreal_forest &
-    deforestation < lsc_thresholds$boreal$upper &
-    deforestation > lsc_thresholds$boreal$lower
-  ] <- 2
-  # safe space
-  pb_status[
-    is_boreal_forest &
-    deforestation <= lsc_thresholds$boreal$lower
-  ] <- 1
+    ## temperate forest
+    # high risk
+      # high risk
+    threshold_attr[
+      is_temperate_forest, "highrisk"
+    ] <- thresholds$highrisk$temperate
+    # pb
+    threshold_attr[
+      is_temperate_forest, "pb"
+    ] <- thresholds$pb$temperate
+    # holocene
+    threshold_attr[
+      is_temperate_forest, "holocene"
+    ] <- thresholds$holocene$temperate
 
-  return(pb_status)
+    ## boreal forest
+    # high risk
+    threshold_attr[
+      is_boreal_forest, "highrisk"
+    ] <- thresholds$highrisk$boreal
+    # pb
+    threshold_attr[
+      is_boreal_forest, "pb"
+    ] <- thresholds$pb$boreal
+    # holocene
+    threshold_attr[
+      is_boreal_forest, "holocene"
+    ] <- thresholds$holocene$boreal
+
+    attr(deforestation, "thresholds") <- threshold_attr
+
+  } else if (spatial_resolution == "global") {
+    #TODO: thresholds to be read in from yml file if not explicitely defined
+
+    dim_remain <- names(dim(deforestation))[names(dim(deforestation)) != "cell"]
+    deforestation <- apply(deforestation[is_forest], dim_remain, mean)
+    attr(deforestation, "thresholds") <- thresholds
+
+  }
+
+  return(deforestation)
 }
 
 read_biome_mapping <- function(file_path) {
