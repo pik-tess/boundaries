@@ -71,12 +71,10 @@ calc_status <- function(boundary,
     }
     on.exit(future::plan(future_plan))
   }
-
-  if (length(time_span_reference) > length(time_span_scenario)) {
-    stop(paste0("time_span_reference is longer than time_span_scenario.",
-                "Define a time_span_reference that is shorter than",
-                "time_span_scenario"))
-  }
+  
+  # verify available spatial resolution
+  spatial_resolution <- match.arg(spatial_resolution, c("global", "subglobal",
+                                                        "grid"))
 
   # Get main file type (meta, clm)
   file_ext <- get_file_ext(path_scenario)
