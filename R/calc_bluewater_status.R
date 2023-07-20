@@ -26,7 +26,7 @@
 #'
 #' @param cut_min double. Exclude boundary calculations for Q < cut_min and
 #' dismiss EFR transgresssions if < cut_min for "gerten2020" method,
-#' Default: 0.0864 hm3/day (=1 m³/s)
+#' Default: 0.0864 hm3/day (=1 m??/s)
 #'
 #' @param avg_nyear_args list of arguments to be passed to
 #' \link[pbfunctions]{average_nyear_window} (see for more info). To be used for
@@ -203,7 +203,7 @@ calc_bluewater_status <- function(files_scenario,
         uncertainty_zone <- safe[basins,,1] - uncertain[basins,,1]
       }
 
-
+     # todo: aggregate to global if requested
 
     }else if (spatial_resolution == "grid"){
       # calculation of EFR transgressions = EFR deficits in LU run
