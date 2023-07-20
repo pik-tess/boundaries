@@ -60,6 +60,7 @@ calc_status <- function(boundary,
                         diff_output_files = list(),
                         method = list(),
                         thresholds = list(),
+                        spatial_resolution,
                         in_parallel = TRUE,
                         ...) {
   # If in_parallel use future package for asynchronous parallelization
@@ -71,12 +72,10 @@ calc_status <- function(boundary,
     }
     on.exit(future::plan(future_plan))
   }
-
-  if (length(time_span_reference) > length(time_span_scenario)) {
-    stop(paste0("time_span_reference is longer than time_span_scenario.",
-                "Define a time_span_reference that is shorter than",
-                "time_span_scenario"))
-  }
+  
+  # verify available spatial resolution
+  spatial_resolution <- match.arg(spatial_resolution, c("global", "subglobal",
+                                                        "grid"))
 
   # Get main file type (meta, clm)
   file_ext <- get_file_ext(path_scenario)
@@ -123,13 +122,10 @@ calc_status <- function(boundary,
           files_reference = files_reference,
           time_span_scenario = time_span_scenario,
           time_span_reference = time_span_reference,
+          spatial_resolution = spatial_resolution,
           avg_nyear_args = avg_nyear_args,
-          method = switch(length(method[[bound]]) == 0,
-                          NULL,
-                          method[[bound]]),
-          thresholds = switch(length(thresholds[[bound]]) == 0,
-                              NULL,
-                              thresholds[[bound]])
+          method = if (length(method[[bound]]) > 0) method[[bound]],
+          thresholds = if (length(thresholds[[bound]]) > 0) thresholds[[bound]]
         ),
         sub_dots
       )
@@ -167,10 +163,9 @@ get_file_ext <- function(path) {
   most_frequent <- all_file_types %>%
     factor() %>%
     table() %>%
-    names() %>%
-    .[1:5]
+    names()
 
-  # 5 exemplaric files to detect type
+  # exemplaric files to detect type
   files_to_check <- sapply(
     most_frequent,
     function(x, y, z) {

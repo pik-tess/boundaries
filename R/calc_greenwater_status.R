@@ -75,12 +75,6 @@ calc_greenwater_status <- function(files_scenario,
   spatial_resolution <- match.arg(spatial_resolution, c("grid", "global"))
   # TODO not yet compatible with avg_nyear_args
 
-  if (length(time_span_reference) < length(time_span_scenario)) {
-    nyear_ref <- length(time_span_scenario)
-  } else {
-    nyear_ref <- NULL
-  }
-
   # -------------------------------------------------------------------------- #
   # calc deviations for rootmoisture
   deviations_rootmoisture <- calc_water_status(

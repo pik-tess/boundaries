@@ -263,19 +263,19 @@ calc_bluewater_status <- function(files_scenario,
       ] <- TRUE
       pb_status[cells_marginal_discharge] <- NA
 
-      # omit boundary status calculation in basins without irrigation?
-      if (irrmask_basin) {
-        # calc irrigation mask to exclude non irrigated basins
-        irrmask_basin <- calc_irrigation_mask(files_scenario,
-                                              time_span = time_span_scenario,
-                                              avg_nyear_args = avg_nyear_args)
-        pb_status[irrmask_basin == 0] <- NA
-      }
-      #   if ratio is above >5%: within uncertainty range (yellow)
-      #   if ratio is above >75% transgression (red)
-      # define PB thresholds as attributes
-      if (is.null(thresholds)) {
-        thresholds <- c(holocene = 0,
+    # omit boundary status calculation in basins without irrigation?
+    if (irrmask_basin) {
+      # calc irrigation mask to exclude non irrigated basins
+      irrmask_basin <- calc_irrigation_mask(files_scenario,
+                                            time_span = time_span_scenario,
+                                            avg_nyear_args = avg_nyear_args)
+      pb_status[irrmask_basin == 0] <- NA
+    }
+    #   if ratio is above >5%: within uncertainty range (yellow)
+    #   if ratio is above >75% transgression (red)
+    # define PB thresholds as attributes
+    if (is.null(thresholds)) {
+      thresholds <- list(holocene = 0,
                         pb = 0.05,
                         highrisk = 0.75)
       }
