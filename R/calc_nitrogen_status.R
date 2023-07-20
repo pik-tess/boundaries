@@ -212,8 +212,9 @@ calc_nitrogen_status <- function(files_scenario,
 
     # add thresholds as attributes
     control_variable <- n_conc
-    attr(n_conc, "thresholds") <- c(holocene = 0, thresholds[["pb"]],
-                                       thresholds[["highrisk"]])
+    attr(control_variable, "thresholds") <- list(holocene = 0,
+                                                 pb = thresholds[["pb"]],
+                                                 highrisk = thresholds[["highrisk"]])
     # non applicable cells
     control_variable[cells_arid] <- NA
     control_variable[cells_low_runoff] <- NA
