@@ -29,24 +29,8 @@ calc_irrigation_mask <- function(files_scenario,
 
   # ------------------------------------------------------------------------- #
 
-  drainage <- lpjmlkit::read_io(
-    paste(path_input, "drainage.bin", sep = "/"), datatype = 2
-    )$data %>%
-    suppressWarnings() %>%
-    drop()
-
-  # -------------------------------------------------------------------------- #
-
-  # add 1 since in C indexing starts at 0 but in R at 1
-  routing <- drainage[, 1] + 1
-  ncell <- dim(avg_irrigation_scenario)["cell"]
-  endcell <- array(0, dim = ncell)
-  cellindex <- endcell
-  for (cell in 1:ncell) {
-    route <- show_route(cell, routing)
-    cellindex[route] <- seq(length(route), 1, -1)
-    endcell[cell] <- route[length(route)]
-  }
+  cellinfo <- indexing_drainage(files_reference = files_scenario)
+  endcell <- lpjmlkit::asub(cellinfo, band = "endcell")
 
   basin_ids <- sort(unique(endcell))
   irrmask_basin <- array(0,
@@ -94,4 +78,30 @@ show_route <- function(ind, routing_table) {
     return(c(ind,
              show_route(routing_table[ind], routing_table)))
   }
+}
+
+
+indexing_drainage <- function(files_reference){
+
+    drainage <- lpjmlkit::read_io(files_reference$drainage, datatype = 2
+                )$data %>%
+    suppressWarnings() %>%
+    drop()
+
+  # -------------------------------------------------------------------------- #
+
+  # add 1 since in C indexing starts at 0 but in R at 1
+  routing <- drainage[, 1] + 1
+  ncell <- length(routing)
+  cellinfo <- array(0,dim=c(ncell,3))
+  cellinfo[,3] <- routing
+  for (cell in 1:ncell) {
+    route <- show_route(cell, routing)
+    # (over)writing all cells from route
+    cellinfo[route,1] <- seq(length(route), 1, -1) # rank (former cellindex)
+    cellinfo[cell,2] <- route[length(route)] # endcell
+  }
+  dimnames(cellinfo) <- list(cell = 0:(ncell-1),
+                             band = c("rank","endcell","routing"))
+  return(cellinfo)
 }

@@ -36,6 +36,7 @@
 #' irrigation will be masked (= no boundary transgression)
 #'
 #' @param spatial_resolution character string indicating spatial resolution
+#'        options: "global", "basin", "grid"
 #'        either "grid" for calculation of number of years with transgression
 #'        (for wang-erlandsson2022: dim(ncell, nyears);
 #'         for porkka_2023: dim(ncell, nyears, months)) or
@@ -43,7 +44,8 @@
 #'        deviations (either one value per year (wang-erlandsson2022) or one
 #'        value per year and month (porkka_2023)) - note: not applied for
 #'        the method "gerten2020" (only at the grid cell level)
-#' 
+#'        TODO: check if this parameter is correctly specified, if not global
+#'
 #' @param thresholds named character string with thresholds to be used to
 #'        define the safe, increasing risk and high risk zone,
 #'        e.g. c(holocene = 0.5, pb = 0.95, highrisk = 0.99).
@@ -76,18 +78,18 @@ calc_bluewater_status <- function(files_scenario,
                                   irrmask_basin = FALSE,
                                   spatial_resolution,
                                   thresholds = NULL) {
-  # verify available methods
+  # verify available methods and resolution
   method <- match.arg(method, c("gerten2020",
                                 "wang-erlandsson2022",
                                 "porkka_2023"))
+  spatial_resolution <- match.arg(spatial_resolution, c("global",
+                                "basin", "grid"))
+  #todo: discuss
+  monthly <- FALSE # do not output basin and global information as monthly
 
   # apply defined method
   if (method == "gerten2020") {
-    if (spatial_resolution == "global") {
-      stop(paste0("Global resolution not yet defined for method ", method, ". ",
-                  "For aggregation to global level use wang-erlandsson2020 or ",
-                  "porkka_2023"))
-    }
+
     # reference discharge ---------------------------------------------------- #
     discharge_reference <- lpjmlkit::read_io(
       files_reference$discharge, subset = list(year = time_span_reference)
@@ -123,6 +125,7 @@ calc_bluewater_status <- function(files_scenario,
                                       append(list(x = discharge_scenario),
                                              avg_nyear_args))
 
+
     # calc efrs for vmf_min and vmf_max
     efr_uncertain <- calc_efrs(discharge_reference,
                                    "vmf_min",
@@ -130,13 +133,87 @@ calc_bluewater_status <- function(files_scenario,
     efr_safe <- calc_efrs(discharge_reference,
                               "vmf_max",
                               avg_nyear_args)
-    # calculation of EFR transgressions = EFR deficits in LU run
-    efr_deficit <- efr_safe - avg_discharge_scenario
-    # dismiss small EFR deficits #TODO check relevance
-    efr_deficit[efr_deficit < cut_min] <- 0
 
-    # calculation of uncertainty zone
-    uncertainty_zone <- efr_safe - efr_uncertain
+
+    if (spatial_resolution == "global" || spatial_resolution == "basin") {
+      # todo: modify the indexing_drainage function to return a list?
+      cellinfo <- indexing_drainage(files_reference = files_reference)
+      endcell <- lpjmlkit::asub(cellinfo, band = "endcell")
+      rank <- lpjmlkit::asub(cellinfo, band = "rank")
+      routing <- lpjmlkit::asub(cellinfo, band = "routing")
+      # attention here the cell labels in C style (0,1,...) from lpjmlkit are
+      # very confusing, because the basin indices need to be in R notation (1,2,...)
+      basins <- which(routing==0)
+      ncells <- length(endcell)
+
+      if (monthly){
+        # this is very sloooow ...
+        safe <- array(0,dim=c(ncells,12,2))
+        uncertain <- safe
+        for (m in 1:12){
+          safe[,m,] <- efr_aggregation(endcell = endcell,
+                                  routing = routing,
+                                  cellindex = rank,
+                                  efr = efr_safe[,m],
+                                  discharge = avg_discharge_scenario[,m],
+                                  remotes = FALSE,
+                                  flowseason = FALSE
+          ) # discharge unit is raw -> hm3/day
+          uncertain[,m,] <- efr_aggregation(endcell = endcell,
+                                  routing = routing,
+                                  cellindex = rank,
+                                  efr = efr_uncertain[,m],
+                                  discharge = avg_discharge_scenario[,m],
+                                  remotes = FALSE,
+                                  flowseason = FALSE
+          )
+        }
+        # currently still in hm3/day/month (/month because of aggregation)
+        # ~ conversion to km3/yr with /1000 * 30.41666 - better would be to
+        # multiply with the days per month array before the aggregation
+        efr_deficit = safe[basins,,1] - avg_discharge_scenario[basins,]
+        efr_deficit[efr_deficit < cut_min] <- 0
+
+        uncertainty_zone <- safe[basins,,1] - uncertain[basins,,1]
+      }else {
+        avg_discharge_scenario_yearly <- rowSums(avg_discharge_scenario)
+        # much faster, but only yearly resolution
+        safe <- efr_aggregation(endcell = endcell,
+                                       routing = routing,
+                                       cellindex = rank,
+                                       efr = rowSums(efr_safe),
+                                       discharge = avg_discharge_scenario_yearly,
+                                       remotes = FALSE,
+                                       flowseason = FALSE
+        ) # discharge unit is raw -> hm3/day
+        uncertain <- efr_aggregation(endcell = endcell,
+                                            routing = routing,
+                                            cellindex = rank,
+                                            efr = rowSums(efr_uncertain),
+                                            discharge = avg_discharge_scenario_yearly,
+                                            remotes = FALSE,
+                                            flowseason = FALSE
+        )
+        # currently still in hm3/day/month (/month because of aggregation)
+        # ~ conversion to km3/yr with /1000 * 30.41666 - better would be to
+        # multiply with the days per month array before the aggregation
+        efr_deficit = safe[basins,1] - avg_discharge_scenario_yearly
+        efr_deficit[efr_deficit < cut_min] <- 0
+
+        uncertainty_zone <- safe[basins,,1] - uncertain[basins,,1]
+      }
+
+
+
+    }else if (spatial_resolution == "grid"){
+      # calculation of EFR transgressions = EFR deficits in LU run
+      efr_deficit <- efr_safe - avg_discharge_scenario
+      # dismiss small EFR deficits #TODO check relevance
+      efr_deficit[efr_deficit < cut_min] <- 0
+
+      # calculation of uncertainty zone
+      uncertainty_zone <- efr_safe - efr_uncertain
+    }
 
     # calculate boundary status based on transgression to uncertainty ratio
     # (as in Steffen 2015; degree to which EFRs are undermined)
@@ -153,6 +230,7 @@ calc_bluewater_status <- function(files_scenario,
 
     # to average the ratio only over months which are not "safe"
     status_frac_monthly[status_frac_monthly <= 0.05] <- NA
+
     pb_status <- apply(
       status_frac_monthly,
       names(dim(status_frac_monthly))[
@@ -165,44 +243,43 @@ calc_bluewater_status <- function(files_scenario,
 
     # check if vector was returned (loss if dimnames) -> reconvert to array
     if (is.null(dim(pb_status))) {
-      pb_status <- array(
-        pb_status,
-        dim = c(cell = dim(status_frac_monthly)[["cell"]], 1),
-        dimnames = list(cell = dimnames(status_frac_monthly)[["cell"]], 1)
-      )
+        pb_status <- array(
+          pb_status,
+          dim = c(cell = dim(status_frac_monthly)[["cell"]], 1),
+          dimnames = list(cell = dimnames(status_frac_monthly)[["cell"]], 1)
+        )
     }
-    # ommit boundary status calculation if PNV discharge is < cut_min
-    # (marginal discharge)
-    cells_marginal_discharge <- array(FALSE,
-                                     dim = dim(pb_status),
-                                     dimnames = dimnames(pb_status))
-    cells_marginal_discharge[
-      which(
-        apply(
-          avg_discharge_reference, c("cell", third_dim), mean
-        ) < cut_min
-      )
-    ] <- TRUE
-    pb_status[cells_marginal_discharge] <- NA
+      # omit boundary status calculation if PNV discharge is < cut_min
+      # (marginal discharge)
+      cells_marginal_discharge <- array(FALSE,
+                                        dim = dim(pb_status),
+                                        dimnames = dimnames(pb_status))
+      cells_marginal_discharge[
+        which(
+          apply(
+            avg_discharge_reference, c("cell", third_dim), mean
+          ) < cut_min
+        )
+      ] <- TRUE
+      pb_status[cells_marginal_discharge] <- NA
 
-    # ommit boundary status calculation in basins without irrigation?
-    if (irrmask_basin) {
-      # calc irrigation mask to exclude non irrigated basins
-      irrmask_basin <- calc_irrigation_mask(files_scenario,
-                                            time_span = time_span_scenario,
-                                            avg_nyear_args = avg_nyear_args)
-      pb_status[irrmask_basin == 0] <- NA
-    }
-    #   if ratio is above >5%: within uncertainty range (yellow)
-    #   if ratio is above >75% transgression (red)
-    # define PB thresholds as attributes
-    if (is.null(thresholds)) {
-      thresholds <- c(holocene = 0,
+      # omit boundary status calculation in basins without irrigation?
+      if (irrmask_basin) {
+        # calc irrigation mask to exclude non irrigated basins
+        irrmask_basin <- calc_irrigation_mask(files_scenario,
+                                              time_span = time_span_scenario,
+                                              avg_nyear_args = avg_nyear_args)
+        pb_status[irrmask_basin == 0] <- NA
+      }
+      #   if ratio is above >5%: within uncertainty range (yellow)
+      #   if ratio is above >75% transgression (red)
+      # define PB thresholds as attributes
+      if (is.null(thresholds)) {
+        thresholds <- c(holocene = 0,
                         pb = 0.05,
                         highrisk = 0.75)
-    }
-    attr(pb_status, "thresholds") <- thresholds
-
+      }
+      attr(pb_status, "thresholds") <- thresholds
 
   } else if (method %in% c("wang-erlandsson2022", "porkka_2023")) {
     #TODO also account for cut_min?

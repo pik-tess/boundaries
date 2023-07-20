@@ -1,3 +1,33 @@
+devtools::load_all("/p/projects/open/Fabian/LPJbox/lpjmlkit/")
+devtools::load_all("/p/projects/open/Fabian/LPJbox/boundaries_development")
+devtools::load_all("/p/projects/open/Fabian/LPJbox/lpjmliotools/")
+
+
+inFol_lu <- "/p/projects/open/Fabian/runs/metrics_202306/output/lu_1500_2014/"
+inFol_pnv <- "/p/projects/open/Fabian/runs/metrics_202306/output/pnv_1500_2014/"
+varnames <- data.frame(row.names = c("grid",            "discharge"),
+                       outname = c("grid.bin.json",  "mdischarge.bin.json")
+)
+files_scenario <- list(grid = paste0(inFol_lu,varnames["grid","outname"]),
+    discharge = paste0(inFol_lu,varnames["discharge","outname"]),
+    drainage = "/p/projects/lpjml/input/historical/input_VERSION2/drainagestn.bin"
+)
+files_reference <- list(grid = paste0(inFol_pnv,varnames["grid","outname"]),
+    discharge = paste0(inFol_pnv,varnames["discharge","outname"]),
+    drainage = "/p/projects/lpjml/input/historical/input_VERSION2/drainagestn.bin"
+)
+
+pb <- boundaries::calc_bluewater_status(files_scenario = files_scenario,
+                                  files_reference = files_reference,
+                                  time_span_scenario = as.character(1985:2014),
+                                  time_span_reference = as.character(1510:1539),
+                                  thresholds = NULL,
+                                  method = "gerten2020",
+                                  spatial_resolution = "global")
+efr_def <- applyBasinData(data=rowSums(efr_deficit),endcell = endcell)
+lpjmliotools::plotGlobalToScreen(data = efr_def, title = "",pow2min = 0, pow2max = 10,type = "exp",onlyPos = T,legYes = T,legendtitle = "")
+
+# -------------------------------------------- #
 library(raster)
 library(RColorBrewer)
 library(maps)
@@ -5,6 +35,7 @@ library(scales) #needed for alpha()
 library(fields) #for image.plot
 library(zoo) #for running mean
 library(lpjmliotools)
+library(magrittr)
 # ===== Settings =======
 fplotspath <- "/home/stenzel/ownCloud/5_PBwater_reworked/plots/"
 ncells=67420
@@ -71,7 +102,7 @@ calcEFRs <- function(discharge,method="VMF"){
     return(NA)
   }
   efrs=discharge[,,1]*0 #initialize efrs array
-  
+
   #calculate mean monthly flow and mean annual flow
   MMF=apply(discharge,c(1,2),mean)
   quantiles=apply(MMF,c(1),quantile,probs=c(0.5,0.9,0.05,0.95))
@@ -82,7 +113,7 @@ calcEFRs <- function(discharge,method="VMF"){
   dim(Q90)=c(ncells,12)
   dim(Q50)=c(ncells,12)
   remove(quantiles)
-  
+
   if (method==efrMethodsSet[1]){ #"PBpaper" - Steffen et al. 2015
     efrs[MMF<=0.4*MAF]=0.75*MMF[MMF<=0.4*MAF] # low flow months
     efrs[MMF>0.4*MAF & MMF<=0.8*MAF]=0.7*MMF[MMF>0.4*MAF & MMF<=0.8*MAF] # intermediate flow months
@@ -97,7 +128,7 @@ calcEFRs <- function(discharge,method="VMF"){
   }else if (method==efrMethodsSet[4]){ # "newPB"
     efrs=Q95-Q05 # low flow months
   }
-  
+
   return(efrs)
 }
 flowSeason <- function(discharge,method="VMF"){
@@ -114,7 +145,7 @@ flowSeason <- function(discharge,method="VMF"){
     return(NA)
   }
   fs=discharge*0 #initialize fs array
-  
+
   #calculate mean monthly flow and mean annual flow
   MMF=discharge
   MAF=rep(rowMeans(MMF),times=12)
@@ -132,7 +163,7 @@ flowSeason <- function(discharge,method="VMF"){
     fs[MMF<=MAF]="l"
     fs[MMF>MAF]="h"
   }
-  
+
   return(fs)
 }
 sumUpPBandEFRs_old <- function(endcell,routing,cellindex,efr,discharge,remotes=F){
@@ -142,7 +173,7 @@ sumUpPBandEFRs_old <- function(endcell,routing,cellindex,efr,discharge,remotes=F
   cellPB=routing*0
   totalEFR=routing*0
   a=1:length(basins)
-  if (length(remotes>1)){ 
+  if (length(remotes>1)){
     efr[remotes==2]=discharge[remotes==2] #outflowcells of remote areas: remotes==2
     efr[remotes==1]=discharge[remotes==1] #remote areas: remotes==1
     #discharge[remotes==1]=0 #remote areas: remotes==1
@@ -182,11 +213,11 @@ sumUpPBandEFRs <- function(endcell,routing,cellindex,efr,discharge,remotes=F,flo
   totalEFR=routing*0
   totalPB=routing*0
   a=1:length(basins)
-  if (length(remotes>1)){ 
+  if (length(remotes>1)){
     efr[remotes==2]=discharge[remotes==2] #outflowcells of remote areas: remotes==2
     efr[remotes==1]=discharge[remotes==1] #remote areas: remotes==1
   }
-  if (length(flowseason>1)){ 
+  if (length(flowseason>1)){
     #fs=flowSeason(discharge=discharge,method = "VMF")
     #efr[fs=="h"]=discharge[fs=="h"] #outflowcells of remote areas: remotes==2
   }
@@ -235,7 +266,7 @@ autoReadInput <- function(inFile,getyearstart=-1,getyearstop=-1,manu=F,msize=4,m
   if (getyearstop==-1){
     getyearstop=stopyear
   }
-  if (hdr[1]==1){#header version 1 
+  if (hdr[1]==1){#header version 1
     headersize=36
   }else if (hdr[1]==2){#header version 2
     headersize=43
@@ -393,13 +424,13 @@ remote[upRemote==1]=1 #add the upStream cells of remote cells as well (makes com
 outflowRemoteCells=remote*0
 remoteCells=which(remote==1)
 for (c in remoteCells){
-  route=showRoute(c,routing) #get the downstream route from this cell 
+  route=showRoute(c,routing) #get the downstream route from this cell
   inters=intersect(route,remoteCells) #get the portion of the downstream route, that is remote
   outflowRemoteCells[inters[which.min(cellindex[inters])]]=1 #set the last cell of that route (min cellindex) to 1; this is the outflowcell
 }
 #plotGlobalWtoscreen(data = outflowRemoteCells*10,title = "",pow2min = 0,pow2max = 4,legendtitle = "",legYes = T)
 fullRemote=remote
-fullRemote[outflowRemoteCells==1]=2 
+fullRemote[outflowRemoteCells==1]=2
 #plotGlobalWtoscreen(data = fullRemote*5,title = "",pow2min = 0,pow2max = 4,legendtitle = "",legYes = T)
 
 # =============== calc global PB from monthly ISIMIP data  ========================
@@ -441,8 +472,8 @@ pbEFRstats(basinPBremote_CRU_remote,endcells)
 discharge_1901_1930_daily_noHF=removeHighFlows(discharge_1901_1930_daily,threshold=0.9,period = "raindays")
 high_flows=aperm(apply(X = discharge_1901_1930_daily-discharge_1901_1930_daily_noHF,MARGIN = c(1,3),FUN = daily2monthly,method="sum")/10^9,c(2,1,3)) #from m3 to km3
 remove(discharge_1901_1930_daily)
-high_flows_sum=rowSums(apply(high_flows,c(1,2),mean)) #from 30 years monthly to average yearly 
-discharge_sum=rowSums(apply(discharge_1901_1930_monthly_full,c(1,2),mean)) #from 30 years monthly to average yearly 
+high_flows_sum=rowSums(apply(high_flows,c(1,2),mean)) #from 30 years monthly to average yearly
+discharge_sum=rowSums(apply(discharge_1901_1930_monthly_full,c(1,2),mean)) #from 30 years monthly to average yearly
 plotGlobalW(data = high_flows_sum,title = "high flows yearly sum",file=paste0(fplotspath,"high_flows_yearly_sum_1901_1930mean.png"),pow2max = 10,pow2min=1,colPos = "Blues",legendtitle = "km3/yr",legYes = T,onlyPos = T,eps = F)
 plotGlobalWlin(data = high_flows_sum/discharge_sum*100,title = "high_flows_sum/discharge_sum*100",colrev=T,file=paste0(fplotspath,"high_flows_yearly_perc_discharge_1901_1930mean_raindays.png"),min = 0,max=100,colPos = "Spectral",legendtitle = "%",legYes = T,onlyPos = T,eps = F,colNeg = "Reds")
 
@@ -510,7 +541,7 @@ expFormat="pdf"
     file=paste(c(file[1:(length(file)-1)],"eps"),collapse=".")
     ps.options(family = c("Helvetica"), pointsize = 18)
     postscript(file,horizontal = FALSE, onefile = FALSE, width=18, height=18,paper="special")
-  }else if (expFormat=="pdf"){  
+  }else if (expFormat=="pdf"){
     file=strsplit(file,".",fixed=TRUE)[[1]]
     file=paste(c(file[1:(length(file)-1)],"pdf"),collapse=".")
     pdf(file,width=6,height=3,family = c("Helvetica"),pointsize = 12,paper='special',version = "1.5")
@@ -539,7 +570,7 @@ for (c in cells){
     file=paste(c(file[1:(length(file)-1)],"eps"),collapse=".")
     ps.options(family = c("Helvetica"), pointsize = 18)
     postscript(file,horizontal = FALSE, onefile = FALSE, width=18, height=18,paper="special")
-  }else if (expFormat=="pdf"){  
+  }else if (expFormat=="pdf"){
     file=strsplit(file,".",fixed=TRUE)[[1]]
     file=paste(c(file[1:(length(file)-1)],"pdf"),collapse=".")
     pdf(file,width=6,height=4,family = c("Helvetica"),pointsize = 12,paper='special',version = "1.5")
@@ -598,7 +629,7 @@ for (c in cells){
     file=paste(c(file[1:(length(file)-1)],"eps"),collapse=".")
     ps.options(family = c("Helvetica"), pointsize = 18)
     postscript(file,horizontal = FALSE, onefile = FALSE, width=18, height=18,paper="special")
-  }else if (expFormat=="pdf"){  
+  }else if (expFormat=="pdf"){
     file=strsplit(file,".",fixed=TRUE)[[1]]
     file=paste(c(file[1:(length(file)-1)],"pdf"),collapse=".")
     pdf(file,width=6,height=4,family = c("Helvetica"),pointsize = 12,paper='special',version = "1.5")
@@ -638,7 +669,7 @@ if (expFormat=="eps"){
   file=paste(c(file[1:(length(file)-1)],"eps"),collapse=".")
   ps.options(family = c("Helvetica"), pointsize = 18)
   postscript(file,horizontal = FALSE, onefile = FALSE, width=18, height=18,paper="special")
-}else if (expFormat=="pdf"){  
+}else if (expFormat=="pdf"){
   file=strsplit(file,".",fixed=TRUE)[[1]]
   file=paste(c(file[1:(length(file)-1)],"pdf"),collapse=".")
   pdf(file,width=4,height=6,family = c("Helvetica"),pointsize = 12,paper='special',version = "1.5")
@@ -672,7 +703,7 @@ if (expFormat=="eps"){
   file=paste(c(file[1:(length(file)-1)],"eps"),collapse=".")
   ps.options(family = c("Helvetica"), pointsize = 18)
   postscript(file,horizontal = FALSE, onefile = FALSE, width=18, height=18,paper="special")
-}else if (expFormat=="pdf"){  
+}else if (expFormat=="pdf"){
   file=strsplit(file,".",fixed=TRUE)[[1]]
   file=paste(c(file[1:(length(file)-1)],"pdf"),collapse=".")
   pdf(file,width=12,height=6,family = c("Helvetica"),pointsize = 12,paper='special',version = "1.5")
@@ -708,7 +739,7 @@ if (expFormat=="eps"){
   file=paste(c(file[1:(length(file)-1)],"eps"),collapse=".")
   ps.options(family = c("Helvetica"), pointsize = 18)
   postscript(file,horizontal = FALSE, onefile = FALSE, width=18, height=18,paper="special")
-}else if (expFormat=="pdf"){  
+}else if (expFormat=="pdf"){
   file=strsplit(file,".",fixed=TRUE)[[1]]
   file=paste(c(file[1:(length(file)-1)],"pdf"),collapse=".")
   pdf(file,width=12,height=6,family = c("Helvetica"),pointsize = 12,paper='special',version = "1.5")
@@ -754,7 +785,7 @@ if (expFormat=="eps"){
   file=paste(c(file[1:(length(file)-1)],"eps"),collapse=".")
   ps.options(family = c("Helvetica"), pointsize = 18)
   postscript(file,horizontal = FALSE, onefile = FALSE, width=18, height=18,paper="special")
-}else if (expFormat=="pdf"){  
+}else if (expFormat=="pdf"){
   file=strsplit(file,".",fixed=TRUE)[[1]]
   file=paste(c(file[1:(length(file)-1)],"pdf"),collapse=".")
   pdf(file,width=12,height=6,family = c("Helvetica"),pointsize = 12,paper='special',version = "1.5")
@@ -794,7 +825,7 @@ if (expFormat=="eps"){
   file=paste(c(file[1:(length(file)-1)],"eps"),collapse=".")
   ps.options(family = c("Helvetica"), pointsize = 18)
   postscript(file,horizontal = FALSE, onefile = FALSE, width=18, height=18,paper="special")
-}else if (expFormat=="pdf"){  
+}else if (expFormat=="pdf"){
   file=strsplit(file,".",fixed=TRUE)[[1]]
   file=paste(c(file[1:(length(file)-1)],"pdf"),collapse=".")
   pdf(file,width=12,height=6,family = c("Helvetica"),pointsize = 12,paper='special',version = "1.5")
@@ -838,7 +869,7 @@ if (expFormat=="eps"){
   file=paste(c(file[1:(length(file)-1)],"eps"),collapse=".")
   ps.options(family = c("Helvetica"), pointsize = 18)
   postscript(file,horizontal = FALSE, onefile = FALSE, width=18, height=18,paper="special")
-}else if (expFormat=="pdf"){  
+}else if (expFormat=="pdf"){
   file=strsplit(file,".",fixed=TRUE)[[1]]
   file=paste(c(file[1:(length(file)-1)],"pdf"),collapse=".")
   pdf(file,width=12,height=6,family = c("Helvetica"),pointsize = 12,paper='special',version = "1.5")
@@ -881,3 +912,11 @@ iFol <- "/p/projects/open/Fabian/runs/IRRHIST/cru_ts3.21/"
 discharge_PI <- readMonthly(inFile = paste0(iFol,"efrcalc_efr_ilim_nolu/mdischarge.bin"),startyear = 1670,stopyear = 1699,
                          size = 4,getyearstart = 1670,headersize = 0,getyearstop = 1699)*rep(nDays,each = 67420)/10^3 #from hm3/d to km3/month
 quantiles <- apply(discharge_PI,c(1,2),quantile,probs = c(0.5,0.9,0.05,0.95))
+
+######################## check discharge sum ###############
+discharge <- lpjmlkit::read_io(
+  files_scenario$discharge, subset = list(year = "2014")
+) %>%
+  lpjmlkit::transform(to = c("year_month_day"))
+discharge <- drop(discharge$data)
+
