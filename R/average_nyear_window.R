@@ -161,8 +161,8 @@ average_nyear_window <- function(x,
     if (is.null(dim(y))) {
       y <- array(
         y,
-        dim = c(cell = dim(x)[["cell"]], 1),
-        dimnames = list(cell = dimnames(x)[["cell"]], 1)
+        dim = c(cell = dim(x)[["cell"]], year = 1),
+        dimnames = list(cell = dimnames(x)[["cell"]], year = "year")
       )
     }
   }

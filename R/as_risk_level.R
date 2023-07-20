@@ -30,19 +30,36 @@ as_risk_level <- function(control_variable, type = "continuous") {
   if (type == "continuous") {
     # pb value normalized to 0-1, 1 is the
     # threshold between safe and increasing risk, >1 is transgressed
-    risk_level <- (control_variable - thresholds[["hol"]]) /
-                  (thresholds[["pb"]] - thresholds[["hol"]])
+    if (class(thresholds) == "list") {
+      risk_level <- (control_variable - thresholds[["holocene"]]) /
+                  (thresholds[["pb"]] - thresholds[["holocene"]])
+    } else if (class(thresholds) == "array") {
+      risk_level <- (control_variable - thresholds[[, , "holocene"]]) /
+                  (thresholds[[, , "pb"]] - thresholds[[, , "holocene"]])
+    }
 
   } else if (type == "discrete") {
     # init array based on control_variable
     risk_level <- control_variable
-    # high risk
-    risk_level[control_variable >= thresholds[["highrisk"]]] <- 3
-    # increasing risk
-    risk_level[control_variable < thresholds[["highrisk"]] &
-               control_variable >= thresholds[["pb"]]] <- 2
-    # safe zone
-    risk_level[control_variable < thresholds[["pb"]]] <- 1
+    if (class(thresholds) == "list") {
+      # high risk
+      risk_level[control_variable >= thresholds[["highrisk"]]] <- 3
+      # increasing risk
+      risk_level[control_variable < thresholds[["highrisk"]] &
+                 control_variable >= thresholds[["pb"]]] <- 2
+      # safe zone
+      risk_level[control_variable < thresholds[["pb"]]] <- 1
+    } else if (class(thresholds) == "array") {
+      # high risk
+      risk_level[control_variable >= thresholds[, , "highrisk"]] <- 3
+      # increasing risk
+      risk_level[control_variable < thresholds[, , "highrisk"] &
+                 control_variable >= thresholds[, , "pb"]] <- 2
+      # safe zone
+      risk_level[control_variable < thresholds[, , "pb"]] <- 1
+      risk_level[is.na(thresholds[, , "pb"])] <- 0
+
+    }
     # non applicable cells
     risk_level[is.na(control_variable)] <- 0
   }

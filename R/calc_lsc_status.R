@@ -72,18 +72,17 @@ calc_lsc_status <- function(files_scenario,
                             ) {
 
 
-
-
   # Filter out method and thresholds arguments from ellipsis
   ellipsis_filtered <- list(...)
   ellipsis_filtered$method <- NULL
   ellipsis_filtered$thresholds <- NULL
 
   # classify biomes based on foliage projected cover (FPC) output
-  do.call(classify_biomes,
+  biome_classes <- do.call(classify_biomes,
           append(list(files_reference = files_reference,
                       time_span_reference = time_span_reference,
-                      avg_nyear_args = avg_nyear_args),
+                      avg_nyear_args = avg_nyear_args,
+                      montane_arctic_proxy = NULL),
                  ellipsis_filtered))
 
   biome_classes <- biome_classes$biome_id
@@ -113,14 +112,14 @@ calc_lsc_status <- function(files_scenario,
       silent = TRUE
       ) %>%
       lpjmlkit::transform(to = c("year_month_day")) %>%
-      as_array()
+      lpjmlkit::as_array()
   fpc_reference <- lpjmlkit::read_io(
       files_reference$fpc,
       subset = list(year = time_span_reference),
       silent = TRUE
       ) %>%
       lpjmlkit::transform(to = c("year_month_day")) %>%
-      as_array()
+      lpjmlkit::as_array()
 
   fpc_nbands <- dim(fpc_scenario)[["band"]]
   npft <- fpc_nbands - 1
@@ -133,7 +132,7 @@ calc_lsc_status <- function(files_scenario,
     dplyr::filter(., npft_proxy == npft)
 
   # add band names for clm outputs
-  if(lpjmlkit::detect_io_type(files_reference$fpc) == "clm") {
+  if (lpjmlkit::detect_io_type(files_reference$fpc) == "clm") {
     fpc_names <- dplyr::filter(pft_categories, category == "natural")$pft
     dimnames(fpc_scenario)$band <- c("natural stand fraction", fpc_names)
     dimnames(fpc_reference)$band <- c("natural stand fraction", fpc_names)
@@ -204,25 +203,25 @@ calc_lsc_status <- function(files_scenario,
   # init forest type mask (tropical:1, temperate:2, boreal:3)
   forest_type <- is_forest
 
-  # 8 forest biomes
+  # forest biomes
   is_forest[biome_classes %in% dplyr::filter(biome_mapping,
                                              category == "forest"
                                             )$id] <- 1
 
-  # 2 tropical forest biomes
+  # tropical forest biomes
   is_tropical_forest[biome_classes %in% dplyr::filter(biome_mapping,
                                              category == "forest" &
                                              zone == "tropical"
                                             )$id] <- 1
   forest_type[which(is_tropical_forest == 1)] <- 1
-  # 4 temperate forest biomes
+  # temperate forest biomes
   is_temperate_forest[biome_classes %in% dplyr::filter(biome_mapping,
                                              category == "forest" &
                                              zone == "temperate"
                                             )$id] <- 1
   forest_type[which(is_temperate_forest == 1)] <- 2
 
-  # 2 boreal forest biomes
+  # boreal forest biomes
   is_boreal_forest[biome_classes %in% dplyr::filter(biome_mapping,
                                              category == "forest" &
                                              zone == "boreal"
@@ -279,53 +278,28 @@ calc_lsc_status <- function(files_scenario,
   if (spatial_resolution %in% c("grid", "subglobal")) {
     # init threshold array with NA = no data and initial dimensions + threshold
     # dimension
+
+    pb_thresholds <- highrisk_thresholds <- holocene_thresholds <-
+      array(NA, dim = dim(deforestation), dimnames = dimnames(deforestation))
+
+    pb_thresholds[forest_type == 1] <- thresholds$pb$tropical
+    pb_thresholds[forest_type == 2] <- thresholds$pb$temperate
+    pb_thresholds[forest_type == 3] <- thresholds$pb$boreal
+    highrisk_thresholds[forest_type == 1] <- thresholds$highrisk$tropical
+    highrisk_thresholds[forest_type == 2] <- thresholds$highrisk$temperate
+    highrisk_thresholds[forest_type == 3] <- thresholds$highrisk$boreal
+    holocene_thresholds[forest_type == 1] <- thresholds$holocene$tropical
+    holocene_thresholds[forest_type == 2] <- thresholds$holocene$temperate
+    holocene_thresholds[forest_type == 3] <- thresholds$holocene$boreal
+
     dim_names <- dimnames(deforestation)
     dim_names$thresholds <- names(thresholds)
     threshold_attr <- array(NA,
                        dim = c(dim(deforestation), length(names(thresholds))),
                        dimnames = dim_names)
-    ## tropical forest
-    # high risk
-    threshold_attr[
-      is_tropical_forest, "highrisk"
-    ] <- thresholds$highrisk$tropical
-    # pb
-    threshold_attr[
-      is_tropical_forest, "pb"
-    ] <- thresholds$pb$tropical
-    # holocene
-    threshold_attr[
-      is_tropical_forest, "holocene"
-    ] <- thresholds$holocene$tropical
-
-    ## temperate forest
-    # high risk
-      # high risk
-    threshold_attr[
-      is_temperate_forest, "highrisk"
-    ] <- thresholds$highrisk$temperate
-    # pb
-    threshold_attr[
-      is_temperate_forest, "pb"
-    ] <- thresholds$pb$temperate
-    # holocene
-    threshold_attr[
-      is_temperate_forest, "holocene"
-    ] <- thresholds$holocene$temperate
-
-    ## boreal forest
-    # high risk
-    threshold_attr[
-      is_boreal_forest, "highrisk"
-    ] <- thresholds$highrisk$boreal
-    # pb
-    threshold_attr[
-      is_boreal_forest, "pb"
-    ] <- thresholds$pb$boreal
-    # holocene
-    threshold_attr[
-      is_boreal_forest, "holocene"
-    ] <- thresholds$holocene$boreal
+    threshold_attr[, , "pb"] <- pb_thresholds
+    threshold_attr[, , "highrisk"] <- highrisk_thresholds
+    threshold_attr[, , "holocene"] <- holocene_thresholds
 
     attr(deforestation, "thresholds") <- threshold_attr
 
@@ -333,7 +307,8 @@ calc_lsc_status <- function(files_scenario,
     #TODO: thresholds to be read in from yml file if not explicitely defined
 
     dim_remain <- names(dim(deforestation))[names(dim(deforestation)) != "cell"]
-    deforestation <- apply(deforestation[is_forest], dim_remain, mean)
+    deforestation[is_forest == 0] <- NA
+    deforestation <- apply(deforestation, dim_remain, mean, na.rm = TRUE)
     attr(deforestation, "thresholds") <- thresholds
 
   }

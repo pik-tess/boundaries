@@ -60,6 +60,7 @@ calc_status <- function(boundary,
                         diff_output_files = list(),
                         method = list(),
                         thresholds = list(),
+                        spatial_resolution,
                         in_parallel = TRUE,
                         ...) {
   # If in_parallel use future package for asynchronous parallelization
@@ -121,6 +122,7 @@ calc_status <- function(boundary,
           files_reference = files_reference,
           time_span_scenario = time_span_scenario,
           time_span_reference = time_span_reference,
+          spatial_resolution = spatial_resolution,
           avg_nyear_args = avg_nyear_args,
           method = if (length(method[[bound]]) > 0) method[[bound]],
           thresholds = if (length(thresholds[[bound]]) > 0) thresholds[[bound]]

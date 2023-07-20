@@ -197,7 +197,7 @@ calc_bluewater_status <- function(files_scenario,
     #   if ratio is above >75% transgression (red)
     # define PB thresholds as attributes
     if (is.null(thresholds)) {
-      thresholds <- c(holocene = 0,
+      thresholds <- list(holocene = 0,
                         pb = 0.05,
                         highrisk = 0.75)
     }
