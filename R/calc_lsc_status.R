@@ -29,15 +29,18 @@
 #'        Defaults to `TRUE`
 #'
 #' @param thresholds list with deforestation thresholds for defining safe,
-#' increasing risk and high risk zone for temperate/temperate/boreal forest
-#' biomes, Default based on Steffen et al. 2015
-#' (https://doi.org/10.1126/science.1259855):
-#' list(boreal = list(pb = 0.5, highrisk = 0.7),
-#'      temperate = list(pb = 0.15, highrisk = 0.4),
-#'      tropical = list(pb = 0.15, highrisk = 0.4))
-#' pb = threshold between safe zone and increasing risk zone (e.g. 50% for
-#'         boreal forest with default value)
-#' highrisk = threshold between increasing risk and high risk zone
+#'        increasing risk and high risk zone
+#'        Default based on Steffen et al. 2015 if thresholds set to NULL
+#'        (https://doi.org/10.1126/science.1259855):
+#'        for gridded and biome scale application:
+#'        list(pb = list(temperate = 0.5, tropical = 0.15, boreal = 0.15),
+#'             highrisk = list(temperate = 0.7, tropical = 0.4, boreal = 0.4))
+#'        for global scale application:
+#'        list(holocene = 0, pb = 0.25, highrisk = 0.46)
+#'        pb = threshold between safe zone and increasing risk zone
+#'             (e.g. 50% for boreal forest with default value)
+#'        highrisk = threshold between increasing risk and high risk zone
+#' 
 #'
 #' @param avg_nyear_args list of arguments to be passed to
 #'        \link[pbfunctions]{average_nyear_window} (see for more info).
@@ -58,15 +61,7 @@ calc_lsc_status <- function(files_scenario,
                             time_span_reference = NULL,
                             spatial_resolution = "subglobal",
                             eurasia = TRUE,
-                            thresholds = list(holocene = list(temperate = 0,
-                                                              tropical = 0,
-                                                              boreal = 0),
-                                              pb = list(temperate = 0.5,
-                                                        tropical = 0.15,
-                                                        boreal = 0.15),
-                                              highrisk = list(temperate = 0.7,
-                                                              tropical = 0.4,
-                                                              boreal = 0.4)),
+                            thresholds = NULL,
                             avg_nyear_args = list(),
                             ...
                             ) {
@@ -278,6 +273,14 @@ calc_lsc_status <- function(files_scenario,
   if (spatial_resolution %in% c("grid", "subglobal")) {
     # init threshold array with NA = no data and initial dimensions + threshold
     # dimension
+    if (is.null(thresholds)) {
+      thresholds <- list(holocene = list(temperate = 0, tropical = 0,
+                                          boreal = 0),
+                         pb = list(temperate = 0.5, tropical = 0.15,
+                                   boreal = 0.15),
+                         highrisk = list(temperate = 0.7, tropical = 0.4,
+                                         boreal = 0.4))
+    }
 
     pb_thresholds <- highrisk_thresholds <- holocene_thresholds <-
       array(NA, dim = dim(deforestation), dimnames = dimnames(deforestation))
@@ -305,7 +308,9 @@ calc_lsc_status <- function(files_scenario,
 
   } else if (spatial_resolution == "global") {
     #TODO: thresholds to be read in from yml file if not explicitely defined
-
+    if (is.null(thresholds)) {
+      thresholds <- list(holocene = 0, pb = 0.25, highrisk = 0.46)
+    }
     dim_remain <- names(dim(deforestation))[names(dim(deforestation)) != "cell"]
     deforestation[is_forest == 0] <- NA
     deforestation <- apply(deforestation, dim_remain, mean, na.rm = TRUE)
