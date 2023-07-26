@@ -222,14 +222,46 @@ calc_nitrogen_status <- function(files_scenario,
   } else if (spatial_resolution == "global") {
     # verify available methods
     method <- match.arg(method, c("schulte-uebbing2022"))
-   # TODO: add surplus method
-   # add needed outputs in yml file (all cropland inputs minus harvest)
-   # fertilizer, manure, deposition, bnf, seedn, minus harvest
+    # thresholds from rockström et al. 2023
+    # https://doi.org/10.1038/s41586-023-06083-8
+    # TODO: what to add for holocene value?
+    # TODO: also consider managed grassland?
+    if (is.null(thresholds)) {
+      thresholds <- list(holocene = 0, pb = 35, highrisk = 84)
+    }
+    # read n inputs/outputs
+    total_fert <- read_file(file = files_scenario$nfert_agr,
+                                      time_span_scenario)
+    total_man <- read_file(file = files_scenario$nmanure_agr,
+                                     time_span_scenario)
+    total_dep <- read_file(file = files_scenario$ndepo_agr,
+                                     time_span_scenario)
+    total_bnf <- read_file(file = files_scenario$bnf_agr,
+                                     time_span_scenario)
+    total_seed <- read_file(file = files_scenario$seedn_agr,
+                                      time_span_scenario)
+    nharvest <- read_file(file = files_scenario$harvestn_agr,
+                                 time_span_scenario)
+    # calc cellarea
+    #TODO to be replaced by landarea
+    cellarea <- lpjmlkit::read_io(files_scenario$grid) %>%
+                lpjmlkit::calc_cellarea()
 
+    # N surplus on cropland (n inputs minus n harvest)
+    # conversion to TgN/year
+    nsurplus <- (total_fert + total_man + total_dep + total_bnf + total_seed -
+                 nharvest) * cellarea * 10^-12
 
+    # average over time
+    avg_nsurplus <- do.call(average_nyear_window,
+                                  append(list(x = nsurplus),
+                                         avg_nyear_args))
 
+    # aggregate to global value
+    dim_remain <- names(dim(avg_nsurplus))[names(dim(avg_nsurplus)) != "cell"]
+    control_variable <- apply(avg_nsurplus, dim_remain, sum, na.rm = TRUE)
 
-
+    attr(control_variable, "thresholds") <- thresholds
   }
   return(control_variable)
 }

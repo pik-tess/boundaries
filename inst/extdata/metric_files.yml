@@ -81,6 +81,24 @@ metric:
             prec:
                 resolution: "monthly"
                 optional: true
+            nfert_agr:
+                resolution: "annual"
+                optional: false
+            nmanure_agr:
+                resolution: "annual"
+                optional: false
+            bnf_agr:
+                resolution: "annual"
+                optional: false
+            seedn_agr:
+                resolution: "annual"
+                optional: false
+            harvestn_agr:
+                resolution: "annual"
+                optional: false
+            ndepo_agr:
+                resolution: "annual"
+                optional: false
         # Called boundaries functions
         fun_name: "calc_nitrogen_status"
         funs: &nitrogen_fun
@@ -583,3 +601,9 @@ file_name:
     temp: ["temp", "mtemp"]
     pet: ["pet", "mpet"]
     prec: ["prec","mprec"]
+    nfert_agr: ["nfert_agr"]
+    nmanure_agr: ["nmanure_agr"]
+    bnf_agr: ["bnf_agr"]
+    seedn_agr: ["seedn_agr"]
+    harvestn_agr: ["harvestn_agr"]
+    ndepo_agr: ["ndepo_agr"]
