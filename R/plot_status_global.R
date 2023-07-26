@@ -1,0 +1,126 @@
+#' Plot the global status of planetary boundaries
+#'
+#' Plot line plots with the PB status over time  for
+#' a scenario LPJmL run and derived planetary boundary statuses
+#'
+#' @param file_name character string providing file name (including directory
+#' and file extension). Defaults to NULL (plotting to screen)
+#'
+#' @param status_data list with global output from calc_status
+#'
+#' @param colors named vector for definition of colors for plotting of
+#'        the safe, increasingnrisk and high risk zone
+#'
+#' @param all_in_one boolean, if TRUE, all PB stati will be normalized to 0
+#'         (holocene value) to 1 (pb) and plotted in one panel
+#'
+#' @param ncol number of plot columns (only relevant if more than one pb is
+#'        plotted and all_in_one = FALSE)
+#'
+#' @examples
+#' \dontrun{
+#'  plot_status(file_name = "./my_boundary_status.png",
+#'                 status_data = list("land system change" = lsc_status,
+#'                                    "nitrogen" = nitrogen_status,
+#'                                    "bluewater" = water_status),
+#'  legend = FALSE
+#'  bg_col = NA)
+#' }
+#'
+#' @md
+#' @export
+
+plot_status_global <- function(file_name = NULL,
+                        status_data = NULL,
+                        colors = c("safe zone" = '#e3f5ec',
+                                   "increasing risk" = '#fcf8d8',
+                                   "high risk" = '#f7e4dd'),
+                        all_in_one = FALSE,
+                        ncol = 2
+                        ) {
+
+  if (length(colors) != 3) {
+    stop(paste0("Length of color vector (", length(colors), ") incorrect. ",
+                 "Three colors have to be provided"))
+  }
+  if (all_in_one == TRUE) {
+    for (i in seq_len(length(status_data))) {
+      status_data[[i]] <- as_risk_level(status_data[[i]], type = "continuous")
+    }
+  }
+
+  data_tibble <- as_tibble(status_data)
+  data_tibble$years <- as.numeric(names(status_data[[1]]))
+  data_tibble <- tidyr::pivot_longer(data_tibble, !years, names_to = "pb",
+    values_to = "values")
+
+
+
+  if (length(status_data) == 1 || all_in_one == TRUE) {
+    n_col <- 1
+  } else {
+    n_col <- ncol
+  }
+  if (!is.null(file_name)) {
+    file_extension <- strsplit(file_name, split = "\\.")[[1]][-1] %>%
+                      tail(1)
+    switch(file_extension,
+      `png` = {
+        png(file_name,
+            width = 9 * n_col,
+            height = 7 * ceiling(length(status_data) / ncol),
+            units = "cm",
+            res = 600,
+            pointsize = 7)
+      },
+      `pdf` = {
+        pdf(file_name,
+            width = 9 * n_col / 2.54,
+            height = 7 * ceiling(length(status_data) / ncol) / 2.54,
+            pointsize = 7)
+      }, {
+        stop("File extension ", dQuote(file_extension), " not supported.")
+      }
+    )
+  }
+
+  if (all_in_one == TRUE) {
+    plot <- ggplot2::ggplot(data_tibble, ggplot2::aes(x = years, y = values,
+                                                      col = pb)) +
+         ggplot2::geom_rect(aes(xmin = -Inf, xmax = Inf, ymin = -Inf,
+                                ymax = 1), alpha = 1,
+                            fill = colors[["safe zone"]], col = NA) +
+         ggplot2::geom_rect(aes(xmin = -Inf, xmax = Inf, ymin = 1,
+                   ymax = max(values) + max(values) * 0.05),
+                   alpha = 1, fill = colors[["increasing risk"]], col = NA) +
+         ggplot2::geom_hline(yintercept = 1, linetype = 2, col = "grey") +
+         ggplot2::geom_line() +
+         ggplot2::scale_y_continuous(limits = c(0, c(max(data_tibble$values) +
+                                          max(data_tibble$values) * 0.05)),
+                            expand = c(0, 0), breaks = c(0, 1),
+                            labels = c("holocene", "pb")) +
+         ggplot2::scale_x_continuous(limits = range(data_tibble$years),
+                            expand = c(0, 0)) +
+         ggplot2::theme_classic(base_line_size = 0.25, base_rect_size = 0.25) +
+         ggplot2::theme(legend.title = element_blank()) +
+         theme(panel.border = element_rect(colour = "#6b6767", fill = NA,
+                                           size = 0.5)) +
+         theme(axis.title = element_blank())
+  } else (
+    #TODO more complicated: facet grid with flexible sizes of rectangles
+    # (withthresholds from attribute!) + axis
+    # also give as attribute the control variable name?
+    plot <- ggplot2::ggplot(data_tibble, ggplot2::aes(x = years, y = values,
+                                                      group = pb)) +
+         ggplot2::geom_line() +
+         ggplot2::facet_wrap(~ pb, ncol = ncol, scales = "free")+
+         ggplot2::theme_classic(base_line_size = 0.25, base_rect_size = 0.25) +
+         theme(axis.title.x = element_blank()) +
+         ylab("status of control variable") +
+         theme(panel.border = element_rect(colour = "#6b6767", fill = NA,
+                                           size = 0.5))
+
+  )
+  print(plot)
+  if (!is.null(file_name)) dev.off()
+}
