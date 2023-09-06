@@ -180,14 +180,17 @@ calc_lsc_status <- function(files_scenario,
   }
 
   # average forest over time
-  avg_trees_reference <- do.call(average_nyear_window,
-                                   append(list(x = all_tree_cover_reference),
-                                          avg_nyear_args))
+  # TODO should the timeframe be static or the same as for the scenario?
+  # --> both options should be implemented
+  avg_trees_reference <- apply(all_tree_cover_reference, "cell", mean)
+                                  # do.call(average_nyear_window,
+                                  # append(list(x = all_tree_cover_reference),
+                                  #        avg_nyear_args))
 
   # binary is forest biome - mask
   is_forest <- array(0,
-                     dim = dim(avg_trees_reference),
-                     dimnames = dimnames(avg_trees_reference))
+                     dim = dim(avg_trees_scenario),
+                     dimnames = dimnames(avg_trees_scenario))
 
   # binary is tropical forest biome - mask
   is_tropical_forest <- is_forest
@@ -304,7 +307,8 @@ calc_lsc_status <- function(files_scenario,
     threshold_attr[, , "highrisk"] <- highrisk_thresholds
     threshold_attr[, , "holocene"] <- holocene_thresholds
 
-    attr(deforestation, "thresholds") <- threshold_attr
+    control_variable <- deforestation
+    attr(control_variable, "thresholds") <- threshold_attr
 
   } else if (spatial_resolution == "global") {
     #TODO: thresholds to be read in from yml file if not explicitely defined
@@ -313,12 +317,12 @@ calc_lsc_status <- function(files_scenario,
     }
     dim_remain <- names(dim(deforestation))[names(dim(deforestation)) != "cell"]
     deforestation[is_forest == 0] <- NA
-    deforestation <- apply(deforestation, dim_remain, mean, na.rm = TRUE)
-    attr(deforestation, "thresholds") <- thresholds
+    control_variable <- apply(deforestation, dim_remain, mean, na.rm = TRUE)
+    attr(control_variable, "thresholds") <- thresholds
 
   }
 
-  return(deforestation)
+  return(control_variable)
 }
 
 read_biome_mapping <- function(file_path) {

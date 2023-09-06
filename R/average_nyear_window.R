@@ -73,7 +73,7 @@ average_nyear_window <- function(x,
   if (!is.null(nyear_window)) {
     if (!is.null(nyear_reference)) {
       orig_x <- x
-      x <- lpjmlKit::asub(x, year = 1:nyear_reference)
+      x <- lpjmlkit::asub(x, year = 1:nyear_reference)
     }
     # only valid for nyear_window <  years of x (dim(x)[3])
     if (nyear_window > 1 & nyear_window <= dim(x)["year"]) {

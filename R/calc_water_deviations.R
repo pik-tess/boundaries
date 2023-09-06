@@ -188,7 +188,22 @@ calc_water_status <- function(file_scenario,
                          probs = thresholds[["pb"]], na.rm = TRUE)
     area_holocene <- quantile(ref_depart$wet_or_dry,
                          probs = thresholds[["holocene"]], na.rm = TRUE)
-    control_variable <- mean(scen_depart$wet_or_dry)
+
+    # transform to array for compatability with average_nyear_window
+    # TODO better implement option in average_nyear_window to work with one
+    # dimensional arrays (hard coded cell = 1)
+    # alternative: apply the moving average funtion already to var_scenario?
+    scen_depart_array <- array(scen_depart$wet_or_dry,
+                               dim = c(cell = 1,
+                                       year = length(scen_depart$wet_or_dry)
+                                       ),
+                               dimnames = list(cell = 1,
+                                               year = names(scen_depart$wet_or_dry)
+                                               )) #dummy cell dimension
+
+    control_variable <- do.call(average_nyear_window,
+                                      append(list(x = scen_depart_array),
+                                             avg_nyear_args))[1, ]
 
     attr(control_variable, "thresholds") <- list(holocene = area_holocene,
                                               pb = area_pb,

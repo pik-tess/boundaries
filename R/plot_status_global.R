@@ -49,7 +49,7 @@ plot_status_global <- function(file_name = NULL,
     }
   }
 
-  data_tibble <- as_tibble(status_data)
+  data_tibble <- tidyr::as_tibble(status_data)
   data_tibble$years <- as.numeric(names(status_data[[1]]))
   data_tibble <- tidyr::pivot_longer(data_tibble, !years, names_to = "pb",
     values_to = "values")
@@ -102,25 +102,64 @@ plot_status_global <- function(file_name = NULL,
          ggplot2::scale_x_continuous(limits = range(data_tibble$years),
                             expand = c(0, 0)) +
          ggplot2::theme_classic(base_line_size = 0.25, base_rect_size = 0.25) +
-         ggplot2::theme(legend.title = element_blank()) +
-         theme(panel.border = element_rect(colour = "#6b6767", fill = NA,
-                                           size = 0.5)) +
-         theme(axis.title = element_blank())
-  } else (
-    #TODO more complicated: facet grid with flexible sizes of rectangles
-    # (withthresholds from attribute!) + axis
-    # also give as attribute the control variable name?
-    plot <- ggplot2::ggplot(data_tibble, ggplot2::aes(x = years, y = values,
-                                                      group = pb)) +
-         ggplot2::geom_line() +
-         ggplot2::facet_wrap(~ pb, ncol = ncol, scales = "free")+
-         ggplot2::theme_classic(base_line_size = 0.25, base_rect_size = 0.25) +
-         theme(axis.title.x = element_blank()) +
-         ylab("status of control variable") +
-         theme(panel.border = element_rect(colour = "#6b6767", fill = NA,
-                                           size = 0.5))
+         ggplot2::theme(legend.title = ggplot2::element_blank()) +
+         ggplot2::theme(panel.border = ggplot2::element_rect(colour = "#6b6767",
+                                                    fill = NA, size = 0.5)) +
+         ggplot2::theme(axis.title = element_blank())
+  } else {
+  # create dataframe for plotting of pb specific background filling
+    pb_thresh <- highrisk_thresh <- holocene <- numeric(length(status_data))
+    for (i in seq_len(length(status_data))) {
+      pb_thresh[i] <-  as.numeric(attr(status_data[[i]], "thresholds")[["pb"]])
+      highrisk_thresh[i] <- as.numeric(
+                              attr(status_data[[i]], "thresholds")[["highrisk"]]
+                            )
+      holocene[i] <- as.numeric(
+                       attr(status_data[[i]], "thresholds")[["holocene"]]
+                     )
+    }
 
-  )
+    df_bg <- data.frame(
+               pb = unique(data_tibble$pb),
+               pb_thresh = pb_thresh,
+               highrisk_thresh = highrisk_thresh,
+               holocene = holocene,
+               years = data_tibble$years[1:length(unique(data_tibble$pb))],
+               values = data_tibble$values[1:length(unique(data_tibble$pb))]
+             )
+    # plot background
+    plot <- ggplot2::ggplot() +
+      ggplot2::geom_rect(data = df_bg, ggplot2::aes(
+                                        xmin = -Inf, xmax = +Inf,
+                                        ymin = holocene, ymax = pb_thresh),
+                         fill = "#e3f5ec", alpha = 0.8) +
+      ggplot2::geom_rect(data = df_bg, ggplot2::aes(xmin = -Inf, xmax = +Inf,
+                                        ymin = pb_thresh,
+                                        ymax = highrisk_thresh),
+                         fill = "#fcf8d8", alpha = 0.8) +
+      ggplot2::geom_rect(data = df_bg, ggplot2::aes(
+                                            xmin = -Inf, xmax = +Inf,
+                                            ymin = highrisk_thresh,
+                                            ymax = +Inf),
+                           fill = "#f7e4dd", alpha = 0.8) +
+      ggplot2::scale_y_continuous(expand = c(0, NA))
+     #ggplot2::coord_cartesian(ylim = c(0, pb_thresh + 3 * (holocene - pb_thresh)))
+    
+    # plot pb status timeseries
+    #TODO y axis name needs to be pb specific (as attribute of status_data)
+    #TODO PB itself should be at the same position in all plots
+    plot <- plot +
+         ggplot2::geom_line(data = data_tibble,
+                            ggplot2::aes(x = years, y = values, group = pb),
+                            col = "#8e8a8a") +
+         ggplot2::facet_wrap(~ pb, ncol = ncol, scales = "free") +
+         ggplot2::theme_classic(base_line_size = 0.25, base_rect_size = 0.25) +
+         ggplot2::theme(axis.title.x = ggplot2::element_blank()) +
+         ggplot2::ylab("status of control variable") +
+         ggplot2::theme(panel.border = ggplot2::element_rect(colour = "#6b6767",
+                                                    fill = NA, size = 0.5))
+
+  }
   print(plot)
   if (!is.null(file_name)) dev.off()
 }
