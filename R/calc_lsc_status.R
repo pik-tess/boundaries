@@ -319,6 +319,7 @@ calc_lsc_status <- function(files_scenario,
     deforestation[is_forest == 0] <- NA
     control_variable <- apply(deforestation, dim_remain, mean, na.rm = TRUE)
     attr(control_variable, "thresholds") <- thresholds
+    attr(control_variable, "control variable") <- "deforestation"
 
   }
 

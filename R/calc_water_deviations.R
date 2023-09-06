@@ -208,6 +208,7 @@ calc_water_status <- function(file_scenario,
     attr(control_variable, "thresholds") <- list(holocene = area_holocene,
                                               pb = area_pb,
                                               highrisk = area_high_risk)
+    attr(control_variable, "control variable") <- "area with wet/dry departures (%)"
 
   }
   return(control_variable)

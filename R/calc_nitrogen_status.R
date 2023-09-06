@@ -262,6 +262,8 @@ calc_nitrogen_status <- function(files_scenario,
     control_variable <- apply(avg_nsurplus, dim_remain, sum, na.rm = TRUE)
 
     attr(control_variable, "thresholds") <- thresholds
+    attr(control_variable, "control variable") <-
+      "nitrogen surplus on agricultural land"
   }
   return(control_variable)
 }

@@ -108,7 +108,8 @@ plot_status_global <- function(file_name = NULL,
          ggplot2::theme(axis.title = element_blank())
   } else {
   # create dataframe for plotting of pb specific background filling
-    pb_thresh <- highrisk_thresh <- holocene <- numeric(length(status_data))
+    pb_thresh <- highrisk_thresh <- holocene <- ylabel <-
+      numeric(length(status_data))
     for (i in seq_len(length(status_data))) {
       pb_thresh[i] <-  as.numeric(attr(status_data[[i]], "thresholds")[["pb"]])
       highrisk_thresh[i] <- as.numeric(
@@ -117,6 +118,8 @@ plot_status_global <- function(file_name = NULL,
       holocene[i] <- as.numeric(
                        attr(status_data[[i]], "thresholds")[["holocene"]]
                      )
+      ylabel[i] <-  attr(status_data[[i]], "control variable")
+      names(ylabel)[i] <- names(status_data)[i]
     }
 
     df_bg <- data.frame(
@@ -142,6 +145,9 @@ plot_status_global <- function(file_name = NULL,
                                             ymin = highrisk_thresh,
                                             ymax = +Inf),
                            fill = "#f7e4dd", alpha = 0.8) +
+      ggplot2::geom_hline(data = df_bg,
+                          mapping = ggplot2::aes(yintercept = pb_thresh),
+                          linetype = 2, col = "grey") +
       ggplot2::scale_y_continuous(expand = c(0, NA))
      #ggplot2::coord_cartesian(ylim = c(0, pb_thresh + 3 * (holocene - pb_thresh)))
     
@@ -152,10 +158,20 @@ plot_status_global <- function(file_name = NULL,
          ggplot2::geom_line(data = data_tibble,
                             ggplot2::aes(x = years, y = values, group = pb),
                             col = "#8e8a8a") +
-         ggplot2::facet_wrap(~ pb, ncol = ncol, scales = "free") +
+         ggplot2::facet_wrap(~ pb, ncol = ncol, scales = "free",
+                             labeller = as_labeller(ylabel),
+                             strip.position = "left") +
+         ggplot2::geom_label(data = data_tibble,
+                             mapping = ggplot2::aes(x = -Inf, y = Inf,
+                                                    label = pb),
+                             hjust = 0.09, vjust = 0.8, size = 3.5,
+                             label.padding = unit(0.75, "lines")
+                             ) +
          ggplot2::theme_classic(base_line_size = 0.25, base_rect_size = 0.25) +
          ggplot2::theme(axis.title.x = ggplot2::element_blank()) +
-         ggplot2::ylab("status of control variable") +
+         ggplot2::ylab("") +
+         theme(strip.background = element_blank(),
+               strip.placement = "outside") +
          ggplot2::theme(panel.border = ggplot2::element_rect(colour = "#6b6767",
                                                     fill = NA, size = 0.5))
 
