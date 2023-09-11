@@ -36,10 +36,7 @@
 #' @export
 
 plot_status <- function(file_name = NULL,
-                        status_data = list("biosphere" = NA,
-                                           "lsc" = NA,
-                                           "bluewater" = NA,
-                                           "nitrogen" = NA),
+                        status_data = NULL,
                         colors = c("safe zone" = "#74bca9e1",
                                    "increasing risk" = "#f6ee0f",
                                    "high risk" = "#e23a50"),
@@ -72,10 +69,7 @@ plot_status <- function(file_name = NULL,
       { if(to_robinson) sp::spTransform(., sp::CRS("+proj=robin")) else . } # nolint
 
   pb_names <- names(status_data)
-
-  not_na <- !is.na(status_data)
-
-  plot_nat <- to_raster(lpjml_array = array(0, length(status_data[[which(not_na)[1]]])), # nolint
+  plot_nat <- to_raster(lpjml_array = array(0, length(status_data[[1]])), # nolint
                         boundary_box = bounding_box,
                         ext = lpjml_extent,
                         to_robinson = to_robinson)
