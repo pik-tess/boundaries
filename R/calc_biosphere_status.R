@@ -332,23 +332,27 @@ calc_biosphere_status <- function(files_scenario,
                                          savanna_proxy = NULL),
                                     ellipsis_filtered))
     # initialize control variable vector
-    control_variable <- biocol$biocol*0
+    control_variable_raw <- biocol$biocol*0
     for (b in sort(unique(biome_classes$biome_id))){
       biome_cells <- which(biome_classes$biome_id == b)
       if (length(biome_cells) > 1){
-        control_variable[biome_cells,] <- colSums(abs(biocol$biocol)[biome_cells,])/
+        control_variable_raw[biome_cells,] <- colSums(abs(biocol$biocol)[biome_cells,])/
           sum(rowMeans(biocol$npp_ref[biome_cells,]))
       } else if (length(biome_cells) == 1){
-        control_variable[biome_cells,] <- abs(biocol$biocol)[biome_cells,]/
+        control_variable_raw[biome_cells,] <- abs(biocol$biocol)[biome_cells,]/
           mean(biocol$npp_ref[biome_cells,])
       }
     }
 
   } else if (spatial_resolution == "global") {
-    control_variable <- biocol$biocol_overtime_abs_frac_piref
+    control_variable_raw <- biocol$biocol_overtime_abs_frac_piref
   }else{
     stop(paste("Unknown value for spatial_resolution: ", spatial_resolution))
   }
+  # average runoff
+  control_variable <- do.call(average_nyear_window,
+                        append(list(x = control_variable_raw),
+                               avg_nyear_args))
   attr(control_variable, "thresholds") <- thresholds
   return(control_variable)
 
