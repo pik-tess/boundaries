@@ -173,13 +173,6 @@ calc_water_status <- function(file_scenario,
   # -------------------------------------------------------------------------- #
   } else if (spatial_resolution == "global") {
 
-    # thresholds for translation into pb status, set to default if thresholds
-    # are not explicitely defined
-    if (is.null(thresholds)) {
-      thresholds <- c(holocene = 0.5,
-                        pb = 0.95,
-                        highrisk = 0.99)
-    }
 
     # calculate areas corresponding to the quantiles defined in thresholds
     area_high_risk <- quantile(ref_depart$wet_or_dry,

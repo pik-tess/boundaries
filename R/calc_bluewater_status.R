@@ -274,11 +274,7 @@ calc_bluewater_status <- function(files_scenario,
     #   if ratio is above >5%: within uncertainty range (yellow)
     #   if ratio is above >75% transgression (red)
     # define PB thresholds as attributes
-    if (is.null(thresholds)) {
-      thresholds <- list(holocene = 0,
-                        pb = 0.05,
-                        highrisk = 0.75)
-      }
+
       attr(pb_status, "thresholds") <- thresholds
 
   } else if (method %in% c("wang-erlandsson2022", "porkka2023")) {

@@ -219,7 +219,7 @@ calc_nitrogen_status <- function(files_scenario,
 
   } else if (spatial_resolution == "global") {
     # verify available methods
-    method <- match.arg(method, c("schulte-uebbing2022"))
+    method <- match.arg(method, c("schulte_uebbing2022"))
     # thresholds from rockström et al. 2023
     # https://doi.org/10.1038/s41586-023-06083-8
     # TODO: what to add for holocene value?

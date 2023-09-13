@@ -127,26 +127,26 @@ metric:
                 braun2022_minusref:
                     <<: *braun2022_n
             global:
-                schulte-uebbing2022:
+                schulte_uebbing2022:
                     output:    
                         nfert_agr:
                             resolution: "annual"
-                            optional: true
+                            optional: false
                         nmanure_agr:
                             resolution: "annual"
-                            optional: true
+                            optional: false
                         bnf_agr:
                             resolution: "annual"
-                            optional: true
+                            optional: false
                         seedn_agr:
                             resolution: "annual"
-                            optional: true
+                            optional: false
                         harvestn_agr:
                             resolution: "annual"
-                            optional: true
+                            optional: false
                         ndepo_agr:
                             resolution: "annual"
-                            optional: true
+                            optional: false
                     threshold:
                         holocene: 0
                         pb: 35
