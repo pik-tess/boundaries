@@ -62,6 +62,7 @@ calc_lsc_status <- function(files_scenario,
                             spatial_resolution = "subglobal",
                             eurasia = TRUE,
                             thresholds = NULL,
+                            method = "steffen2015", #TODO add switch
                             avg_nyear_args = list(),
                             ...
                             ) {
@@ -97,7 +98,7 @@ calc_lsc_status <- function(files_scenario,
   cell_area <- lpjmlkit::read_io(
       files_reference$grid,
       silent = TRUE
-      ) %>% 
+      ) %>%
       lpjmlkit::calc_cellarea()
 
   # read fpc
@@ -115,7 +116,6 @@ calc_lsc_status <- function(files_scenario,
       ) %>%
       lpjmlkit::transform(to = c("year_month_day")) %>%
       lpjmlkit::as_array()
-
   fpc_nbands <- dim(fpc_scenario)[["band"]]
   npft <- fpc_nbands - 1
 
@@ -162,7 +162,7 @@ calc_lsc_status <- function(files_scenario,
   )
   # sum tree pfts for forest cover
   all_tree_cover_scenario <- apply(tree_cover_scenario,
-                                     c("cell", "year"),
+                                     c("cell", "year"), #TODO not working for 1 year
                                      sum,
                                      na.rm = TRUE)
   all_tree_cover_reference <- apply(tree_cover_reference,
@@ -276,14 +276,6 @@ calc_lsc_status <- function(files_scenario,
   if (spatial_resolution %in% c("grid", "subglobal")) {
     # init threshold array with NA = no data and initial dimensions + threshold
     # dimension
-    if (is.null(thresholds)) {
-      thresholds <- list(holocene = list(temperate = 0, tropical = 0,
-                                          boreal = 0),
-                         pb = list(temperate = 0.5, tropical = 0.15,
-                                   boreal = 0.15),
-                         highrisk = list(temperate = 0.7, tropical = 0.4,
-                                         boreal = 0.4))
-    }
 
     pb_thresholds <- highrisk_thresholds <- holocene_thresholds <-
       array(NA, dim = dim(deforestation), dimnames = dimnames(deforestation))
@@ -311,10 +303,6 @@ calc_lsc_status <- function(files_scenario,
     attr(control_variable, "thresholds") <- threshold_attr
 
   } else if (spatial_resolution == "global") {
-    #TODO: thresholds to be read in from yml file if not explicitely defined
-    if (is.null(thresholds)) {
-      thresholds <- list(holocene = 0, pb = 0.25, highrisk = 0.46)
-    }
     dim_remain <- names(dim(deforestation))[names(dim(deforestation)) != "cell"]
     deforestation[is_forest == 0] <- NA
     control_variable <- apply(deforestation, dim_remain, mean, na.rm = TRUE)

@@ -27,7 +27,7 @@
 #'        method is `c("wang-erlandsson2022")` based on
 #'        [Wang-Erlandsson et al. 2022](https://doi.org/10.1038/s43017-022-00287-8)
 #'        (referring only to the driest/wettest month of each year) or
-#'        `porkka_2023` based on
+#'        `porkka2023` based on
 #'        [Porkka et al. 2023](https://eartharxiv.org/repository/view/3438/)
 #'        (referring to each month of a year; default)
 #'
@@ -47,10 +47,10 @@
 #' @param spatial_resolution character string indicating spatial resolution
 #'        either "grid" for calculation of number of years with transgression
 #'        (for wang-erlandsson2022: dim(ncell, nyears);
-#'         for porkka_2023: dim(ncell, nyears, months)) or
+#'         for porkka2023: dim(ncell, nyears, months)) or
 #'        "global" for calculation of the share (%) of total global area with
 #'        deviations (either one value per year (wang-erlandsson2022) or one
-#'        value per year and month (porkka_2023))
+#'        value per year and month (porkka2023))
 #'
 #' @param avg_nyear_args list of arguments to be passed to
 #'        \link[pbfunctions]{average_nyear_window} (see for more info).
@@ -69,7 +69,7 @@ calc_water_status <- function(file_scenario,
                               grid_path,
                               time_span_scenario = as.character(1982:2011),
                               time_span_reference,
-                              method = "porkka_2023",
+                              method = "porkka2023",
                               thresholds = NULL,
                               avg_nyear_args = list(),
                               spatial_resolution = "grid") {
@@ -117,7 +117,7 @@ calc_water_status <- function(file_scenario,
     if (method == "wang-erlandsson2022") {
       trials <- c(length(time_span_reference), length(time_span_scenario))
       # TODO adapt for timeseries analysis
-    } else if (method == "porkka_2023") {
+    } else if (method == "porkka2023") {
       # calculate number of months within the time_span
       trials <- c(length(time_span_reference) * 12,
                    length(time_span_scenario) * 12)
@@ -226,7 +226,7 @@ calc_baseline <- function(file_reference, method) {
   if (method == "wang-erlandsson2022") {
     dry_base_yr <- apply(file_reference, c(1, 3), min)
     wet_base_yr <- apply(file_reference, c(1, 3), max)
-  } else if (method == "porkka_2023") {
+  } else if (method == "porkka2023") {
     dry_base_yr <- wet_base_yr <- file_reference
   }
   # calc 5% and 95% percentile for each cell
@@ -253,7 +253,7 @@ calc_departures <- function(data, grid_path, quants,
     # driest/ wettest month per gridcell for each year -> ignores which month
     dry <- apply(data, c("cell", "year"), min)
     wet <- apply(data, c("cell", "year"), max)
-  } else if (method == "porkka_2023") {
+  } else if (method == "porkka2023") {
     dry <- wet <- dry_or_wet <- data
   }
 

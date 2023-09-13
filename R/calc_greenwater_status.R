@@ -27,17 +27,17 @@
 #'        method is `c("wang-erlandsson2022")` based on
 #'        [Wang-Erlandsson et al. 2022](https://doi.org/10.1038/s43017-022-00287-8)
 #'        (referring only to the driest/wettest month of each year) or
-#'        `porkka_2023` based on
+#'        `porkka2023` based on
 #'        [Porkka et al. 2023](https://eartharxiv.org/repository/view/3438/)
 #'        (referring to each month of a year)
 #' 
 #' @param spatial_resolution character string indicating spatial resolution
 #'        either "grid" for calculation of number of years with transgression
 #'        (for wang-erlandsson2022: dim(ncell, nyears);
-#'         for porkka_2023: dim(ncell, nyears, months)) or
+#'         for porkka2023: dim(ncell, nyears, months)) or
 #'        "global" for calculation of the share (%) of total global area with
 #'        deviations (either one value per year (wang-erlandsson2022) or one
-#'        value per year and month (porkka_2023))
+#'        value per year and month (porkka2023))
 #'
 #' #' @param thresholds named character string with thresholds to be used to
 #'        define the safe, increasing risk and high risk zone,
@@ -70,7 +70,7 @@ calc_greenwater_status <- function(files_scenario,
                                    thresholds = NULL
                                    ) {
    # verify available methods
-  method <- match.arg(method, c("wang-erlandsson2022", "porkka_2023"))
+  method <- match.arg(method, c("wang-erlandsson2022", "porkka2023"))
    # verify available spatial resolution
   spatial_resolution <- match.arg(spatial_resolution, c("grid", "global"))
   # TODO not yet compatible with avg_nyear_args

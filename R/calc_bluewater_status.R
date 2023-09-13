@@ -39,10 +39,10 @@
 #'        options: "global", "basin", "grid"
 #'        either "grid" for calculation of number of years with transgression
 #'        (for wang-erlandsson2022: dim(ncell, nyears);
-#'         for porkka_2023: dim(ncell, nyears, months)) or
+#'         for porkka2023: dim(ncell, nyears, months)) or
 #'        "global" for calculation of the share (%) of total global area with
 #'        deviations (either one value per year (wang-erlandsson2022) or one
-#'        value per year and month (porkka_2023)) - note: not applied for
+#'        value per year and month (porkka2023)) - note: not applied for
 #'        the method "gerten2020" (only at the grid cell level)
 #'        TODO: check if this parameter is correctly specified, if not global
 #'
@@ -81,7 +81,7 @@ calc_bluewater_status <- function(files_scenario,
   # verify available methods and resolution
   method <- match.arg(method, c("gerten2020",
                                 "wang-erlandsson2022",
-                                "porkka_2023"))
+                                "porkka2023"))
   spatial_resolution <- match.arg(spatial_resolution, c("global",
                                 "basin", "grid"))
   #todo: discuss
@@ -281,7 +281,7 @@ calc_bluewater_status <- function(files_scenario,
       }
       attr(pb_status, "thresholds") <- thresholds
 
-  } else if (method %in% c("wang-erlandsson2022", "porkka_2023")) {
+  } else if (method %in% c("wang-erlandsson2022", "porkka2023")) {
     #TODO also account for cut_min?
     pb_status <- calc_water_status(
      file_scenario = files_scenario$discharge,
