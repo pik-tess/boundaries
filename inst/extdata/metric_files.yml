@@ -83,22 +83,22 @@ metric:
                 optional: true
             nfert_agr:
                 resolution: "annual"
-                optional: false
+                optional: true
             nmanure_agr:
                 resolution: "annual"
-                optional: false
+                optional: true
             bnf_agr:
                 resolution: "annual"
-                optional: false
+                optional: true
             seedn_agr:
                 resolution: "annual"
-                optional: false
+                optional: true
             harvestn_agr:
                 resolution: "annual"
-                optional: false
+                optional: true
             ndepo_agr:
                 resolution: "annual"
-                optional: false
+                optional: true
         # Called boundaries functions
         fun_name: "calc_nitrogen_status"
         funs: &nitrogen_fun
