@@ -4,41 +4,68 @@
 metric:
     # Biome classification
     biome:
-        # LPJmL output IDs with required resolution
-        output: &biome_output
-            grid:
-                resolution: "annual"
-                optional: false
-            fpc:
-                resolution: "annual"
-                optional: false
-            vegc:
-                resolution: "annual"
-                optional: true
-            pft_lai:
-                resolution: "annual"
-                optional: true
-            temp: 
-                resolution: "annual"
-                optional: true
-        # Called boundaries functions
-        fun_name: "classify_biomes"
-        funs: &biome_fun
-            - classify_biomes
+        spatial_resolution:
+            subglobal:
+                default: 
+                    # LPJmL output IDs with required resolution
+                    output: &biome_output
+                        grid:
+                            resolution: "annual"
+                            optional: false
+                        fpc:
+                            resolution: "annual"
+                            optional: false
+                        vegc:
+                            resolution: "annual"
+                            optional: true
+                        pft_lai:
+                            resolution: "annual"
+                            optional: true
+                        temp: 
+                            resolution: "annual"
+                            optional: true
+                    # Called boundaries functions
+                    fun_name: "classify_biomes"
+                    funs: &biome_fun
+                            - classify_biomes
 
     # Calculate bluewater boundary
     bluewater: &bluewater
-        # LPJmL output IDs with required resolution
-        output:
+        spatial_resolution: 
+            global:
+                wang-erlandsson2022: &wang-erlandsson2022_bw
+                   # LPJmL output IDs with required resolution
+                   output:
+                       grid:
+                           resolution: "annual"
+                           optional: false
+                       discharge:
+                           resolution: "monthly"
+                           optional: false
+                   threshold:
+                       holocene: 0.5
+                       pb: 0.95
+                       highrisk: 0.99
+                porkka2023: 
+                    <<: *wang-erlandsson2022_bw
             grid:
-                resolution: "annual"
-                optional: false
-            discharge:
-                resolution: "monthly"
-                optional: false
-            irrig: 
-                resolution: "monthly"
-                optional: true
+                wang-erlandsson2022: *wang-erlandsson2022_bw
+                porkka2023: *wang-erlandsson2022_bw
+                gerten2020:
+                    output:
+                        grid:
+                            resolution: "annual"
+                            optional: false
+                        discharge:
+                            resolution: "monthly"
+                            optional: false
+                        irrig: 
+                           resolution: "monthly"
+                           optional: true
+                    threshold:
+                        holocene: 0
+                        pb: 0.05
+                        highrisk: 0.75
         fun_name: "calc_bluewater_status"
         # Called boundaries functions
         funs:
@@ -46,17 +73,26 @@ metric:
 
     # Calculate greenwater boundary
     greenwater: &greenwater
-        # LPJmL output IDs with required resolution
-        output:
+        spatial_resolution: 
+            global:
+                wang-erlandsson2022: &wang-erlandsson2022_bw
+                   # LPJmL output IDs with required resolution
+                   output:
+                       grid:
+                           resolution: "annual"
+                           optional: false
+                       rootmoist:
+                           resolution: "monthly"
+                           optional: false
+                   threshold:
+                       holocene: 0.5
+                       pb: 0.95
+                       highrisk: 0.99
+                porkka2023: 
+                    <<: *wang-erlandsson2022_bw #TODO correct?
             grid:
-                resolution: "annual"
-                optional: false
-            rootmoist:
-                resolution: "monthly"
-                optional: false
-            swc:
-                resolution: "monthly"
-                optional: true
+                wang-erlandsson2022: *wang-erlandsson2022_bw
+                porkka2023: *wang-erlandsson2022_bw
         # Called boundaries functions#
         fun_name: "calc_greenwater_status"
         funs:
@@ -64,41 +100,57 @@ metric:
 
     # Calculate nitrogen boundary
     nitrogen: &nitrogen
-        # LPJmL output IDs with required resolution
-        output:
+        spatial_resolution:
             grid:
-                resolution: "annual"
-                optional: false
-            runoff:
-                resolution: "monthly"
-                optional: false
-            leaching:
-                resolution: "monthly"
-                optional: false
-            pet:
-                resolution: "monthly"
-                optional: false
-            prec:
-                resolution: "monthly"
-                optional: true
-            nfert_agr:
-                resolution: "annual"
-                optional: true
-            nmanure_agr:
-                resolution: "annual"
-                optional: true
-            bnf_agr:
-                resolution: "annual"
-                optional: true
-            seedn_agr:
-                resolution: "annual"
-                optional: true
-            harvestn_agr:
-                resolution: "annual"
-                optional: true
-            ndepo_agr:
-                resolution: "annual"
-                optional: true
+                braun2022: &braun2022_n
+                    # LPJmL output IDs with required resolution
+                    output:
+                        grid:
+                            resolution: "annual"
+                            optional: false
+                        runoff:
+                            resolution: "monthly"
+                            optional: false
+                        leaching:
+                            resolution: "monthly"
+                            optional: false
+                        pet:
+                            resolution: "monthly"
+                            optional: false
+                        prec:
+                            resolution: "monthly"
+                            optional: true
+                    threshold:
+                        holocene: 0
+                        pb: 2
+                        highrisk: 5
+                braun2022_minusref:
+                    <<: *braun2022_n
+            global:
+                schulte_uebbing2022:
+                    output:    
+                        nfert_agr:
+                            resolution: "annual"
+                            optional: false
+                        nmanure_agr:
+                            resolution: "annual"
+                            optional: false
+                        bnf_agr:
+                            resolution: "annual"
+                            optional: false
+                        seedn_agr:
+                            resolution: "annual"
+                            optional: false
+                        harvestn_agr:
+                            resolution: "annual"
+                            optional: false
+                        ndepo_agr:
+                            resolution: "annual"
+                            optional: false
+                    threshold:
+                        holocene: 0
+                        pb: 35
+                        highrisk: 84
         # Called boundaries functions
         fun_name: "calc_nitrogen_status"
         funs: &nitrogen_fun
@@ -106,147 +158,90 @@ metric:
 
     # Calculate lsc boundary
     lsc: &lsc
-        # LPJmL output IDs with required resolution
-        output:
-            <<: *biome_output
+        spatial_resolution:
+            global:
+                steffen2015: 
+                    # LPJmL output IDs with required resolution
+                    output:
+                        <<: *biome_output
+                    threshold: 
+                        holocene: 0
+                        pb: 0.25
+                        highrisk: 0.46    
+            subglobal:
+                steffen2015: &steffen2015_lsc
+                    # LPJmL output IDs with required resolution
+                    output:
+                        <<: *biome_output
+                    threshold:
+                        holocene:
+                            boreal: 0
+                            temperate: 0
+                            tropical: 0
+                        pb:
+                            boreal: 0.15
+                            temperate: 0.5
+                            tropical: 0.15
+                        highrisk:
+                            boreal: 0.4
+                            temperate: 0.7
+                            tropical: 0.4
+            grid:
+                steffen2015:
+                   <<: *steffen2015_lsc 
         fun_name: "calc_lsc_status"
         funs:
             - *biome_fun
             - calc_lsc_status
 
 
-    # Calculate meco
-    meco:
-        # LPJmL output IDs with required resolution
-        output: &meco_output
+    # Calculate biosphere status based on biocol
+    biosphere:
+        spatial_resolution:
+            global:
+                stenzel2023: &stenzel2023_biosphere
+                    # LPJmL output IDs with required resolution
+                    output:
+                        grid:
+                            resolution: "annual"
+                            optional: false
+                        npp:
+                            resolution: "annual"
+                            optional: false
+                        pft_npp:
+                            resolution: "annual"
+                            optional: false
+                        pft_harvestc:
+                            resolution: "annual"
+                            optional: false
+                        pft_rharvestc:
+                            resolution: "annual"
+                            optional: false
+                        firec:
+                            resolution: "annual"
+                            optional: false
+                        timber_harvestc:
+                            resolution: "annual"
+                            optional: false
+                        cftfrac:
+                            resolution: "annual"
+                            optional: false
+                        fpc:
+                            resolution: "annual"
+                            optional: false     
+                    threshold:
+                        holocene: 0
+                        pb: 0.1
+                        highrisk: 0.2
+            subglobal:
+                <<: *stenzel2023_biosphere
             grid:
-                resolution: "annual"
-                optional: false
-            fpc:
-                resolution: "annual"
-                optional: false
-            fpc_bft:
-                resolution: "annual"
-                optional: false
-            cftfrac:
-                resolution: "annual"
-                optional: false
-            firec:
-                resolution: "annual"
-                optional: false
-            npp:
-                resolution: "annual"
-                optional: false
-            runoff:
-                resolution: "annual"
-                optional: false
-            transp:
-                resolution: "annual"
-                optional: false
-            vegc:
-                resolution: "annual"
-                optional: false
-            firef:
-                resolution: "annual"
-                optional: false
-            rh:
-                resolution: "annual"
-                optional: false
-            harvestc:
-                resolution: "annual"
-                optional: false
-            evap:
-                resolution: "annual"
-                optional: false
-            interc:
-                resolution: "annual"
-                optional: false
-            soilc:
-                resolution: "annual"
-                optional: false
-            litc:
-                resolution: "annual"
-                optional: false
-            swc:
-                resolution: "annual"
-                optional: false
+                <<: *stenzel2023_biosphere
+              
         # Called boundaries functions
-        fun_name: null
-        funs: &meco_output
-            []
-
-    # Calculate meco_nitrogen
-    meco_nitrogen:
-        # LPJmL output IDs with required resolution
-        output:
-            <<: *meco_output
-            vegn:
-                resolution: "annual"
-                optional: false
-            soilnh4:
-                resolution: "annual"
-                optional: false
-            soilno3:
-                resolution: "annual"
-                optional: false
-            leaching:
-                resolution: "annual"
-                optional: false
-            n2o_denit:
-                resolution: "annual"
-                optional: false
-            n2o_nit:
-                resolution: "annual"
-                optional: false
-            n2_emis:
-                resolution: "annual"
-                optional: false
-            bnf:
-                resolution: "annual"
-                optional: false
-            n_volatilization:
-                resolution: "annual"
-                optional: false
-        # Called boundaries functions
-        fun_name: null
+        fun_name: "calc_biosphere_integrity"
         funs:
-            []
-
-    # Calculate mcol
-    mcol:
-        # LPJmL output IDs with required resolution
-        output:
-            grid:
-                resolution: "annual"
-                optional: false
-            npp:
-                resolution: "annual"
-                optional: false
-            pft_npp:
-                resolution: "annual"
-                optional: false
-            pft_harvestc:
-                resolution: "annual"
-                optional: false
-            pft_rharvestc:
-                resolution: "annual"
-                optional: false
-            firec:
-                resolution: "annual"
-                optional: false
-            timber_harvestc:
-                resolution: "annual"
-                optional: false
-            cftfrac:
-                resolution: "annual"
-                optional: false
-            fpc:
-                resolution: "annual"
-                optional: false
-        # Called boundaries functions
-        fun_name: null
-        funs:
-            []
+            - calc_biosphere_integrity
 
     benchmark:
         grid:

@@ -72,7 +72,7 @@ calc_status <- function(boundary,
     }
     on.exit(future::plan(future_plan))
   }
-  
+
   # verify available spatial resolution
   spatial_resolution <- match.arg(spatial_resolution, c("global", "subglobal",
                                                         "grid"))
@@ -81,7 +81,7 @@ calc_status <- function(boundary,
   file_ext <- get_file_ext(path_scenario)
 
   # List required output files for each boundary
-  output_files <- list_outputs(boundary,
+  output_files <- list_outputs(boundary, method, spatial_resolution,
                                only_first_filename = FALSE)
 
   # Get filenames for scenario and reference
@@ -110,7 +110,7 @@ calc_status <- function(boundary,
   for (bound in boundary) {
     fun_name <- paste0("calc_", bound, "_status")
 
-    # Get arguments for each boundary function
+   # Get arguments for each boundary function
     sub_dots <- get_dots(fun_name, fun_args, dot_args)
     check_args[names(sub_dots)] <- NULL
 
@@ -123,10 +123,14 @@ calc_status <- function(boundary,
       avg_nyear_args = avg_nyear_args
     )
     if (length(method[[bound]]) > 0) {
-      inner_args$method <- method[[bound]]
+      inner_args$method <- method_i <- method[[bound]]
+    } else {
+      method_i <- formals(get(fun_name))$method
     }
     if (length(thresholds[[bound]]) > 0) {
       inner_args$thresholds <- thresholds[[bound]]
+    } else {
+      inner_args$thresholds <- list_thresholds(bound, method_i, spatial_resolution)
     }
     # Calculate status
     all_status[[bound]] <- do.call(

@@ -20,7 +20,7 @@
 #'
 #' }
 #' @export
-list_outputs <- function(metric = "all",
+list_outputs <- function(metric = "all", method, spatial_resolution,
                          only_first_filename = TRUE) {
 
   metric <- process_metric(metric = metric)
@@ -31,7 +31,7 @@ list_outputs <- function(metric = "all",
     package = "boundaries"
   ) %>%
     yaml::read_yaml() %>%
-    get_outputs(metric, only_first_filename)
+    get_outputs(metric, method, spatial_resolution, only_first_filename)
 
 }
 
@@ -53,7 +53,7 @@ list_function_args <- function(metric = "all") {
 # Translate metric options into internal metric names
 process_metric <- function(metric = "all") {
   all_metrics <- c(
-    "meco", "meco_nitrogen", "mcol", "biome", "nitrogen", "lsc",
+    "biome", "nitrogen", "lsc",
     "bluewater", "greenwater", "water", "biosphere"
   )
 
@@ -77,14 +77,29 @@ process_metric <- function(metric = "all") {
 
 # for input list a, all duplicate keys are unified, taking the value with
 #     highest temporal resolution (daily>monthly>annual)
-get_outputs <- function(x, metric_name, only_first_filename) {
+get_outputs <- function(x, metric_name, method, spatial_resolution,
+                        only_first_filename) {
 
   outputs <- list()
   # Iterate over all metrics
+  i <- 0
   for (metric in x$metric[metric_name]) {
+    i <- i + 1
+    boundary_name <- metric_name[i]
+    if (length(method[[boundary_name]]) > 0) {
+      method_i <- method[[boundary_name]]
+    } else {
+      method_i <- formals(get(paste0("calc_", boundary_name, "_status")))$method
+    }
+    if (length(spatial_resolution) > 0) {
+      spatial_resolution_i <- spatial_resolution
+    } else {
+      spatial_resolution_i <- formals(get(paste0("calc_", boundary_name,
+                                                 "_status")))$spatial_resolution
+    }
 
     # Iterate over all unique keys
-    for (item in names(metric$output)) {
+    for (item in names(metric$spatial_resolution[[spatial_resolution_i]][[method_i]]$output)) { #nolint
 
       # Check if output is already in list or if it has higher resolution
       if (!item %in% names(outputs) ||
@@ -93,8 +108,8 @@ get_outputs <- function(x, metric_name, only_first_filename) {
                       outputs[[item]]$resolution))
       ) {
         # Assign output resolution from metric file
-        outputs[[item]]$resolution <- metric$output[[item]]$resolution
-        outputs[[item]]$optional <- metric$output[[item]]$optional
+        outputs[[item]]$resolution <- metric$spatial_resolution[[spatial_resolution_i]][[method_i]]$output[[item]]$resolution #nolint
+        outputs[[item]]$optional <- metric$spatial_resolution[[spatial_resolution_i]][[method_i]]$output[[item]]$optional #nolint
         # Assign output file name from metric file
         if (only_first_filename) {
           outputs[[item]]$file_name <- x$file_name[[item]][1]
@@ -137,4 +152,18 @@ higher_res <- function(x, y) {
   } else {
     return(FALSE)
   }
+}
+
+list_thresholds <- function(metric, method, spatial_resolution) {
+    metric <- process_metric(metric = metric)
+
+    yaml_data <- system.file(
+      "extdata",
+      "metric_files.yml",
+      package = "boundaries"
+    ) %>%
+      yaml::read_yaml()
+
+    return(yaml_data$metric[[metric]]$spatial_resolution[[spatial_resolution]][[method]]$threshold)
+
 }

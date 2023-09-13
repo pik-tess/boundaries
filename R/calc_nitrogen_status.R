@@ -42,9 +42,7 @@
 #' 
 #' @param thresholds list with highrisk and pb threshold for N concentration
 #' (mg N/l) in runoff to surface water
-#' Default: highrisk = 2.5, pb = 1
-#' (based on de Vries et al. 2013, https://doi.org/10.1016/j.cosust.2013.07.004)
-#' Alternative: highrisk = 5, pb = 2
+#' Default: highrisk = 5, pb = 2
 #' (based on Schulte-Uebbing et al. 2022,
 #' https://doi.org/10.1038/s41586-022-05158-2:
 #' "we used a threshold for N concentration in run-off to surface water. This
@@ -68,8 +66,8 @@ calc_nitrogen_status <- function(files_scenario,
                                  time_span_scenario = as.character(1982:2011),
                                  time_span_reference = NULL,
                                  method = "braun2022",
-                                 thresholds = list(pb = 2, highrisk = 5),
-                                 spatial_resolution,
+                                 thresholds = NULL,
+                                 spatial_resolution = "grid",
                                  cut_arid = 0.2,
                                  cut_runoff = 0,
                                  with_groundwater_denit = TRUE,
@@ -221,14 +219,12 @@ calc_nitrogen_status <- function(files_scenario,
 
   } else if (spatial_resolution == "global") {
     # verify available methods
-    method <- match.arg(method, c("schulte-uebbing2022"))
+    method <- match.arg(method, c("schulte_uebbing2022"))
     # thresholds from rockström et al. 2023
     # https://doi.org/10.1038/s41586-023-06083-8
     # TODO: what to add for holocene value?
     # TODO: also consider managed grassland?
-    if (is.null(thresholds)) {
-      thresholds <- list(holocene = 0, pb = 35, highrisk = 84)
-    }
+
     # read n inputs/outputs
     total_fert <- read_file(file = files_scenario$nfert_agr,
                                       time_span_scenario)
