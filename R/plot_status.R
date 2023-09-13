@@ -35,11 +35,11 @@
 #' @md
 #' @export
 
-plot_status <- function(file_name = NULL,
-                        status_data = list("biosphere" = NA,
+plot_status <- function(status_data = list("biosphere" = NA,
                                            "lsc" = NA,
                                            "bluewater" = NA,
                                            "nitrogen" = NA),
+                        file_name = NULL,
                         colors = c("safe zone" = "#74bca9e1",
                                    "increasing risk" = "#f6ee0f",
                                    "high risk" = "#e23a50"),
@@ -74,7 +74,6 @@ plot_status <- function(file_name = NULL,
   pb_names <- names(status_data)
 
   not_na <- !is.na(status_data)
-
   plot_nat <- to_raster(lpjml_array = array(0, length(status_data[[which(not_na)[1]]])), # nolint
                         boundary_box = bounding_box,
                         ext = lpjml_extent,
@@ -123,7 +122,7 @@ plot_status <- function(file_name = NULL,
     )
   }
   textcex <- 0.5 + 0.125 * (n_row + n_col)
-  par(mar = rep(0, 4), xpd = TRUE, bg = bg_col)
+  # par(mar = rep(0, 4), xpd = TRUE, bg = bg_col)
   brk <- c(-1:4)
   cols <- c("grey92", colors, "darkgrey")
 
@@ -137,6 +136,7 @@ plot_status <- function(file_name = NULL,
     # with discrete scale
     plot_data <- status_data[[i]] %>%
       as_risk_level(type = "discrete")
+
     # convert lpjml vector to raster with robinson projection
     plotvar <- to_raster(lpjml_array = plot_data,
                          boundary_box = bounding_box,

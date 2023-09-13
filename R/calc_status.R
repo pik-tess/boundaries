@@ -113,20 +113,26 @@ calc_status <- function(boundary,
     # Get arguments for each boundary function
     sub_dots <- get_dots(fun_name, fun_args, dot_args)
     check_args[names(sub_dots)] <- NULL
+
+    inner_args <- list(
+      files_scenario = files_scenario,
+      files_reference = files_reference,
+      time_span_scenario = time_span_scenario,
+      time_span_reference = time_span_reference,
+      spatial_resolution = spatial_resolution,
+      avg_nyear_args = avg_nyear_args
+    )
+    if (length(method[[bound]]) > 0) {
+      inner_args$method <- method[[bound]]
+    }
+    if (length(thresholds[[bound]]) > 0) {
+      inner_args$thresholds <- thresholds[[bound]]
+    }
     # Calculate status
     all_status[[bound]] <- do.call(
       fun_name,
       args = c(
-        list(
-          files_scenario = files_scenario,
-          files_reference = files_reference,
-          time_span_scenario = time_span_scenario,
-          time_span_reference = time_span_reference,
-          spatial_resolution = spatial_resolution,
-          avg_nyear_args = avg_nyear_args,
-          method = if (length(method[[bound]]) > 0) method[[bound]],
-          thresholds = if (length(thresholds[[bound]]) > 0) thresholds[[bound]]
-        ),
+        inner_args,
         sub_dots
       )
     )
