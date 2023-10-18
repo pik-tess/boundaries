@@ -39,7 +39,6 @@ list_outputs <- function(metric = "all", method, spatial_resolution,
 list_function_args <- function(metric = "all") {
 
   metric <- process_metric(metric = metric)
-
   system.file(
     "extdata",
     "metric_files.yml",
@@ -125,7 +124,6 @@ get_outputs <- function(x, metric_name, method, spatial_resolution,
 
 # Get arguments of functions used in metrics
 get_function_args <- function(x, metric_name) {
-
   # List functions of metrics (metric_name)
   funs <- list()
 
