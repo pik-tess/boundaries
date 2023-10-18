@@ -205,6 +205,9 @@ metric:
                         grid:
                             resolution: "annual"
                             optional: false
+                        terr_area:
+                            resolution: "annual"
+                            optional: false
                         npp:
                             resolution: "annual"
                             optional: false
@@ -563,6 +566,7 @@ metric:
 # ---------------------------------------------------------------------------- #
 file_name:
     grid: ["grid"]
+    terr_area: ["terr_area"]
     discharge: ["discharge", "mdischarge"]
     irrig: ["irrig", "mirrig"]
     rootmoist:  ["rootmoist", "mrootmoist"]
