@@ -56,8 +56,8 @@ pb_bi_grid <- calc_biosphere_status(files_scenario = files_scenario,
                                spatial_resolution = "grid",
                                thresholds = NULL,
                                gridbased = T,
-                               npp_threshold = 20
-)
+                               npp_threshold = 20)
+
 pb_bi_global <- calc_biosphere_status(files_scenario = files_scenario,
                                     files_reference = files_reference,
                                     files_baseline = files_baseline,
