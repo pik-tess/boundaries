@@ -347,11 +347,10 @@ calc_biosphere_status <- function(files_scenario,
 
   } else if (spatial_resolution == "global") {
     control_variable_raw <- biocol$biocol_overtime_abs_frac_piref
-    dim(control_variable_raw) <-
+    #dim(control_variable_raw) <-
   }else{
     stop(paste("Unknown value for spatial_resolution: ", spatial_resolution))
   }
-  browser()
   # average runoff
   control_variable <- do.call(average_nyear_window,
                         append(list(x = control_variable_raw),
