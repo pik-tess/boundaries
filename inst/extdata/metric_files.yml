@@ -234,14 +234,17 @@ metric:
                         pb: 0.1
                         highrisk: 0.2
             subglobal:
-                <<: *stenzel2023_biosphere
+                stenzel2023:
+                    <<: *stenzel2023_biosphere
             grid:
-                <<: *stenzel2023_biosphere
+                stenzel2023:
+                    <<: *stenzel2023_biosphere
               
         # Called boundaries functions
-        fun_name: "calc_biosphere_integrity"
+        fun_name: "calc_biosphere_status"
         funs:
-            - calc_biosphere_integrity
+            - *biome_fun
+            - calc_biosphere_status
 
     benchmark:
         grid:
@@ -589,8 +592,8 @@ file_name:
     bnf: ["bnf", "mbnf"]
     n_volatilization: ["n_volatilization", "mn_volatilization"]
     pft_npp: ["pft_npp"]
-    pft_harvestc: ["pft_harvestc"]
-    pft_rharvestc: ["pft_rharvestc"]
+    pft_harvestc: ["pft_harvestc", "pft_harvest.pft"]
+    pft_rharvestc: ["pft_rharvestc", "pft_rharvest.pft"]
     timber_harvestc: ["timber_harvestc"]
     pft_lai: ["pft_lai", "mpft_lai"]
     temp: ["temp", "mtemp"]
