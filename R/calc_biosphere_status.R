@@ -108,6 +108,7 @@ calc_biosphere_status <- function(files_scenario,
                                     ellipsis_filtered))
     # initialize control variable vector
     control_variable_raw <- biocol$biocol*0
+
     for (b in sort(unique(biome_classes$biome_id))){
       biome_cells <- which(biome_classes$biome_id == b)
       if (length(biome_cells) > 1){
@@ -118,10 +119,15 @@ calc_biosphere_status <- function(files_scenario,
           mean(biocol$npp_ref[biome_cells,])
       }
     }
-
   } else if (spatial_resolution == "global") {
-    control_variable_raw <- biocol$biocol_overtime_abs_frac_piref
-    #dim(control_variable_raw) <-
+    # add dummy cell dimension
+    control_variable_raw <- array(biocol$biocol_overtime_abs_frac_piref,
+                               dim = c(cell = 1,
+                                       year = length(biocol$biocol_overtime_abs_frac_piref)
+                               ),
+                               dimnames = list(cell = 1,
+                                               year = names(biocol$biocol_overtime_abs_frac_piref)
+                               ))
   }else{
     stop(paste("Unknown value for spatial_resolution: ", spatial_resolution))
   }
@@ -129,6 +135,10 @@ calc_biosphere_status <- function(files_scenario,
   control_variable <- do.call(average_nyear_window,
                         append(list(x = control_variable_raw),
                                avg_nyear_args))
+  if (spatial_resolution == "global") {
+    # remove dummy cell dimension
+    control_variable <- control_variable[1,]
+  }
   attr(control_variable, "thresholds") <- thresholds
   return(control_variable)
 

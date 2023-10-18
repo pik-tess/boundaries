@@ -35,7 +35,7 @@ files_baseline <- list(grid = paste0(inFol_pnv,varnames["grid","outname"]),
 )
 files_reference <- list(npp = paste0(inFol_pnv,varnames["npp","outname"]))
 
-pb_bi <- calc_biosphere_status(files_scenario = files_scenario,
+pb_bi_subglobal <- calc_status(files_scenario = files_scenario,
                                files_reference = files_reference,
                                files_baseline = files_baseline,
                                time_span_scenario = as.character(2000:2016),
@@ -47,7 +47,7 @@ pb_bi <- calc_biosphere_status(files_scenario = files_scenario,
                                npp_threshold = 20)
 
 
-pb_bi_grid <- calc_biosphere_status(files_scenario = files_scenario,
+pb_bi_grid <- calc_status(files_scenario = files_scenario,
                                files_reference = files_reference,
                                files_baseline = files_baseline,
                                time_span_scenario = as.character(2000:2016),
@@ -67,12 +67,25 @@ pb_bi_global <- calc_biosphere_status(files_scenario = files_scenario,
                                     spatial_resolution = "global",
                                     thresholds = NULL,
                                     gridbased = T,
-                                    npp_threshold = 20
-)
-boundaries::plot_status(status_data = list(biosphere = pb_bi))
-lpjmliotools::plotGlobalManToScreen(data = pb_bi[,17], title = "pb biosphere",
+                                    npp_threshold = 20)
+
+pb_bi_grid <- calc_status(boundary = c("biosphere"),
+                      path_scenario = inFol_lu,
+                      path_reference = inFol_pnv,
+                      path_baseline = inFol_pnv,
+                      #files_baseline = list(npp = "/p/projects/open/Fabian/runs/metrics_202308/output/pnv_1500_2016/npp.bin.json"),
+                      time_span_scenario = as.character(2000:2016),
+                      time_span_reference = as.character(1510:1520),
+                      input_files = list(prec = "/p/projects/lpjml/input/historical/CRUDATA_TS3_23/gpcc_v7_cruts3_23_precip_1901_2013.clm",
+                                         temp = "/p/projects/lpjml/input/historical/CRUDATA_TS3_23/cru_ts3.23.1901.2014.tmp.dat.clm"),
+                      spatial_resolution = "grid",
+                      savanna_proxy = list(vegc = 7500))
+
+boundaries::plot_status(status_data = list(biosphere = pb_bi_grid))
+
+lpjmliotools::plotGlobalManToScreen(data = pb_bi_subglobal[,1], title = "pb biosphere subglobal",
                                     brks = c(0,0.1,0.2,1), palette = c("green","yellow","red"),
                                     legendtitle = "",legYes = T)
-lpjmliotools::plotGlobalManToScreen(data = pb_bi_grid[,17], title = "pb biosphere",
+lpjmliotools::plotGlobalManToScreen(data = pb_bi_grid[,1], title = "pb biosphere grid",
                                     brks = c(0,0.1,0.2,1), palette = c("green","yellow","red"),
                                     legendtitle = "",legYes = T)
