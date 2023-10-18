@@ -53,6 +53,7 @@
 calc_status <- function(boundary,
                         path_scenario,
                         path_reference = NULL,
+                        path_baseline = NULL,
                         time_span_scenario = as.character(1982:2011),
                         time_span_reference = time_span_scenario,
                         avg_nyear_args = list(),
@@ -100,6 +101,16 @@ calc_status <- function(boundary,
     file_ext = file_ext
   )
 
+  if (!is.null(path_baseline)) {
+    files_baseline <- get_filenames(
+      path = path_baseline,
+      output_files = output_files,
+      diff_output_files = diff_output_files,
+      input_files = input_files,
+      file_ext = file_ext
+    )
+  }
+
   # Get arguments for each boundary function
   fun_args <- list_function_args(boundary)
 
@@ -131,6 +142,9 @@ calc_status <- function(boundary,
       inner_args$thresholds <- thresholds[[bound]]
     } else {
       inner_args$thresholds <- list_thresholds(bound, method_i, spatial_resolution)
+    }
+    if (bound == "biosphere") {
+      inner_args$files_baseline <- files_baseline
     }
     # Calculate status
     all_status[[bound]] <- do.call(
