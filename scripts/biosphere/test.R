@@ -55,7 +55,18 @@ pb_bi_grid <- calc_biosphere_status(files_scenario = files_scenario,
                                gridbased = T,
                                npp_threshold = 20
 )
-boundaries::plot_status(status_data = list(biosphere = pb_bi[,17]))
+pb_bi_global <- calc_biosphere_status(files_scenario = files_scenario,
+                                    files_reference = files_reference,
+                                    files_baseline = files_baseline,
+                                    time_span_scenario = as.character(2000:2016),
+                                    time_span_baseline = as.character(2000:2016),
+                                    time_span_reference = as.character(1510:1520),
+                                    spatial_resolution = "global",
+                                    thresholds = NULL,
+                                    gridbased = T,
+                                    npp_threshold = 20
+)
+boundaries::plot_status(status_data = list(biosphere = pb_bi))
 lpjmliotools::plotGlobalManToScreen(data = pb_bi[,17], title = "pb biosphere",
                                     brks = c(0,0.1,0.2,1), palette = c("green","yellow","red"),
                                     legendtitle = "",legYes = T)
