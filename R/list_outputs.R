@@ -91,14 +91,14 @@ get_outputs <- function(x, metric_name, method, spatial_scale,
       method_i <- formals(get(paste0("calc_", boundary_name, "_status")))$method
     }
     if (length(spatial_scale) > 0) {
-      spatial_resolution_i <- spatial_scale
+      spatial_scale_i <- spatial_scale
     } else {
-      spatial_resolution_i <- formals(get(paste0("calc_", boundary_name,
+      spatial_scale_i <- formals(get(paste0("calc_", boundary_name,
                                                  "_status")))$spatial_scale
     }
 
     # Iterate over all unique keys
-    for (item in names(metric$spatial_scale[[spatial_resolution_i]][[method_i]]$output)) { #nolint
+    for (item in names(metric$spatial_scale[[spatial_scale_i]][[method_i]]$output)) { #nolint
 
       # Check if output is already in list or if it has higher resolution
       if (!item %in% names(outputs) ||
@@ -107,8 +107,8 @@ get_outputs <- function(x, metric_name, method, spatial_scale,
                       outputs[[item]]$resolution))
       ) {
         # Assign output resolution from metric file
-        outputs[[item]]$resolution <- metric$spatial_scale[[spatial_resolution_i]][[method_i]]$output[[item]]$resolution #nolint
-        outputs[[item]]$optional <- metric$spatial_scale[[spatial_resolution_i]][[method_i]]$output[[item]]$optional #nolint
+        outputs[[item]]$resolution <- metric$spatial_scale[[spatial_scale_i]][[method_i]]$output[[item]]$resolution #nolint
+        outputs[[item]]$optional <- metric$spatial_scale[[spatial_scale_i]][[method_i]]$output[[item]]$optional #nolint
         # Assign output file name from metric file
         if (only_first_filename) {
           outputs[[item]]$file_name <- x$file_name[[item]][1]

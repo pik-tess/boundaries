@@ -9,7 +9,7 @@ calc_lsc_status(
   files_reference,
   time_span_scenario = as.character(1982:2011),
   time_span_reference = NULL,
-  lsc_spatial_resolution = "biome",
+  lsc_spatial_scale = "biome",
   eurasia = TRUE,
   lsc_thresholds = list(temperate = list(lower = 0.5, upper = 0.7), boreal = list(lower =
     0.15, upper = 0.4), tropical = list(lower = 0.15, upper = 0.4)),
@@ -35,10 +35,10 @@ as an integer vector, e.g. \code{as.character(1901:1930)}. Can differ in offset
 and length from \code{time_span_scenario}! If \code{NULL} value of \code{time_span_scenario}
 is used}
 
-\item{lsc_spatial_resolution}{character. Spatial resolution, available options
+\item{lsc_spatial_scale}{character. Spatial resolution, available options
 are \code{"biome"} (default) and \code{"grid"}}
 
-\item{eurasia}{logical. If \code{lsc_spatial_resolution} = \code{"biome"} merge continents
+\item{eurasia}{logical. If \code{lsc_spatial_scale} = \code{"biome"} merge continents
 Europe and Asia to avoid arbitrary biome cut at europe/asia border.
 Defaults to \code{TRUE}}
 
