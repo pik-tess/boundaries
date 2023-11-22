@@ -78,7 +78,7 @@ classify_biomes <- function(path_reference = NULL,
     # List required output files for each boundary
     output_files <- list_outputs("biome",
                                  method = list("biome" = method),
-                                 spatial_resolution = "subglobal",
+                                 spatial_scale = "subglobal",
                                  only_first_filename = FALSE)
 
     files_reference <- get_filenames(

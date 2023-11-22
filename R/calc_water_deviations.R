@@ -113,7 +113,7 @@ calc_water_status <- function(file_scenario,
 
     control_variable <- do.call(average_nyear_window,
                                 append(list(x = scen_depart$wet_or_dry),
-                                       avg_nyear_args))[1, ]
+                                       avg_nyear_args))
 
     attr(control_variable, "thresholds") <- list(holocene = area_holocene,
                                                  pb = area_pb,
