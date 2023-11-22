@@ -6,7 +6,7 @@ metric:
     biome:
         spatial_resolution:
             subglobal:
-                default: 
+                default:
                     # LPJmL output IDs with required resolution
                     output: &biome_output
                         grid:
@@ -21,7 +21,7 @@ metric:
                         pft_lai:
                             resolution: "annual"
                             optional: true
-                        temp: 
+                        temp:
                             resolution: "annual"
                             optional: true
                     # Called boundaries functions
@@ -31,7 +31,7 @@ metric:
 
     # Calculate bluewater boundary
     bluewater: &bluewater
-        spatial_resolution: 
+        spatial_resolution:
             global:
                 wang-erlandsson2022: &wang-erlandsson2022_bw
                    # LPJmL output IDs with required resolution
@@ -79,7 +79,7 @@ metric:
                         discharge:
                             resolution: "monthly"
                             optional: false
-                        irrig: 
+                        irrig:
                            resolution: "monthly"
                            optional: true
                     threshold:
@@ -93,7 +93,7 @@ metric:
 
     # Calculate greenwater boundary
     greenwater: &greenwater
-        spatial_resolution: 
+        spatial_resolution:
             global:
                 wang-erlandsson2022: &wang-erlandsson2022_gw
                    # LPJmL output IDs with required resolution
@@ -215,14 +215,14 @@ metric:
     lsc: &lsc
         spatial_resolution:
             global:
-                steffen2015: 
+                steffen2015:
                     # LPJmL output IDs with required resolution
                     output:
                         <<: *biome_output
-                    threshold: 
+                    threshold:
                         holocene: 0
                         pb: 0.25
-                        highrisk: 0.46    
+                        highrisk: 0.46
             subglobal:
                 steffen2015: &steffen2015_lsc
                     # LPJmL output IDs with required resolution
@@ -243,7 +243,7 @@ metric:
                             tropical: 0.4
             grid:
                 steffen2015:
-                   <<: *steffen2015_lsc 
+                   <<: *steffen2015_lsc
         fun_name: "calc_lsc_status"
         funs:
             - *biome_fun
@@ -254,9 +254,9 @@ metric:
     biosphere:
         spatial_resolution:
             global:
-                stenzel2023: &stenzel2023_biosphere
+                stenzel2023:
                     # LPJmL output IDs with required resolution
-                    output:
+                    output: &stenzel2023_biosphere_output
                         grid:
                             resolution: "annual"
                             optional: false
@@ -286,18 +286,26 @@ metric:
                             optional: false
                         fpc:
                             resolution: "annual"
-                            optional: false     
-                    threshold:
+                            optional: false
+                    threshold: &stenzel2023_biosphere_threshold
                         holocene: 0
                         pb: 0.1
                         highrisk: 0.2
             subglobal:
                 stenzel2023:
-                    <<: *stenzel2023_biosphere
+                    output:
+                      <<: *biome_output
+                      <<: *stenzel2023_biosphere_output
+                    threshold:
+                      <<: *stenzel2023_biosphere_threshold
+
             grid:
                 stenzel2023:
-                    <<: *stenzel2023_biosphere
-              
+                    output:
+                      <<: *stenzel2023_biosphere_output
+                    threshold:
+                      <<: *stenzel2023_biosphere_threshold
+
         # Called boundaries functions
         fun_name: "calc_biosphere_status"
         funs:
