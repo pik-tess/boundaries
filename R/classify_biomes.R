@@ -374,25 +374,32 @@ classify_biomes <- function(path_reference = NULL,
   is_tropical_forest <- {
     fpc_tree_total >= min_tree_cover[["tropical forest"]]
   }
+
+  browser()
   # Boreal Evergreen
   is_boreal_evergreen <- {
     is_boreal_forest &
-      lpjmlkit::asub(
-        avg_fpc, band = "boreal needleleaved evergreen tree", drop = FALSE
+      abind::adrop(
+        lpjmlkit::asub(
+          avg_fpc, band = "boreal needleleaved evergreen tree", drop = FALSE
+        ),
+        "band"
       ) == max_share_trees
   }
+
 
   if (npft == 9) {
     # Boreal Broadleaved Deciduous
     # no simulation of boreal needleleaved summergreen trees
     is_boreal_broad_deciduous <- {
       is_boreal_forest &
-        (
+        abind::adrop(
           lpjmlkit::asub(
               avg_fpc,
               band = "boreal broadleaved summergreen tree", drop = FALSE
-            ) == max_share_trees
-        )
+          ),
+          "band"
+        )  == max_share_trees
     }
   } else {
     # Boreal Deciduous
