@@ -556,17 +556,9 @@ classify_biomes <- function(path_reference = NULL,
   }
 
   # CLASSIFY BIOMES ---------------------------------------------------------- #
-
   # initiate biome_class array
-  #TODO can be removed if time dimension is always kept
-  if (class(fpc_total) == "numeric") {
-    dims <- length(fpc_total)
-  } else {
-    dims <- dim(fpc_total)
-  }
-
   biome_class <- array(NA,
-                       dim = dims,
+                       dim = dim(fpc_total),
                        dimnames = dimnames(fpc_total))
 
   biome_class[is_desert] <- biome_names["Desert"]
