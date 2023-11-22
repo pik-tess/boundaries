@@ -377,9 +377,12 @@ classify_biomes <- function(path_reference = NULL,
   # Boreal Evergreen
   is_boreal_evergreen <- {
     is_boreal_forest &
-      lpjmlkit::asub(
-        avg_fpc, band = "boreal needleleaved evergreen tree", drop = FALSE
-      ) == max_share_trees
+      (abind::adrop(
+        lpjmlkit::asub(
+          avg_fpc, band = "boreal needleleaved evergreen tree", drop = FALSE
+        ),
+        drop = "band"
+      ) == max_share_trees)
   }
 
   if (npft == 9) {
@@ -387,97 +390,124 @@ classify_biomes <- function(path_reference = NULL,
     # no simulation of boreal needleleaved summergreen trees
     is_boreal_broad_deciduous <- {
       is_boreal_forest &
-        (
+        (abind::adrop(
           lpjmlkit::asub(
-              avg_fpc,
-              band = "boreal broadleaved summergreen tree", drop = FALSE
-            ) == max_share_trees
-        )
+            avg_fpc, band = "boreal broadleaved summergreen tree",
+            drop = FALSE
+          ),
+          drop = "band"
+        ) == max_share_trees)
     }
   } else {
     # Boreal Deciduous
     is_boreal_broad_deciduous <- {
       is_boreal_forest &
-        lpjmlkit::asub(
-          avg_fpc,
-          band = "boreal broadleaved summergreen tree",
-          drop = FALSE
-        ) == max_share_trees
+        (abind::adrop(
+          lpjmlkit::asub(
+            avg_fpc,
+            band = "boreal broadleaved summergreen tree",
+            drop = FALSE
+          ),
+          drop = "band"
+        ) == max_share_trees)
     }
 
     is_boreal_needle_deciduous <- {
       is_boreal_forest &
-        lpjmlkit::asub(
-          avg_fpc,
-          band = "boreal needleleaved summergreen tree",
-          drop = FALSE
-        ) == max_share_trees
+        (abind::adrop(
+          lpjmlkit::asub(
+            avg_fpc,
+            band = "boreal needleleaved summergreen tree",
+            drop = FALSE
+          ),
+          drop = "band"
+        ) == max_share_trees)
     }
   }
 
   # Temperate Coniferous Forest
   is_temperate_coniferous <- {
     is_temperate_forest &
-      lpjmlkit::asub(
-        avg_fpc,
-        band = "temperate needleleaved evergreen tree",
-        drop = FALSE
-      ) == max_share_trees
+      (abind::adrop(
+        lpjmlkit::asub(
+          avg_fpc,
+          band = "temperate needleleaved evergreen tree",
+          drop = FALSE
+        ),
+        drop = "band"
+      ) == max_share_trees)
   }
   # Temperate Broadleaved Evergreen Forest
   is_temperate_broadleaved_evergreen <- { # nolint
     is_temperate_forest &
-      lpjmlkit::asub(
-        avg_fpc,
-        band = "temperate broadleaved evergreen tree",
-        drop = FALSE
-      ) == max_share_trees
+      (abind::adrop(
+        lpjmlkit::asub(
+          avg_fpc,
+          band = "temperate broadleaved evergreen tree",
+          drop = FALSE
+        ),
+        drop = "band"
+      ) == max_share_trees)
   }
   # Temperate Broadleaved Deciduous Forest
-  is_temperate_broadleaved_deciduous <- { # nolint
+  is_temperate_broadleaved_deciduous <- {
     is_temperate_forest &
-      lpjmlkit::asub(
-        avg_fpc,
-        band = "temperate broadleaved summergreen tree",
-        drop = FALSE
-      ) == max_share_trees
+      (abind::adrop(
+        lpjmlkit::asub(
+          avg_fpc,
+          band = "temperate broadleaved summergreen tree",
+          drop = FALSE
+        ),
+        drop = "band"
+      ) == max_share_trees)
   }
 
   # Tropical Rainforest
   is_tropical_evergreen <- {
     is_tropical_forest &
-      lpjmlkit::asub(
-        avg_fpc,
-        band = "tropical broadleaved evergreen tree",
-        drop = FALSE
-      ) == max_share_trees &
+      (abind::adrop(
+        lpjmlkit::asub(
+          avg_fpc,
+          band = "tropical broadleaved evergreen tree",
+          drop = FALSE
+        ),
+        drop = "band"
+      ) == max_share_trees) &
       is_tropical_proxy
   }
 
   # Tropical Seasonal & Deciduous Forest
   is_tropical_raingreen <- {
     is_tropical_forest &
-      (lpjmlkit::asub(
-        avg_fpc,
-        band = "tropical broadleaved raingreen tree",
-        drop = FALSE
+      (abind::adrop(
+        lpjmlkit::asub(
+          avg_fpc,
+          band = "tropical broadleaved raingreen tree",
+          drop = FALSE
+        ),
+        drop = "band"
       ) == max_share_trees) &
       is_tropical_proxy
   }
   # Warm Woody Savanna, Woodland & Shrubland
   is_tropical_forest_savanna <- {
     is_tropical_forest &
-      (
+      (abind::adrop(
         lpjmlkit::asub(
           avg_fpc,
           band = "tropical broadleaved evergreen tree",
           drop = FALSE
-        ) == max_share_trees |
+        ),
+        drop = "band"
+      ) == max_share_trees |
+        (abind::adrop(
           lpjmlkit::asub(
             avg_fpc,
             band = "tropical broadleaved raingreen tree",
             drop = FALSE
-          ) == max_share_trees
+          ),
+          drop = "band"
+        ) == max_share_trees)
       ) &
       is_savanna_proxy
   }
@@ -488,16 +518,20 @@ classify_biomes <- function(path_reference = NULL,
   is_temperate_woody_savanna <- {
     fpc_tree_total <= min_tree_cover[["temperate forest"]] &
       fpc_tree_total >= min_tree_cover[["temperate woodland"]] &
-      lpjmlkit::asub(avg_fpc, band = "temperate c3 grass", drop = FALSE) >
-        lpjmlkit::asub(avg_fpc, band = "tropical c4 grass", drop = FALSE) &
+      abind::adrop(lpjmlkit::asub(avg_fpc, band = "temperate c3 grass",
+                                  drop = FALSE), drop = "band") >
+        abind::adrop(lpjmlkit::asub(avg_fpc, band = "tropical c4 grass",
+                                    drop = FALSE), drop = "band") &
       avg_temp >= low_temp_threshold
   }
   # Warm Woody Savanna, Woodland & Shrubland
   is_tropical_woody_savanna <- {
     fpc_tree_total <= min_tree_cover[["tropical forest"]] &
       fpc_tree_total >= min_tree_cover[["tropical woodland"]] &
-      lpjmlkit::asub(avg_fpc, band = "temperate c3 grass", drop = FALSE) <
-        lpjmlkit::asub(avg_fpc, band = "tropical c4 grass", drop = FALSE)
+      abind::adrop(lpjmlkit::asub(avg_fpc, band = "temperate c3 grass",
+                                  drop = FALSE), drop = "band") <
+        abind::adrop(lpjmlkit::asub(avg_fpc, band = "tropical c4 grass",
+                                    drop = FALSE), drop = "band")
   }
 
   # OPEN SHRUBLAND / SAVANNAS ----------------------------------------------- #
@@ -506,16 +540,20 @@ classify_biomes <- function(path_reference = NULL,
   is_temperate_shrubland <- {
     fpc_tree_total <= min_tree_cover[["temperate woodland"]] &
       fpc_tree_total >= min_tree_cover[["temperate savanna"]] &
-      lpjmlkit::asub(avg_fpc, band = "temperate c3 grass", drop = FALSE) >
-        lpjmlkit::asub(avg_fpc, band = "tropical c4 grass", drop = FALSE) &
+      abind::adrop(lpjmlkit::asub(avg_fpc, band = "temperate c3 grass",
+                                  drop = FALSE), drop = "band") >
+        abind::adrop(lpjmlkit::asub(avg_fpc, band = "tropical c4 grass",
+                                    drop = FALSE), drop = "band") &
       avg_temp >= low_temp_threshold
   }
   # Warm Savanna & Open Shrubland
   is_tropical_shrubland <- {
     fpc_tree_total <= min_tree_cover[["tropical woodland"]] &
       fpc_tree_total >= min_tree_cover[["tropical savanna"]] &
-      lpjmlkit::asub(avg_fpc, band = "temperate c3 grass", drop = FALSE) <
-        lpjmlkit::asub(avg_fpc, band = "tropical c4 grass", drop = FALSE) &
+      abind::adrop(lpjmlkit::asub(avg_fpc, band = "temperate c3 grass",
+                                  drop = FALSE), drop = "band") <
+        abind::adrop(lpjmlkit::asub(avg_fpc, band = "tropical c4 grass",
+                                    drop = FALSE), drop = "band") &
       avg_temp >= low_temp_threshold
   }
 
@@ -526,16 +564,20 @@ classify_biomes <- function(path_reference = NULL,
   is_temperate_grassland <- {
     fpc_total > low_fpc &
       fpc_tree_total <= min_tree_cover[["temperate savanna"]] &
-      lpjmlkit::asub(avg_fpc, band = "temperate c3 grass", drop = FALSE) >
-        lpjmlkit::asub(avg_fpc, band = "tropical c4 grass", drop = FALSE) &
+      abind::adrop(lpjmlkit::asub(avg_fpc, band = "temperate c3 grass",
+                                  drop = FALSE), drop = "band") >
+        abind::adrop(lpjmlkit::asub(avg_fpc, band = "tropical c4 grass",
+                                    drop = FALSE), drop = "band") &
       avg_temp >= low_temp_threshold
   }
   # Warm grassland
   is_tropical_grassland <- {
     fpc_total > low_fpc &
       fpc_tree_total <= min_tree_cover[["tropical savanna"]] &
-      lpjmlkit::asub(avg_fpc, band = "temperate c3 grass", drop = FALSE) <
-        lpjmlkit::asub(avg_fpc, band = "tropical c4 grass", drop = FALSE) &
+      abind::adrop(lpjmlkit::asub(avg_fpc, band = "temperate c3 grass",
+                                  drop = FALSE), drop = "band") <
+        abind::adrop(lpjmlkit::asub(avg_fpc, band = "tropical c4 grass",
+                                    drop = FALSE), drop = "band") &
       avg_temp >= low_temp_threshold
   }
 
@@ -545,8 +587,10 @@ classify_biomes <- function(path_reference = NULL,
       !is_temperate_forest &
       (
         avg_temp < low_temp_threshold |
-          lpjmlkit::asub(avg_fpc, band = "temperate c3 grass", drop = FALSE) ==
-            lpjmlkit::asub(avg_fpc, band = "tropical c4 grass", drop = FALSE)
+          abind::adrop(lpjmlkit::asub(avg_fpc, band = "temperate c3 grass",
+                                      drop = FALSE), drop = "band") ==
+            abind::adrop(lpjmlkit::asub(avg_fpc, band = "tropical c4 grass",
+                                        drop = FALSE), drop = "band")
       ) &
       fpc_total > low_fpc
     ) |
@@ -560,7 +604,8 @@ classify_biomes <- function(path_reference = NULL,
   }
   # Water body
   is_water <- {
-    lpjmlkit::asub(avg_fpc, band = 1, drop = FALSE) == 0
+    abind::adrop(lpjmlkit::asub(avg_fpc, band = 1, drop = FALSE),
+                               drop = "band") == 0
   }
 
   # CLASSIFY BIOMES ---------------------------------------------------------- #
