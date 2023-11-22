@@ -39,7 +39,7 @@ metric:
                 wang-erlandsson2022: &wang-erlandsson2022_bw
                    # LPJmL output IDs with required resolution
                     output:
-                        grid:
+                        terr_area:
                             resolution: "annual"
                             optional: false
                         discharge:
@@ -54,7 +54,7 @@ metric:
             subglobal:
                 wang-erlandsson2022: &wang-erlandsson2022_bw_sub
                     output:
-                        grid:
+                        terr_area:
                             resolution: "annual"
                             optional: false
                         discharge:
@@ -101,7 +101,7 @@ metric:
                 wang-erlandsson2022: &wang-erlandsson2022_gw
                    # LPJmL output IDs with required resolution
                    output:
-                       grid:
+                       terr_area:
                            resolution: "annual"
                            optional: false
                        rootmoist:
@@ -116,7 +116,7 @@ metric:
             subglobal:
                 wang-erlandsson2022: &wang-erlandsson2022_gw_sub
                     output:
-                        grid:
+                        terr_area:
                             resolution: "annual"
                             optional: false
                         rootmoist:

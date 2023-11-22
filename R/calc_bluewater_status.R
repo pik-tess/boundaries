@@ -282,7 +282,7 @@ calc_bluewater_status <- function(files_scenario,
     pb_status <- calc_water_status(
      file_scenario = files_scenario$discharge,
      file_reference = files_reference$discharge,
-     grid_path = files_reference$grid,
+     terr_area_path = files_reference$terr_area,
      drainage_path = files_reference$drainage,
      time_span_scenario = time_span_scenario,
      time_span_reference =  time_span_reference,
