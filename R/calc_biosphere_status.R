@@ -25,7 +25,7 @@
 #' is used
 #' @param time_span_reference time span to read reference_npp_file from, using
 #' index years 3:32 if set to NULL (default: NULL)
-#' @param spatial_resolution character string indicating spatial resolution
+#' @param spatial_scale character string indicating spatial resolution
 #' either "grid" or "global"
 #' @param thresholds named character string with thresholds to be used to
 #' define the lower end of safe, increasing risk and high risk zone,
@@ -45,70 +45,71 @@
 #' \dontrun{
 #' }
 #' @export
-calc_biosphere_status <- function(files_scenario,
-                                  files_baseline,
-                                  files_reference = NULL,
-                                  time_span_scenario,
-                                  time_span_baseline = NULL,
-                                  time_span_reference = NULL,
-                                  spatial_resolution = "subglobal",
-                                  thresholds = NULL,
-                                  method = "stenzel2023",
-                                  gridbased = T,
-                                  npp_threshold = 20,
-                                  avg_nyear_args = list(),
-                                  ...
-                                  ) {
-  if (is.null(files_reference))
-    files_reference <- list(npp = baseline_npp_file)
-  if (is.null(time_span_baseline))
-    time_span_baseline <- time_span_scenario
-  if (is.null(time_span_reference))
-    time_span_reference <- time_span_scenario[3:12]
-  if (is.null(thresholds)) {
-    thresholds <- c(holocene = 0,
-                    pb = 0.1,
-                    highrisk = 0.2)
-  }
-  biocol <- biospheremetrics::read_calc_biocol(
-                    files_scenario = files_scenario,
-                    files_baseline = files_baseline,
-                    files_reference = files_reference,
-                    time_span_scenario = as.character(time_span_scenario),
-                    time_span_baseline = as.character(time_span_baseline),
-                    time_span_reference = as.character(time_span_reference),
-                    gridbased = gridbased,
-                    npp_threshold = npp_threshold,
-                    read_saved_data = FALSE,
-                    save_data = FALSE,
-                    data_file = NULL,
-                    include_fire = FALSE,
-                    external_fire = FALSE,
-                    external_wood_harvest = FALSE,
-                    grass_scaling = FALSE,
-                    grass_harvest_file = NULL,
-                    external_fire_file = NULL,
-                    external_wood_harvest_file = NULL
-    )
+calc_biosphere_status <- function(
+  files_scenario,
+  files_reference,
+  path_baseline,
+  time_span_scenario = as.character(1982:2011),
+  time_span_baseline = time_span_scenario,
+  time_span_reference = time_span_scenario,
+  spatial_scale = "subglobal",
+  thresholds = NULL,
+  method = "stenzel2023",
+  gridbased = TRUE,
+  npp_threshold = 20,
+  avg_nyear_args = list(),
+  ...
+) {
 
-  if (spatial_resolution == "grid") {
+  files_baseline <- lapply(
+    files_reference,
+    function(x) {
+      file.path(path_baseline, basename(x))
+    }
+  )
+
+  biocol <- biospheremetrics::read_calc_biocol(
+    files_scenario = files_scenario,
+    files_baseline = files_baseline,
+    files_reference = files_reference,
+    time_span_scenario = time_span_scenario,
+    time_span_baseline = time_span_baseline,
+    time_span_reference = time_span_reference,
+    gridbased = gridbased,
+    npp_threshold = npp_threshold,
+    read_saved_data = FALSE,
+    save_data = FALSE,
+    data_file = NULL,
+    include_fire = FALSE,
+    external_fire = FALSE,
+    external_wood_harvest = FALSE,
+    grass_scaling = FALSE,
+    grass_harvest_file = NULL,
+    external_fire_file = NULL,
+    external_wood_harvest_file = NULL
+  )
+
+  if (spatial_scale == "grid") {
     control_variable_raw <- abs(biocol$biocol_frac_piref)
-  } else if (spatial_resolution == "subglobal") {
+  } else if (spatial_scale == "subglobal") {
     # Filter out method and thresholds arguments from ellipsis
     ellipsis_filtered <- list(...)
     ellipsis_filtered$method <- NULL
     ellipsis_filtered$thresholds <- NULL
     # classify biomes based on foliage projected cover (FPC) output
-    biome_classes <- do.call(classify_biomes,
-                             append(list(files_reference = files_baseline,
-                                         time_span_reference = time_span_baseline,
-                                         avg_nyear_args = avg_nyear_args,
-                                         montane_arctic_proxy = NULL # todo: ideally this line should be removed, but has to be fixed first - does not work yet with elevation
-                                         ),
-                                    ellipsis_filtered))
+    biome_classes <- do.call(
+      classify_biomes,
+      append(list(files_reference = files_baseline,
+                  time_span_reference = time_span_baseline,
+                  avg_nyear_args = avg_nyear_args,
+                  # TODO: ideally this line should be removed, but has to be 
+                  #   fixed first - does not work yet with elevation
+                  montane_arctic_proxy = NULL),
+             ellipsis_filtered)
+    )
 
     # initialize control variable vector
-    control_variable_raw <- biocol$biocol*0
+    control_variable_raw <- biocol$biocol * 0
 
     for (b in sort(unique(biome_classes$biome_id))){
       biome_cells <- which(biome_classes$biome_id == b)
@@ -120,7 +121,7 @@ calc_biosphere_status <- function(files_scenario,
           mean(biocol$npp_ref[biome_cells,])
       }
     }
-  } else if (spatial_resolution == "global") {
+  } else if (spatial_scale == "global") {
     # add dummy cell dimension
     control_variable_raw <- array(biocol$biocol_overtime_abs_frac_piref,
                                dim = c(cell = 1,
@@ -130,13 +131,13 @@ calc_biosphere_status <- function(files_scenario,
                                                year = names(biocol$biocol_overtime_abs_frac_piref)
                                ))
   }else{
-    stop(paste("Unknown value for spatial_resolution: ", spatial_resolution))
+    stop(paste("Unknown value for spatial_scale: ", spatial_scale))
   }
   # average
   control_variable <- do.call(average_nyear_window,
                         append(list(x = control_variable_raw),
                                avg_nyear_args))
-  if (spatial_resolution == "global") {
+  if (spatial_scale == "global") {
     # remove dummy cell dimension
     control_variable <- control_variable[1,]
   }
