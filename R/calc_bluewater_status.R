@@ -35,7 +35,7 @@
 #' @param irrmask_basin logical, if true: all cells in river basins without
 #' irrigation will be masked (= no boundary transgression)
 #'
-#' @param spatial_resolution character string indicating spatial resolution
+#' @param spatial_scale character string indicating spatial resolution
 #'        options: "global", "basin", "grid"
 #'        either "grid" for calculation of number of years with transgression
 #'        (for wang-erlandsson2022: dim(ncell, nyears);
@@ -57,7 +57,7 @@
 #'        for global resolution is: c(holocene = 0.5, pb = 0.95,
 #'        highrisk = 0.99).
 #'        If set to NULL, the respective default is taken (see above; matching
-#'        the spatial_resolution)
+#'        the spatial_scale)
 #'
 #'@return todo: describe returned object
 #'
@@ -76,13 +76,13 @@ calc_bluewater_status <- function(files_scenario,
                                   cut_min = 0.0864,
                                   avg_nyear_args = list(),
                                   irrmask_basin = FALSE,
-                                  spatial_resolution,
+                                  spatial_scale,
                                   thresholds = NULL) {
   # verify available methods and resolution
   method <- match.arg(method, c("gerten2020",
                                 "wang-erlandsson2022",
                                 "porkka2023"))
-  spatial_resolution <- match.arg(spatial_resolution, c("global",
+  spatial_scale <- match.arg(spatial_scale, c("global",
                                 "subglobal", "grid"))
   #todo: discuss
   monthly <- FALSE # do not output basin and global information as monthly
@@ -135,7 +135,7 @@ calc_bluewater_status <- function(files_scenario,
                               avg_nyear_args)
 
 
-    if (spatial_resolution == "global" || spatial_resolution == "subglobal") {
+    if (spatial_scale == "global" || spatial_scale == "subglobal") {
       # todo: modify the indexing_drainage function to return a list?
       cellinfo <- indexing_drainage(drainage_file = files_reference$drainage)
       endcell <- lpjmlkit::asub(cellinfo, band = "endcell")
@@ -205,7 +205,7 @@ calc_bluewater_status <- function(files_scenario,
 
      # todo: aggregate to global if requested
 
-    }else if (spatial_resolution == "grid"){
+    }else if (spatial_scale == "grid"){
       # calculation of EFR transgressions = EFR deficits in LU run
       efr_deficit <- efr_safe - avg_discharge_scenario
       # dismiss small EFR deficits #TODO check relevance
@@ -288,7 +288,7 @@ calc_bluewater_status <- function(files_scenario,
      time_span_reference =  time_span_reference,
      method = method,
      avg_nyear_args = avg_nyear_args,
-     spatial_resolution = spatial_resolution,
+     spatial_scale = spatial_scale,
      thresholds = thresholds
    )
   }

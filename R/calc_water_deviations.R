@@ -3,7 +3,7 @@
 #'
 #' Calculate deviations (<q5 / >q95) for a monhtly variable in a scenario LPJmL
 #' run as compared to a reference LPJmL run, either referring to global area
-#' share with deviations (spatial_resolution: global), or to number of months or
+#' share with deviations (spatial_scale: global), or to number of months or
 #' years with deviations (spatial resolution: cell). From this, calculate a
 #' global or gridded PB status
 #'
@@ -42,9 +42,9 @@
 #'        for global resolution is: c(holocene = 0.5, pb = 0.95,
 #'        highrisk = 0.99).
 #'        If set to NULL, the respective default is taken (see above; matching
-#'        the spatial_resolution)
+#'        the spatial_scale)
 #' 
-#' @param spatial_resolution character string indicating spatial resolution
+#' @param spatial_scale character string indicating spatial resolution
 #'        either "grid" for calculation of number of years with transgression
 #'        (for wang-erlandsson2022: dim(ncell, nyears);
 #'         for porkka2023: dim(ncell, nyears, months)) or
@@ -59,7 +59,7 @@
 #' @examples
 #' \dontrun{
 #'  calc_water_status(file_scenario, file_reference, grid_path,
-#'                 time_span_reference, spatial_resolution)
+#'                 time_span_reference, spatial_scale)
 #' }
 #'
 #' @md
@@ -73,7 +73,7 @@ calc_water_status <- function(file_scenario,
                               method = "porkka2023",
                               thresholds = NULL,
                               avg_nyear_args = list(),
-                              spatial_resolution = "grid") {
+                              spatial_scale = "grid") {
 
   # read in reference and scenario output
   # reference
@@ -103,14 +103,14 @@ calc_water_status <- function(file_scenario,
   # calculate number of months/years with dry & wet departures (grid resolution)
   # or area with dry/wet departures (global resolution) for each cell
   ref_depart <- calc_departures(var_reference, grid_path, drainage_path, quants,
-                                    spatial_resolution = spatial_resolution,
+                                    spatial_scale = spatial_scale,
                                     method = method)
   scen_depart <- calc_departures(var_scenario, grid_path, drainage_path, quants,
-                                     spatial_resolution = spatial_resolution,
+                                     spatial_scale = spatial_scale,
                                      method = method)
 
   # -------------------------------------------------------------------------- #
-  if (spatial_resolution == "grid") {
+  if (spatial_scale == "grid") {
 
     # define the number of trials (= number of years or months within the
     # reference and scenario timeframe)
@@ -171,7 +171,7 @@ calc_water_status <- function(file_scenario,
     attr(control_variable, "thresholds") <-  1 - thresholds
 
   # -------------------------------------------------------------------------- #
-  } else if (spatial_resolution == "global") {
+  } else if (spatial_scale == "global") {
 
     # calculate areas corresponding to the quantiles defined in thresholds
     area_high_risk <- quantile(ref_depart$wet_or_dry,
@@ -203,7 +203,7 @@ calc_water_status <- function(file_scenario,
     attr(control_variable, "control variable") <-
       "area with wet/dry departures (%)"
 
-  } else if (spatial_resolution == "subglobal") {
+  } else if (spatial_scale == "subglobal") {
 
     # calculate for each basin: thresholds for translation into pb status
     area_high_risk <- apply(ref_depart$wet_or_dry, "basin",
@@ -293,7 +293,7 @@ calc_baseline <- function(file_reference, method) {
 # (grid resolution)
 
 calc_departures <- function(data, grid_path, drainage_path, quants,
-                              spatial_resolution, method) {
+                              spatial_scale, method) {
 
   q5_base <- rep(quants[["q5"]], dim(data)["year"])
   q95_base <- rep(quants[["q95"]], dim(data)["year"])
@@ -324,12 +324,12 @@ calc_departures <- function(data, grid_path, drainage_path, quants,
   cell_area <- lpjmlkit::calc_cellarea(grid)
 
   result <- list()
-  if (spatial_resolution == "grid") {
+  if (spatial_scale == "grid") {
     result$dry <- apply(dry, "cell", sum)
     result$wet <- apply(wet, "cell", sum)
     result$wet_or_dry <- apply(dry_or_wet, "cell", sum)
 
-  } else if (spatial_resolution == "subglobal") {
+  } else if (spatial_scale == "subglobal") {
     # calculate for each basin and year: area with wet/dry departures
     cellinfo <- indexing_drainage(drainage_file = drainage_path)
     endcell <<- lpjmlkit::asub(cellinfo, band = "endcell")
@@ -351,7 +351,7 @@ calc_departures <- function(data, grid_path, drainage_path, quants,
       }
     }
 
-  } else if (spatial_resolution == "global") {
+  } else if (spatial_scale == "global") {
     dim_remain <- names(dim(dry))[names(dim(dry)) != "cell"]
     result$dry <- apply((dry * cell_area) / sum(cell_area) * 100, dim_remain,
                            sum)

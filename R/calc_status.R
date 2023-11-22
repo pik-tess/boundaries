@@ -51,9 +51,9 @@
 #' @md
 #' @export
 calc_status <- function(boundary,
+                        spatial_scale,
                         path_scenario,
                         path_reference = NULL,
-                        path_baseline = NULL,
                         time_span_scenario = as.character(1982:2011),
                         time_span_reference = time_span_scenario,
                         avg_nyear_args = list(),
@@ -61,7 +61,6 @@ calc_status <- function(boundary,
                         diff_output_files = list(),
                         method = list(),
                         thresholds = list(),
-                        spatial_resolution,
                         in_parallel = TRUE,
                         ...) {
   # If in_parallel use future package for asynchronous parallelization
@@ -75,15 +74,21 @@ calc_status <- function(boundary,
   }
 
   # verify available spatial resolution
-  spatial_resolution <- match.arg(spatial_resolution, c("global", "subglobal",
-                                                        "grid"))
+  spatial_scale <- match.arg(
+    spatial_scale,
+    c("global", "subglobal", "grid")
+  )
 
   # Get main file type (meta, clm)
   file_ext <- get_file_ext(path_scenario)
 
   # List required output files for each boundary
-  output_files <- list_outputs(boundary, method, spatial_resolution,
-                               only_first_filename = FALSE)
+  output_files <- list_outputs(
+    boundary,
+    method,
+    spatial_scale,
+    only_first_filename = FALSE
+  )
 
   # Get filenames for scenario and reference
   files_scenario <- get_filenames(
@@ -101,16 +106,6 @@ calc_status <- function(boundary,
     file_ext = file_ext
   )
 
-  if (!is.null(path_baseline)) {
-    files_baseline <- get_filenames(
-      path = path_baseline,
-      output_files = output_files,
-      diff_output_files = diff_output_files,
-      input_files = input_files,
-      file_ext = file_ext
-    )
-  }
-
   # Get arguments for each boundary function
   fun_args <- list_function_args(boundary)
 
@@ -121,7 +116,7 @@ calc_status <- function(boundary,
   for (bound in boundary) {
     fun_name <- paste0("calc_", bound, "_status")
 
-   # Get arguments for each boundary function
+    # Get arguments for each boundary function
     sub_dots <- get_dots(fun_name, fun_args, dot_args)
     check_args[names(sub_dots)] <- NULL
 
@@ -130,7 +125,7 @@ calc_status <- function(boundary,
       files_reference = files_reference,
       time_span_scenario = time_span_scenario,
       time_span_reference = time_span_reference,
-      spatial_resolution = spatial_resolution,
+      spatial_scale = spatial_scale,
       avg_nyear_args = avg_nyear_args
     )
     if (length(method[[bound]]) > 0) {
@@ -141,10 +136,7 @@ calc_status <- function(boundary,
     if (length(thresholds[[bound]]) > 0) {
       inner_args$thresholds <- thresholds[[bound]]
     } else {
-      inner_args$thresholds <- list_thresholds(bound, method_i, spatial_resolution)
-    }
-    if (bound == "biosphere") {
-      inner_args$files_baseline <- files_baseline
+      inner_args$thresholds <- list_thresholds(bound, method_i, spatial_scale)
     }
     # Calculate status
     all_status[[bound]] <- do.call(

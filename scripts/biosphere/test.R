@@ -45,7 +45,7 @@ pb_bi_grid <- calc_status(boundary = c("biosphere"),
                       time_span_reference = as.character(1510:1520),
                       input_files = list(prec = "/p/projects/lpjml/input/historical/CRUDATA_TS3_23/gpcc_v7_cruts3_23_precip_1901_2013.clm",
                                          temp = "/p/projects/lpjml/input/historical/CRUDATA_TS3_23/cru_ts3.23.1901.2014.tmp.dat.clm"),
-                      spatial_resolution = "grid",
+                      spatial_scale = "grid",
                       savanna_proxy = list(vegc = 7500))
 
 boundaries::plot_status(pb_bi_grid)
@@ -63,7 +63,7 @@ pb_bi_subglobal <- calc_status(boundary = c("biosphere"),
                           input_files = list(prec = "/p/projects/lpjml/input/historical/CRUDATA_TS3_23/gpcc_v7_cruts3_23_precip_1901_2013.clm",
                                              temp = "/p/projects/lpjml/input/historical/CRUDATA_TS3_23/cru_ts3.23.1901.2014.tmp.dat.clm",
                                              elevation = "/p/projects/lpjml/input/historical/input_VERSION2/elevation.bin"),
-                          spatial_resolution = "subglobal",
+                          spatial_scale = "subglobal",
                           savanna_proxy = list(vegc = 7500))
 
 boundaries::plot_status(pb_bi_subglobal)
@@ -78,7 +78,7 @@ pb_bi_global <- calc_status(boundary = c("biosphere"),
                                time_span_reference = as.character(1510:1520),
                                input_files = list(prec = "/p/projects/lpjml/input/historical/CRUDATA_TS3_23/gpcc_v7_cruts3_23_precip_1901_2013.clm",
                                                   temp = "/p/projects/lpjml/input/historical/CRUDATA_TS3_23/cru_ts3.23.1901.2014.tmp.dat.clm"),
-                               spatial_resolution = "global")
+                               spatial_scale = "global")
 
 boundaries::plot_status_global(pb_bi_global)
 

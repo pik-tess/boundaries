@@ -25,7 +25,7 @@
 #' Second method option is `"braun2022_minusref"` to subtract reference run
 #' output
 #'
-#' @param spatial_resolution character. Spatial resolution, available options
+#' @param spatial_scale character. Spatial resolution, available options
 #'        are `"global"` and `"grid"`
 #'
 #' @param cut_arid double. Exclude boundary calculations below the defined
@@ -67,14 +67,14 @@ calc_nitrogen_status <- function(files_scenario,
                                  time_span_reference = NULL,
                                  method = NULL,
                                  thresholds = NULL,
-                                 spatial_resolution = "grid",
+                                 spatial_scale = "grid",
                                  cut_arid = 0.2,
                                  cut_runoff = 0,
                                  with_groundwater_denit = TRUE,
                                  avg_nyear_args = list()
                                  ) {
 
-  if (spatial_resolution == "grid") {
+  if (spatial_scale == "grid") {
     # verify available methods
     method <- match.arg(method, c("braun2022",
                                   "braun2022_minusref"))
@@ -210,14 +210,12 @@ calc_nitrogen_status <- function(files_scenario,
 
     # add thresholds as attributes
     control_variable <- n_conc
-    attr(control_variable, "thresholds") <- list(holocene = 0,
-                                                 pb = thresholds[["pb"]],
-                                                 highrisk = thresholds[["highrisk"]])
+    attr(control_variable, "thresholds") <- thresholds
     # non applicable cells
     control_variable[cells_arid] <- NA
     control_variable[cells_low_runoff] <- NA
 
-  } else if (spatial_resolution == "global") {
+  } else if (spatial_scale == "global") {
     # verify available methods
     method <- match.arg(method, c("schulte_uebbing2022"))
     browser()

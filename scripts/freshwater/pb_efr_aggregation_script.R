@@ -23,7 +23,7 @@ pb <- boundaries::calc_bluewater_status(files_scenario = files_scenario,
                                   time_span_reference = as.character(1510:1539),
                                   thresholds = NULL,
                                   method = "gerten2020",
-                                  spatial_resolution = "global")
+                                  spatial_scale = "global")
 efr_def <- applyBasinData(data=rowSums(efr_deficit),endcell = endcell)
 lpjmliotools::plotGlobalToScreen(data = efr_def, title = "",pow2min = 0, pow2max = 10,type = "exp",onlyPos = T,legYes = T,legendtitle = "")
 

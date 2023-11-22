@@ -20,11 +20,11 @@
 #' and length from `time_span_scenario`! If `NULL` value of `time_span_scenario`
 #' is used
 #'
-#' @param spatial_resolution character. Spatial resolution, available options
+#' @param spatial_scale character. Spatial resolution, available options
 #'        are `"subglobal"` (at the biome level, default), `"global"` and
 #'        `"grid"`
 #'
-#' @param eurasia logical. If `spatial_resolution` = `"biome"` merge continents
+#' @param eurasia logical. If `spatial_scale` = `"biome"` merge continents
 #'        Europe and Asia to avoid arbitrary biome cut at europe/asia border.
 #'        Defaults to `TRUE`
 #'
@@ -55,17 +55,18 @@
 #'
 #' @md
 #' @export
-calc_lsc_status <- function(files_scenario,
-                            files_reference,
-                            time_span_scenario = as.character(1982:2011),
-                            time_span_reference = NULL,
-                            spatial_resolution = "subglobal",
-                            eurasia = TRUE,
-                            thresholds = NULL,
-                            method = "steffen2015", #TODO add switch
-                            avg_nyear_args = list(),
-                            ...
-                            ) {
+calc_lsc_status <- function(
+  files_scenario,
+  files_reference,
+  time_span_scenario = as.character(1982:2011),
+  time_span_reference = time_span_scenario,
+  spatial_scale = "subglobal",
+  eurasia = TRUE,
+  thresholds = NULL,
+  method = "steffen2015", #TODO add switch
+  avg_nyear_args = list(),
+  ...
+) {
 
 
   # Filter out method and thresholds arguments from ellipsis
@@ -74,16 +75,18 @@ calc_lsc_status <- function(files_scenario,
   ellipsis_filtered$thresholds <- NULL
 
   # classify biomes based on foliage projected cover (FPC) output
-  biome_classes <- do.call(classify_biomes,
-          append(list(files_reference = files_reference,
-                      time_span_reference = time_span_reference,
-                      avg_nyear_args = avg_nyear_args,
-                      montane_arctic_proxy = NULL),
-                 ellipsis_filtered))
+  biome_classes <- do.call(
+    classify_biomes,
+    append(list(files_reference = files_reference,
+                time_span_reference = time_span_reference,
+                avg_nyear_args = avg_nyear_args,
+                montane_arctic_proxy = NULL),
+           ellipsis_filtered)
+  )
 
   biome_classes <- biome_classes$biome_id
 
-  if (spatial_resolution == "subglobal") {
+  if (spatial_scale == "subglobal") {
     # get continents mask - pass arg of whether to merge europe and asia
     continent_grid <- calc_continents_mask(files_reference$grid,
                                            eurasia = eurasia)
@@ -96,26 +99,27 @@ calc_lsc_status <- function(files_scenario,
 
   # calculate cell area
   cell_area <- lpjmlkit::read_io(
-      files_reference$grid,
-      silent = TRUE
-      ) %>%
-      lpjmlkit::calc_cellarea()
+    files_reference$grid,
+    silent = TRUE
+  ) %>%
+    lpjmlkit::calc_cellarea()
 
   # read fpc
   fpc_scenario <- lpjmlkit::read_io(
-      files_scenario$fpc,
-      subset = list(year = time_span_scenario),
-      silent = TRUE
-      ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array()
+    files_scenario$fpc,
+    subset = list(year = time_span_scenario),
+    silent = TRUE
+  ) %>%
+    lpjmlkit::transform(to = c("year_month_day")) %>%
+    lpjmlkit::as_array()
+
   fpc_reference <- lpjmlkit::read_io(
-      files_reference$fpc,
-      subset = list(year = time_span_reference),
-      silent = TRUE
-      ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array()
+    files_reference$fpc,
+    subset = list(year = time_span_reference),
+    silent = TRUE
+  ) %>%
+    lpjmlkit::transform(to = c("year_month_day")) %>%
+    lpjmlkit::as_array()
   fpc_nbands <- dim(fpc_scenario)[["band"]]
   npft <- fpc_nbands - 1
 
@@ -143,49 +147,66 @@ calc_lsc_status <- function(files_scenario,
     fpc_scenario,
     band = fpc_trees
   )
+
   tree_share_reference <- lpjmlkit::asub(
     fpc_reference,
     band = fpc_trees
   )
+
   # calculate actual tree cover area
   tree_cover_scenario <- (
     tree_share_scenario *
-    array(lpjmlkit::asub(fpc_scenario,
-                         band = c("natural stand fraction")),
-         dim = dim(tree_share_scenario)) * cell_area
+      array(lpjmlkit::asub(fpc_scenario,
+                           band = c("natural stand fraction")),
+            dim = dim(tree_share_scenario)) * cell_area
   )
+
   tree_cover_reference <- (
     tree_share_reference *
-    array(lpjmlkit::asub(fpc_reference,
-                         band = c("natural stand fraction")),
-         dim = dim(tree_share_reference)) * cell_area
+      array(lpjmlkit::asub(fpc_reference,
+                           band = c("natural stand fraction")),
+            dim = dim(tree_share_reference)) * cell_area
   )
+
   # sum tree pfts for forest cover
-  all_tree_cover_scenario <- apply(tree_cover_scenario,
-                                     c("cell", "year"), #TODO not working for 1 year
-                                     sum,
-                                     na.rm = TRUE)
-  all_tree_cover_reference <- apply(tree_cover_reference,
-                                      c("cell", "year"),
-                                      sum,
-                                      na.rm = TRUE)
+  all_tree_cover_scenario <- apply(
+    tree_cover_scenario,
+    c("cell", "year"), #TODO not working for 1 year
+    sum,
+    na.rm = TRUE
+  )
+
+  all_tree_cover_reference <- apply(
+    tree_cover_reference,
+    c("cell", "year"),
+    sum,
+    na.rm = TRUE
+  )
+
   # average forest over time
   avg_trees_scenario <- do.call(average_nyear_window,
-                                  append(list(x = all_tree_cover_scenario),
-                                         avg_nyear_args))
+                                append(list(x = all_tree_cover_scenario),
+                                       avg_nyear_args))
 
-
-  if (length(time_span_reference) < length(time_span_scenario)) {
-    avg_nyear_args["nyear_reference"] <- length(time_span_scenario)
-  }
 
   # average forest over time
   # TODO should the timeframe be static or the same as for the scenario?
   # --> both options should be implemented
-  avg_trees_reference <- apply(all_tree_cover_reference, "cell", mean)
-                                  # do.call(average_nyear_window,
-                                  # append(list(x = all_tree_cover_reference),
-                                  #        avg_nyear_args))
+
+  if (all(time_span_reference == time_span_scenario)) {
+
+    avg_trees_reference <- do.call(
+      average_nyear_window,
+      append(list(x = all_tree_cover_reference),
+             avg_nyear_args)
+    )
+  } else {
+    avg_trees_reference <- apply(
+      all_tree_cover_reference,
+      "cell",
+      mean
+    )
+  }
 
   # binary is forest biome - mask
   is_forest <- array(0,
@@ -202,28 +223,32 @@ calc_lsc_status <- function(files_scenario,
   forest_type <- is_forest
 
   # forest biomes
-  is_forest[biome_classes %in% dplyr::filter(biome_mapping,
-                                             category == "forest"
-                                            )$id] <- 1
+  is_forest[
+    biome_classes %in% dplyr::filter(biome_mapping, category == "forest")$id
+  ] <- 1
 
   # tropical forest biomes
-  is_tropical_forest[biome_classes %in% dplyr::filter(biome_mapping,
-                                             category == "forest" &
-                                             zone == "tropical"
-                                            )$id] <- 1
+  is_tropical_forest[
+    biome_classes %in% dplyr::filter(
+      biome_mapping, category == "forest" & zone == "tropical"
+    )$id
+  ] <- 1
   forest_type[which(is_tropical_forest == 1)] <- 1
+
   # temperate forest biomes
-  is_temperate_forest[biome_classes %in% dplyr::filter(biome_mapping,
-                                             category == "forest" &
-                                             zone == "temperate"
-                                            )$id] <- 1
+  is_temperate_forest[
+    biome_classes %in% dplyr::filter(
+      biome_mapping, category == "forest" & zone == "temperate"
+    )$id
+  ] <- 1
   forest_type[which(is_temperate_forest == 1)] <- 2
 
   # boreal forest biomes
-  is_boreal_forest[biome_classes %in% dplyr::filter(biome_mapping,
-                                             category == "forest" &
-                                             zone == "boreal"
-                                            )$id] <- 1
+  is_boreal_forest[
+    biome_classes %in% dplyr::filter(
+      biome_mapping, category == "forest" & zone == "boreal"
+    )$id
+  ] <- 1
   forest_type[which(is_boreal_forest == 1)] <- 3
 
   # calculate deforestation status by share of scenario and reference run
@@ -236,7 +261,7 @@ calc_lsc_status <- function(files_scenario,
     !names(dim(deforestation)) %in% c("cell")
   ]
 
-  if (spatial_resolution == "subglobal") {
+  if (spatial_scale == "subglobal") {
     # create space of combinations to loop over (even though not all make sense)
     comb <- expand.grid(
       continent = sort(unique(lpjmlkit::asub(continent_grid,
@@ -249,12 +274,12 @@ calc_lsc_status <- function(files_scenario,
       sub_cells <- {
         # match forest type for cells
         forest_type == comb$forest[idx] &
-        # match continent for cells
-        array(
-          lpjmlkit::asub(continent_grid, band = "continent", drop = FALSE) == comb$continent[idx], # nolint
-          dim = dim(deforestation),
-          dimnames = dimnames(deforestation)
-        )
+          # match continent for cells
+          array(
+            lpjmlkit::asub(continent_grid, band = "continent", drop = FALSE) == comb$continent[idx], # nolint
+            dim = dim(deforestation),
+            dimnames = dimnames(deforestation)
+          )
       }
       if (!any(sub_cells)) {
         next
@@ -273,7 +298,7 @@ calc_lsc_status <- function(files_scenario,
     }
   }
 
-  if (spatial_resolution %in% c("grid", "subglobal")) {
+  if (spatial_scale %in% c("grid", "subglobal")) {
     # init threshold array with NA = no data and initial dimensions + threshold
     # dimension
 
@@ -292,9 +317,11 @@ calc_lsc_status <- function(files_scenario,
 
     dim_names <- dimnames(deforestation)
     dim_names$thresholds <- names(thresholds)
-    threshold_attr <- array(NA,
-                       dim = c(dim(deforestation), length(names(thresholds))),
-                       dimnames = dim_names)
+    threshold_attr <- array(
+      NA,
+      dim = c(dim(deforestation), length(names(thresholds))),
+      dimnames = dim_names
+    )
     threshold_attr[, , "pb"] <- pb_thresholds
     threshold_attr[, , "highrisk"] <- highrisk_thresholds
     threshold_attr[, , "holocene"] <- holocene_thresholds
@@ -302,7 +329,7 @@ calc_lsc_status <- function(files_scenario,
     control_variable <- deforestation
     attr(control_variable, "thresholds") <- threshold_attr
 
-  } else if (spatial_resolution == "global") {
+  } else if (spatial_scale == "global") {
     dim_remain <- names(dim(deforestation))[names(dim(deforestation)) != "cell"]
     deforestation[is_forest == 0] <- NA
     control_variable <- apply(deforestation, dim_remain, mean, na.rm = TRUE)

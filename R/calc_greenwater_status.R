@@ -31,7 +31,7 @@
 #'        [Porkka et al. 2023](https://eartharxiv.org/repository/view/3438/)
 #'        (referring to each month of a year)
 #' 
-#' @param spatial_resolution character string indicating spatial resolution
+#' @param spatial_scale character string indicating spatial resolution
 #'        either "grid" for calculation of number of years with transgression
 #'        (for wang-erlandsson2022: dim(ncell, nyears);
 #'         for porkka2023: dim(ncell, nyears, months)) or
@@ -50,12 +50,12 @@
 #'        for global resolution is: c(holocene = 0.5, pb = 0.95,
 #'        highrisk = 0.99).
 #'        If set to NULL, the respective default is taken (see above; matching
-#'        the spatial_resolution)
+#'        the spatial_scale)
 #'
 #' @examples
 #' \dontrun{
 #'  calc_greenwater_status(files_scenario, files_reference,
-#'                 time_span_reference, spatial_resolution = "grid")
+#'                 time_span_reference, spatial_scale = "grid")
 #' }
 #'
 #' @md
@@ -65,14 +65,14 @@ calc_greenwater_status <- function(files_scenario,
                                    time_span_scenario = as.character(1982:2011),
                                    time_span_reference = NULL,
                                    avg_nyear_args = list(),
-                                   spatial_resolution = "grid",
+                                   spatial_scale = "grid",
                                    method = "wang-erlandsson2022",
                                    thresholds = NULL
                                    ) {
    # verify available methods
   method <- match.arg(method, c("wang-erlandsson2022", "porkka2023"))
    # verify available spatial resolution
-  spatial_resolution <- match.arg(spatial_resolution, c("grid", "global",
+  spatial_scale <- match.arg(spatial_scale, c("grid", "global",
                                                         "subglobal"))
   # TODO not yet compatible with avg_nyear_args
 
@@ -87,7 +87,7 @@ calc_greenwater_status <- function(files_scenario,
     time_span_reference =  time_span_reference,
     method = method,
     avg_nyear_args = avg_nyear_args,
-    spatial_resolution = spatial_resolution,
+    spatial_scale = spatial_scale,
     thresholds = thresholds
   )
 
