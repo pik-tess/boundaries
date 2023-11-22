@@ -5,15 +5,16 @@
 #'
 #' @param files_scenario list with variable names and corresponding file paths
 #' (character string) of the scenario LPJmL run. All needed files are
-#' provided in XXX. E.g.: list(leaching = "/temp/leaching.bin.json")
+#' provided in metric_files.yaml.
+#' E.g.: list(leaching = "/temp/leaching.bin.json")
 #'
 #' @param files_reference list with variable names and corresponding file paths
 #' (character string) of the reference LPJmL run. All needed files are
-#' provided in XXX. E.g.: list(leaching = "/temp/leaching.bin.json"). If not
-#' needed for the applied method, set to NULL.
+#' provided in metric_files.yml.
+#' E.g.: list(leaching = "/temp/leaching.bin.json").
 #'
 #' @param time_span_scenario time span to be used for the scenario run, defined
-#' as character string, e.g. `as.character(1982:2011)` (default)
+#' as character string
 #'
 #' @param time_span_reference time span to be used for the scenario run, defined
 #' as character string, e.g. `as.character(1901:1930)`. Can differ in offset and
@@ -21,43 +22,30 @@
 #' used
 #'
 #' @param method method (character string) to be used , currently available
-#' method is `c("gerten2020")` based on
-#' [Gerten et al. 2020](https://doi.org/10.1038/s41893-019-0465-1).
+#' method is `"gerten2020"` based on
+#' [Gerten et al. 2020](https://doi.org/10.1038/s41893-019-0465-1)
+#' for spatial_scale = "grid" and
+#' "wang_erlandsson2022" as well as "porkka2023" for
+#' spatial_scale = "global" or "subglobal"
 #'
-#' @param cut_min double. Exclude boundary calculations for Q < cut_min and
-#' dismiss EFR transgresssions if < cut_min for "gerten2020" method,
-#' Default: 0.0864 hm3/day (=1 m??/s)
+#' @param cut_min double. Exclude boundary calculations for discharge < cut_min
+#' and dismiss EFR transgresssions if < cut_min for "gerten2020" method,
+#' Default: 0.0864 hm3/day (=1 m3/s)
 #'
 #' @param avg_nyear_args list of arguments to be passed to
 #' \link[pbfunctions]{average_nyear_window} (see for more info). To be used for
 #' time series analysis
 #'
-#' @param irrmask_basin logical, if true: all cells in river basins without
-#' irrigation will be masked (= no boundary transgression)
-#'
 #' @param spatial_scale character string indicating spatial resolution
-#'        options: "global", "basin", "grid"
-#'        either "grid" for calculation of number of years with transgression
-#'        (for wang-erlandsson2022: dim(ncell, nyears);
-#'         for porkka2023: dim(ncell, nyears, months)) or
-#'        "global" for calculation of the share (%) of total global area with
-#'        deviations (either one value per year (wang-erlandsson2022) or one
-#'        value per year and month (porkka2023)) - note: not applied for
-#'        the method "gerten2020" (only at the grid cell level)
-#'        TODO: check if this parameter is correctly specified, if not global
+#' options: "global", "subglobal", "grid";
+#' for "grid" the method "gerten2020" is applicable based on EFR calculations;
+#' for "global"/"subglobal" the share (%) of total global/basin area with
+#' deviations is calculated
 #'
 #' @param thresholds named character string with thresholds to be used to
-#'        define the safe, increasing risk and high risk zone,
-#'        e.g. c(holocene = 0.5, pb = 0.95, highrisk = 0.99).
-#'        For spatial resolution = "grid", this refers to the p value
-#'        (significance level of increases in deviations) with the default:
-#'        c(holocene = 1, pb = 0.05, highrisk = 0.01).
-#'        For spatial resolution = "global", this refers to the quantiles of
-#'        the global area with deviations in the reference period. The dafault
-#'        for global resolution is: c(holocene = 0.5, pb = 0.95,
-#'        highrisk = 0.99).
-#'        If set to NULL, the respective default is taken (see above; matching
-#'        the spatial_scale)
+#' define the safe, increasing risk and high risk zone, the method and scale
+#' specific default thresholds are defined in metric_files.yml are are applied
+#' if thresholds are set to NULL. 
 #'
 #'@return todo: describe returned object
 #'
@@ -70,44 +58,44 @@
 #' @export
 calc_bluewater_status <- function(files_scenario,
                                   files_reference,
-                                  time_span_scenario = as.character(1982:2011),
+                                  time_span_scenario = NULL,
                                   time_span_reference = time_span_scenario,
                                   method = "gerten2020",
                                   cut_min = 0.0864,
                                   avg_nyear_args = list(),
-                                  irrmask_basin = FALSE,
                                   spatial_scale,
                                   thresholds = NULL) {
+
   # verify available methods and resolution
   method <- match.arg(method, c("gerten2020",
                                 "wang-erlandsson2022",
                                 "porkka2023"))
-  spatial_scale <- match.arg(spatial_scale, c("global",
-                                "subglobal", "grid"))
-  #todo: discuss
-  monthly <- FALSE # do not output basin and global information as monthly
+  spatial_scale <- match.arg(spatial_scale, c("global", "subglobal", "grid"))
 
   # apply defined method
   if (method == "gerten2020") {
-
+    if (spatial_scale != "grid") {
+      stop("Method \"gerten2020\" is only applicable for spatial_scale = \"grid\"") #nolint
+    }
     # reference discharge ---------------------------------------------------- #
     discharge_reference <- lpjmlkit::read_io(
-      files_reference$discharge, subset = list(year = time_span_reference)
-      ) %>%
+      files_reference$discharge, subset = list(year = time_span_reference),
+      silent = TRUE
+    ) %>%
       lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(band = sum)) %>%
-      suppressWarnings()
-    #TODO not yet working for header files (month dimension is calles band)
-    # scenario discharge ----------------------------------------------------- #
+      lpjmlkit::as_array(aggregate = list(band = sum))
 
+    # scenario discharge ----------------------------------------------------- #
     discharge_scenario <- lpjmlkit::read_io(
-      files_scenario$discharge, subset = list(year = time_span_scenario)
-      ) %>%
+      files_scenario$discharge, subset = list(year = time_span_scenario),
+      silent = TRUE
+    ) %>%
       lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(band = sum)) %>%
-      suppressWarnings()
+      lpjmlkit::as_array(aggregate = list(band = sum))
+
     # ------------------------------------------------------------------------ #
 
+    # TODO understand what this does
     if (length(time_span_reference) < length(time_span_scenario)) {
       nyear_ref <- length(time_span_scenario)
     } else {
@@ -128,99 +116,25 @@ calc_bluewater_status <- function(files_scenario,
 
     # calc efrs for vmf_min and vmf_max
     efr_uncertain <- calc_efrs(discharge_reference,
-                                   "vmf_min",
-                                   avg_nyear_args)
+                               "vmf_min",
+                                avg_nyear_args)
     efr_safe <- calc_efrs(discharge_reference,
-                              "vmf_max",
-                              avg_nyear_args)
+                          "vmf_max",
+                          avg_nyear_args)
 
-
-    if (spatial_scale == "global" || spatial_scale == "subglobal") {
-      # todo: modify the indexing_drainage function to return a list?
-      cellinfo <- indexing_drainage(drainage_file = files_reference$drainage)
-      endcell <- lpjmlkit::asub(cellinfo, band = "endcell")
-      rank <- lpjmlkit::asub(cellinfo, band = "rank")
-      routing <- lpjmlkit::asub(cellinfo, band = "routing")
-      # attention here the cell labels in C style (0,1,...) from lpjmlkit are
-      # very confusing, because the basin indices need to be in R notation (1,2,...)
-      basins <- which(routing==0)
-      ncells <- length(endcell)
-
-      if (monthly){
-        # this is very sloooow ...
-        safe <- array(0,dim=c(ncells,12,2))
-        uncertain <- safe
-        for (m in 1:12){
-          safe[,m,] <- efr_aggregation(endcell = endcell,
-                                  routing = routing,
-                                  cellindex = rank,
-                                  efr = efr_safe[,m],
-                                  discharge = avg_discharge_scenario[,m],
-                                  remotes = FALSE,
-                                  flowseason = FALSE
-          ) # discharge unit is raw -> hm3/day
-          uncertain[,m,] <- efr_aggregation(endcell = endcell,
-                                  routing = routing,
-                                  cellindex = rank,
-                                  efr = efr_uncertain[,m],
-                                  discharge = avg_discharge_scenario[,m],
-                                  remotes = FALSE,
-                                  flowseason = FALSE
-          )
-        }
-        # currently still in hm3/day/month (/month because of aggregation)
-        # ~ conversion to km3/yr with /1000 * 30.41666 - better would be to
-        # multiply with the days per month array before the aggregation
-        efr_deficit = safe[basins,,1] - avg_discharge_scenario[basins,]
-        efr_deficit[efr_deficit < cut_min] <- 0
-
-        uncertainty_zone <- safe[basins,,1] - uncertain[basins,,1]
-      }else {
-        avg_discharge_scenario_yearly <- rowSums(avg_discharge_scenario)
-        # much faster, but only yearly resolution
-        safe <- efr_aggregation(endcell = endcell,
-                                       routing = routing,
-                                       cellindex = rank,
-                                       efr = rowSums(efr_safe),
-                                       discharge = avg_discharge_scenario_yearly,
-                                       remotes = FALSE,
-                                       flowseason = FALSE
-        ) # discharge unit is raw -> hm3/day
-        uncertain <- efr_aggregation(endcell = endcell,
-                                            routing = routing,
-                                            cellindex = rank,
-                                            efr = rowSums(efr_uncertain),
-                                            discharge = avg_discharge_scenario_yearly,
-                                            remotes = FALSE,
-                                            flowseason = FALSE
-        )
-        # currently still in hm3/day/month (/month because of aggregation)
-        # ~ conversion to km3/yr with /1000 * 30.41666 - better would be to
-        # multiply with the days per month array before the aggregation
-        efr_deficit = safe[basins,1] - avg_discharge_scenario_yearly
-        efr_deficit[efr_deficit < cut_min] <- 0
-
-        uncertainty_zone <- safe[basins,,1] - uncertain[basins,,1]
-      }
-
-     # todo: aggregate to global if requested
-
-    }else if (spatial_scale == "grid"){
-      # calculation of EFR transgressions = EFR deficits in LU run
-      efr_deficit <- efr_safe - avg_discharge_scenario
-      # dismiss small EFR deficits #TODO check relevance
-      efr_deficit[efr_deficit < cut_min] <- 0
-
-      # calculation of uncertainty zone
-      uncertainty_zone <- efr_safe - efr_uncertain
-    }
+    # calculation of EFR transgressions = EFR deficits in LU run
+    efr_deficit <- efr_safe - avg_discharge_scenario
+    # dismiss small EFR deficits #TODO check relevance
+    efr_deficit[efr_deficit < cut_min] <- 0
+    # calculation of uncertainty zone
+    uncertainty_zone <- efr_safe - efr_uncertain
 
     # calculate boundary status based on transgression to uncertainty ratio
     # (as in Steffen 2015; degree to which EFRs are undermined)
 
     status_frac_monthly <- ifelse(uncertainty_zone > 0,
-                                    efr_deficit / uncertainty_zone,
-                                    0)
+                                  efr_deficit / uncertainty_zone,
+                                  0)
 
     third_dim <- names(dim(status_frac_monthly))[
       !names(dim(status_frac_monthly)) %in% c("cell", "month")
@@ -231,66 +145,62 @@ calc_bluewater_status <- function(files_scenario,
     # to average the ratio only over months which are not "safe"
     status_frac_monthly[status_frac_monthly <= 0.05] <- NA
 
-    pb_status <- apply(
-      status_frac_monthly,
-      names(dim(status_frac_monthly))[
-        names(dim(status_frac_monthly)) %in% c("cell", third_dim)
-      ],
-      mean,
-      na.rm = TRUE)
+    pb_status <- apply(status_frac_monthly,
+                       names(dim(status_frac_monthly))[
+                         names(dim(status_frac_monthly)) %in%
+                           c("cell", third_dim)
+                       ],
+                       mean,
+                       na.rm = TRUE)
     # set cells with NA (all months safe) to 0
     pb_status[is.na(pb_status)] <- 0
 
-    # check if vector was returned (loss if dimnames) -> reconvert to array
+    # check if vector was returned (loss of dimnames) -> reconvert to array
+    #TODO check if necessary
     if (is.null(dim(pb_status))) {
-        pb_status <- array(
-          pb_status,
-          dim = c(cell = dim(status_frac_monthly)[["cell"]], 1),
-          dimnames = list(cell = dimnames(status_frac_monthly)[["cell"]], 1)
-        )
+      pb_status <- array(
+        pb_status,
+        dim = c(cell = dim(status_frac_monthly)[["cell"]], 1),
+        dimnames = list(cell = dimnames(status_frac_monthly)[["cell"]], 1)
+      )
     }
-      # omit boundary status calculation if PNV discharge is < cut_min
-      # (marginal discharge)
-      cells_marginal_discharge <- array(FALSE,
-                                        dim = dim(pb_status),
-                                        dimnames = dimnames(pb_status))
-      cells_marginal_discharge[
-        which(
-          apply(
-            avg_discharge_reference, c("cell", third_dim), mean
-          ) < cut_min
-        )
-      ] <- TRUE
-      pb_status[cells_marginal_discharge] <- NA
+    # omit boundary status calculation if PNV discharge is < cut_min
+    # (marginal discharge)
+    cells_marginal_discharge <- array(FALSE,
+                                      dim = dim(pb_status),
+                                      dimnames = dimnames(pb_status))
+    cells_marginal_discharge[
+      which(
+        apply(
+          avg_discharge_reference, c("cell", third_dim), mean
+        ) < cut_min
+      )
+    ] <- TRUE
+    pb_status[cells_marginal_discharge] <- NA
 
-    # omit boundary status calculation in basins without irrigation?
-    if (irrmask_basin) {
-      # calc irrigation mask to exclude non irrigated basins
-      irrmask_basin <- calc_irrigation_mask(files_scenario,
-                                            time_span = time_span_scenario,
-                                            avg_nyear_args = avg_nyear_args)
-      pb_status[irrmask_basin == 0] <- NA
-    }
-    #   if ratio is above >5%: within uncertainty range (yellow)
-    #   if ratio is above >75% transgression (red)
+    # if ratio is above >5%: within uncertainty range (yellow)
+    # if ratio is above >75% transgression (red)
     # define PB thresholds as attributes
 
-      attr(pb_status, "thresholds") <- thresholds
+    attr(pb_status, "thresholds") <- thresholds
 
   } else if (method %in% c("wang-erlandsson2022", "porkka2023")) {
+    if (spatial_scale == "grid") {
+      stop("Method is only applicable for spatial_scale = \"global\" or \"subglobal\"") #nolint
+    }
     #TODO also account for cut_min?
     pb_status <- calc_water_status(
-     file_scenario = files_scenario$discharge,
-     file_reference = files_reference$discharge,
-     terr_area_path = files_reference$terr_area,
-     drainage_path = files_reference$drainage,
-     time_span_scenario = time_span_scenario,
-     time_span_reference =  time_span_reference,
-     method = method,
-     avg_nyear_args = avg_nyear_args,
-     spatial_scale = spatial_scale,
-     thresholds = thresholds
-   )
+      file_scenario = files_scenario$discharge,
+      file_reference = files_reference$discharge,
+      terr_area_path = files_reference$terr_area,
+      drainage_path = files_reference$drainage,
+      time_span_scenario = time_span_scenario,
+      time_span_reference =  time_span_reference,
+      method = method,
+      avg_nyear_args = avg_nyear_args,
+      spatial_scale = spatial_scale,
+      thresholds = thresholds
+    )
   }
 
   return(pb_status)
