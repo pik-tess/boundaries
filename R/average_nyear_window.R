@@ -36,6 +36,14 @@ average_nyear_window <- function(x,
                                  interpolate = FALSE,
                                  nyear_reference = NULL) {
 
+  if (!is.array(x)) {
+    x <- array(
+      x,
+      dim = c(cell = 1, year = length(x)),
+      dimnames = list(cell = "global", year = seq_along(x))
+    )
+  }
+
   third_dim <- names(dim(x))[
     !names(dim(x)) %in% c("cell", "year")
   ] %>% {
@@ -73,7 +81,7 @@ average_nyear_window <- function(x,
   if (!is.null(nyear_window)) {
     if (!is.null(nyear_reference)) {
       orig_x <- x
-      x <- lpjmlkit::asub(x, year = 1:nyear_reference)
+      x <- lpjmlkit::asub(x, year = 1:nyear_reference, drop = FALSE)
     }
     # only valid for nyear_window <  years of x (dim(x)[3])
     if (nyear_window > 1 & nyear_window <= dim(x)["year"]) {
@@ -157,14 +165,24 @@ average_nyear_window <- function(x,
       }
     }
   } else {
+
     y <- apply(x, c("cell", third_dim), mean)
-    if (is.null(dim(y))) {
-      y <- array(
-        y,
-        dim = c(cell = dim(x)[["cell"]], year = 1),
-        dimnames = list(cell = dimnames(x)[["cell"]], year = "year")
-      )
-    }
+    y_dim <- dim(x)
+    y_dim[["year"]] <- 1
+
+    y_dimnames <- dimnames(x)
+    y_dimnames[["year"]] <- round(mean(as.integer(dimnames(x)[["year"]])))
+
+    y <- array(
+      y,
+      dim = y_dim,
+      dimnames = y_dimnames
+    )
   }
+
+  if (all(dimnames(x)[["cell"]] == "global")) {
+    y <- abind::adrop(y, "cell")
+  }
+
   return(y)
 }
