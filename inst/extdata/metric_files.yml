@@ -24,6 +24,9 @@ metric:
                         temp:
                             resolution: "annual"
                             optional: true
+                        elevation:
+                            resolution: "annual"
+                            optional: true
                     # Called boundaries functions
                     fun_name: "classify_biomes"
                     funs: &biome_fun
