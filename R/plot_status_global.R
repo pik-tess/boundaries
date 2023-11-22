@@ -84,13 +84,13 @@ plot_status_global <- function(file_name = NULL,
     )
   }
 
-  if (all_in_one == TRUE) {
+  if (all_in_one) {
     plot <- ggplot2::ggplot(data_tibble, ggplot2::aes(x = years, y = values,
                                                       col = pb)) +
-         ggplot2::geom_rect(aes(xmin = -Inf, xmax = Inf, ymin = -Inf,
+         ggplot2::geom_rect(ggplot2::aes(xmin = -Inf, xmax = Inf, ymin = -Inf,
                                 ymax = 1), alpha = 1,
                             fill = colors[["safe zone"]], col = NA) +
-         ggplot2::geom_rect(aes(xmin = -Inf, xmax = Inf, ymin = 1,
+         ggplot2::geom_rect(ggplot2::aes(xmin = -Inf, xmax = Inf, ymin = 1,
                    ymax = max(values) + max(values) * 0.05),
                    alpha = 1, fill = colors[["increasing risk"]], col = NA) +
          ggplot2::geom_hline(yintercept = 1, linetype = 2, col = "grey") +
@@ -159,18 +159,18 @@ plot_status_global <- function(file_name = NULL,
                             ggplot2::aes(x = years, y = values, group = pb),
                             col = "#8e8a8a") +
          ggplot2::facet_wrap(~ pb, ncol = ncol, scales = "free",
-                             labeller = as_labeller(ylabel),
+                             labeller = ggplot2::as_labeller(ylabel),
                              strip.position = "left") +
          ggplot2::geom_label(data = data_tibble,
                              mapping = ggplot2::aes(x = -Inf, y = Inf,
                                                     label = pb),
                              hjust = 0.09, vjust = 0.8, size = 3.5,
-                             label.padding = unit(0.75, "lines")
+                             label.padding = ggplot2::unit(0.75, "lines")
                              ) +
          ggplot2::theme_classic(base_line_size = 0.25, base_rect_size = 0.25) +
          ggplot2::theme(axis.title.x = ggplot2::element_blank()) +
          ggplot2::ylab("") +
-         theme(strip.background = element_blank(),
+         ggplot2::theme(strip.background = ggplot2::element_blank(),
                strip.placement = "outside") +
          ggplot2::theme(panel.border = ggplot2::element_rect(colour = "#6b6767",
                                                     fill = NA, size = 0.5))

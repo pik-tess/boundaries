@@ -140,6 +140,7 @@ calc_biosphere_status <- function(files_scenario,
     control_variable <- control_variable[1,]
   }
   attr(control_variable, "thresholds") <- thresholds
+  attr(control_variable, "control variable") <- "BioCol (in fraction of NPPref)"
   return(control_variable)
 
 } # end of calc_biosphere_status

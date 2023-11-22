@@ -65,7 +65,7 @@ calc_nitrogen_status <- function(files_scenario,
                                  files_reference,
                                  time_span_scenario = as.character(1982:2011),
                                  time_span_reference = NULL,
-                                 method = "braun2022",
+                                 method = NULL,
                                  thresholds = NULL,
                                  spatial_resolution = "grid",
                                  cut_arid = 0.2,
@@ -220,38 +220,77 @@ calc_nitrogen_status <- function(files_scenario,
   } else if (spatial_resolution == "global") {
     # verify available methods
     method <- match.arg(method, c("schulte_uebbing2022"))
+    browser()
     # thresholds from rockström et al. 2023
     # https://doi.org/10.1038/s41586-023-06083-8
     # TODO: what to add for holocene value?
     # TODO: also consider managed grassland?
 
     # read n inputs/outputs
-    total_fert <- read_file(file = files_scenario$nfert_agr,
-                                      time_span_scenario)
-    total_man <- read_file(file = files_scenario$nmanure_agr,
-                                     time_span_scenario)
-    total_dep <- read_file(file = files_scenario$ndepo_agr,
-                                     time_span_scenario)
-    total_bnf <- read_file(file = files_scenario$bnf_agr,
-                                     time_span_scenario)
-    total_seed <- read_file(file = files_scenario$seedn_agr,
-                                      time_span_scenario)
-    nharvest <- read_file(file = files_scenario$harvestn_agr,
-                                 time_span_scenario)
-    # calc cellarea
-    #TODO to be replaced by landarea
-    cellarea <- lpjmlkit::read_io(files_scenario$grid) %>%
-                lpjmlkit::calc_cellarea()
+    #total_fert <- read_file(file = files_scenario$nfert_agr,
+    #                        time_span_scenario)
+    #total_man <- read_file(file = files_scenario$nmanure_agr,
+    #                       time_span_scenario)
+    #total_dep <- read_file(file = files_scenario$ndepo_agr,
+    #                       time_span_scenario)
+    #total_bnf <- read_file(file = files_scenario$bnf_agr,
+    #                       time_span_scenario)
+    #total_seed <- read_file(file = files_scenario$seedn_agr,
+    #                        time_span_scenario)
+    #nharvest <- read_file(file = files_scenario$harvestn_agr,
+    #                      time_span_scenario)
+ 
+    # TODO better use cftoutput? 
+    cftfrac <- read_file(file = files_scenario$cftfrac,
+                         time_span_scenario)
+    cftfrac_combined <- apply(cftfrac, c("cell", "year"), sum)
+
+    fert_agr <- read_file(file = files_scenario$nfert_agr,
+                      time_span_scenario)
+    fert_mgrass <- read_file(file = files_scenario$nfert_mgrass,
+                      time_span_scenario)
+    manure_agr <- read_file(file = files_scenario$nmanure_agr,
+                        time_span_scenario)
+    manure_mgrass <- read_file(file = files_scenario$nmanure_mgrass,
+                        time_span_scenario)
+    
+    bnf <- read_file(file = files_scenario$pft_bnf,
+                     time_span_scenario)
+    dep <- read_file(file = files_scenario$ndepos,
+                      time_span_scenario)
+    # find band names which start with rainfed or irrigated to exclude
+    # natural PFT bands
+    bandnames_bnf <- dimnames(bnf)[["band"]][grepl("rainfed|irrigated",
+                                                   dimnames(bnf)[["band"]])]
+    bnf <- bnf[, , bandnames_bnf, drop = FALSE]
+
+    harvest <- read_file(file = files_scenario$harvest,
+                         time_span_scenario) # TODO better with asub!
+    seed <- read_file(file = files_scenario$seed,
+                      time_span_scenario)
+    flux_estabn_mgrass <- read_file(file = files_scenario$flux_estabn_mgrass,
+                                    time_span_scenario)
+
+    # calc terrestrial area
+    # TODO better asub?
+    terr_area <- lpjmlkit::read_io(files_scenario$terr_area) %>% as_array()
+    terr_area <- terr_area[, , 1]
+
+    # calc n surplus
+    nsurplus <- (apply(bnf * cftfrac * terr_area, c("cell", "year"), sum) +
+                    apply((seed + flux_estabn_mgrass + fert_agr + manure_agr +
+                     fert_mgrass + manure_mgrass - harvest), c("cell", "year"), sum) * terr_area +
+                     apply(dep, c("cell", "year"), sum) * cftfrac_combined * terr_area) * 10^-12
 
     # N surplus on cropland (n inputs minus n harvest)
     # conversion to TgN/year
-    nsurplus <- (total_fert + total_man + total_dep + total_bnf + total_seed -
-                 nharvest) * cellarea * 10^-12
+    #nsurplus <- (total_fert + total_man + total_dep + total_bnf + total_seed -
+    #             harvest) * cellarea * 10^-12
 
     # average over time
     avg_nsurplus <- do.call(average_nyear_window,
-                                  append(list(x = nsurplus),
-                                         avg_nyear_args))
+                            append(list(x = nsurplus),
+                                   avg_nyear_args))
 
     # aggregate to global value
     dim_remain <- names(dim(avg_nsurplus))[names(dim(avg_nsurplus)) != "cell"]
@@ -266,10 +305,10 @@ calc_nitrogen_status <- function(files_scenario,
 
 read_file <- function(file, timespan) {
   file <- lpjmlkit::read_io(
-      file, subset = list(year = timespan)
-      ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(month = sum, band = sum)) %>%
-      suppressWarnings()
+    file, subset = list(year = timespan)
+  ) %>%
+    lpjmlkit::transform(to = c("year_month_day")) %>%
+    lpjmlkit::as_array(aggregate = list(month = sum)) %>%
+    suppressWarnings()
   return(file)
 }

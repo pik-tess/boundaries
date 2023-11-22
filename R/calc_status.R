@@ -173,9 +173,9 @@ get_file_ext <- function(path) {
 
   # Get file extensions
   all_file_types <- all_files %>%
-  strsplit("/") %>%
-  sapply(tail, 1) %>%
-  strsplit("^([^\\.]+)") %>%
+    strsplit("/") %>%
+    sapply(tail, 1) %>%
+    strsplit("^([^\\.]+)") %>%
     sapply(function(x) {
       y <- x[2]
       return(y)
@@ -260,6 +260,7 @@ get_filenames <- function(path,
       meta <- lpjmlkit::read_meta(file_name)
 
       # Then check if temporal resultion of file matches required nstep
+      #TODO not working if input/output has higher resolution (i.e. 365 but 12 required)
       if (nstep != meta$nstep && nstep != meta$nbands) {
         stop(
           paste0(

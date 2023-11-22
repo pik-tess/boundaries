@@ -72,7 +72,8 @@ calc_greenwater_status <- function(files_scenario,
    # verify available methods
   method <- match.arg(method, c("wang-erlandsson2022", "porkka2023"))
    # verify available spatial resolution
-  spatial_resolution <- match.arg(spatial_resolution, c("grid", "global"))
+  spatial_resolution <- match.arg(spatial_resolution, c("grid", "global",
+                                                        "subglobal"))
   # TODO not yet compatible with avg_nyear_args
 
   # -------------------------------------------------------------------------- #
@@ -81,6 +82,7 @@ calc_greenwater_status <- function(files_scenario,
     file_scenario = files_scenario$rootmoist,
     file_reference = files_reference$rootmoist,
     grid_path = files_reference$grid,
+    drainage_path = files_reference$drainage,
     time_span_scenario = time_span_scenario,
     time_span_reference =  time_span_reference,
     method = method,

@@ -83,7 +83,7 @@ calc_bluewater_status <- function(files_scenario,
                                 "wang-erlandsson2022",
                                 "porkka2023"))
   spatial_resolution <- match.arg(spatial_resolution, c("global",
-                                "basin", "grid"))
+                                "subglobal", "grid"))
   #todo: discuss
   monthly <- FALSE # do not output basin and global information as monthly
 
@@ -135,9 +135,9 @@ calc_bluewater_status <- function(files_scenario,
                               avg_nyear_args)
 
 
-    if (spatial_resolution == "global" || spatial_resolution == "basin") {
+    if (spatial_resolution == "global" || spatial_resolution == "subglobal") {
       # todo: modify the indexing_drainage function to return a list?
-      cellinfo <- indexing_drainage(files_reference = files_reference)
+      cellinfo <- indexing_drainage(drainage_file = files_reference$drainage)
       endcell <- lpjmlkit::asub(cellinfo, band = "endcell")
       rank <- lpjmlkit::asub(cellinfo, band = "rank")
       routing <- lpjmlkit::asub(cellinfo, band = "routing")
@@ -283,12 +283,13 @@ calc_bluewater_status <- function(files_scenario,
      file_scenario = files_scenario$discharge,
      file_reference = files_reference$discharge,
      grid_path = files_reference$grid,
+     drainage_path = files_reference$drainage,
      time_span_scenario = time_span_scenario,
      time_span_reference =  time_span_reference,
      method = method,
      avg_nyear_args = avg_nyear_args,
      spatial_resolution = spatial_resolution,
-     thresholds = NULL
+     thresholds = thresholds
    )
   }
 

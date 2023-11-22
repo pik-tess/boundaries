@@ -4,14 +4,9 @@
 #   returns lpjml output with either just cell or + year/window
 calc_irrigation_mask <- function(files_scenario,
                                  time_span,
-                                 avg_nyear_args=list(),
-                                 path_input = (
-                                  paste0("/p/projects/lpjml/input/historical",
-                                         "/input_VERSION2/")
-                                 )) {
+                                 avg_nyear_args=list()
+                                 ) {
 
-#TODO should "path_input" be part of "files_scenario", or should the parameter
-# be also defined in calc_bluewater_status?
 
   # -------------------------------------------------------------------------- #
   irrigation_scenario <- lpjmlkit::read_io(
@@ -29,7 +24,7 @@ calc_irrigation_mask <- function(files_scenario,
 
   # ------------------------------------------------------------------------- #
 
-  cellinfo <- indexing_drainage(files_reference = files_scenario)
+  cellinfo <- indexing_drainage(drainge_file = files_scenario$drainage)
   endcell <- lpjmlkit::asub(cellinfo, band = "endcell")
 
   basin_ids <- sort(unique(endcell))
@@ -81,9 +76,9 @@ show_route <- function(ind, routing_table) {
 }
 
 
-indexing_drainage <- function(files_reference){
+indexing_drainage <- function(drainage_file){
 
-    drainage <- lpjmlkit::read_io(files_reference$drainage, datatype = 2
+    drainage <- lpjmlkit::read_io(drainage_file, datatype = 2
                 )$data %>%
     suppressWarnings() %>%
     drop()

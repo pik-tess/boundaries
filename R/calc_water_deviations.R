@@ -67,6 +67,7 @@
 calc_water_status <- function(file_scenario,
                               file_reference,
                               grid_path,
+                              drainage_path,
                               time_span_scenario = as.character(1982:2011),
                               time_span_reference,
                               method = "porkka2023",
@@ -101,13 +102,12 @@ calc_water_status <- function(file_scenario,
   # -------------------------------------------------------------------------- #
   # calculate number of months/years with dry & wet departures (grid resolution)
   # or area with dry/wet departures (global resolution) for each cell
-  ref_depart <- calc_departures(var_reference, grid_path, quants,
+  ref_depart <- calc_departures(var_reference, grid_path, drainage_path, quants,
                                     spatial_resolution = spatial_resolution,
                                     method = method)
-  scen_depart <- calc_departures(var_scenario, grid_path, quants,
+  scen_depart <- calc_departures(var_scenario, grid_path, drainage_path, quants,
                                      spatial_resolution = spatial_resolution,
                                      method = method)
-
 
   # -------------------------------------------------------------------------- #
   if (spatial_resolution == "grid") {
@@ -173,7 +173,6 @@ calc_water_status <- function(file_scenario,
   # -------------------------------------------------------------------------- #
   } else if (spatial_resolution == "global") {
 
-
     # calculate areas corresponding to the quantiles defined in thresholds
     area_high_risk <- quantile(ref_depart$wet_or_dry,
                          probs = thresholds[["highrisk"]], na.rm = TRUE)
@@ -188,20 +187,77 @@ calc_water_status <- function(file_scenario,
     # alternative: apply the moving average funtion already to var_scenario?
     scen_depart_array <- array(scen_depart$wet_or_dry,
                                dim = c(cell = 1,
-                                       year = length(scen_depart$wet_or_dry)
-                                       ),
+                                 year = length(scen_depart$wet_or_dry)
+                               ),
                                dimnames = list(cell = 1,
-                                               year = names(scen_depart$wet_or_dry)
-                                               )) #dummy cell dimension
+                                 year = names(scen_depart$wet_or_dry)
+                               )) #dummy cell dimension
 
     control_variable <- do.call(average_nyear_window,
-                                      append(list(x = scen_depart_array),
-                                             avg_nyear_args))[1, ]
+                                append(list(x = scen_depart_array),
+                                            avg_nyear_args))[1, ]
 
     attr(control_variable, "thresholds") <- list(holocene = area_holocene,
-                                              pb = area_pb,
-                                              highrisk = area_high_risk)
-    attr(control_variable, "control variable") <- "area with wet/dry departures (%)"
+                                                 pb = area_pb,
+                                                 highrisk = area_high_risk)
+    attr(control_variable, "control variable") <-
+      "area with wet/dry departures (%)"
+
+  } else if (spatial_resolution == "subglobal") {
+
+    # calculate for each basin: thresholds for translation into pb status
+    area_high_risk <- apply(ref_depart$wet_or_dry, "basin",
+                            function(x) {
+                              y <- quantile(x, probs = thresholds[["highrisk"]],
+                                            na.rm = TRUE)
+                            })
+    area_pb <- apply(ref_depart$wet_or_dry, "basin",
+                     function(x) {
+                       y <- quantile(x, probs = thresholds[["pb"]],
+                                     na.rm = TRUE)
+                     })
+    area_holocene <- apply(ref_depart$wet_or_dry, "basin",
+                           function(x) {
+                             y <- quantile(x, probs = thresholds[["holocene"]],
+                                           na.rm = TRUE)
+                           })
+
+    # transform to array with cell dim as in lpjml
+    basin_to_cell <- function(data, endcell) {
+      ncells <- length(endcell)
+      basins <- unique(endcell)
+      out <- array(NA, dim = c(cell = ncells),
+                   dimnames = list(cell = 1:ncells))
+      for (i in 1:length(basins)){
+        basin <- basins[i]
+        out[which(endcell == basin)] <- data[i]
+      }
+      return(out)
+    }
+    area_high_risk <- basin_to_cell(area_high_risk, endcell)
+    area_pb <- basin_to_cell(area_pb, endcell)
+    area_holocene <- basin_to_cell(area_holocene, endcell)
+
+    scen_departures <- array(NA,
+                             dim = c(cell = length(endcell),
+                                     year = dim(scen_depart$wet_or_dry)[["year"]]),
+                             dimnames = list(cell = 1:length(endcell),
+                                             year = dimnames(scen_depart$wet_or_dry)[["year"]]))
+
+    basins <- unique(endcell)
+    for (i in 1:length(basins)) {
+      y <- which(endcell == basins[i])
+      scen_departures[y, ] <- scen_depart$wet_or_dry[i, ]
+    }
+    control_variable <- do.call(average_nyear_window,
+                                append(list(x = scen_departures),
+                                       avg_nyear_args)) %>%
+      drop()
+    attr(control_variable, "thresholds") <- list(holocene = area_holocene,
+                                                 pb = area_pb,
+                                                 highrisk = area_high_risk)
+    attr(control_variable, "control variable") <-
+      "area with wet/dry departures (%)"
 
   }
   return(control_variable)
@@ -236,7 +292,7 @@ calc_baseline <- function(file_reference, method) {
 # (global resolution) or number of years/months with wet/dry departures
 # (grid resolution)
 
-calc_departures <- function(data, grid_path, quants,
+calc_departures <- function(data, grid_path, drainage_path, quants,
                               spatial_resolution, method) {
 
   q5_base <- rep(quants[["q5"]], dim(data)["year"])
@@ -259,19 +315,43 @@ calc_departures <- function(data, grid_path, quants,
   dry[is.na(dry)] <- 0
   dry_or_wet <- ifelse((dry == 1 | wet == 1), 1, 0)
 
+  # calc cellarea if spatial resolution is subglobal or global
+  grid <- lpjmlkit::read_io(
+    grid_path,
+    silent = TRUE
+  )
+  # TODO this should rather be the percentage of ice-free land surface!
+  cell_area <- lpjmlkit::calc_cellarea(grid)
+
   result <- list()
   if (spatial_resolution == "grid") {
-    #dim_remain <- names(dim(dry))[names(dim(dry)) != "year"]
     result$dry <- apply(dry, "cell", sum)
     result$wet <- apply(wet, "cell", sum)
     result$wet_or_dry <- apply(dry_or_wet, "cell", sum)
+
+  } else if (spatial_resolution == "subglobal") {
+    # calculate for each basin and year: area with wet/dry departures
+    cellinfo <- indexing_drainage(drainage_file = drainage_path)
+    endcell <<- lpjmlkit::asub(cellinfo, band = "endcell")
+    nbasins <- length(unique(endcell))
+    result$wet_or_dry <- array(NA, dim = c(basin = nbasins, dim(dry)["year"]),
+                               dimnames = list(basin = unique(endcell),
+                                               year = dimnames(dry)[["year"]]))
+    for (b in unique(endcell)) { # go through all basins
+      print(b)
+      if (length(which(endcell == b) == TRUE) == 1) {
+        result$wet_or_dry[which(unique(endcell) == b), ] <-
+          (dry_or_wet[endcell == b, ] * cell_area[endcell == b]) /
+          sum(cell_area[endcell == b]) * 100
+      } else {
+        result$wet_or_dry[which(unique(endcell) == b), ] <- 
+          apply((dry_or_wet[endcell == b, ] * cell_area[endcell == b]) /
+                  sum(cell_area[endcell == b]) * 100,
+                c("year"), sum, na.rm = TRUE)
+      }
+    }
+
   } else if (spatial_resolution == "global") {
-    grid <- lpjmlkit::read_io(
-      grid_path,
-      silent = TRUE
-      )
-    # TODO this should rather be the percentage of ice-free land surface!
-    cell_area <- lpjmlkit::calc_cellarea(grid)
     dim_remain <- names(dim(dry))[names(dim(dry)) != "cell"]
     result$dry <- apply((dry * cell_area) / sum(cell_area) * 100, dim_remain,
                            sum)

@@ -119,7 +119,7 @@ plot_status <- function(status_data = NULL,
     )
   }
   textcex <- 0.5 + 0.125 * (n_row + n_col)
-  # par(mar = rep(0, 4), xpd = TRUE, bg = bg_col)
+  par(mar = rep(0, 4), xpd = TRUE, bg = bg_col)
   brk <- c(-1:4)
   cols <- c("grey92", colors, "darkgrey")
 
