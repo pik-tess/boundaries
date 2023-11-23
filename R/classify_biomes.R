@@ -375,7 +375,6 @@ classify_biomes <- function(path_reference = NULL,
     fpc_tree_total >= min_tree_cover[["tropical forest"]]
   }
 
-  browser()
   # Boreal Evergreen
   is_boreal_evergreen <- {
     is_boreal_forest &
