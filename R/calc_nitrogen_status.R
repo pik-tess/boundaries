@@ -88,21 +88,21 @@ calc_nitrogen_status <- function(files_scenario,
                                     ) {
 
       # read runoff ---------------------------------------------------------- #
-      runoff <- read_file(file = path_data$runoff, timespan = time_span)
+      runoff %<-% read_file(file = path_data$runoff, timespan = time_span)
 
       # read leaching -------------------------------------------------------- #
-      leaching <- read_file(file = path_data$leaching, timespan = time_span)
+      leaching %<-% read_file(file = path_data$leaching, timespan = time_span)
 
       # ---------------------------------------------------------------------- #
       # average runoff
-      avg_runoff <- do.call(average_nyear_window,
-                            append(list(x = runoff),
-                                   avg_nyear_args))
+      avg_runoff %<-% do.call(average_nyear_window,
+                              append(list(x = runoff),
+                                     avg_nyear_args))
 
       # average leaching
-      avg_leaching <- do.call(average_nyear_window,
-                              append(list(x = leaching),
-                                     avg_nyear_args))
+      avg_leaching %<-% do.call(average_nyear_window,
+                                append(list(x = leaching),
+                                       avg_nyear_args))
 
       if (with_groundwater_denit) {
         # temporary solution using shares of global losses after
@@ -117,9 +117,11 @@ calc_nitrogen_status <- function(files_scenario,
         loss_factor <- 1
       }
 
-      n_conc <- ifelse(avg_runoff > 0,
-                             (avg_leaching * 1e3 * loss_factor) /
-                             (avg_runoff), 0)
+      n_conc <- ifelse(
+        avg_runoff > 0,
+        (avg_leaching * 1e3 * loss_factor) /
+        (avg_runoff), 0
+      )
   
       return(n_conc)
     }
@@ -161,10 +163,10 @@ calc_nitrogen_status <- function(files_scenario,
     )
 
     # read potential evapotranspiration -------------------------------------- #
-    pet <- read_file(file = files_scenario$pet, timespan = time_span_scenario)
+    pet %<-% read_file(file = files_scenario$pet, timespan = time_span_scenario)
 
     # read precipitation ----------------------------------------------------- #
-    prec <- read_file(file = files_scenario$prec, timespan = time_span_scenario)
+    prec %<-% read_file(file = files_scenario$prec, timespan = time_span_scenario) # nolint:line_length_linter
     # ------------------------------------------------------------------------ #
     # average pet
     avg_pet <- do.call(average_nyear_window,
@@ -173,14 +175,15 @@ calc_nitrogen_status <- function(files_scenario,
 
     # average precipitation
     avg_prec <- do.call(average_nyear_window,
-                       append(list(x = prec),
-                              avg_nyear_args))
+                        append(list(x = prec),
+                               avg_nyear_args))
 
-    # calculate global aridity index (AI) as an indicator for a level under which
-    #   the calculation of leaching just cannot show realistic behavior, see also
-    #   on the AI: https://doi.org/10.6084/m9.figshare.7504448.v4%C2%A0
-    #     & (first descr.) https://wedocs.unep.org/xmlui/handle/20.500.11822/30300
-    #   on nitrogen processes in arid areas: https://www.jstor.org/stable/45128683
+    # calculate global aridity index (AI) as an indicator for a level under
+    #   which the calculation of leaching just cannot show realistic behavior,
+    #   see also on the AI: https://doi.org/10.6084/m9.figshare.7504448.v4%C2%A0
+    #   & (first descr.) https://wedocs.unep.org/xmlui/handle/20.500.11822/30300
+    #   on nitrogen processes in arid areas: 
+    #   https://www.jstor.org/stable/45128683
     #     -> indicates boundary to "arid" as thresholds (=< 0.2)
     #   on "arid threshold" (indirectly): https://doi.org/10.1038/ncomms5799
     #     -> threshold for behaviour change in nitrogen cycling (=< 0.32)
@@ -188,15 +191,21 @@ calc_nitrogen_status <- function(files_scenario,
 
     # ------------------------------------------------------------------------
     # read runoff
-    runoff <- read_file(file = files_scenario$runoff,
-                        timespan = time_span_scenario)
+    runoff %<-% read_file(
+      file = files_scenario$runoff,
+      timespan = time_span_scenario
+    )
 
     # average runoff
-    runoff_annual <- do.call(average_nyear_window,
-                            append(list(x = runoff),
-                                   avg_nyear_args))
+    runoff_annual %<-% do.call(
+      average_nyear_window,
+      append(
+        list(x = runoff),
+        avg_nyear_args
+      )
+    )
 
-    # to display arid cells (leaching behaviour threshold) in other color (grey):
+    # to display arid cells (leaching behaviour threshold) in other color (grey)
     cells_arid <- array(FALSE,
                         dim = dim(n_conc),
                         dimnames = dimnames(n_conc))
@@ -218,52 +227,63 @@ calc_nitrogen_status <- function(files_scenario,
   } else if (spatial_scale == "global") {
     # verify available methods
     method <- match.arg(method, c("schulte_uebbing2022"))
-    browser()
     # thresholds from rockström et al. 2023
     # https://doi.org/10.1038/s41586-023-06083-8
-    # TODO: what to add for holocene value?
-    # TODO: also consider managed grassland?
 
-    # read n inputs/outputs
-    #total_fert <- read_file(file = files_scenario$nfert_agr,
-    #                        time_span_scenario)
-    #total_man <- read_file(file = files_scenario$nmanure_agr,
-    #                       time_span_scenario)
-    #total_dep <- read_file(file = files_scenario$ndepo_agr,
-    #                       time_span_scenario)
-    #total_bnf <- read_file(file = files_scenario$bnf_agr,
-    #                       time_span_scenario)
-    #total_seed <- read_file(file = files_scenario$seedn_agr,
-    #                        time_span_scenario)
-    #nharvest <- read_file(file = files_scenario$harvestn_agr,
-    #                      time_span_scenario)
- 
-    # TODO better use cftoutput? 
-    cftfrac <- read_file(file = files_scenario$cftfrac,
-                         time_span_scenario)
+    # TODO better use cftoutput?
+    cftfrac %<-% read_file(
+      file = files_scenario$cftfrac,
+      time_span_scenario
+    )
     cftfrac_combined <- apply(cftfrac, c("cell", "year"), sum)
 
-    fert_agr <- read_file(file = files_scenario$nfert_agr,
-                      time_span_scenario)
-    fert_mgrass <- read_file(file = files_scenario$nfert_mgrass,
-                      time_span_scenario)
-    manure_agr <- read_file(file = files_scenario$nmanure_agr,
-                        time_span_scenario)
-    manure_mgrass <- read_file(file = files_scenario$nmanure_mgrass,
-                        time_span_scenario)
-    
-    bnf <- read_file(file = files_scenario$pft_bnf,
-                     time_span_scenario)
-    dep <- read_file(file = files_scenario$ndepos,
-                      time_span_scenario)
+    # read in fertilizer for agricultural land
+    fert_agr %<-% read_file(
+      file = files_scenario$nfert_agr,
+      time_span_scenario
+    )
+
+    # read in fertilizer for managed grassland
+    fert_mgrass %<-% read_file(
+      file = files_scenario$nfert_mgrass,
+      time_span_scenario
+    )
+
+    # read in manure for agricultural land
+    manure_agr %<-% read_file(
+      file = files_scenario$nmanure_agr,
+      time_span_scenario
+    )
+
+    # read in manure for managed grassland
+    manure_mgrass %<-% read_file(
+      file = files_scenario$nmanure_mgrass,
+      time_span_scenario
+    )
+
+    # read in biological nitrogen fixation
+    bnf %<-% read_file(
+      file = files_scenario$pft_bnf,
+      time_span_scenario
+    )
+
+    # read in nitrogen deposition
+    dep %<-% read_file(
+      file = files_scenario$ndepos,
+      time_span_scenario
+    )
+
     # find band names which start with rainfed or irrigated to exclude
     # natural PFT bands
-    bandnames_bnf <- dimnames(bnf)[["band"]][grepl("rainfed|irrigated",
-                                                   dimnames(bnf)[["band"]])]
+    bandnames_bnf <- dimnames(bnf)[["band"]][
+      grepl("rainfed|irrigated", dimnames(bnf)[["band"]])
+    ]
     bnf <- bnf[, , bandnames_bnf, drop = FALSE]
 
-    harvest <- read_file(file = files_scenario$harvest,
-                         time_span_scenario) # TODO better with asub!
+    harvest %<-% read_file(
+      file = files_scenario$harvest,
+      time_span_scenario
+    ) # TODO better with asub!
     seed <- read_file(file = files_scenario$seed,
                       time_span_scenario)
     flux_estabn_mgrass <- read_file(file = files_scenario$flux_estabn_mgrass,
@@ -295,12 +315,15 @@ calc_nitrogen_status <- function(files_scenario,
     control_variable <- apply(avg_nsurplus, dim_remain, sum, na.rm = TRUE)
 
     attr(control_variable, "thresholds") <- thresholds
-    attr(control_variable, "control variable") <-
+    attr(control_variable, "control variable") <- (
       "nitrogen surplus on agricultural land"
+    )
   }
   return(control_variable)
 }
 
+
+# read file function --------------------------------------------------------- #
 read_file <- function(file, timespan) {
   file <- lpjmlkit::read_io(
     file, subset = list(year = timespan)

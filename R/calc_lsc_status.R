@@ -75,7 +75,7 @@ calc_lsc_status <- function(
   ellipsis_filtered$thresholds <- NULL
 
   # classify biomes based on foliage projected cover (FPC) output
-  biome_classes <- do.call(
+  biome_classes %<-% do.call(
     classify_biomes,
     append(list(files_reference = files_reference,
                 time_span_reference = time_span_reference,
@@ -84,42 +84,49 @@ calc_lsc_status <- function(
            ellipsis_filtered)
   )
 
-  biome_classes <- biome_classes$biome_id
-
   if (spatial_scale == "subglobal") {
     # get continents mask - pass arg of whether to merge europe and asia
-    continent_grid <- calc_continents_mask(files_reference$grid,
-                                           eurasia = eurasia)
+    continent_grid %<-% calc_continents_mask(files_reference$grid,
+                                             eurasia = eurasia)
   }
 
   # read in biome mapping
-  biome_mapping <- read_biome_mapping(system.file("extdata",
-                               "biomes.csv",
-                               package = "boundaries"))
+  biome_mapping <- read_biome_mapping(
+    system.file("extdata",
+    "biomes.csv",
+    package = "boundaries")
+  )
 
   # calculate cell area
-  cell_area <- lpjmlkit::read_io(
-    files_reference$grid,
-    silent = TRUE
-  ) %>%
-    lpjmlkit::calc_cellarea()
+  cell_area %<-% {
+    lpjmlkit::read_io(
+      files_reference$grid,
+      silent = TRUE
+    ) %>%
+      lpjmlkit::calc_cellarea()
+  }
 
   # read fpc
-  fpc_scenario <- lpjmlkit::read_io(
-    files_scenario$fpc,
-    subset = list(year = time_span_scenario),
-    silent = TRUE
-  ) %>%
-    lpjmlkit::transform(to = c("year_month_day")) %>%
-    lpjmlkit::as_array()
+  fpc_scenario %<-% {
+    lpjmlkit::read_io(
+      files_scenario$fpc,
+      subset = list(year = time_span_scenario),
+      silent = TRUE
+    ) %>%
+      lpjmlkit::transform(to = c("year_month_day")) %>%
+      lpjmlkit::as_array()
+  }
 
-  fpc_reference <- lpjmlkit::read_io(
-    files_reference$fpc,
-    subset = list(year = time_span_reference),
-    silent = TRUE
-  ) %>%
-    lpjmlkit::transform(to = c("year_month_day")) %>%
-    lpjmlkit::as_array()
+  fpc_reference %<-% {
+    lpjmlkit::read_io(
+      files_reference$fpc,
+      subset = list(year = time_span_reference),
+      silent = TRUE
+    ) %>%
+      lpjmlkit::transform(to = c("year_month_day")) %>%
+      lpjmlkit::as_array()
+  }
+
   fpc_nbands <- dim(fpc_scenario)[["band"]]
   npft <- fpc_nbands - 1
 
@@ -169,14 +176,14 @@ calc_lsc_status <- function(
   )
 
   # sum tree pfts for forest cover
-  all_tree_cover_scenario <- apply(
+  all_tree_cover_scenario %<-% apply(
     tree_cover_scenario,
     c("cell", "year"), #TODO not working for 1 year
     sum,
     na.rm = TRUE
   )
 
-  all_tree_cover_reference <- apply(
+  all_tree_cover_reference %<-% apply(
     tree_cover_reference,
     c("cell", "year"),
     sum,
@@ -184,29 +191,18 @@ calc_lsc_status <- function(
   )
 
   # average forest over time
-  avg_trees_scenario <- do.call(average_nyear_window,
-                                append(list(x = all_tree_cover_scenario),
-                                       avg_nyear_args))
+  avg_trees_scenario %<-% do.call(average_nyear_window,
+                                  append(list(x = all_tree_cover_scenario),
+                                         avg_nyear_args))
 
 
   # average forest over time
-  # TODO should the timeframe be static or the same as for the scenario?
-  # --> both options should be implemented
 
-  if (all(time_span_reference == time_span_scenario)) {
-
-    avg_trees_reference <- do.call(
-      average_nyear_window,
-      append(list(x = all_tree_cover_reference),
-             avg_nyear_args)
-    )
-  } else {
-    avg_trees_reference <- apply(
-      all_tree_cover_reference,
-      "cell",
-      mean
-    )
-  }
+  avg_trees_reference %<-% apply(
+    all_tree_cover_reference,
+    "cell",
+    mean
+  )
 
   # binary is forest biome - mask
   is_forest <- array(0,
@@ -224,12 +220,14 @@ calc_lsc_status <- function(
 
   # forest biomes
   is_forest[
-    biome_classes %in% dplyr::filter(biome_mapping, category == "forest")$id
+    biome_classes$biome_id %in% dplyr::filter(
+      biome_mapping, category == "forest"
+    )$id
   ] <- 1
 
   # tropical forest biomes
   is_tropical_forest[
-    biome_classes %in% dplyr::filter(
+    biome_classes$biome_id %in% dplyr::filter(
       biome_mapping, category == "forest" & zone == "tropical"
     )$id
   ] <- 1
@@ -237,7 +235,7 @@ calc_lsc_status <- function(
 
   # temperate forest biomes
   is_temperate_forest[
-    biome_classes %in% dplyr::filter(
+    biome_classes$biome_id %in% dplyr::filter(
       biome_mapping, category == "forest" & zone == "temperate"
     )$id
   ] <- 1
@@ -245,7 +243,7 @@ calc_lsc_status <- function(
 
   # boreal forest biomes
   is_boreal_forest[
-    biome_classes %in% dplyr::filter(
+    biome_classes$biome_id %in% dplyr::filter(
       biome_mapping, category == "forest" & zone == "boreal"
     )$id
   ] <- 1
@@ -349,18 +347,22 @@ read_biome_mapping <- function(file_path) {
                      function(x) ifelse(as.logical(x), TRUE, NA)) %>%
     # all binary zone columns (tropical, temperate, boreal) in one categorical
     #   zone column
-    tidyr::pivot_longer(cols = starts_with("zone_"),
-                 names_to = "zone",
-                 names_prefix = "zone_",
-                 values_to = "zone_value",
-                 values_drop_na = TRUE) %>%
+    tidyr::pivot_longer(
+      cols = starts_with("zone_"),
+      names_to = "zone",
+      names_prefix = "zone_",
+      values_to = "zone_value",
+      values_drop_na = TRUE
+    ) %>%
     # all binary category columns (forest, xx) in one categorical
     #   category column
-    tidyr::pivot_longer(cols = starts_with("category_"),
-                 names_to = "category",
-                 names_prefix = "category_",
-                 values_to = "category_value",
-                 values_drop_na = TRUE) %>%
+    tidyr::pivot_longer(
+      cols = starts_with("category_"),
+      names_to = "category",
+      names_prefix = "category_",
+      values_to = "category_value",
+      values_drop_na = TRUE
+    ) %>%
     # delete side product - logical columns
     dplyr::select(-c("category_value", "zone_value")) %>%
     return()
