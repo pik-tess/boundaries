@@ -152,6 +152,8 @@ calc_status <- function(boundary,
     warning(paste0("The following arguments were not used: ",
                    paste0("`", names(check_args), "`", collapse = ", ")))
   }
+  attr(all_status, "class") <- "pb_status"
+
   return(all_status)
 }
 

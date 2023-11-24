@@ -63,7 +63,7 @@ calc_lsc_status <- function(
   spatial_scale = "subglobal",
   eurasia = TRUE,
   thresholds = NULL,
-  method = "steffen2015", #TODO add switch
+  method = "steffen2015",
   avg_nyear_args = list(),
   ...
 ) {
@@ -92,9 +92,7 @@ calc_lsc_status <- function(
 
   # read in biome mapping
   biome_mapping <- read_biome_mapping(
-    system.file("extdata",
-    "biomes.csv",
-    package = "boundaries")
+    system.file("extdata", "biomes.csv", package = "boundaries")
   )
 
   # calculate cell area
@@ -260,10 +258,12 @@ calc_lsc_status <- function(
   ]
 
   if (spatial_scale == "subglobal") {
+
     # create space of combinations to loop over (even though not all make sense)
     comb <- expand.grid(
-      continent = sort(unique(lpjmlkit::asub(continent_grid,
-                                             band = "continent"))),
+      continent = sort(
+        unique(lpjmlkit::asub(continent_grid, band = "continent"))
+      ),
       forest = sort(unique(factor(forest_type)))[-1]
     )
     for (idx in seq_len(nrow(comb))) {
@@ -300,18 +300,21 @@ calc_lsc_status <- function(
     # init threshold array with NA = no data and initial dimensions + threshold
     # dimension
 
-    pb_thresholds <- highrisk_thresholds <- holocene_thresholds <-
-      array(NA, dim = dim(deforestation), dimnames = dimnames(deforestation))
+    assign_thresholds <- function(forest_type, thresholds) {
+      threshold_array <- array(
+        NA,
+        dim = dim(deforestation),
+        dimnames = dimnames(deforestation)
+      )
+      threshold_array[forest_type == 1] <- thresholds$tropical
+      threshold_array[forest_type == 2] <- thresholds$temperate
+      threshold_array[forest_type == 3] <- thresholds$boreal
+      return(threshold_array)
+    }
 
-    pb_thresholds[forest_type == 1] <- thresholds$pb$tropical
-    pb_thresholds[forest_type == 2] <- thresholds$pb$temperate
-    pb_thresholds[forest_type == 3] <- thresholds$pb$boreal
-    highrisk_thresholds[forest_type == 1] <- thresholds$highrisk$tropical
-    highrisk_thresholds[forest_type == 2] <- thresholds$highrisk$temperate
-    highrisk_thresholds[forest_type == 3] <- thresholds$highrisk$boreal
-    holocene_thresholds[forest_type == 1] <- thresholds$holocene$tropical
-    holocene_thresholds[forest_type == 2] <- thresholds$holocene$temperate
-    holocene_thresholds[forest_type == 3] <- thresholds$holocene$boreal
+    pb_thresholds <- assign_thresholds(forest_type, thresholds$pb)
+    highrisk_thresholds <- assign_thresholds(forest_type, thresholds$highrisk)
+    holocene_thresholds <- assign_thresholds(forest_type, thresholds$holocene)
 
     dim_names <- dimnames(deforestation)
     dim_names$thresholds <- names(thresholds)

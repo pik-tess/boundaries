@@ -65,7 +65,7 @@ calc_nitrogen_status <- function(files_scenario,
                                  files_reference,
                                  time_span_scenario = as.character(1982:2011),
                                  time_span_reference = NULL,
-                                 method = NULL,
+                                 method = "braun2022",
                                  thresholds = NULL,
                                  spatial_scale = "grid",
                                  cut_arid = 0.2,
@@ -88,10 +88,18 @@ calc_nitrogen_status <- function(files_scenario,
                                     ) {
 
       # read runoff ---------------------------------------------------------- #
-      runoff %<-% read_file(file = path_data$runoff, timespan = time_span)
+      runoff %<-% read_io_format(
+        file = path_data$runoff,
+        timespan = time_span,
+        aggregate = list(month = sum)
+      )
 
       # read leaching -------------------------------------------------------- #
-      leaching %<-% read_file(file = path_data$leaching, timespan = time_span)
+      leaching %<-% read_io_format(
+        file = path_data$leaching,
+        timespan = time_span,
+        aggregate = list(month = sum)
+      )
 
       # ---------------------------------------------------------------------- #
       # average runoff
@@ -163,10 +171,18 @@ calc_nitrogen_status <- function(files_scenario,
     )
 
     # read potential evapotranspiration -------------------------------------- #
-    pet %<-% read_file(file = files_scenario$pet, timespan = time_span_scenario)
+    pet %<-% read_io_format(
+      file = files_scenario$pet,
+      timespan = time_span_scenario,
+      aggregate = list(month = sum)
+    )
 
     # read precipitation ----------------------------------------------------- #
-    prec %<-% read_file(file = files_scenario$prec, timespan = time_span_scenario) # nolint:line_length_linter
+    prec %<-% read_io_format(
+      file = files_scenario$prec,
+      timespan = time_span_scenario,
+      aggregate = list(month = sum)
+    )
     # ------------------------------------------------------------------------ #
     # average pet
     avg_pet <- do.call(average_nyear_window,
@@ -191,9 +207,10 @@ calc_nitrogen_status <- function(files_scenario,
 
     # ------------------------------------------------------------------------
     # read runoff
-    runoff %<-% read_file(
+    runoff %<-% read_io_format(
       file = files_scenario$runoff,
-      timespan = time_span_scenario
+      timespan = time_span_scenario,
+      aggregate = list(month = sum)
     )
 
     # average runoff
@@ -231,46 +248,51 @@ calc_nitrogen_status <- function(files_scenario,
     # https://doi.org/10.1038/s41586-023-06083-8
 
     # TODO better use cftoutput?
-    cftfrac %<-% read_file(
+    cftfrac %<-% read_io_format(
       file = files_scenario$cftfrac,
-      time_span_scenario
+      time_span_scenario,
+      aggregate = list(month = sum)
     )
     cftfrac_combined <- apply(cftfrac, c("cell", "year"), sum)
 
     # read in fertilizer for agricultural land
-    fert_agr %<-% read_file(
+    fert_agr %<-% read_io_format(
       file = files_scenario$nfert_agr,
-      time_span_scenario
+      time_span_scenario,
+      aggregate = list(month = sum)
     )
 
     # read in fertilizer for managed grassland
-    fert_mgrass %<-% read_file(
+    fert_mgrass %<-% read_io_format(
       file = files_scenario$nfert_mgrass,
-      time_span_scenario
+      time_span_scenario,
+      aggregate = list(month = sum)
     )
 
     # read in manure for agricultural land
-    manure_agr %<-% read_file(
+    manure_agr %<-% read_io_format(
       file = files_scenario$nmanure_agr,
-      time_span_scenario
+      time_span_scenario,
+      aggregate = list(month = sum)
     )
-
     # read in manure for managed grassland
-    manure_mgrass %<-% read_file(
+    manure_mgrass %<-% read_io_format(
       file = files_scenario$nmanure_mgrass,
       time_span_scenario
     )
 
     # read in biological nitrogen fixation
-    bnf %<-% read_file(
+    bnf %<-% read_io_format(
       file = files_scenario$pft_bnf,
-      time_span_scenario
+      time_span_scenario,
+      aggregate = list(month = sum)
     )
 
     # read in nitrogen deposition
-    dep %<-% read_file(
+    dep %<-% read_io_format(
       file = files_scenario$ndepos,
-      time_span_scenario
+      time_span_scenario,
+      aggregate = list(month = sum)
     )
 
     # find band names which start with rainfed or irrigated to exclude
@@ -280,14 +302,23 @@ calc_nitrogen_status <- function(files_scenario,
     ]
     bnf <- bnf[, , bandnames_bnf, drop = FALSE]
 
-    harvest %<-% read_file(
+    harvest %<-% read_io_format(
       file = files_scenario$harvest,
-      time_span_scenario
+      time_span_scenario,
+      aggregate = list(month = sum)
     ) # TODO better with asub!
-    seed <- read_file(file = files_scenario$seed,
-                      time_span_scenario)
-    flux_estabn_mgrass <- read_file(file = files_scenario$flux_estabn_mgrass,
-                                    time_span_scenario)
+
+    seed <- read_io_format(
+      file = files_scenario$seed,
+      time_span_scenario,
+      aggregate = list(month = sum)
+    )
+
+    flux_estabn_mgrass <- read_io_format(
+      file = files_scenario$flux_estabn_mgrass,
+      time_span_scenario,
+      aggregate = list(month = sum)
+    )
 
     # calc terrestrial area
     # TODO better asub?
@@ -324,12 +355,12 @@ calc_nitrogen_status <- function(files_scenario,
 
 
 # read file function --------------------------------------------------------- #
-read_file <- function(file, timespan) {
+read_io_format <- function(file, timespan, aggregate=list()) {
   file <- lpjmlkit::read_io(
     file, subset = list(year = timespan)
   ) %>%
     lpjmlkit::transform(to = c("year_month_day")) %>%
-    lpjmlkit::as_array(aggregate = list(month = sum)) %>%
+    lpjmlkit::as_array(aggregate = aggregate) %>%
     suppressWarnings()
   return(file)
 }

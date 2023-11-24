@@ -6,10 +6,11 @@ calc_continents_mask <- function(path_grid, eurasia = TRUE) {
   # -------------------------------------------------------------------------- #
   # read grid
   lpjml_grid <- lpjmlkit::read_io(
-      path_grid,
-      silent = TRUE, dim_order = c("band", "cell", "time")
-      )$data %>% drop()
-  dimnames(lpjml_grid)$band <- c("lon", "lat")
+    path_grid,
+    band_names = c("lon", "lat"),
+    silent = TRUE,
+    dim_order = c("band", "cell", "time")
+  )$data %>% drop()
 
 
   # grid to simple feature collection (sfc) 

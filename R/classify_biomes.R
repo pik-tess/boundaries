@@ -140,7 +140,10 @@ classify_biomes <- function(path_reference = NULL,
   # bands currently not named in grid file, therefore band 2 manually selected
   lat <- lpjmlkit::as_array(grid, subset = list(band = 2)) %>%
     drop()
-  fpc %<-% read_file(files_reference$fpc, time_span_reference)
+  fpc %<-% read_io_format(
+    files_reference$fpc,
+    time_span_reference
+  )
 
   temp %<-% {
     lpjmlkit::read_io(
@@ -155,8 +158,10 @@ classify_biomes <- function(path_reference = NULL,
   }
 
   if (!is.na(savanna_proxy_name)) {
-    savanna_proxy_data %<-% read_file(files_reference[[savanna_proxy_name]],
-                                    time_span_reference)
+    savanna_proxy_data %<-% read_io_format(
+      files_reference[[savanna_proxy_name]],
+      time_span_reference
+    )
   }
 
   if (!is.na(montane_arctic_proxy_name)) {

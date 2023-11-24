@@ -6,7 +6,7 @@
 #' @param file_name character string providing file name (including directory
 #' and file extension). Defaults to NULL (plotting to screen)
 #'
-#' @param status_data list with one to four LPJmL vectors (length: ncells) with
+#' @param x list with one to four LPJmL vectors (length: ncells) with
 #' the outputs from the calc_* functions for one point in time.
 #' Given element names within the list will be displayed underneath the
 #' respective map. Order in the list determines the plotting order (by row).
@@ -25,7 +25,7 @@
 #' @examples
 #' \dontrun{
 #'  plot_status(file_name = "./my_boundary_status.png",
-#'                 status_data = list("land system change" = lsc_status,
+#'                 x = list("land system change" = lsc_status,
 #'                                    "nitrogen" = nitrogen_status,
 #'                                    "bluewater" = water_status),
 #'  legend = FALSE
@@ -35,20 +35,27 @@
 #' @md
 #' @export
 
-plot_status <- function(status_data = NULL,
-                        file_name = NULL,
-                        colors = c("safe zone" = "#74bca9e1",
-                                   "increasing risk" = "#f6ee0f",
-                                   "high risk" = "#e23a50"),
-                        bg_col = "white",
-                        to_robinson = TRUE,
-                        legend = TRUE) {
+plot_status <- function(
+  x,
+  file_name = NULL,
+  colors = c("safe zone" = "#74bca9e1",
+             "increasing risk" = "#f6ee0f",
+             "high risk" = "#e23a50"),
+  bg_col = "white",
+  to_robinson = TRUE,
+  legend = TRUE
+) {
   # checking
-  if (length(status_data) == 0 || length(status_data) > 4) {
-    stop(paste0("Number of elements in status data (", length(status_data),
+  if (!inherits(x, "pb_status")) {
+    stop("x is not of class 'pb_status'")
+  }
+
+  if (length(x) == 0 || length(x) > 4) {
+    stop(paste0("Number of elements in status data (", length(x),
             ") is out of scope. 1 - 4 PB status maps can be",
             " plotted."))
   }
+
   if (length(colors) != 3) {
     stop(paste0("Length of color vector (", length(colors), ") incorrect. ",
                  "Three colors have to be provided"))
@@ -59,28 +66,27 @@ plot_status <- function(status_data = NULL,
 
   bounding_box <- system.file("extdata", "ne_110m_wgs84_bounding_box.shp",
                               package = "boundaries") %>%
-      rgdal::readOGR(layer = "ne_110m_wgs84_bounding_box", verbose = FALSE) %>%
-      { if(to_robinson) sp::spTransform(., sp::CRS("+proj=robin")) else . } # nolint
+    rgdal::readOGR(layer = "ne_110m_wgs84_bounding_box", verbose = FALSE) %>%
+    { if(to_robinson) sp::spTransform(., sp::CRS("+proj=robin")) else . } # nolint
 
   countries <- system.file("extdata", "ne_110m_admin_0_countries.shp",
                               package = "boundaries") %>%
-      rgdal::readOGR(layer = "ne_110m_admin_0_countries", verbose = FALSE) %>%
-      raster::crop(., lpjml_extent) %>%
-      { if(to_robinson) sp::spTransform(., sp::CRS("+proj=robin")) else . } # nolint
+    rgdal::readOGR(layer = "ne_110m_admin_0_countries", verbose = FALSE) %>%
+    raster::crop(., lpjml_extent) %>%
+    { if(to_robinson) sp::spTransform(., sp::CRS("+proj=robin")) else . } # nolint
 
-  pb_names <- names(status_data)
-  not_na <- !is.na(status_data)
+  pb_names <- names(x)
 
-  plot_nat <- to_raster(lpjml_array = array(0, length(status_data[[which(not_na)[1]]])), # nolint
+  plot_nat <- to_raster(lpjml_array = array(0, length(x[[which(!is.na(x))[1]]])), # nolint
                         boundary_box = bounding_box,
                         ext = lpjml_extent,
                         to_robinson = to_robinson)
 
   # plot settings
-  if (length(status_data) == 1) {
+  if (length(x) == 1) {
     n_row <- 1
     n_col <- 1
-  } else if (length(status_data) == 2) {
+  } else if (length(x) == 2) {
     n_row <- 1
     n_col <- 2
   } else {
@@ -96,9 +102,13 @@ plot_status <- function(status_data = NULL,
     leg_adj <- 0
   }
   fig_params <- definefig(n_row, n_col, lfrac)
+
   if (!is.null(file_name)) {
-    file_extension <- strsplit(file_name, split = "\\.")[[1]][-1] %>%
-                      tail(1)
+
+    file_extension <- strsplit(
+      file_name, split = "\\."
+    )[[1]][-1] %>%
+      tail(1)
     switch(file_extension,
       `png` = {
         png(file_name,
@@ -119,19 +129,20 @@ plot_status <- function(status_data = NULL,
     )
   }
   textcex <- 0.5 + 0.125 * (n_row + n_col)
-  par(mar = rep(0, 4), xpd = TRUE, bg = bg_col)
+  withr::local_par(new = list(mar = rep(0, 4), xpd = TRUE, bg = bg_col))
   brk <- c(-1:4)
   cols <- c("grey92", colors, "darkgrey")
 
-  for (i in seq_len(length(status_data))) {
+  for (i in seq_len(length(x))) {
     if (i == 1) {
       par(fig = fig_params[i, ])
     } else {
       par(fig = fig_params[i, ], new = TRUE)
     }
+
     # convert lpjml vector with continuous control variable status to risk level
     # with discrete scale
-    plot_data <- status_data[[i]] %>%
+    plot_data <- x[[i]] %>%
       as_risk_level(type = "discrete")
 
     # convert lpjml vector to raster with robinson projection
@@ -146,7 +157,7 @@ plot_status <- function(status_data = NULL,
           yaxt = "n", xlab = "", ylab = "", col = cols, breaks = brk,
           lwd = 0.1, bty = "n", add = TRUE)
     raster::plot(countries, add = TRUE, lwd = 0.3, border = "#33333366",
-         usePolypath = FALSE)
+      usePolypath = FALSE)
     mtext(pb_names[i], 1, -3, cex = textcex, font = 1,
           adj = 0.57)
   }
@@ -174,13 +185,13 @@ to_raster <- function(lpjml_array, boundary_box, ext, to_robinson) {
   lpj_ras[raster::cellFromXY(lpj_ras, cbind(lpjmliotools::lon, lpjmliotools::lat))] <-
         lpjml_array
   if (to_robinson) {
-    ras_to <- raster(xmn = -18000000,
-                     xmx = 18000000,
-                     ymn = -9000000,
-                     ymx = 9000000,
-                     crs = "+proj=robin",
-                     nrows = 2 * 360,
-                     ncols = 2 * 720)
+    ras_to <- raster::raster(xmn = -18000000,
+                             xmx = 18000000,
+                             ymn = -9000000,
+                             ymx = 9000000,
+                             crs = "+proj=robin",
+                             nrows = 2 * 360,
+                             ncols = 2 * 720)
 
     out_ras <- raster::crop(lpj_ras, ext) %>%
                raster::projectRaster(to = ras_to, crs = "+proj=robin",

@@ -78,20 +78,18 @@ calc_bluewater_status <- function(files_scenario,
       stop("Method \"gerten2020\" is only applicable for spatial_scale = \"grid\"") #nolint
     }
     # reference discharge ---------------------------------------------------- #
-    discharge_reference <- lpjmlkit::read_io(
-      files_reference$discharge, subset = list(year = time_span_reference),
-      silent = TRUE
-    ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(band = sum))
+    discharge_reference %<-% read_io_format(
+      files_reference$discharge,
+      time_span_reference,
+      aggregate = list(band = sum)
+    )
 
     # scenario discharge ----------------------------------------------------- #
-    discharge_scenario <- lpjmlkit::read_io(
-      files_scenario$discharge, subset = list(year = time_span_scenario),
-      silent = TRUE
-    ) %>%
-      lpjmlkit::transform(to = c("year_month_day")) %>%
-      lpjmlkit::as_array(aggregate = list(band = sum))
+    discharge_scenario %<-% read_io_format(
+      files_scenario$discharge,
+      time_span_scenario,
+      aggregate = list(band = sum)
+    )
 
     # ------------------------------------------------------------------------ #
 
@@ -103,24 +101,28 @@ calc_bluewater_status <- function(files_scenario,
     }
 
     # average discharge reference
-    avg_discharge_reference <- do.call(average_nyear_window,
-                                       append(list(x = discharge_reference,
-                                                   nyear_reference = nyear_ref),
-                                              avg_nyear_args))
+    avg_discharge_reference %<-% do.call(
+      average_nyear_window,
+      append(list(x = discharge_reference,
+                  nyear_reference = nyear_ref),
+             avg_nyear_args)
+    )
 
     # average discharge scenario
-    avg_discharge_scenario <- do.call(average_nyear_window,
-                                      append(list(x = discharge_scenario),
-                                             avg_nyear_args))
+    avg_discharge_scenario %<-% do.call(
+      average_nyear_window,
+      append(list(x = discharge_scenario),
+             avg_nyear_args)
+    )
 
 
     # calc efrs for vmf_min and vmf_max
-    efr_uncertain <- calc_efrs(discharge_reference,
-                               "vmf_min",
-                                avg_nyear_args)
-    efr_safe <- calc_efrs(discharge_reference,
-                          "vmf_max",
-                          avg_nyear_args)
+    efr_uncertain %<-% calc_efrs(discharge_reference,
+                                 "vmf_min",
+                                 avg_nyear_args)
+    efr_safe %<-% calc_efrs(discharge_reference,
+                            "vmf_max",
+                            avg_nyear_args)
 
     # calculation of EFR transgressions = EFR deficits in LU run
     efr_deficit <- efr_safe - avg_discharge_scenario

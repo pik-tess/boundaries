@@ -96,7 +96,6 @@ get_outputs <- function(x, metric_name, method, spatial_scale,
       spatial_scale_i <- formals(get(paste0("calc_", boundary_name,
                                                  "_status")))$spatial_scale
     }
-
     # Iterate over all unique keys
     for (item in names(metric$spatial_scale[[spatial_scale_i]][[method_i]]$output)) { #nolint
 

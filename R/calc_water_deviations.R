@@ -69,18 +69,18 @@ calc_water_status <- function(file_scenario,
 
   # read in reference and scenario output
   # reference
-  var_reference <- lpjmlkit::read_io(
-    file_reference, subset = list(year = time_span_reference), silent = TRUE
-  ) %>%
-    lpjmlkit::transform(to = c("year_month_day")) %>%
-    lpjmlkit::as_array(aggregate = list(band = sum))
+  var_reference %<-% read_io_format(
+    file_reference,
+    time_span_reference,
+    aggregate = list(band = sum)
+  )
 
   # scenario
-  var_scenario <- lpjmlkit::read_io(
-    file_scenario, subset = list(year = time_span_scenario), silent = TRUE
-  ) %>%
-    lpjmlkit::transform(to = c("year_month_day")) %>%
-    lpjmlkit::as_array(aggregate = list(band = sum))
+  var_scenario %<-% read_io_format(
+    file_scenario,
+    time_span_scenario,
+    aggregate = list(band = sum)
+  )
   
 
   # -------------------------------------------------------------------------- #
@@ -93,10 +93,10 @@ calc_water_status <- function(file_scenario,
   # -------------------------------------------------------------------------- #
   # calculate the area with dry/wet departures (subglobal and global resolution)
 
-  ref_depart <- calc_departures(var_reference, terr_area_path, drainage_path,
+  ref_depart %<-% calc_departures(var_reference, terr_area_path, drainage_path,
                                 quants, spatial_scale = spatial_scale,
                                 method = method)
-  scen_depart <- calc_departures(var_scenario, terr_area_path, drainage_path,
+  scen_depart %<-% calc_departures(var_scenario, terr_area_path, drainage_path,
                                  quants, spatial_scale = spatial_scale,
                                  method = method)
 
@@ -104,11 +104,11 @@ calc_water_status <- function(file_scenario,
   if (spatial_scale == "global") {
 
     # calculate areas corresponding to the quantiles defined in thresholds
-    area_high_risk <- quantile(ref_depart$wet_or_dry,
+    area_high_risk %<-% quantile(ref_depart$wet_or_dry,
                                probs = thresholds[["highrisk"]], na.rm = TRUE)
-    area_pb <- quantile(ref_depart$wet_or_dry,
-                         probs = thresholds[["pb"]], na.rm = TRUE)
-    area_holocene <- quantile(ref_depart$wet_or_dry,
+    area_pb %<-% quantile(ref_depart$wet_or_dry,
+                        probs = thresholds[["pb"]], na.rm = TRUE)
+    area_holocene %<-% quantile(ref_depart$wet_or_dry,
                               probs = thresholds[["holocene"]], na.rm = TRUE)
 
     control_variable <- do.call(average_nyear_window,
@@ -118,26 +118,27 @@ calc_water_status <- function(file_scenario,
     attr(control_variable, "thresholds") <- list(holocene = area_holocene,
                                                  pb = area_pb,
                                                  highrisk = area_high_risk)
-    attr(control_variable, "control variable") <-
+    attr(control_variable, "control variable") <- (
       "area with wet/dry departures (%)"
+    )
 
   } else if (spatial_scale == "subglobal") {
     # calculate for each basin: thresholds for translation into pb status
-    area_high_risk <- apply(ref_depart$wet_or_dry, "basin",
-                            function(x) {
-                              y <- quantile(x, probs = thresholds[["highrisk"]],
-                                            na.rm = TRUE)
-                            })
-    area_pb <- apply(ref_depart$wet_or_dry, "basin",
-                     function(x) {
-                       y <- quantile(x, probs = thresholds[["pb"]],
-                                     na.rm = TRUE)
-                     })
-    area_holocene <- apply(ref_depart$wet_or_dry, "basin",
-                           function(x) {
-                             y <- quantile(x, probs = thresholds[["holocene"]],
-                                           na.rm = TRUE)
-                           })
+    area_high_risk %<-% apply(ref_depart$wet_or_dry, "basin",
+                              function(x) {
+                                y <- quantile(x, probs = thresholds[["highrisk"]], # nolint:line_length_linter
+                                              na.rm = TRUE)
+                              })
+    area_pb %<-% apply(ref_depart$wet_or_dry, "basin",
+                       function(x) {
+                         y <- quantile(x, probs = thresholds[["pb"]],
+                                       na.rm = TRUE)
+                       })
+    area_holocene %<-% apply(ref_depart$wet_or_dry, "basin",
+                             function(x) {
+                               y <- quantile(x, probs = thresholds[["holocene"]], # nolint:line_length_linter
+                                             na.rm = TRUE)
+                             })
 
     # transform to array with cell dim as in lpjml
     # for vectors:
@@ -146,15 +147,15 @@ calc_water_status <- function(file_scenario,
       basins <- unique(endcell)
       out <- array(NA, dim = c(cell = ncells),
                    dimnames = list(cell = 1:ncells))
-      for (i in 1:length(basins)){
+      for (i in seq_along(basins)){
         basin <- basins[i]
         out[which(endcell == basin)] <- data[i]
       }
       return(out)
     }
-    area_high_risk <- basin_to_cell(area_high_risk, endcell)
-    area_pb <- basin_to_cell(area_pb, endcell)
-    area_holocene <- basin_to_cell(area_holocene, endcell)
+    area_high_risk %<-% basin_to_cell(area_high_risk, endcell)
+    area_pb %<-% basin_to_cell(area_pb, endcell)
+    area_holocene %<-% basin_to_cell(area_holocene, endcell)
     # for two dimensional array
     scen_departures <- array(NA,
                              dim = c(cell = length(endcell),
