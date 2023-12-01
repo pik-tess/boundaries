@@ -6,7 +6,7 @@
 #' @param file_name character string providing file name (including directory
 #' and file extension). Defaults to NULL (plotting to screen)
 #'
-#' @param status_data list with global output from calc_status
+#' @param x list with global output from calc_status
 #'
 #' @param colors named vector for definition of colors for plotting of
 #'        the safe, increasingnrisk and high risk zone
@@ -20,7 +20,7 @@
 #' @examples
 #' \dontrun{
 #'  plot_status(file_name = "./my_boundary_status.png",
-#'                 status_data = list("land system change" = lsc_status,
+#'                 x = list("land system change" = lsc_status,
 #'                                    "nitrogen" = nitrogen_status,
 #'                                    "bluewater" = water_status),
 #'  legend = FALSE
@@ -30,8 +30,9 @@
 #' @md
 #' @export
 
-plot_status_global <- function(file_name = NULL,
-                        status_data = NULL,
+plot_status_global <- function(
+                        x,
+                        file_name = NULL, 
                         colors = c("safe zone" = '#e3f5ec',
                                    "increasing risk" = '#fcf8d8',
                                    "high risk" = '#f7e4dd'),
@@ -44,19 +45,19 @@ plot_status_global <- function(file_name = NULL,
                  "Three colors have to be provided"))
   }
   if (all_in_one == TRUE) {
-    for (i in seq_len(length(status_data))) {
-      status_data[[i]] <- as_risk_level(status_data[[i]], type = "continuous")
+    for (i in seq_len(length(x))) {
+      x[[i]] <- as_risk_level(x[[i]], type = "continuous")
     }
   }
-
-  data_tibble <- tidyr::as_tibble(status_data)
-  data_tibble$years <- as.numeric(names(status_data[[1]]))
+  
+  data_tibble <- tidyr::as_tibble(x)
+  data_tibble$years <- as.numeric(names(x[[1]]))
   data_tibble <- tidyr::pivot_longer(data_tibble, !years, names_to = "pb",
     values_to = "values")
 
 
 
-  if (length(status_data) == 1 || all_in_one == TRUE) {
+  if (length(x) == 1 || all_in_one == TRUE) {
     n_col <- 1
   } else {
     n_col <- ncol
@@ -68,15 +69,15 @@ plot_status_global <- function(file_name = NULL,
       `png` = {
         png(file_name,
             width = 9 * n_col,
-            height = 7 * ceiling(length(status_data) / ncol),
+            height = 7 * ceiling(length(x) / ncol),
             units = "cm",
             res = 600,
             pointsize = 7)
       },
       `pdf` = {
         pdf(file_name,
-            width = 9 * n_col / 2.54,
-            height = 7 * ceiling(length(status_data) / ncol) / 2.54,
+            width = 10 * n_col / 2.54,
+            height = 7 * ceiling(length(x) / ncol) / 2.54,
             pointsize = 7)
       }, {
         stop("File extension ", dQuote(file_extension), " not supported.")
@@ -109,17 +110,17 @@ plot_status_global <- function(file_name = NULL,
   } else {
   # create dataframe for plotting of pb specific background filling
     pb_thresh <- highrisk_thresh <- holocene <- ylabel <-
-      numeric(length(status_data))
-    for (i in seq_len(length(status_data))) {
-      pb_thresh[i] <-  as.numeric(attr(status_data[[i]], "thresholds")[["pb"]])
+      numeric(length(x))
+    for (i in seq_len(length(x))) {
+      pb_thresh[i] <-  as.numeric(attr(x[[i]], "thresholds")[["pb"]])
       highrisk_thresh[i] <- as.numeric(
-                              attr(status_data[[i]], "thresholds")[["highrisk"]]
+                              attr(x[[i]], "thresholds")[["highrisk"]]
                             )
       holocene[i] <- as.numeric(
-                       attr(status_data[[i]], "thresholds")[["holocene"]]
+                       attr(x[[i]], "thresholds")[["holocene"]]
                      )
-      ylabel[i] <-  attr(status_data[[i]], "control variable")
-      names(ylabel)[i] <- names(status_data)[i]
+      ylabel[i] <-  attr(x[[i]], "control variable")
+      names(ylabel)[i] <- names(x)[i]
     }
 
     df_bg <- data.frame(
@@ -152,7 +153,6 @@ plot_status_global <- function(file_name = NULL,
      #ggplot2::coord_cartesian(ylim = c(0, pb_thresh + 3 * (holocene - pb_thresh)))
     
     # plot pb status timeseries
-    #TODO y axis name needs to be pb specific (as attribute of status_data)
     #TODO PB itself should be at the same position in all plots
     plot <- plot +
          ggplot2::geom_line(data = data_tibble,

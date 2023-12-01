@@ -79,7 +79,7 @@ calc_lsc_status <- function(
     classify_biomes,
     append(list(files_reference = files_reference,
                 time_span_reference = time_span_reference,
-                avg_nyear_args = avg_nyear_args,
+                avg_nyear_args = list(),
                 montane_arctic_proxy = NULL),
            ellipsis_filtered)
   )
@@ -204,8 +204,8 @@ calc_lsc_status <- function(
 
   # binary is forest biome - mask
   is_forest <- array(0,
-                     dim = dim(avg_trees_scenario),
-                     dimnames = dimnames(avg_trees_scenario))
+                     dim = dim(biome_classes$biome_id),
+                     dimnames = dimnames(biome_classes$biome_id))
 
   # binary is tropical forest biome - mask
   is_tropical_forest <- is_forest
@@ -332,7 +332,7 @@ calc_lsc_status <- function(
 
   } else if (spatial_scale == "global") {
     dim_remain <- names(dim(deforestation))[names(dim(deforestation)) != "cell"]
-    deforestation[is_forest == 0] <- NA
+    deforestation[as.vector(is_forest == 0), ] <- NA
     control_variable <- apply(deforestation, dim_remain, mean, na.rm = TRUE)
     attr(control_variable, "thresholds") <- thresholds
     attr(control_variable, "control variable") <- "deforestation"

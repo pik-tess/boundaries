@@ -64,6 +64,7 @@ calc_status <- function(boundary,
                         in_parallel = TRUE,
                         ...) {
   # If in_parallel use future package for asynchronous parallelization
+  rlang::local_options(future.globals.maxSize = 1500*1024^2)
   if (in_parallel) {
     if (.Platform$OS.type == "windows") {
       future_plan <- future::plan("multisession")
@@ -139,6 +140,7 @@ calc_status <- function(boundary,
       inner_args$thresholds <- list_thresholds(bound, method_i, spatial_scale)
     }
     # Calculate status
+    print(bound)
     all_status[[bound]] <- do.call(
       fun_name,
       args = c(
@@ -152,7 +154,6 @@ calc_status <- function(boundary,
     warning(paste0("The following arguments were not used: ",
                    paste0("`", names(check_args), "`", collapse = ", ")))
   }
-  attr(all_status, "class") <- "pb_status"
 
   return(all_status)
 }
@@ -254,8 +255,7 @@ get_filenames <- function(path,
       meta <- lpjmlkit::read_meta(file_name)
 
       # Then check if temporal resultion of file matches required nstep
-      #TODO not working if input/output has higher resolution (i.e. 365 but 12 required)
-      if (nstep != meta$nstep && nstep != meta$nbands) {
+      if (nstep < meta$nstep && nstep < meta$nbands) {
         stop(
           paste0(
             "Required temporal resolution (nstep = ", nstep, ") ",

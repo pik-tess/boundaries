@@ -111,6 +111,10 @@ calc_water_status <- function(file_scenario,
     area_holocene %<-% quantile(ref_depart$wet_or_dry,
                               probs = thresholds[["holocene"]], na.rm = TRUE)
 
+    if (method == "porkka2023") {
+      scen_depart$wet_or_dry <- apply(scen_depart$wet_or_dry, "year",
+                                      mean, na.rm = TRUE)
+    }
     control_variable <- do.call(average_nyear_window,
                                 append(list(x = scen_depart$wet_or_dry),
                                        avg_nyear_args))
@@ -191,8 +195,8 @@ q95 <- function(x) quantile(x, probs = 0.95, na.rm = TRUE)
 # calculate the baseline quantiles
 calc_baseline <- function(file_reference, method) {
   if (method == "wang-erlandsson2022") {
-    dry_base_yr <- apply(file_reference, c(1, 3), min)
-    wet_base_yr <- apply(file_reference, c(1, 3), max)
+    dry_base_yr <- apply(file_reference, c("cell", "year"), min)
+    wet_base_yr <- apply(file_reference, c("cell", "year"), max)
   } else if (method == "porkka2023") {
     dry_base_yr <- wet_base_yr <- file_reference
   }

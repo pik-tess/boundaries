@@ -46,10 +46,6 @@ plot_status <- function(
   legend = TRUE
 ) {
   # checking
-  if (!inherits(x, "pb_status")) {
-    stop("x is not of class 'pb_status'")
-  }
-
   if (length(x) == 0 || length(x) > 4) {
     stop(paste0("Number of elements in status data (", length(x),
             ") is out of scope. 1 - 4 PB status maps can be",
@@ -129,7 +125,7 @@ plot_status <- function(
     )
   }
   textcex <- 0.5 + 0.125 * (n_row + n_col)
-  withr::local_par(new = list(mar = rep(0, 4), xpd = TRUE, bg = bg_col))
+  par(mar = rep(0, 4), xpd = TRUE, bg = bg_col)
   brk <- c(-1:4)
   cols <- c("grey92", colors, "darkgrey")
 

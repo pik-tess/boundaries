@@ -174,14 +174,14 @@ calc_nitrogen_status <- function(files_scenario,
     pet %<-% read_io_format(
       file = files_scenario$pet,
       timespan = time_span_scenario,
-      aggregate = list(month = sum)
+      aggregate = list(month = sum, band = sum)
     )
 
     # read precipitation ----------------------------------------------------- #
     prec %<-% read_io_format(
       file = files_scenario$prec,
       timespan = time_span_scenario,
-      aggregate = list(month = sum)
+      aggregate = list(month = sum, band = sum, day = sum)
     )
     # ------------------------------------------------------------------------ #
     # average pet
@@ -247,77 +247,39 @@ calc_nitrogen_status <- function(files_scenario,
     # thresholds from rockström et al. 2023
     # https://doi.org/10.1038/s41586-023-06083-8
 
-    # TODO better use cftoutput?
-    cftfrac %<-% read_io_format(
-      file = files_scenario$cftfrac,
+    # read in fertilizer and manure input on managed land
+    fert_mg %<-% read_io_format(
+      file = files_scenario$nfert_mg,
       time_span_scenario,
-      aggregate = list(month = sum)
-    )
-    cftfrac_combined <- apply(cftfrac, c("cell", "year"), sum)
-
-    # read in fertilizer for agricultural land
-    fert_agr %<-% read_io_format(
-      file = files_scenario$nfert_agr,
-      time_span_scenario,
-      aggregate = list(month = sum)
+      aggregate = list(month = sum, band = sum)
     )
 
-    # read in fertilizer for managed grassland
-    fert_mgrass %<-% read_io_format(
-      file = files_scenario$nfert_mgrass,
-      time_span_scenario,
-      aggregate = list(month = sum)
-    )
-
-    # read in manure for agricultural land
-    manure_agr %<-% read_io_format(
-      file = files_scenario$nmanure_agr,
-      time_span_scenario,
-      aggregate = list(month = sum)
-    )
-    # read in manure for managed grassland
-    manure_mgrass %<-% read_io_format(
-      file = files_scenario$nmanure_mgrass,
-      time_span_scenario
-    )
-
-    # read in biological nitrogen fixation
+    # read in biological nitrogen fixation on managed land
     bnf %<-% read_io_format(
-      file = files_scenario$pft_bnf,
+      file = files_scenario$bnf_mg,
       time_span_scenario,
-      aggregate = list(month = sum)
+      aggregate = list(month = sum, band = sum)
     )
 
-    # read in nitrogen deposition
+    # read in nitrogen deposition on managed land
     dep %<-% read_io_format(
-      file = files_scenario$ndepos,
+      file = files_scenario$ndepo_mg,
       time_span_scenario,
-      aggregate = list(month = sum)
+      aggregate = list(month = sum, band = sum)
     )
 
-    # find band names which start with rainfed or irrigated to exclude
-    # natural PFT bands
-    bandnames_bnf <- dimnames(bnf)[["band"]][
-      grepl("rainfed|irrigated", dimnames(bnf)[["band"]])
-    ]
-    bnf <- bnf[, , bandnames_bnf, drop = FALSE]
+    # read in establishemnt input on managed land
+    flux_estabn <- read_io_format(
+      file = files_scenario$flux_estabn_mg,
+      time_span_scenario,
+      aggregate = list(month = sum, band = sum)
+    )
 
+    # read in N removal on managed land
     harvest %<-% read_io_format(
-      file = files_scenario$harvest,
+      file = files_scenario$harvestn,
       time_span_scenario,
-      aggregate = list(month = sum)
-    ) # TODO better with asub!
-
-    seed <- read_io_format(
-      file = files_scenario$seed,
-      time_span_scenario,
-      aggregate = list(month = sum)
-    )
-
-    flux_estabn_mgrass <- read_io_format(
-      file = files_scenario$flux_estabn_mgrass,
-      time_span_scenario,
-      aggregate = list(month = sum)
+      aggregate = list(month = sum, band = sum)
     )
 
     # calc terrestrial area
@@ -326,10 +288,8 @@ calc_nitrogen_status <- function(files_scenario,
     terr_area <- terr_area[, , 1]
 
     # calc n surplus
-    nsurplus <- (apply(bnf * cftfrac * terr_area, c("cell", "year"), sum) +
-                    apply((seed + flux_estabn_mgrass + fert_agr + manure_agr +
-                     fert_mgrass + manure_mgrass - harvest), c("cell", "year"), sum) * terr_area +
-                     apply(dep, c("cell", "year"), sum) * cftfrac_combined * terr_area) * 10^-12
+    nsurplus <- (fert_mg + bnf + dep + flux_estabn - harvest) *
+                  terr_area * 10^-12
 
     # N surplus on cropland (n inputs minus n harvest)
     # conversion to TgN/year

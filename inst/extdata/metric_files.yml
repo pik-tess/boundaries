@@ -23,7 +23,7 @@ metric:
                             optional: true
                         temp:
                             resolution: "annual"
-                            optional: true
+                            optional: false
                         elevation:
                             resolution: "annual"
                             optional: true
@@ -76,15 +76,9 @@ metric:
                     <<: *wang-erlandsson2022_bw
                 gerten2020:
                     output:
-                        grid:
-                            resolution: "annual"
-                            optional: false
                         discharge:
                             resolution: "monthly"
                             optional: false
-                        irrig:
-                           resolution: "monthly"
-                           optional: true
                     threshold:
                         holocene: 0
                         pb: 0.05
@@ -172,37 +166,22 @@ metric:
             global:
                 schulte_uebbing2022:
                     output:    
-                        cftfrac:
-                            resolution: "annual"
-                            optional: false
                         terr_area: 
                             resolution: "annual"
                             optional: false
-                        nfert_agr:
+                        nfert_mg:
                             resolution: "annual"
                             optional: false
-                        nfert_mgrass:
+                        bnf_mg:
                             resolution: "annual"
                             optional: false
-                        nmanure_agr:
-                            resolution: "annual"
-                            optional: false
-                        nmanure_mgrass:
-                            resolution: "annual"
-                            optional: false
-                        pft_bnf:
-                            resolution: "annual"
-                            optional: false
-                        seedn_agr:
-                            resolution: "annual"
-                            optional: false
-                        flux_estabn_mgrass:
+                        flux_estabn_mg:
                             resolution: "annual"
                             optional: false
                         harvestn:
                             resolution: "annual"
                             optional: false
-                        ndepos:
+                        ndepo_mg:
                             resolution: "annual"
                             optional: false
                     threshold:
@@ -359,13 +338,9 @@ file_name:
     temp: ["temp", "mtemp"]
     pet: ["pet", "mpet"]
     prec: ["prec","mprec"]
-    nfert_agr: ["nfert_agr"]
-    nfert_mgrass: ["nfert_mgrass"]
-    nmanure_agr: ["nmanure_agr"]
-    nmanure_mgrass: ["nmanure_mgrass"]
-    pft_bnf: ["pft_bnf"]
-    seedn_agr: ["seedn_agr"]
-    flux_estabn_mgrass: ["flux_estabn_mgrass"]
+    nfert_mg: ["nfert_mg"]
+    bnf_mg: ["bnf_mg"]
+    flux_estabn_mg: ["flux_estabn_mg"]
     harvestn: ["harvestn", "flux_harvestn"]
-    ndepos: ["ndepos"]
+    ndepo_mg: ["ndepo_mg"]
     drainage: ["drainage"]

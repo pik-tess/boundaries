@@ -145,7 +145,7 @@ calc_bluewater_status <- function(files_scenario,
     }
 
     # to average the ratio only over months which are not "safe"
-    status_frac_monthly[status_frac_monthly <= 0.05] <- NA
+    status_frac_monthly[status_frac_monthly <= thresholds[["pb"]]] <- NA
 
     pb_status <- apply(status_frac_monthly,
                        names(dim(status_frac_monthly))[

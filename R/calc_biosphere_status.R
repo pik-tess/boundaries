@@ -71,7 +71,7 @@ calc_biosphere_status <- function(
   avg_nyear_args = list(),
   ...
 ) {
-
+  #TODO does not work if other input files are specified -> Jannes
   files_baseline <- lapply(
     files_scenario,
     function(x) {
@@ -143,27 +143,14 @@ calc_biosphere_status <- function(
       }
     }
   } else if (spatial_scale == "global") {
-    # add dummy cell dimension
-    # TODO can be removed once avg_nyear_args is compatible with it
-    control_variable_raw <- array(biocol$biocol_overtime_abs_frac_piref,
-                                  dim = c(cell = 1,
-                                          year = length(biocol$biocol_overtime_abs_frac_piref) #nolint
-                                  ),
-                                  dimnames = list(cell = 1,
-                                                  year = names(biocol$biocol_overtime_abs_frac_piref) #nolint
-                                  ))
-  } else {
-    stop(paste("Unknown value for spatial_scale: ", spatial_scale))
+    control_variable_raw <- biocol$biocol_overtime_abs_frac_piref
   }
+
   # average
   control_variable <- do.call(average_nyear_window,
                               append(list(x = control_variable_raw),
                                      avg_nyear_args))
 
-  if (spatial_scale == "global") {
-    # remove dummy cell dimension
-    control_variable <- control_variable[1, ]
-  }
   attr(control_variable, "thresholds") <- thresholds
   attr(control_variable, "control variable") <- "BioCol (in fraction of NPPref)"
   return(control_variable)
