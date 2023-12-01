@@ -40,7 +40,7 @@ average_nyear_window <- function(x,
     x <- array(
       x,
       dim = c(cell = 1, year = length(x)),
-      dimnames = list(cell = "global", year = seq_along(x))
+      dimnames = list(cell = "global", year = names(x))
     )
   }
 
