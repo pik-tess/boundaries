@@ -34,9 +34,11 @@
 #' @param thresholds list with thresholds to be used to
 #' define the safe, increasing risk and high risk zone,
 #' For spatial scale = "global" and "subglobal", this refers to the quantiles of
-#' the global/basin area with deviations in the reference period. The dafault
-#' is: c(holocene = 0.5, pb = 0.95, highrisk = 0.99).
+#' the global/basin area with deviations in the reference period. The default
+#' is: c(holocene = 0.5, pb = 0.95, highrisk = NULL).
 #' If set to NULL, the  default is taken from metric_files.yml
+#' For highrisk, the value is currently hard-coded to 0.5
+#' (following Richardson et al. 2023) 
 #'
 #' @param spatial_scale character string indicating spatial scale; 
 #' "global" or "subglobal" for calculation of the share (%) of total
@@ -81,7 +83,7 @@ calc_water_status <- function(file_scenario,
     time_span_scenario,
     aggregate = list(band = sum)
   )
-  
+ 
 
   # -------------------------------------------------------------------------- #
   # calculate the 5% and 95% quantiles of the baseline period for each cell
@@ -104,8 +106,13 @@ calc_water_status <- function(file_scenario,
   if (spatial_scale == "global") {
 
     # calculate areas corresponding to the quantiles defined in thresholds
-    area_high_risk %<-% quantile(ref_depart$wet_or_dry,
+    if (is.null(thresholds[["highrisk"]])) {
+      area_high_risk <- 50 # hard-coded based on Richardson et al. 2023 (SI)
+    } else {
+      area_high_risk %<-% quantile(ref_depart$wet_or_dry,
                                probs = thresholds[["highrisk"]], na.rm = TRUE)
+    }
+    
     area_pb %<-% quantile(ref_depart$wet_or_dry,
                         probs = thresholds[["pb"]], na.rm = TRUE)
     area_holocene %<-% quantile(ref_depart$wet_or_dry,

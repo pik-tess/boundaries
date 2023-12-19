@@ -48,7 +48,7 @@ metric:
                     threshold:
                         holocene: 0.5
                         pb: 0.95
-                        highrisk: 0.99
+                        highrisk: NULL
                 porkka2023: 
                     <<: *wang-erlandsson2022_bw
             subglobal:
@@ -66,7 +66,7 @@ metric:
                     threshold:
                         holocene: 0.5
                         pb: 0.95
-                        highrisk: 0.99
+                        highrisk: NULL
                 porkka2023:
                     <<: *wang-erlandsson2022_bw_sub
             grid:
@@ -104,7 +104,7 @@ metric:
                    threshold:
                        holocene: 0.5
                        pb: 0.95
-                       highrisk: 0.99
+                       highrisk: NULL
                 porkka2023: 
                     <<: *wang-erlandsson2022_gw #TODO correct?
             subglobal:
@@ -122,7 +122,7 @@ metric:
                     threshold:
                         holocene: 0.5
                         pb: 0.95
-                        highrisk: 0.99
+                        highrisk: NULL
                 porkka2023:
                     <<: *wang-erlandsson2022_gw_sub
             grid:
