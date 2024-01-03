@@ -16,6 +16,12 @@
 #'
 #' @param ncol number of plot columns (only relevant if more than one pb is
 #'        plotted and all_in_one = FALSE)
+#' 
+#' @param normalize character string to define normalization, either "safe"
+#'        (normalized from holocene to pb = the safe zone) or
+#'        "increasing risk" (normalized from pb to high risk level =
+#'        increasing risk zone if the pb status is > pb, otherwise normalized
+#'        from holocene to pb). Only used if all_on_one set to TRUE
 #'
 #' @examples
 #' \dontrun{
@@ -37,16 +43,20 @@ plot_status_global <- function(
                                    "increasing risk" = '#fcf8d8',
                                    "high risk" = '#f7e4dd'),
                         all_in_one = FALSE,
-                        ncol = 2
+                        ncol = 2,
+                        normalize = "safe"
                         ) {
 
   if (length(colors) != 3) {
     stop(paste0("Length of color vector (", length(colors), ") incorrect. ",
                  "Three colors have to be provided"))
   }
+
+  normalize <- match.arg(normalize, c("safe", "increasing risk"))
+
   if (all_in_one == TRUE) {
     for (i in seq_len(length(x))) {
-      x[[i]] <- as_risk_level(x[[i]], type = "continuous")
+      x[[i]] <- as_risk_level(x[[i]], type = "continuous", normalize = normalize)
     }
   }
   
@@ -54,8 +64,6 @@ plot_status_global <- function(
   data_tibble$years <- as.numeric(names(x[[1]]))
   data_tibble <- tidyr::pivot_longer(data_tibble, !years, names_to = "pb",
     values_to = "values")
-
-
 
   if (length(x) == 1 || all_in_one == TRUE) {
     n_col <- 1
@@ -86,20 +94,41 @@ plot_status_global <- function(
   }
 
   if (all_in_one) {
+
+    #holocene value
+    holo_all <- NULL
+    for (i in seq_len(length(x))) {
+      holo_all <- abind(holo_all, attr(x[[i]], "thresholds")$holocene)
+    }
+    holo <- min(holo_all)
+    pl_b <- attr(x[[1]], "thresholds")$pb
+    h_risk <- attr(x[[1]], "thresholds")$highrisk
     plot <- ggplot2::ggplot(data_tibble, ggplot2::aes(x = years, y = values,
                                                       col = pb)) +
          ggplot2::geom_rect(ggplot2::aes(xmin = -Inf, xmax = Inf, ymin = -Inf,
-                                ymax = 1), alpha = 1,
+                                ymax =  pl_b), alpha = 1,
                             fill = colors[["safe zone"]], col = NA) +
-         ggplot2::geom_rect(ggplot2::aes(xmin = -Inf, xmax = Inf, ymin = 1,
+         ggplot2::geom_rect(ggplot2::aes(xmin = -Inf, xmax = Inf, ymin = pl_b,
                    ymax = max(values) + max(values) * 0.05),
-                   alpha = 1, fill = colors[["increasing risk"]], col = NA) +
-         ggplot2::geom_hline(yintercept = 1, linetype = 2, col = "grey") +
+                   alpha = 1, fill = colors[["increasing risk"]], col = NA)
+    if (normalize == "safe") {
+      plot <- plot + 
+        ggplot2::scale_y_continuous(limits = c(holo, c(max(data_tibble$values) +
+                                      max(data_tibble$values) * 0.05)),
+                        expand = c(0, 0), breaks = c(holo, pl_b),
+                        labels = c("holocene", "pb"))
+    } else if (normalize == "increasing risk") {
+      plot <- plot + 
+        ggplot2::scale_y_continuous(limits = c(holo, c(max(data_tibble$values) +
+                                     max(data_tibble$values) * 0.05)),
+                       expand = c(0, 0), breaks = c(holo, pl_b, h_risk),
+                       labels = c("holocene", "pb", "highrisk")) +
+        ggplot2::geom_rect(ggplot2::aes(xmin = -Inf, xmax = Inf, ymin = h_risk,
+                                ymax =  Inf), alpha = 1,
+                            fill = colors[["high risk"]], col = NA)
+    }
+    plot <- plot + ggplot2::geom_hline(yintercept = pl_b, linetype = 2, col = "grey") +
          ggplot2::geom_line() +
-         ggplot2::scale_y_continuous(limits = c(0, c(max(data_tibble$values) +
-                                          max(data_tibble$values) * 0.05)),
-                            expand = c(0, 0), breaks = c(0, 1),
-                            labels = c("holocene", "pb")) +
          ggplot2::scale_x_continuous(limits = range(data_tibble$years),
                             expand = c(0, 0)) +
          ggplot2::theme_classic(base_line_size = 0.25, base_rect_size = 0.25) +
@@ -107,6 +136,8 @@ plot_status_global <- function(
          ggplot2::theme(panel.border = ggplot2::element_rect(colour = "#6b6767",
                                                     fill = NA, size = 0.5)) +
          ggplot2::theme(axis.title = element_blank())
+
+    
   } else {
   # create dataframe for plotting of pb specific background filling
     pb_thresh <- highrisk_thresh <- holocene <- ylabel <-
