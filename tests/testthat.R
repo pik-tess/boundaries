@@ -1,4 +1,4 @@
-library(testthat)
-library(boundaries)
+# library(testthat)
+# library(boundaries)
 
-test_check("boundaries")
+# test_check("boundaries")

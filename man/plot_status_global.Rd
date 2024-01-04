@@ -10,7 +10,8 @@ plot_status_global(
   colors = c(`safe zone` = "#e3f5ec", `increasing risk` = "#fcf8d8", `high risk` =
     "#f7e4dd"),
   all_in_one = FALSE,
-  ncol = 2
+  ncol = 2,
+  normalize = "safe"
 )
 }
 \arguments{
@@ -27,6 +28,12 @@ the safe, increasingnrisk and high risk zone}
 
 \item{ncol}{number of plot columns (only relevant if more than one pb is
 plotted and all_in_one = FALSE)}
+
+\item{normalize}{character string to define normalization, either "safe"
+(normalized from holocene to pb = the safe zone) or
+"increasing risk" (normalized from pb to high risk level =
+increasing risk zone if the pb status is > pb, otherwise normalized
+from holocene to pb). Only used if all_on_one set to TRUE}
 }
 \description{
 Plot line plots with the PB status over time  for
