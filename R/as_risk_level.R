@@ -59,26 +59,26 @@ as_risk_level <- function(control_variable, type = "continuous", normalize = "sa
                            thresholds[[, , "holocene"]]))
       }
     } else if (normalize == "increasing risk") {
-      # holocene: -1, pb: 0, high risk level: 1
+      # holocene: 0, pb: 1, high risk level: 2
       # if the control variable status is > pb:  
-      # control variable status normalized to 0-1, 0 is the
-      # threshold between safe and increasing risk (pb), 1 is the threshold
+      # control variable status normalized to 1-2, 1 is the
+      # threshold between safe and increasing risk (pb), 2 is the threshold
       # between increasing risk and high risk zone
       # if control variable is < pb: 
-      # normalized to -1 (holocene) to 0 (pb)
+      # normalized to 0 (holocene) to 1 (pb)
       if (class(thresholds) == "list") {
         risk_level <- control_variable
         risk_level[control_variable >= thresholds[["pb"]]] <-
           (control_variable[control_variable >= thresholds[["pb"]]] -
            thresholds[["pb"]]) /
-          (thresholds[["highrisk"]] - thresholds[["pb"]])
+          (thresholds[["highrisk"]] - thresholds[["pb"]]) + 1
         risk_level[control_variable < thresholds[["pb"]]] <-
-          -(control_variable[control_variable < thresholds[["pb"]]] -
-            thresholds[["pb"]]) /
-           (thresholds[["holocene"]] - thresholds[["pb"]])
+          1 - (control_variable[control_variable < thresholds[["pb"]]] -
+           thresholds[["pb"]]) /
+          (thresholds[["holocene"]] - thresholds[["pb"]])
         attr(risk_level, "thresholds") <-
-          list(holocene = -1, 
-               pb = 0, highrisk = 1)
+          list(holocene = 0, 
+               pb = 1, highrisk = 2)
           #alternative, if no additional normalization from holocene to pb:
           #holocene = (thresholds[["holocene"]] -
           #                   thresholds[["pb"]]) / 
@@ -89,14 +89,14 @@ as_risk_level <- function(control_variable, type = "continuous", normalize = "sa
         risk_level[control_variable >= thresholds[[, , "pb"]]] <-
           (control_variable[control_variable >= thresholds[[, , "pb"]]] -
            thresholds[[, , "pb"]]) /
-          (thresholds[[, , "highrisk"]] - thresholds[[, , "pb"]])
+          (thresholds[[, , "highrisk"]] - thresholds[[, , "pb"]]) + 1
         risk_level[control_variable < thresholds[[, , "pb"]]] <-
-          -(control_variable[control_variable < thresholds[[, , "pb"]]] -
-            thresholds[[, , "pb"]]) /
-           (thresholds[[, , "holocene"]] - thresholds[[, , "pb"]])
+          1 - (control_variable[control_variable < thresholds[[, , "pb"]]] -
+           thresholds[[, , "pb"]]) /
+          (thresholds[[, , "holocene"]] - thresholds[[, , "pb"]])
         attr(risk_level, "thresholds") <-
-          list(holocene = -1, 
-               pb = 0, highrisk = 1)
+          list(holocene = 0, 
+               pb = 1, highrisk = 2)
       }
     }
     
