@@ -50,7 +50,7 @@
 #' of N entering surface water is removed through retention and sedimentation"))
 #'
 #' @param avg_nyear_args list of arguments to be passed to
-#' \link[pbfunctions]{average_nyear_window} (see for more info). To be used for
+#' \link[boundaries]{average_nyear_window} (see for more info). To be used for
 #' time series analysis
 #'
 #' @examples

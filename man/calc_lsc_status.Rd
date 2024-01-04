@@ -8,11 +8,11 @@ calc_lsc_status(
   files_scenario,
   files_reference,
   time_span_scenario = as.character(1982:2011),
-  time_span_reference = NULL,
-  lsc_spatial_scale = "biome",
+  time_span_reference = time_span_scenario,
+  spatial_scale = "subglobal",
   eurasia = TRUE,
-  lsc_thresholds = list(temperate = list(lower = 0.5, upper = 0.7), boreal = list(lower =
-    0.15, upper = 0.4), tropical = list(lower = 0.15, upper = 0.4)),
+  thresholds = NULL,
+  method = "steffen2015",
   avg_nyear_args = list(),
   ...
 )
@@ -35,26 +35,29 @@ as an integer vector, e.g. \code{as.character(1901:1930)}. Can differ in offset
 and length from \code{time_span_scenario}! If \code{NULL} value of \code{time_span_scenario}
 is used}
 
-\item{lsc_spatial_scale}{character. Spatial resolution, available options
-are \code{"biome"} (default) and \code{"grid"}}
+\item{spatial_scale}{character. Spatial resolution, available options
+are \code{"subglobal"} (at the biome level, default), \code{"global"} and
+\code{"grid"}}
 
-\item{eurasia}{logical. If \code{lsc_spatial_scale} = \code{"biome"} merge continents
+\item{eurasia}{logical. If \code{spatial_scale} = \code{"biome"} merge continents
 Europe and Asia to avoid arbitrary biome cut at europe/asia border.
 Defaults to \code{TRUE}}
 
-\item{lsc_thresholds}{list with deforestation thresholds for defining safe,
-increasing risk and high risk zone for temperate/temperate/boreal forest
-biomes, Default based on Steffen et al. 2015
+\item{thresholds}{list with deforestation thresholds for defining safe,
+increasing risk and high risk zone
+Default based on Steffen et al. 2015 if thresholds set to NULL
 (https://doi.org/10.1126/science.1259855):
-list(boreal = list(lower = 0.5, upper = 0.7),
-temperate = list(lower = 0.15, upper = 0.4),
-tropical = list(lower = 0.15, upper = 0.4))
-lower = threshold between safe zone and increasing risk zone (e.g. 50\% for
-boreal forest with default value)
-upper = threshold between increasing risk and high risk zone}
+for gridded and biome scale application:
+list(pb = list(temperate = 0.5, tropical = 0.15, boreal = 0.15),
+highrisk = list(temperate = 0.7, tropical = 0.4, boreal = 0.4))
+for global scale application:
+list(holocene = 0, pb = 0.25, highrisk = 0.46)
+pb = threshold between safe zone and increasing risk zone
+(e.g. 50\% for boreal forest with default value)
+highrisk = threshold between increasing risk and high risk zone}
 
 \item{avg_nyear_args}{list of arguments to be passed to
-\link[pbfunctions]{average_nyear_window} (see for more info).
+\link[boundaries]{average_nyear_window} (see for more info).
 To be used for time series analysis}
 
 \item{...}{arguments forwarded to \link\href{classify_biomes}{boundaries}}

@@ -21,7 +21,7 @@
 #' `time_span_scenario`! If `NULL` value of `time_span_scenario` is used
 #'
 #' @param avg_nyear_args list of arguments to be passed to
-#' \link[pbfunctions]{average_nyear_window} (see for more info). To be used for # nolint
+#' \link[boundaries]{average_nyear_window} (see for more info). To be used for # nolint
 #' time series analysis
 #'
 #' @param input_files list of required file(s) using ID (e.g. `prec`, `runoff`)

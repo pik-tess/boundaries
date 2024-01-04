@@ -1,4 +1,4 @@
-## PBfunctions_LSC.R
+## boundaries_LSC.R
 script to calculate the masks for the three major forest
 biomes (tropical, temperate, boreal).
 Required for calculating the status of the status of the

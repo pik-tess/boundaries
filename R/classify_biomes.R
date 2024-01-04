@@ -37,7 +37,7 @@
 #' @param method character string indicating which biome classification method
 #'        to use. Currently only one is defined ("default").
 #' @param avg_nyear_args list of arguments to be passed to
-#'        \link[pbfunctions]{average_nyear_window} (see for more info).
+#'        \link[boundaries]{average_nyear_window} (see for more info).
 #'        To be used for time series analysis
 #' @param input_files list of required file(s) using ID (e.g. `temp`,
 #'        `elevation`) and an absolute file path to the corresponding input file

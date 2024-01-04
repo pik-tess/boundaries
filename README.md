@@ -20,12 +20,12 @@ The boundaries considered here are
 You can install `boundaries` by git cloning this repository ...
 
 ```bash
-git clone https://gitlab.pik-potsdam.de/tess/pbfunctions.git
+git clone https://gitlab.pik-potsdam.de/tess/boundaries.git
 ```
 
 and install via  [`devtools`](https://rawgit.com/rstudio/cheatsheets/master/package-development.pdf) ...
 ```R
-devtools::install("<path_to_pbfunctions>/boundaries")
+devtools::install("<path_to_boundaries>/boundaries")
 
 library("boundaries")
 ```

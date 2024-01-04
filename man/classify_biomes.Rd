@@ -5,30 +5,39 @@
 \title{Classify biomes}
 \usage{
 classify_biomes(
-  files_reference,
+  path_reference = NULL,
+  files_reference = NULL,
   time_span_reference,
   savanna_proxy = list(pft_lai = 6),
   montane_arctic_proxy = list(elevation = 1000),
   tree_cover_thresholds = list(),
-  avg_nyear_args = list()
+  method = "default",
+  avg_nyear_args = list(),
+  input_files = list(),
+  diff_output_files = list()
 )
 }
 \arguments{
+\item{path_reference}{path to the reference LPJmL run. If not provided,
+the path is extracted from the file paths provided in files_reference.}
+
 \item{files_reference}{list with variable names and corresponding file paths
 (character string) of the reference LPJmL run. All needed files are
-provided in XXX. E.g.: list(leaching = "/temp/leaching.bin.json"). If not
-needed for the applied method, set to NULL.}
+provided as key value pairs, e.g.:
+list(leaching = "/temp/leaching.bin.json"). If path_reference is
+supplied with all needed files, files reference can be set to NULL.}
 
-\item{time_span_reference}{time span to be used for the scenario run, defined
-as an character string, e.g. \code{as.character(1901:1930)}.}
+\item{time_span_reference}{time span to be used for the classification of
+biomes, defined as character string, e.g. \code{as.character(1901:1930)}.}
 
 \item{savanna_proxy}{\code{list} with either pft_lai or vegc as
-key and value in m2/m2 for pft_lai (default = 6) and gC/m2 for
-vegc (default would be 7500), Set to \code{NULL} if no proxy should be used.}
+key and value in m2/m2 for pft_lai (default: 6) and gC/m2 for
+vegc (current default: 7500); set to \code{NULL} if no proxy should be
+used.}
 
 \item{montane_arctic_proxy}{\code{list} with either "elevation" or "latitude" as
-name/key and value in m for elevation (default 1000) and degree for
-latitude (default would be 55), Set to \code{NULL} if no proxy is used.}
+name/key and value in m for elevation (default: 1000) and degree for
+latitude (default: 55); set to \code{NULL} if no proxy is used.}
 
 \item{tree_cover_thresholds}{list with minimum tree cover thresholds for
 definition of forest, woodland, savanna and grassland. Only changes to
@@ -45,9 +54,21 @@ Default values, based on the IGBP land cover classification system:
 In the boreal zone, there is no woodland, everything below the
 boreal forest threshold will be classified as boreal tundra.}
 
+\item{method}{character string indicating which biome classification method
+to use. Currently only one is defined ("default").}
+
 \item{avg_nyear_args}{list of arguments to be passed to
-\link[pbfunctions]{average_nyear_window} (see for more info). To be used for # nolint
-time series analysis}
+\link[boundaries]{average_nyear_window} (see for more info).
+To be used for time series analysis}
+
+\item{input_files}{list of required file(s) using ID (e.g. \code{temp},
+\code{elevation}) and an absolute file path to the corresponding input file
+if files_reference are not provided and if temp and elevation are
+needed and not among the output files under path_reference}
+
+\item{diff_output_files}{list of required file(s) using ID
+(e.g. prec, runoff) and the alternative writing (e.g. \code{"my_runoff"}).
+Only required if files_reference are not provided}
 }
 \value{
 list object containing biome_id (main biome per grid cell \link{dim=c(ncells)}), # nolint
@@ -61,8 +82,8 @@ the savanna_proxy option and elevation if montane_arctic_proxy requires this
 \examples{
 \dontrun{
 classify_biomes(
-  path_data = "/p/projects/open/Fabian/runs/Gamma/output/historic_gamma"
-  timespan = c(1982:2011))
+  path_reference = "./outputs/"
+  time_span_reference = c(1982:2011))
 }
 
 }

@@ -33,7 +33,7 @@
 #' Default: 0.0864 hm3/day (=1 m3/s)
 #'
 #' @param avg_nyear_args list of arguments to be passed to
-#' \link[pbfunctions]{average_nyear_window} (see for more info). To be used for
+#' \link[boundaries]{average_nyear_window} (see for more info). To be used for
 #' time series analysis
 #'
 #' @param spatial_scale character string indicating spatial resolution

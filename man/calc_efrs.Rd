@@ -15,7 +15,7 @@ as well as \code{"steffen2015"}, a modified version of vmf by
 \href{https://doi.org/10.1126/science.1259855}{Steffen et al. 2015}}
 
 \item{avg_nyear_args}{list of arguments to be passed to
-\link[pbfunctions]{average_nyear_window} (see for more info). To be used for
+\link[boundaries]{average_nyear_window} (see for more info). To be used for
 time series analysis.}
 }
 \value{

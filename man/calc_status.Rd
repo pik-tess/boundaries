@@ -6,6 +6,7 @@
 \usage{
 calc_status(
   boundary,
+  spatial_scale,
   path_scenario,
   path_reference = NULL,
   time_span_scenario = as.character(1982:2011),
@@ -13,6 +14,8 @@ calc_status(
   avg_nyear_args = list(),
   input_files = list(),
   diff_output_files = list(),
+  method = list(),
+  thresholds = list(),
   in_parallel = TRUE,
   ...
 )
@@ -36,7 +39,7 @@ as an integer vector, e.g. \code{1901:1930}. Can differ in offset and length fro
 \code{time_span_scenario}! If \code{NULL} value of \code{time_span_scenario} is used}
 
 \item{avg_nyear_args}{list of arguments to be passed to
-\link[pbfunctions]{average_nyear_window} (see for more info). To be used for # nolint
+\link[boundaries]{average_nyear_window} (see for more info). To be used for # nolint
 time series analysis}
 
 \item{input_files}{list of required file(s) using ID (e.g. \code{prec}, \code{runoff})
@@ -45,8 +48,11 @@ and an absolute file path to the corresponding input file}
 \item{diff_output_files}{list of required file(s) using ID
 (e.g. prec, runoff) and the alternative writing (e.g. \code{"my_runoff"})}
 
-\item{in_parallel}{if parallel (asynchronous) execution of code should be
-used(future package) to speed up boundary status calculation}
+\item{method}{list of methods to be used for each boundary. If \code{NULL} the
+default method is used}
+
+\item{thresholds}{list of thresholds to be used for each boundary. If \code{NULL}
+the default thresholds are used}
 
 \item{...}{further arguments to be passed to each calc_* function}
 }

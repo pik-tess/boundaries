@@ -47,7 +47,7 @@
 #' not yet defined
 #'
 #' @param avg_nyear_args list of arguments to be passed to
-#' \link[pbfunctions]{average_nyear_window} (see for more info).
+#' \link[boundaries]{average_nyear_window} (see for more info).
 #' To be used for time series analysis
 #'
 #' @examples

@@ -4,7 +4,7 @@
 \alias{list_outputs}
 \title{List required LPJmL outputs and temporal resolution}
 \usage{
-list_outputs(metric = "all", only_first_filename = TRUE)
+list_outputs(metric = "all", method, spatial_scale, only_first_filename = TRUE)
 }
 \arguments{
 \item{metric}{Character string containing name of metric to get

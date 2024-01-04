@@ -13,7 +13,7 @@
 #' [Steffen et al. 2015](https://doi.org/10.1126/science.1259855)
 #'
 #' @param avg_nyear_args list of arguments to be passed to
-#' \link[pbfunctions]{average_nyear_window} (see for more info). To be used for
+#' \link[boundaries]{average_nyear_window} (see for more info). To be used for
 #' time series analysis.
 #'
 #' @return EFRs with same unit as `x` (discharge), with `dim(x)=c(ncells, 12)`

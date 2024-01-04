@@ -45,7 +45,7 @@
 #' (default: 20 gC/m2)
 #'
 #' @param avg_nyear_args list of arguments to be passed to
-#' \link[pbfunctions]{average_nyear_window} (see for more info).
+#' \link[boundaries]{average_nyear_window} (see for more info).
 #' To be used for time series analysis
 #'
 #' @param ... arguments forwarded to \link[boundaries](classify_biomes)

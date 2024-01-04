@@ -7,26 +7,28 @@
 calc_bluewater_status(
   files_scenario,
   files_reference,
-  time_span_scenario = as.character(1982:2011),
-  time_span_reference = NULL,
+  time_span_scenario = NULL,
+  time_span_reference = time_span_scenario,
   method = "gerten2020",
   cut_min = 0.0864,
   avg_nyear_args = list(),
-  irrmask_basin = TRUE
+  spatial_scale,
+  thresholds = NULL
 )
 }
 \arguments{
 \item{files_scenario}{list with variable names and corresponding file paths
 (character string) of the scenario LPJmL run. All needed files are
-provided in XXX. E.g.: list(leaching = "/temp/leaching.bin.json")}
+provided in metric_files.yaml.
+E.g.: list(leaching = "/temp/leaching.bin.json")}
 
 \item{files_reference}{list with variable names and corresponding file paths
 (character string) of the reference LPJmL run. All needed files are
-provided in XXX. E.g.: list(leaching = "/temp/leaching.bin.json"). If not
-needed for the applied method, set to NULL.}
+provided in metric_files.yml.
+E.g.: list(leaching = "/temp/leaching.bin.json").}
 
 \item{time_span_scenario}{time span to be used for the scenario run, defined
-as character string, e.g. \code{as.character(1982:2011)} (default)}
+as character string}
 
 \item{time_span_reference}{time span to be used for the scenario run, defined
 as character string, e.g. \code{as.character(1901:1930)}. Can differ in offset and
@@ -34,18 +36,33 @@ length from \code{time_span_scenario}! If \code{NULL} value of \code{time_span_s
 used}
 
 \item{method}{method (character string) to be used , currently available
-method is \code{c("gerten2020")} based on
-\href{https://doi.org/10.1038/s41893-019-0465-1}{Gerten et al. 2020}.}
+method is \code{"gerten2020"} based on
+\href{https://doi.org/10.1038/s41893-019-0465-1}{Gerten et al. 2020}
+for spatial_scale = "grid" and
+"wang_erlandsson2022" as well as "porkka2023" for
+spatial_scale = "global" or "subglobal"}
 
-\item{cut_min}{double. Exclude boundary calculations for Q < cut_min,
-Default: 0.0864 hm3/day (=1 m³/s)}
+\item{cut_min}{double. Exclude boundary calculations for discharge < cut_min
+and dismiss EFR transgresssions if < cut_min for "gerten2020" method,
+Default: 0.0864 hm3/day (=1 m3/s)}
 
 \item{avg_nyear_args}{list of arguments to be passed to
-\link[pbfunctions]{average_nyear_window} (see for more info). To be used for
+\link[boundaries]{average_nyear_window} (see for more info). To be used for
 time series analysis}
 
-\item{irrmask_basin}{logical, if true: all cells in river basins without
-irrigation will be masked (= no boundary transgression)}
+\item{spatial_scale}{character string indicating spatial resolution
+options: "global", "subglobal", "grid";
+for "grid" the method "gerten2020" is applicable based on EFR calculations;
+for "global"/"subglobal" the share (\%) of total global/basin area with
+deviations is calculated}
+
+\item{thresholds}{named character string with thresholds to be used to
+define the safe, increasing risk and high risk zone, the method and scale
+specific default thresholds are defined in metric_files.yml are are applied
+if thresholds are set to NULL.}
+}
+\value{
+todo: describe returned object
 }
 \description{
 Calculate the PB status for the bluewater (former freshwater) boundary based

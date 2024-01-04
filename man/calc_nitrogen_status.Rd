@@ -10,10 +10,11 @@ calc_nitrogen_status(
   time_span_scenario = as.character(1982:2011),
   time_span_reference = NULL,
   method = "braun2022",
+  thresholds = NULL,
+  spatial_scale = "grid",
   cut_arid = 0.2,
   cut_runoff = 0,
   with_groundwater_denit = TRUE,
-  n_thresholds = list(lower = 1, upper = 2.5),
   avg_nyear_args = list()
 )
 }
@@ -35,10 +36,22 @@ as character string, e.g. \code{as.character(1901:1930)}. Can differ in offset a
 length from \code{time_span_scenario}! If \code{NULL} value of \code{time_span_scenario} is
 used}
 
-\item{method}{method (character string) to be used , currently available
+\item{method}{(character string) to be used , currently available
 method is \code{"braun2022"} based on unpublished suggestion by Johanna Braun.
 Second method option is \code{"braun2022_minusref"} to subtract reference run
 output}
+
+\item{thresholds}{list with highrisk and pb threshold for N concentration
+(mg N/l) in runoff to surface water
+Default: highrisk = 5, pb = 2
+(based on Schulte-Uebbing et al. 2022,
+https://doi.org/10.1038/s41586-022-05158-2:
+"we used a threshold for N concentration in run-off to surface water. This
+threshold was set to 5.0 mgN/l, based on the assumption that on average 50\%
+of N entering surface water is removed through retention and sedimentation"))}
+
+\item{spatial_scale}{character. Spatial resolution, available options
+are \code{"global"} and \code{"grid"}}
 
 \item{cut_arid}{double. Exclude boundary calculations below the defined
 threshold for aridity (annual precipitation / annual potential
@@ -52,19 +65,8 @@ groundwater denitrification losses. Defaults to TRUE ( = simulated leaching
 is multiplied with 0.71 based on simulated denitrification losses in ground
 water from Bouwman et al 2013)}
 
-\item{n_thresholds}{list with upper and lower threshold for N concentration
-(mg N/l) in runoff to surface water
-Default: upper = 2.5, lower = 1
-(based on de Vries et al. 2013, https://doi.org/10.1016/j.cosust.2013.07.004)
-Alternative: upper = 5, lower = 2
-(based on Schulte-Uebbing et al. 2022,
-https://doi.org/10.1038/s41586-022-05158-2:
-"we used a threshold for N concentration in run-off to surface water. This
-threshold was set to 5.0 mgN/l, based on the assumption that on average 50\%
-of N entering surface water is removed through retention and sedimentation"))}
-
 \item{avg_nyear_args}{list of arguments to be passed to
-\link[pbfunctions]{average_nyear_window} (see for more info). To be used for
+\link[boundaries]{average_nyear_window} (see for more info). To be used for
 time series analysis}
 }
 \description{

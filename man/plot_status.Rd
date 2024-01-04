@@ -5,8 +5,8 @@
 \title{Plot the global status of planetary boundaries}
 \usage{
 plot_status(
+  x,
   file_name = NULL,
-  status_data = list(biosphere = NA, lsc = NA, bluewater = NA, nitrogen = NA),
   colors = c(`safe zone` = "#74bca9e1", `increasing risk` = "#f6ee0f", `high risk` =
     "#e23a50"),
   bg_col = "white",
@@ -15,13 +15,13 @@ plot_status(
 )
 }
 \arguments{
-\item{file_name}{character string providing file name (including directory
-and file extension). Defaults to NULL (plotting to screen)}
-
-\item{status_data}{list with one to four LPJmL vectors (length: ncells) with
+\item{x}{list with one to four LPJmL vectors (length: ncells) with
 the outputs from the calc_* functions for one point in time.
 Given element names within the list will be displayed underneath the
 respective map. Order in the list determines the plotting order (by row).}
+
+\item{file_name}{character string providing file name (including directory
+and file extension). Defaults to NULL (plotting to screen)}
 
 \item{colors}{definition of colors for plotting of the safe, increasing
 risk and high risk zone (3 elements, do not change the order). Colors used
@@ -41,7 +41,7 @@ a scenario LPJmL run and derived planetary boundary statuses
 \examples{
 \dontrun{
  plot_status(file_name = "./my_boundary_status.png",
-                status_data = list("land system change" = lsc_status,
+                x = list("land system change" = lsc_status,
                                    "nitrogen" = nitrogen_status,
                                    "bluewater" = water_status),
  legend = FALSE

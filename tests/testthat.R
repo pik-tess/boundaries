@@ -1,4 +1,4 @@
 library(testthat)
-library(pbfunctions)
+library(boundaries)
 
-test_check("pbfunctions")
+test_check("boundaries")
