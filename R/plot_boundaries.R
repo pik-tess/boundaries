@@ -51,6 +51,8 @@ plot_boundaries <- function(
     x
   })
 
+  max_y <- max(unlist(x_lvl))
+
   # Create tibble for plotting
   x_table <- tibble::tibble(
     x = seq_along(x_lvl),
@@ -155,7 +157,7 @@ plot_boundaries <- function(
     dplyr::rename(y = vals)
 
   # Create table with distribution of high risk values
-  high_risk <- tibble::tibble(x = 1:5, y = rep(3, 5)) %>%
+  high_risk <- tibble::tibble(x = 1:5, y = rep(max_y, 5)) %>%
     dplyr::mutate(vals = purrr::map(y, ~seq(2, .x, by = 0.01))) %>%
     tidyr::unnest(cols = c(vals)) %>%
     dplyr::mutate(xend = x + 0.44, x = x - 0.44, yend = vals) %>%
@@ -228,7 +230,7 @@ plot_boundaries <- function(
   p <- p +
     ggplot2::geom_segment(
       data = x_table,
-      ggplot2::aes(x = x - 0.45, xend = x - 0.45, y = 0, yend = 3.12),
+      ggplot2::aes(x = x - 0.45, xend = x - 0.45, y = 0, yend = max_y + 0.12),
       size = 0.8,
       color = "black",
       alpha = 0.7,  # Add transparency
@@ -236,7 +238,7 @@ plot_boundaries <- function(
     ) +
     ggplot2::geom_segment(
       data = x_table,
-      ggplot2::aes(x = x, xend = x, y = 3, yend = 3.12),
+      ggplot2::aes(x = x, xend = x, y = max_y, yend = max_y + 0.12),
       size = 0.8,
       color = "black",
       alpha = 0.7,  # Add transparency
@@ -244,7 +246,7 @@ plot_boundaries <- function(
     ) +
     ggplot2::geom_segment(
       data = x_table,
-      ggplot2::aes(x = x + 0.45, xend = x + 0.45, y = 0, yend = 3.12),
+      ggplot2::aes(x = x + 0.45, xend = x + 0.45, y = 0, yend = max_y + 0.12),
       size = 0.8,
       color = "black",
       alpha = 0.7,  # Add transparency
@@ -269,7 +271,7 @@ plot_boundaries <- function(
     ) +
     ggplot2::geom_segment(
       data = x_table,
-      ggplot2::aes(x = x - 0.45, xend = x + 0.45, y = 3, yend = 3),
+      ggplot2::aes(x = x - 0.45, xend = x + 0.45, y = max_y, yend = max_y),
       size = 0.8,
       color = purple,
       linetype = 1
@@ -278,37 +280,37 @@ plot_boundaries <- function(
   # Add lines/segments to seperate the different boundaries
   p <- p +
     ggplot2::geom_segment(
-      ggplot2::aes(x = 0.5, xend = 0.5, y = 0, yend = 3.5),
+      ggplot2::aes(x = 0.5, xend = 0.5, y = 0, yend = max_y + 0.5),
       size = 1.2,
       color = "black",
       linetype = 1
     ) +
     ggplot2::geom_segment(
-      ggplot2::aes(x = 1.5, xend = 1.5, y = 0, yend = 3.5),
+      ggplot2::aes(x = 1.5, xend = 1.5, y = 0, yend = max_y + 0.5),
       size = 1.2,
       color = "black",
       linetype = 1
     ) +
     ggplot2::geom_segment(
-      ggplot2::aes(x = 2.5, xend = 2.5, y = 0, yend = 3.5),
+      ggplot2::aes(x = 2.5, xend = 2.5, y = 0, yend = max_y + 0.5),
       size = 1.2,
       color = "black",
       linetype = 1
     ) +
     ggplot2::geom_segment(
-      ggplot2::aes(x = 3.5, xend = 3.5, y = 0, yend = 3.5),
+      ggplot2::aes(x = 3.5, xend = 3.5, y = 0, yend = max_y + 0.5),
       size = 1.2,
       color = "black",
       linetype = 1
     ) +
     ggplot2::geom_segment(
-      ggplot2::aes(x = 4.5, xend = 4.5, y = 0, yend = 3.5),
+      ggplot2::aes(x = 4.5, xend = 4.5, y = 0, yend = max_y + 0.5),
       size = 1.2,
       color = "black",
       linetype = 1
     ) +
     ggplot2::geom_segment(
-      ggplot2::aes(x = 5.5, xend = 5.5, y = 0, yend = 3.5),
+      ggplot2::aes(x = 5.5, xend = 5.5, y = 0, yend = max_y + 0.5),
       size = 1.2,
       color = "black",
       linetype = 1
@@ -318,21 +320,21 @@ plot_boundaries <- function(
   p <- p +
     ggplot2::geom_text(
       data = x_table,
-      ggplot2::aes(x = x - 0.43, y = 3.25, label = start_year),
+      ggplot2::aes(x = x - 0.43, y = max_y + 0.25, label = start_year),
       color = "black",
       alpha = 0.7,  # Add transparency
       size = 4  # Increase the size of the labels
     ) +
     ggplot2::geom_text(
       data = x_table,
-      ggplot2::aes(x = x, y = 3.25, label = mid_year),
+      ggplot2::aes(x = x, y = max_y + 0.25, label = mid_year),
       color = "black",
       alpha = 0.7,  # Add transparency
       size = 4  # Increase the size of the labels
     ) +
     ggplot2::geom_text(
       data = x_table,
-      ggplot2::aes(x = x + 0.43, y = 3.25, label = end_year),
+      ggplot2::aes(x = x + 0.43, y = max_y + 0.25, label = end_year),
       color = "black",
       alpha = 0.7,  # Add transparency
       size = 4  # Increase the size of the labels
@@ -342,7 +344,7 @@ plot_boundaries <- function(
   p <- p +
     ggplot2::geom_label(
       data = x_table,
-      ggplot2::aes(x = x, y = 3.8, label = name),
+      ggplot2::aes(x = x, y = max_y + 0.8, label = name),
       color = "black",
       size = 6  # Increase the size of the labels
     )
