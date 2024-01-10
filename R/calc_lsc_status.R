@@ -96,12 +96,11 @@ calc_lsc_status <- function(
   )
 
   # calculate cell area
-  cell_area %<-% {
+  terr_area %<-% {
     lpjmlkit::read_io(
-      files_reference$grid,
+      files_reference$terr_area,
       silent = TRUE
-    ) %>%
-      lpjmlkit::calc_cellarea()
+    )$data %>% drop()
   }
 
   # read fpc
@@ -163,14 +162,14 @@ calc_lsc_status <- function(
     tree_share_scenario *
       array(lpjmlkit::asub(fpc_scenario,
                            band = c("natural stand fraction")),
-            dim = dim(tree_share_scenario)) * cell_area
+            dim = dim(tree_share_scenario)) * terr_area
   )
 
   tree_cover_reference <- (
     tree_share_reference *
       array(lpjmlkit::asub(fpc_reference,
                            band = c("natural stand fraction")),
-            dim = dim(tree_share_reference)) * cell_area
+            dim = dim(tree_share_reference)) * terr_area
   )
 
   # sum tree pfts for forest cover
@@ -289,7 +288,7 @@ calc_lsc_status <- function(
         function(x) {
           # mean over cell subset of forest type and continent
           # weighted by cell area
-          return(rep(weighted.mean(x, cell_area, na.rm = TRUE), length(x)))
+          return(rep(weighted.mean(x, terr_area, na.rm = TRUE), length(x)))
         }
       )
       deforestation[sub_cells] <- sub_deforest[sub_cells]

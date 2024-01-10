@@ -201,6 +201,9 @@ metric:
                     # LPJmL output IDs with required resolution
                     output:
                         <<: *biome_output
+                        terr_area:
+                            resolution: "annual"
+                            optional: false
                     threshold:
                         holocene: 0
                         pb: 0.25
@@ -210,6 +213,9 @@ metric:
                     # LPJmL output IDs with required resolution
                     output:
                         <<: *biome_output
+                        terr_area:
+                            resolution: "annual"
+                            optional: false
                     threshold:
                         holocene:
                             boreal: 0
