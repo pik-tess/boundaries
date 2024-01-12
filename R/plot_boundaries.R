@@ -158,14 +158,15 @@ plot_boundaries <- function(
     dplyr::select(-y) %>%
     dplyr::rename(y = vals)
 
-  # Create table with distribution of high risk values
-  high_risk <- tibble::tibble(x = 1:5, y = rep(max_y, 5)) %>%
-    dplyr::mutate(vals = purrr::map(y, ~seq(3, .x, by = 0.01))) %>%
-    tidyr::unnest(cols = c(vals)) %>%
-    dplyr::mutate(xend = x + 0.44, x = x - 0.44, yend = vals) %>%
-    dplyr::select(-y) %>%
-    dplyr::rename(y = vals)
-
+  if (max_y >= 3) {
+    # Create table with distribution of high risk values
+    high_risk <- tibble::tibble(x = 1:5, y = rep(max_y, 5)) %>%
+      dplyr::mutate(vals = purrr::map(y, ~seq(3, .x, by = 0.01))) %>%
+      tidyr::unnest(cols = c(vals)) %>%
+      dplyr::mutate(xend = x + 0.44, x = x - 0.44, yend = vals) %>%
+      dplyr::select(-y) %>%
+      dplyr::rename(y = vals)
+  }
 
   # Create ggplot, first with the segments that include the colour gradient for
   #   each level of risk (safe space, uncertainty zone, high risk)
@@ -178,19 +179,21 @@ plot_boundaries <- function(
     ggplot2::scale_color_gradient2(
       low = yellow, mid = red, high = darkpurple,
       midpoint = 2
-    ) +
+    )
+    if (max_y >= 3) {
+      # Reset colour scale for next segment to be filled with new colour gradient
+      p <- p + ggnewscale::new_scale_color() +
+        ggplot2::geom_segment(
+          data = high_risk,
+          ggplot2::aes(x = x, xend = xend, y = y, yend = yend, color = y),
+          size = 2
+        ) +
+        ggplot2::scale_color_gradient(
+          low = darkpurple, high = darkpurple,
+        )
+    }
     # Reset colour scale for next segment to be filled with new colour gradient
-    ggnewscale::new_scale_color() +
-    ggplot2::geom_segment(
-      data = high_risk,
-      ggplot2::aes(x = x, xend = xend, y = y, yend = yend, color = y),
-      size = 2
-    ) +
-    ggplot2::scale_color_gradient(
-      low = darkpurple, high = darkpurple,
-    ) +
-    # Reset colour scale for next segment to be filled with new colour gradient
-    ggnewscale::new_scale_color() +
+    p <- p + ggnewscale::new_scale_color() +
     ggplot2::geom_segment(
       data = safe_space,
       ggplot2::aes(
@@ -208,7 +211,7 @@ plot_boundaries <- function(
     #   (complementary part of wedge)
     geom_boundaries(
       data = x_table,
-      ggplot2::aes(x = x, y = y, group = x, status = status),
+      ggplot2::aes(x = x, y = max(3, y), group = x, status = status),
       fill = "white",
       negative = TRUE
     ) +
