@@ -141,7 +141,7 @@ plot_boundaries <- function(
       )
     )
   }
-
+  print(max_y)
   # Create table with distribution of safe space values
   safe_space <- tibble::tibble(x = 1:5, y = rep(1, 5)) %>%
     dplyr::mutate(vals = purrr::map(y, ~seq(0, .x, by = 0.01))) %>%
@@ -160,12 +160,22 @@ plot_boundaries <- function(
 
   if (max_y >= 3) {
     # Create table with distribution of high risk values
-    high_risk <- tibble::tibble(x = 1:5, y = rep(max_y, 5)) %>%
+    high_risk <- tibble::tibble(x = 1:5, y = rep(3.5, 5)) %>%
       dplyr::mutate(vals = purrr::map(y, ~seq(3, .x, by = 0.01))) %>%
       tidyr::unnest(cols = c(vals)) %>%
       dplyr::mutate(xend = x + 0.44, x = x - 0.44, yend = vals) %>%
       dplyr::select(-y) %>%
       dplyr::rename(y = vals)
+
+    if (max_y >= 3.5) {
+      # Create table with distribution of high risk values
+      ultra_risk <- tibble::tibble(x = 1:5, y = rep(max_y, 5)) %>%
+        dplyr::mutate(vals = purrr::map(y, ~seq(3.5, .x, by = 0.01))) %>%
+        tidyr::unnest(cols = c(vals)) %>%
+        dplyr::mutate(xend = x + 0.44, x = x - 0.44, yend = vals) %>%
+        dplyr::select(-y) %>%
+        dplyr::rename(y = vals)
+    }
   }
 
   # Create ggplot, first with the segments that include the colour gradient for
@@ -177,7 +187,7 @@ plot_boundaries <- function(
       size = 2
     ) +
     ggplot2::scale_color_gradient2(
-      low = yellow, mid = red, high = darkpurple,
+      low = yellow, mid = red, high = purple,
       midpoint = 2
     )
     if (max_y >= 3) {
@@ -188,9 +198,23 @@ plot_boundaries <- function(
           ggplot2::aes(x = x, xend = xend, y = y, yend = yend, color = y),
           size = 2
         ) +
-        ggplot2::scale_color_gradient(
-          low = darkpurple, high = darkpurple,
+        ggplot2::scale_color_gradient2(
+          low = purple, mid = darkpurple, high = darkpurple,
+          midpoint = 3.5
         )
+      if(max_y >= 3.5) {
+        # Reset colour scale for next segment to be filled with new colour gradient
+        p <- p + ggnewscale::new_scale_color() +
+          ggplot2::geom_segment(
+            data = ultra_risk,
+            ggplot2::aes(
+              x = x, xend = xend, y = y, yend = yend, color = y),
+            size = 2
+          ) +
+          ggplot2::scale_color_gradient(
+            low = darkpurple, high = darkpurple
+          )
+      }
     }
     # Reset colour scale for next segment to be filled with new colour gradient
     p <- p + ggnewscale::new_scale_color() +
@@ -211,7 +235,12 @@ plot_boundaries <- function(
     #   (complementary part of wedge)
     geom_boundaries(
       data = x_table,
-      ggplot2::aes(x = x, y = max(3, y), group = x, status = status),
+      ggplot2::aes(
+        x = x,
+        y = ifelse(y > 3.5, y, ifelse(y > 3, 3.5, 3)),
+        group = x,
+        status = status
+      ),
       fill = "white",
       negative = TRUE
     ) +
@@ -362,21 +391,33 @@ plot_boundaries <- function(
   p <- p +
     ggplot2::geom_text(
       data = x_table,
-      ggplot2::aes(x = x - 0.43, y = max_y + 0.25, label = start_year),
+      ggplot2::aes(
+        x = x - 0.43,
+        y = max_y + ifelse(max_y >= 3, 0.3, 0.25),
+        label = start_year
+      ),
       color = "#464646",
       # alpha = 0.7,  # Add transparency
       size = 4  # Increase the size of the labels
     ) +
     ggplot2::geom_text(
       data = x_table,
-      ggplot2::aes(x = x, y = max_y + 0.25, label = mid_year),
+      ggplot2::aes(
+        x = x,
+        y = max_y + ifelse(max_y >= 3, 0.3, 0.25),
+        label = mid_year
+      ),
       color = "#464646",
       # alpha = 0.7,  # Add transparency
       size = 4  # Increase the size of the labels
     ) +
     ggplot2::geom_text(
       data = x_table,
-      ggplot2::aes(x = x + 0.43, y = max_y + 0.25, label = end_year),
+      ggplot2::aes(
+        x = x + 0.43,
+        y = max_y + ifelse(max_y >= 3, 0.3, 0.25),
+        label = end_year
+      ),
       color = "#464646",
       # alpha = 0.7,  # Add transparency
       size = 4  # Increase the size of the labels
@@ -386,7 +427,11 @@ plot_boundaries <- function(
   p <- p +
     ggplot2::geom_label(
       data = x_table,
-      ggplot2::aes(x = x, y = max_y + 0.8, label = name),
+      ggplot2::aes(
+        x = x,
+        y = max_y + ifelse(max_y >= 3, 1.2, 0.8),
+        label = name
+      ),
       color = "black",
       size = 6  # Increase the size of the labels
     )
