@@ -47,16 +47,18 @@ plot_boundaries <- function(
   # quick fix to not allow na, negative, or values > 3
   x_lvl <- lapply(x_lvl, function(x) {
     x[x < 0 | is.nan(x) | is.na(x)] <- 0
-    x[x > 3] <- 3
     x
   })
 
-  max_y <- max(unlist(x_lvl))
+  max_y <- x_lvl |>
+    unlist() %>%
+    max() %>%
+    sum(0.05 * .)
 
   # Create tibble for plotting
   x_table <- tibble::tibble(
     x = seq_along(x_lvl),
-    y = rep(3, length(x_lvl)),
+    y = rep(max_y, length(x_lvl)),
     start_year = min(as.integer(names(x_lvl[[names(x_lvl)[1]]]))),
     end_year = max(as.integer(names(x_lvl[[names(x_lvl)[1]]]))),
     mid_year = round((start_year + end_year) / 2),
@@ -148,8 +150,8 @@ plot_boundaries <- function(
     dplyr::select(-y) %>%
     dplyr::rename(y = vals)
 
-  # Create table with distribution of uncertainty zone values
-  uncertainty_zone <- tibble::tibble(x = 1:5, y = rep(2, 5)) %>%
+  # Create table with distribution of high risk values
+  increasing_risk <- tibble::tibble(x = 1:5, y = rep(3, 5)) %>%
     dplyr::mutate(vals = purrr::map(y, ~seq(1, .x, by = 0.01))) %>%
     tidyr::unnest(cols = c(vals)) %>%
     dplyr::mutate(xend = x + 0.44, x = x - 0.44, yend = vals) %>%
@@ -158,7 +160,7 @@ plot_boundaries <- function(
 
   # Create table with distribution of high risk values
   high_risk <- tibble::tibble(x = 1:5, y = rep(max_y, 5)) %>%
-    dplyr::mutate(vals = purrr::map(y, ~seq(2, .x, by = 0.01))) %>%
+    dplyr::mutate(vals = purrr::map(y, ~seq(3, .x, by = 0.01))) %>%
     tidyr::unnest(cols = c(vals)) %>%
     dplyr::mutate(xend = x + 0.44, x = x - 0.44, yend = vals) %>%
     dplyr::select(-y) %>%
@@ -169,37 +171,38 @@ plot_boundaries <- function(
   #   each level of risk (safe space, uncertainty zone, high risk)
   p <- ggplot2::ggplot() +
     ggplot2::geom_segment(
-      data = high_risk,
+      data = increasing_risk,
       ggplot2::aes(x = x, xend = xend, y = y, yend = yend, color = y),
       size = 2
     ) +
     ggplot2::scale_color_gradient2(
-      low = lightred, mid = red, high = purple,
-      midpoint = max(high_risk$y) / 2
+      low = yellow, mid = red, high = darkpurple,
+      midpoint = 2
     ) +
     # Reset colour scale for next segment to be filled with new colour gradient
     ggnewscale::new_scale_color() +
     ggplot2::geom_segment(
-      data = uncertainty_zone,
+      data = high_risk,
       ggplot2::aes(x = x, xend = xend, y = y, yend = yend, color = y),
       size = 2
     ) +
-    ggplot2::scale_color_gradient2(
-      low = yellow, mid = yellow, high = orange,
-      midpoint = max(uncertainty_zone$y) / 2
+    ggplot2::scale_color_gradient(
+      low = darkpurple, high = darkpurple,
     ) +
     # Reset colour scale for next segment to be filled with new colour gradient
     ggnewscale::new_scale_color() +
     ggplot2::geom_segment(
       data = safe_space,
-      ggplot2::aes(x = x, xend = xend, y = y, yend = yend, color = y),
+      ggplot2::aes(
+        x = x, xend = xend, y = y - 0.01, yend = yend - 0.01, color = y
+      ),
       size = 2
     ) +
     ggplot2::scale_color_gradient2(
-      low = lightgreen,
-      mid = green,
-      high = darkgreen,
-      midpoint = max(safe_space$y) / 2
+      low = "white",
+      mid = "white",
+      high = green,
+      midpoint = max(safe_space$y) / 7.5
     ) +
     # Hide segment area outside of boundaries with white polygon
     #   (complementary part of wedge)
@@ -214,6 +217,7 @@ plot_boundaries <- function(
       data = x_table,
       ggplot2::aes(x = x, y = y, group = x, status = status),
       color = "black",
+      size = 0.6,
       fill = "transparent"
     ) +
     # Limit x-axis to a half circle
@@ -227,53 +231,88 @@ plot_boundaries <- function(
     # Remove legend
     ggplot2::theme(legend.position = "none")
 
-  p <- p +
-    ggplot2::geom_segment(
-      data = x_table,
-      ggplot2::aes(x = x - 0.45, xend = x - 0.45, y = 0, yend = max_y + 0.12),
-      size = 0.8,
-      color = "black",
-      alpha = 0.7,  # Add transparency
-      linetype = 1
-    ) +
-    ggplot2::geom_segment(
-      data = x_table,
-      ggplot2::aes(x = x, xend = x, y = max_y, yend = max_y + 0.12),
-      size = 0.8,
-      color = "black",
-      alpha = 0.7,  # Add transparency
-      linetype = 1
-    ) +
-    ggplot2::geom_segment(
-      data = x_table,
-      ggplot2::aes(x = x + 0.45, xend = x + 0.45, y = 0, yend = max_y + 0.12),
-      size = 0.8,
-      color = "black",
-      alpha = 0.7,  # Add transparency
-      linetype = 1
-    )
 
   # Add lines/segments to indicate the different levels of risk
   p <- p +
     ggplot2::geom_segment(
       data = x_table,
       ggplot2::aes(x = x - 0.45, xend = x + 0.45, y = 1, yend = 1),
-      size = 0.8,
+      size = 1.3,
+      color = darkgreen,
+      alpha = 0.8,  # Add transparency
+      linetype = 1
+    ) +
+    ggplot2::geom_segment(
+      data = x_table,
+      ggplot2::aes(x = x - 0.45, xend = x + 0.45, y = 0.983, yend = 0.983),
+      size = 1,
+      color = "white",
+      alpha = 0.3,  # Add transparency
+      linetype = 1
+    ) +
+    ggplot2::geom_segment(
+      data = x_table,
+      ggplot2::aes(x = x - 0.45, xend = x + 0.45, y = 0.987, yend = 0.987),
+      size = 0.55,
+      color = "white",
+      alpha = 0.6,  # Add transparency
+      linetype = 1
+    ) +
+    ggplot2::geom_segment(
+      data = x_table,
+      ggplot2::aes(x = x - 0.45, xend = x + 0.45, y = 0.9885, yend = 0.9885),
+      size = 0.2,
+      color = "white",
+      alpha = 0.9,  # Add transparency
+      linetype = 1
+    ) +
+    ggplot2::geom_segment(
+      data = x_table,
+      ggplot2::aes(x = x - 0.45, xend = x + 0.45, y = 1, yend = 1),
+      size = 1,
       color = darkgreen,
       linetype = 1
     ) +
     ggplot2::geom_segment(
       data = x_table,
       ggplot2::aes(x = x - 0.45, xend = x + 0.45, y = 2, yend = 2),
-      size = 0.8,
+      size = 0.6,
       color = orange,
+      alpha = 0.4,  # Add transparency
       linetype = 1
     ) +
     ggplot2::geom_segment(
       data = x_table,
       ggplot2::aes(x = x - 0.45, xend = x + 0.45, y = max_y, yend = max_y),
       size = 0.8,
-      color = purple,
+      color = "#464646",
+      # alpha = 0.7,  # Add transparency
+      linetype = 1
+    )
+
+  p <- p +
+    ggplot2::geom_segment(
+      data = x_table,
+      ggplot2::aes(x = x - 0.45, xend = x - 0.45, y = 0, yend = max_y + 0.12),
+      size = 0.8,
+      color = "#464646",
+      # alpha = 0.7,  # Add transparency
+      linetype = 1
+    ) +
+    ggplot2::geom_segment(
+      data = x_table,
+      ggplot2::aes(x = x, xend = x, y = max_y, yend = max_y + 0.12),
+      size = 0.8,
+      color = "#464646",
+      # alpha = 0.7,  # Add transparency
+      linetype = 1
+    ) +
+    ggplot2::geom_segment(
+      data = x_table,
+      ggplot2::aes(x = x + 0.45, xend = x + 0.45, y = 0, yend = max_y + 0.12),
+      size = 0.8,
+      color = "#464646",
+      # alpha = 0.7,  # Add transparency
       linetype = 1
     )
 
@@ -321,22 +360,22 @@ plot_boundaries <- function(
     ggplot2::geom_text(
       data = x_table,
       ggplot2::aes(x = x - 0.43, y = max_y + 0.25, label = start_year),
-      color = "black",
-      alpha = 0.7,  # Add transparency
+      color = "#464646",
+      # alpha = 0.7,  # Add transparency
       size = 4  # Increase the size of the labels
     ) +
     ggplot2::geom_text(
       data = x_table,
       ggplot2::aes(x = x, y = max_y + 0.25, label = mid_year),
-      color = "black",
-      alpha = 0.7,  # Add transparency
+      color = "#464646",
+      # alpha = 0.7,  # Add transparency
       size = 4  # Increase the size of the labels
     ) +
     ggplot2::geom_text(
       data = x_table,
       ggplot2::aes(x = x + 0.43, y = max_y + 0.25, label = end_year),
-      color = "black",
-      alpha = 0.7,  # Add transparency
+      color = "#464646",
+      # alpha = 0.7,  # Add transparency
       size = 4  # Increase the size of the labels
     )
 
