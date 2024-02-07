@@ -31,8 +31,7 @@
 
 plot_boundaries <- function(
   x,
-  normalization = "increasing risk",
-  add_legend = TRUE
+  normalization = "increasing risk"
 ) {
 
   x_lvl <- x
@@ -62,28 +61,9 @@ plot_boundaries <- function(
     y = rep(max_y, length(x_lvl)),
     start_year = min(as.integer(names(x_lvl[[names(x_lvl)[1]]]))),
     end_year = max(as.integer(names(x_lvl[[names(x_lvl)[1]]]))),
+    mid_year = round((start_year + end_year) / 2),
     name = names(x_lvl),
     status = x_lvl
-  )
-
-  x_table$mid_year <- sapply(
-    x_table$name,
-    function(x) {
-      as.integer(
-        names(which(x_lvl[[x]] > attributes(x_lvl[[x]])$thresholds$pb)[1])
-      )
-    }
-  )
-
-  x_table$alpha <- sapply(
-    x_table$mid_year,
-    function(x) {
-      ifelse(
-        abs(x_table$start_year[1] - x) < 20 || abs(x - x_table$end_year[1]) < 20,
-        0,
-        1
-      )
-    }
   )
 
   # Create ggproto class to plot time series of boundaries into wedge
@@ -171,16 +151,8 @@ plot_boundaries <- function(
     dplyr::rename(y = vals)
 
   # Create table with distribution of high risk values
-  increasing_risk_1 <- tibble::tibble(x = 1:5, y = rep(2.5, 5)) %>%
+  increasing_risk <- tibble::tibble(x = 1:5, y = rep(3, 5)) %>%
     dplyr::mutate(vals = purrr::map(y, ~seq(1, .x, by = 0.01))) %>%
-    tidyr::unnest(cols = c(vals)) %>%
-    dplyr::mutate(xend = x + 0.44, x = x - 0.44, yend = vals) %>%
-    dplyr::select(-y) %>%
-    dplyr::rename(y = vals)
-
-  # Create table with distribution of high risk values
-  increasing_risk_2 <- tibble::tibble(x = 1:5, y = rep(3, 5)) %>%
-    dplyr::mutate(vals = purrr::map(y, ~seq(2.5, .x, by = 0.01))) %>%
     tidyr::unnest(cols = c(vals)) %>%
     dplyr::mutate(xend = x + 0.44, x = x - 0.44, yend = vals) %>%
     dplyr::select(-y) %>%
@@ -210,25 +182,14 @@ plot_boundaries <- function(
   #   each level of risk (safe space, uncertainty zone, high risk)
   p <- ggplot2::ggplot() +
     ggplot2::geom_segment(
-      data = increasing_risk_1,
+      data = increasing_risk,
       ggplot2::aes(x = x, xend = xend, y = y, yend = yend, color = y),
       size = 2
     ) +
     ggplot2::scale_color_gradient2(
-      low = yellow, mid = yellow, high = red,
-      midpoint = 1.5
-    ) +
-    ggnewscale::new_scale_color() +
-    ggplot2::geom_segment(
-      data = increasing_risk_2,
-      ggplot2::aes(x = x, xend = xend, y = y, yend = yend, color = y),
-      size = 2
-    ) +
-    ggplot2::scale_color_gradient2(
-      low = red, mid = red, high = purple,
-      midpoint = 2.5
+      low = yellow, mid = red, high = purple,
+      midpoint = 2
     )
-
     if (max_y >= 3) {
       # Reset colour scale for next segment to be filled with new colour gradient
       p <- p + ggnewscale::new_scale_color() +
@@ -372,16 +333,11 @@ plot_boundaries <- function(
     ) +
     ggplot2::geom_segment(
       data = x_table,
-      ggplot2::aes(
-        x = x + (0.43 - ((0.43 * 2) * (end_year - mid_year) / (end_year - start_year))),
-        xend = x + (0.43 - ((0.43 * 2) * (end_year - mid_year) / (end_year - start_year))),
-        y = max_y, yend = max_y + 0.12,
-        alpha = alpha
-      ),
-      size = 1,
+      ggplot2::aes(x = x, xend = x, y = max_y, yend = max_y + 0.12),
+      size = 0.8,
+      color = "#464646",
       # alpha = 0.7,  # Add transparency
-      linetype = 1,
-      color = orange
+      linetype = 1
     ) +
     ggplot2::geom_segment(
       data = x_table,
@@ -447,13 +403,11 @@ plot_boundaries <- function(
     ggplot2::geom_text(
       data = x_table,
       ggplot2::aes(
-        x = x + (0.43 - ((0.43 * 2) * (end_year - mid_year) / (end_year - start_year))),
+        x = x,
         y = max_y + ifelse(max_y >= 3, 0.3, 0.25),
-        label = mid_year,
-        alpha = alpha
+        label = mid_year
       ),
-      fontface = "bold",
-      color = orange,
+      color = "#464646",
       # alpha = 0.7,  # Add transparency
       size = 4  # Increase the size of the labels
     ) +
@@ -515,277 +469,317 @@ yellow <- rgb(251. / 255., 206. / 255., 0. / 255., 1)
 orange <- rgb(0.8763552479815456, 0.4319876970396003, 0.04398308342945019, 1.0)
 
 
-plot_legend <- function() {
+require(tidyverse)
+devtools::load_all("/p/projects/open/Jannes/repos/boundaries")
 
-  # Create table with distribution of safe space values
-  safe_space <- tibble::tibble(x = 7.5, y = rep(3, 5)) %>%
-    dplyr::mutate(vals = purrr::map(y, ~seq(2, .x, by = 0.01))) %>%
-    tidyr::unnest(cols = c(vals)) %>%
-    dplyr::mutate(xend = x, x = x - 0.13, yend = vals) %>%
-    dplyr::select(-y) %>%
-    dplyr::rename(y = vals)
+data_path_ma <- (
+  "/p/projects/open/Johanna/boundaries/R/r_out/r_data/global_timeseries_avg_10_porkka.RData"
+)
 
-  safe_space_arrow <- safe_space
-  safe_space_arrow$x <- 7.55
-  safe_space_arrow$xend <- 7.56
-  safe_space_arrow <- dplyr::filter(safe_space_arrow, y < 2.4)
+data <- load(data_path_ma) |>
+  get()
 
-  # Create table with distribution of high risk values
-  increasing_risk_1 <- tibble::tibble(x = 7.5, y = rep(4.5, 5)) %>%
-    dplyr::mutate(vals = purrr::map(y, ~seq(3, .x, by = 0.01))) %>%
-    tidyr::unnest(cols = c(vals)) %>%
-    dplyr::mutate(xend = x, x = x - 0.13, yend = vals) %>%
-    dplyr::select(-y) %>%
-    dplyr::rename(y = vals)
-
-  # Create table with distribution of high risk values
-  increasing_risk_2 <- tibble::tibble(x = 7.5, y = rep(5, 5)) %>%
-    dplyr::mutate(vals = purrr::map(y, ~seq(4.5, .x, by = 0.01))) %>%
-    tidyr::unnest(cols = c(vals)) %>%
-    dplyr::mutate(xend = x, x = x - 0.13, yend = vals) %>%
-    dplyr::select(-y) %>%
-    dplyr::rename(y = vals)
+ggplot2::ggsave(
+  "test6.png",
+  plot_boundaries(data),
+  width = 16,
+  height = 9,
+  dpi = 300
+)
 
 
-  # Create table with distribution of high risk values
-  high_risk <- tibble::tibble(x = 7.5, y = rep(5.5, 5)) %>%
-    dplyr::mutate(vals = purrr::map(y, ~seq(5, .x, by = 0.01))) %>%
-    tidyr::unnest(cols = c(vals)) %>%
-    dplyr::mutate(xend = x, x = x - 0.13, yend = vals) %>%
-    dplyr::select(-y) %>%
-    dplyr::rename(y = vals)
-
-  # Create table with distribution of high risk values
-  ultra_risk <- tibble::tibble(x = 7.5, y = rep(7, 5)) %>%
-    dplyr::mutate(vals = purrr::map(y, ~seq(5.5, .x, by = 0.01))) %>%
-    tidyr::unnest(cols = c(vals)) %>%
-    dplyr::mutate(xend = x, x = x - 0.13, yend = vals) %>%
-    dplyr::select(-y) %>%
-    dplyr::rename(y = vals)
 
 
-  p <- ggplot2::ggplot() +
-    ggplot2::geom_segment(
-      data = increasing_risk_1,
-      ggplot2::aes(x = x, xend = xend, y = y, yend = yend, color = y),
-      size = 2
-    ) +
-    ggplot2::scale_color_gradient2(
-      low = yellow, mid = yellow, high = red,
-      midpoint = 3.5
-    ) +
-    ggnewscale::new_scale_color() +
-    ggplot2::geom_segment(
-      data = increasing_risk_2,
-      ggplot2::aes(x = x, xend = xend, y = y, yend = yend, color = y),
-      size = 2
-    ) +
-    ggplot2::scale_color_gradient2(
-      low = red, mid = red, high = purple,
-      midpoint = 4.5
-    ) +
+library(magrittr)
+library(ggplot2)
 
-    ggplot2::scale_x_continuous(
-      limits = c(0, 10)
-    ) +
-    ggplot2::scale_y_continuous(
-      limits = c(0, 7)
-    ) +
-    # Add polar grid
-    ggplot2::coord_polar(start = pi) +
-    # Remove axis labels, grid and ticks
-    ggplot2::theme_void() +
-    # Remove legend
-    ggplot2::theme(legend.position = "none")
+# boundary <- tibble::tibble(x = 7.5, y = rep(6, 5)) %>%
+#   dplyr::mutate(vals = purrr::map(y, ~seq(1, .x, by = 0.01))) %>%
+#   tidyr::unnest(cols = c(vals)) %>%
+#   dplyr::mutate(xend = x + 0.1, x = x - 0.1, yend = vals) %>%
+#   dplyr::select(-y) %>%
+#   dplyr::rename(y = vals)
 
 
-  # Reset colour scale for next segment to be filled with new colour gradient
-  p <- p + ggnewscale::new_scale_color() +
-    ggplot2::geom_segment(
-      data = high_risk,
-      ggplot2::aes(x = x, xend = xend, y = y, yend = yend, color = y),
-      size = 2
-    ) +
-    ggplot2::scale_color_gradient2(
-      low = purple, mid = darkpurple, high = darkpurple,
-      midpoint = 5.5
-    )
+# Create table with distribution of safe space values
+safe_space <- tibble::tibble(x = 7.5, y = rep(3, 5)) %>%
+  dplyr::mutate(vals = purrr::map(y, ~seq(2, .x, by = 0.01))) %>%
+  tidyr::unnest(cols = c(vals)) %>%
+  dplyr::mutate(xend = x, x = x - 0.13, yend = vals) %>%
+  dplyr::select(-y) %>%
+  dplyr::rename(y = vals)
 
-  # Reset colour scale for next segment to be filled with new colour gradient
-  p <- p + ggnewscale::new_scale_color() +
-    ggplot2::geom_segment(
-      data = safe_space,
-      ggplot2::aes(
-        x = x, xend = xend, y = y - 0.01, yend = yend - 0.01, color = y
-      ),
-      size = 2
-    ) +
-    ggplot2::scale_color_gradient2(
-      low = "white",
-      mid = "white",
-      high = green,
-      midpoint = 2
-    )  +
-    geom_segment(
-      aes(x = 7.556, xend = 7.52, y = 2, yend = 5.61),
-      arrow = arrow(length = unit(0.25, "cm"), type = "closed"),
-      size = 1.1,
-    ) +
-    ggnewscale::new_scale_color() +
-    ggplot2::geom_segment(
-      data = safe_space_arrow,
-      ggplot2::aes(
-        x = x, xend = xend, y = y - 0.02, yend = yend, alpha = y
-      ),
-      color = "white",
-      size = 2
-    ) +
-    ggplot2::scale_alpha_continuous(
-      range = c(0.4, 0),
-    ) +
-    geom_segment(
-      aes(x = 7.54, xend = 7.54, y = 2.96, yend = 3.03),
-      size = 3,
-      color = "white"
-    ) +
-    geom_segment(
-      aes(x = 7.53, xend = 7.53, y = 3.96, yend = 4.03),
-      size = 3,
-      color = "white"
-    ) +
-    ggplot2::geom_text(
-      ggplot2::aes(
-        x = 7.665,
-        y = 2.5,
-        label = "Safe Operating"
-      ),
-      color = "black",
-      # alpha = 0.7,  # Add transparency
-      size = 4  # Increase the size of the labels
-    ) +
-    ggplot2::geom_text(
-      ggplot2::aes(
-        x = 7.785,
-        y = 2.555,
-        label = "Space"
-      ),
-      color = "black",
-      # alpha = 0.7,  # Add transparency
-      size = 4  # Increase the size of the labels
-    ) +
-    ggplot2::geom_text(
-      ggplot2::aes(
-        x = 7.62,
-        y = 3.515,
-        label = "Zone of"
-      ),
-      color = "black",
-      # alpha = 0.7,  # Add transparency
-      size = 4  # Increase the size of the labels
-    ) +
-    ggplot2::geom_text(
-      ggplot2::aes(
-        x = 7.71,
-        y = 3.525,
-        label = "Uncertainty"
-      ),
-      color = "black",
-      # alpha = 0.7,  # Add transparency
-      size = 4  # Increase the size of the labels
-    ) +
-    ggplot2::geom_text(
-      ggplot2::aes(
-        x = 7.6,
-        y = 4.445,
-        label = "High Risk"
-      ),
-      color = "black",
-      # alpha = 0.7,  # Add transparency
-      size = 4  # Increase the size of the labels
-    ) +
-    ggplot2::geom_text(
-      ggplot2::aes(
-        x = 7.67,
-        y = 4.455,
-        label = "Zone"
-      ),
-      color = "black",
-      # alpha = 0.7,  # Add transparency
-      size = 4  # Increase the size of the labels
-    ) +
-    ggplot2::geom_text(
-      ggplot2::aes(
-        x = 7.58,
-        y = 5.3,
-        label = "Control"
-      ),
-      fontface = "italic",
-      color = "black",
-      # alpha = 0.7,  # Add transparency
-      size = 4  # Increase the size of the labels
-    ) +
-    ggplot2::geom_text(
-      ggplot2::aes(
-        x = 7.64,
-        y = 5.31,
-        label = "Variable"
-      ),
-      fontface = "italic",
-      color = "black",
-      # alpha = 0.7,  # Add transparency
-      size = 4  # Increase the size of the labels
-    ) +
-    ggplot2::geom_segment(
-      ggplot2::aes(x = 7.25, xend = 7.59, y = 3, yend = 3),
-      size = 1.25,
-      color = darkgreen,
-      alpha = 0.8,  # Add transparency
-      linetype = 1
-    ) +
-    ggplot2::geom_text(
-      ggplot2::aes(
-        x = 7.25,
-        y = 2.5,
-        label = "Planetary Boundary"
-      ),
-      color = darkgreen,
-      fontface = "bold",
-      # alpha = 0.7,  # Add transparency
-      size = 4  # Increase the size of the labels
-    ) +
-    ggplot2::geom_segment(
-      ggplot2::aes(x = 7.27, xend = 7.575, y = 4, yend = 4),
-      size = 1,
-      size = 0.6,
-      color = orange,
-      alpha = 0.4,  # Add transparency
-      linetype = 1
-    ) +
-    ggplot2::geom_text(
-      ggplot2::aes(
-        x = 7.3,
-        y = 3.65,
-        yend = 3.65,
-        label = "High Risk Line"
-      ),
-      color = orange,
-      # alpha = 0.7,  # Add transparency
-      size = 4.2  # Increase the size of the labels
-    )
+safe_space_arrow <- safe_space
+safe_space_arrow$x <- 7.55
+safe_space_arrow$xend <- 7.56
+safe_space_arrow <- dplyr::filter(safe_space_arrow, y < 2.4)
 
-    final <- ggtrace::with_ggtrace(
-      x = p + ggplot2::theme(aspect.ratio = .52),
-      method = ggplot2::Layout$render,
-      trace_steps = 5L,
-      trace_expr = quote({
-        panels <- lapply(
-          panels,
-          grid::editGrob,
-          vp = grid::viewport(
-            yscale = c(0.45, 1),
-            xscale = c(0.45, 1)))
-      }),
-      out = "g"
-    )
+# Create table with distribution of high risk values
+increasing_risk_1 <- tibble::tibble(x = 7.5, y = rep(4.5, 5)) %>%
+  dplyr::mutate(vals = purrr::map(y, ~seq(3, .x, by = 0.01))) %>%
+  tidyr::unnest(cols = c(vals)) %>%
+  dplyr::mutate(xend = x, x = x - 0.13, yend = vals) %>%
+  dplyr::select(-y) %>%
+  dplyr::rename(y = vals)
 
-}
+# Create table with distribution of high risk values
+increasing_risk_2 <- tibble::tibble(x = 7.5, y = rep(5, 5)) %>%
+  dplyr::mutate(vals = purrr::map(y, ~seq(4.5, .x, by = 0.01))) %>%
+  tidyr::unnest(cols = c(vals)) %>%
+  dplyr::mutate(xend = x, x = x - 0.13, yend = vals) %>%
+  dplyr::select(-y) %>%
+  dplyr::rename(y = vals)
+
+
+# Create table with distribution of high risk values
+high_risk <- tibble::tibble(x = 7.5, y = rep(5.5, 5)) %>%
+  dplyr::mutate(vals = purrr::map(y, ~seq(5, .x, by = 0.01))) %>%
+  tidyr::unnest(cols = c(vals)) %>%
+  dplyr::mutate(xend = x, x = x - 0.13, yend = vals) %>%
+  dplyr::select(-y) %>%
+  dplyr::rename(y = vals)
+
+# Create table with distribution of high risk values
+ultra_risk <- tibble::tibble(x = 7.5, y = rep(7, 5)) %>%
+  dplyr::mutate(vals = purrr::map(y, ~seq(5.5, .x, by = 0.01))) %>%
+  tidyr::unnest(cols = c(vals)) %>%
+  dplyr::mutate(xend = x, x = x - 0.13, yend = vals) %>%
+  dplyr::select(-y) %>%
+  dplyr::rename(y = vals)
+
+
+p <- ggplot2::ggplot() +
+  ggplot2::geom_segment(
+    data = increasing_risk_1,
+    ggplot2::aes(x = x, xend = xend, y = y, yend = yend, color = y),
+    size = 2
+  ) +
+  ggplot2::scale_color_gradient2(
+    low = yellow, mid = yellow, high = red,
+    midpoint = 3.5
+  ) +
+  ggnewscale::new_scale_color() +
+  ggplot2::geom_segment(
+    data = increasing_risk_2,
+    ggplot2::aes(x = x, xend = xend, y = y, yend = yend, color = y),
+    size = 2
+  ) +
+  ggplot2::scale_color_gradient2(
+    low = red, mid = red, high = purple,
+    midpoint = 4.5
+  ) +
+
+  ggplot2::scale_x_continuous(
+    limits = c(0, 10)
+  ) +
+  ggplot2::scale_y_continuous(
+    limits = c(0, 7)
+  ) +
+  # Add polar grid
+  ggplot2::coord_polar(start = pi) +
+  # Remove axis labels, grid and ticks
+  ggplot2::theme_void() +
+  # Remove legend
+  ggplot2::theme(legend.position = "none")
+
+
+# Reset colour scale for next segment to be filled with new colour gradient
+p <- p + ggnewscale::new_scale_color() +
+  ggplot2::geom_segment(
+    data = high_risk,
+    ggplot2::aes(x = x, xend = xend, y = y, yend = yend, color = y),
+    size = 2
+  ) +
+  ggplot2::scale_color_gradient2(
+    low = purple, mid = darkpurple, high = darkpurple,
+    midpoint = 5.5
+  )
+
+# Reset colour scale for next segment to be filled with new colour gradient
+p <- p + ggnewscale::new_scale_color() +
+  ggplot2::geom_segment(
+    data = safe_space,
+    ggplot2::aes(
+      x = x, xend = xend, y = y - 0.01, yend = yend - 0.01, color = y
+    ),
+    size = 2
+  ) +
+  ggplot2::scale_color_gradient2(
+    low = "white",
+    mid = "white",
+    high = green,
+    midpoint = 2
+  )  +
+  geom_segment(
+    aes(x = 7.556, xend = 7.52, y = 2, yend = 5.61),
+    arrow = arrow(length = unit(0.25, "cm"), type = "closed"),
+    size = 1.1,
+  ) +
+  ggnewscale::new_scale_color() +
+  ggplot2::geom_segment(
+    data = safe_space_arrow,
+    ggplot2::aes(
+      x = x, xend = xend, y = y - 0.02, yend = yend, alpha = y
+    ),
+    color = "white",
+    size = 2
+  ) +
+  ggplot2::scale_alpha_continuous(
+    range = c(0.4, 0),
+  ) +
+  geom_segment(
+    aes(x = 7.54, xend = 7.54, y = 2.96, yend = 3.03),
+    size = 3,
+    color = "white"
+  ) +
+  geom_segment(
+    aes(x = 7.53, xend = 7.53, y = 3.96, yend = 4.03),
+    size = 3,
+    color = "white"
+  ) +
+  ggplot2::geom_text(
+    ggplot2::aes(
+      x = 7.665,
+      y = 2.5,
+      label = "Safe Operating"
+    ),
+    color = "black",
+    # alpha = 0.7,  # Add transparency
+    size = 4  # Increase the size of the labels
+  ) +
+  ggplot2::geom_text(
+    ggplot2::aes(
+      x = 7.785,
+      y = 2.555,
+      label = "Space"
+    ),
+    color = "black",
+    # alpha = 0.7,  # Add transparency
+    size = 4  # Increase the size of the labels
+  ) +
+  ggplot2::geom_text(
+    ggplot2::aes(
+      x = 7.62,
+      y = 3.515,
+      label = "Zone of"
+    ),
+    color = "black",
+    # alpha = 0.7,  # Add transparency
+    size = 4  # Increase the size of the labels
+  ) +
+  ggplot2::geom_text(
+    ggplot2::aes(
+      x = 7.71,
+      y = 3.525,
+      label = "Uncertainty"
+    ),
+    color = "black",
+    # alpha = 0.7,  # Add transparency
+    size = 4  # Increase the size of the labels
+  ) +
+  ggplot2::geom_text(
+    ggplot2::aes(
+      x = 7.6,
+      y = 4.445,
+      label = "High Risk"
+    ),
+    color = "black",
+    # alpha = 0.7,  # Add transparency
+    size = 4  # Increase the size of the labels
+  ) +
+  ggplot2::geom_text(
+    ggplot2::aes(
+      x = 7.67,
+      y = 4.455,
+      label = "Zone"
+    ),
+    color = "black",
+    # alpha = 0.7,  # Add transparency
+    size = 4  # Increase the size of the labels
+  ) +
+  ggplot2::geom_text(
+    ggplot2::aes(
+      x = 7.58,
+      y = 5.3,
+      label = "Control"
+    ),
+    fontface = "italic",
+    color = "black",
+    # alpha = 0.7,  # Add transparency
+    size = 4  # Increase the size of the labels
+  ) +
+  ggplot2::geom_text(
+    ggplot2::aes(
+      x = 7.64,
+      y = 5.31,
+      label = "Variable"
+    ),
+    fontface = "italic",
+    color = "black",
+    # alpha = 0.7,  # Add transparency
+    size = 4  # Increase the size of the labels
+  ) +
+  ggplot2::geom_segment(
+    ggplot2::aes(x = 7.25, xend = 7.59, y = 3, yend = 3),
+    size = 1.25,
+    color = darkgreen,
+    alpha = 0.8,  # Add transparency
+    linetype = 1
+  ) +
+  ggplot2::geom_text(
+    ggplot2::aes(
+      x = 7.25,
+      xend = 7.59,
+      y = 2.5,
+      yend = 2.5,
+      label = "Planetary Boundary"
+    ),
+    color = darkgreen,
+    fontface = "bold",
+    # alpha = 0.7,  # Add transparency
+    size = 4  # Increase the size of the labels
+  ) +
+  ggplot2::geom_segment(
+    ggplot2::aes(x = 7.27, xend = 7.575, y = 4, yend = 4),
+    size = 1,
+    size = 0.6,
+    color = orange,
+    alpha = 0.4,  # Add transparency
+    linetype = 1
+  ) +
+  ggplot2::geom_text(
+    ggplot2::aes(
+      x = 7.3,
+      xend = 7.8,
+      y = 3.65,
+      yend = 3.65,
+      label = "High Risk Line"
+    ),
+    color = orange,
+    # alpha = 0.7,  # Add transparency
+    size = 4.2  # Increase the size of the labels
+  )
+
+  final <- ggtrace::with_ggtrace(
+    x = p + ggplot2::theme(aspect.ratio = .52),
+    method = ggplot2::Layout$render,
+    trace_steps = 5L,
+    trace_expr = quote({
+      panels <- lapply(
+        panels,
+        grid::editGrob,
+        vp = grid::viewport(
+          yscale = c(0.45, 1),
+          xscale = c(0.45, 1)))
+    }),
+    out = "g"
+  )
+
+
+ggplot2::ggsave(
+  "testol.png",
+  final,
+  width = 16,
+  height = 9,
+  dpi = 300
+)

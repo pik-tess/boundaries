@@ -128,3 +128,4 @@ as_risk_level <- function(control_variable, type = "continuous", normalize = "sa
   }
   return(risk_level)
 }
+
