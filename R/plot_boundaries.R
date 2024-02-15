@@ -14,7 +14,7 @@
 #'   "/p/projects/open/Johanna/boundaries/R/r_out/r_data/global_timeseries_avg_10_porkka.RData"
 #' )
 #'
-#' data <- load(data_path_ma) |>
+#' data <- load(data_path_ma) %>%
 #'   get()
 #'
 #' ggplot2::ggsave(
@@ -50,7 +50,7 @@ plot_boundaries <- function(
     x
   })
 
-  max_y <- x_lvl |>
+  max_y <- x_lvl %>%
     unlist() %>%
     max() %>%
     sum(0.05 * .)
@@ -472,7 +472,7 @@ orange <- rgb(0.8763552479815456, 0.4319876970396003, 0.04398308342945019, 1.0)
 #   "/p/projects/open/Johanna/boundaries/R/r_out/r_data/global_timeseries_avg_10_porkka.RData"
 # )
 # 
-# data <- load(data_path_ma) |>
+# data <- load(data_path_ma) %>%
 #   get()
 
 # ggplot2::ggsave(
