@@ -122,7 +122,7 @@ calc_biosphere_status <- function(
     # classify biomes based on foliage projected cover (FPC) output
     biome_classes <- do.call(
       classify_biomes,
-      append(list(files_reference = files_reference, # todo: replace with files_baseline
+      append(list(files_reference = files_baseline,
                time_span_reference = time_span_baseline,
                avg_nyear_args = avg_nyear_args
              ),
