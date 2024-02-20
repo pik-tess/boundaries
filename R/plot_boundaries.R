@@ -32,7 +32,8 @@
 plot_boundaries <- function(
   x,
   normalization = "increasing risk",
-  add_legend = TRUE
+  add_legend = TRUE,
+  high_risk = 3.5
 ) {
 
   x_lvl <- x
@@ -171,90 +172,55 @@ plot_boundaries <- function(
     dplyr::rename(y = vals)
 
   # Create table with distribution of high risk values
-  increasing_risk_1 <- tibble::tibble(x = 1:5, y = rep(2.5, 5)) %>%
+  increasing_risk <- tibble::tibble(x = 1:5, y = rep(high_risk, 5)) %>%
     dplyr::mutate(vals = purrr::map(y, ~seq(1, .x, by = 0.01))) %>%
     tidyr::unnest(cols = c(vals)) %>%
     dplyr::mutate(xend = x + 0.44, x = x - 0.44, yend = vals) %>%
     dplyr::select(-y) %>%
     dplyr::rename(y = vals)
 
-  # Create table with distribution of high risk values
-  increasing_risk_2 <- tibble::tibble(x = 1:5, y = rep(3, 5)) %>%
-    dplyr::mutate(vals = purrr::map(y, ~seq(2.5, .x, by = 0.01))) %>%
-    tidyr::unnest(cols = c(vals)) %>%
-    dplyr::mutate(xend = x + 0.44, x = x - 0.44, yend = vals) %>%
-    dplyr::select(-y) %>%
-    dplyr::rename(y = vals)
-
-  if (max_y >= 3) {
+  if (max_y >= high_risk) {
     # Create table with distribution of high risk values
-    high_risk <- tibble::tibble(x = 1:5, y = rep(3.5, 5)) %>%
-      dplyr::mutate(vals = purrr::map(y, ~seq(3, .x, by = 0.01))) %>%
+    ultra_risk <- tibble::tibble(x = 1:5, y = rep(max_y, 5)) %>%
+      dplyr::mutate(vals = purrr::map(y, ~seq(high_risk, .x, by = 0.01))) %>%
       tidyr::unnest(cols = c(vals)) %>%
       dplyr::mutate(xend = x + 0.44, x = x - 0.44, yend = vals) %>%
       dplyr::select(-y) %>%
       dplyr::rename(y = vals)
-
-    if (max_y >= 3.5) {
-      # Create table with distribution of high risk values
-      ultra_risk <- tibble::tibble(x = 1:5, y = rep(max_y, 5)) %>%
-        dplyr::mutate(vals = purrr::map(y, ~seq(3.5, .x, by = 0.01))) %>%
-        tidyr::unnest(cols = c(vals)) %>%
-        dplyr::mutate(xend = x + 0.44, x = x - 0.44, yend = vals) %>%
-        dplyr::select(-y) %>%
-        dplyr::rename(y = vals)
-    }
   }
 
   # Create ggplot, first with the segments that include the colour gradient for
   #   each level of risk (safe space, uncertainty zone, high risk)
   p <- ggplot2::ggplot() +
     ggplot2::geom_segment(
-      data = increasing_risk_1,
+      data = increasing_risk,
       ggplot2::aes(x = x, xend = xend, y = y, yend = yend, color = y),
       size = 2
     ) +
-    ggplot2::scale_color_gradient2(
-      low = yellow, mid = yellow, high = red,
-      midpoint = 1.5
-    ) +
-    ggnewscale::new_scale_color() +
-    ggplot2::geom_segment(
-      data = increasing_risk_2,
-      ggplot2::aes(x = x, xend = xend, y = y, yend = yend, color = y),
-      size = 2
-    ) +
-    ggplot2::scale_color_gradient2(
-      low = red, mid = red, high = purple,
-      midpoint = 2.5
+    ggplot2::scale_colour_viridis_c(
+      option = "inferno",
+      begin = 0,
+      end = 1,
+      direction = -1
     )
 
-    if (max_y >= 3) {
-      # Reset colour scale for next segment to be filled with new colour gradient
-      p <- p + ggnewscale::new_scale_color() +
-        ggplot2::geom_segment(
-          data = high_risk,
-          ggplot2::aes(x = x, xend = xend, y = y, yend = yend, color = y),
-          size = 2
-        ) +
-        ggplot2::scale_color_gradient2(
-          low = purple, mid = darkpurple, high = darkpurple,
-          midpoint = 3.5
-        )
-      if(max_y >= 3.5) {
-        # Reset colour scale for next segment to be filled with new colour gradient
-        p <- p + ggnewscale::new_scale_color() +
-          ggplot2::geom_segment(
-            data = ultra_risk,
-            ggplot2::aes(
-              x = x, xend = xend, y = y, yend = yend, color = y),
-            size = 2
-          ) +
-          ggplot2::scale_color_gradient(
-            low = darkpurple, high = darkpurple
-          )
-      }
-    }
+  if (max_y >= high_risk) {
+    # Reset colour scale for next segment to be filled with new colour gradient
+    p <- p + ggnewscale::new_scale_color() +
+      ggplot2::geom_segment(
+        data = ultra_risk,
+        ggplot2::aes(
+          x = x, xend = xend, y = y, yend = yend, color = y),
+        size = 2
+      ) +
+      ggplot2::scale_colour_viridis_c(
+        option = "inferno",
+        begin = 0,
+        end = 0,
+        direction = -1
+      )
+  }
+
     # Reset colour scale for next segment to be filled with new colour gradient
     p <- p + ggnewscale::new_scale_color() +
     ggplot2::geom_segment(
@@ -276,7 +242,7 @@ plot_boundaries <- function(
       data = x_table,
       ggplot2::aes(
         x = x,
-        y = ifelse(y > 3.5, y, ifelse(y > 3, 3.5, 3)),
+        y = ifelse(y > high_risk, y, high_risk),
         group = x,
         status = status
       ),
