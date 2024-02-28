@@ -51,6 +51,14 @@ test_that("test calc_nitrogen_status global", {
       round(test$nitrogen, digit = 2) %in% c(0.01, 0.02)
     )
   )
+
+  # test for as_risk_level
+  boundary_status <- as_risk_level(test)
+
+  testthat::expect_true(
+    class(boundary_status$nitrogen) == "boundary_status"
+  )
+
 })
 
 
@@ -96,8 +104,23 @@ test_that("test calc_nitrogen_status grid", {
   # test for expected output
   testthat::expect_true(
     all(test$nitrogen[1,] < attributes(test$nitrogen)$thresholds$pb) &&
-    all(test$nitrogen[2,] > attributes(test$nitrogen)$thresholds$pb)
+      all(test$nitrogen[2,] > attributes(test$nitrogen)$thresholds$pb)
   )
+
+  # test for as_risk_level
+  boundary_status <- as_risk_level(test)
+
+  testthat::expect_true(
+    class(boundary_status$nitrogen) == "boundary_status"
+  )
+
+  testthat::expect_true(
+    all(
+      boundary_status$nitrogen[1,] < attributes(boundary_status$nitrogen)$thresholds$pb & # nolint
+        boundary_status$nitrogen[2,] > attributes(boundary_status$nitrogen)$thresholds$pb # nolint
+    )
+  )
+
 })
 
 

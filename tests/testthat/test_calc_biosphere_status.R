@@ -133,8 +133,8 @@ test_that("test calc_biosphere_status grid", {
   boundary_status <- as_risk_level(test)
 
   testthat::expect_true(
-    all(boundary_status$biosphere[1,] > attributes(test$biosphere)$thresholds$pb) && # nolint
-    all(boundary_status$biosphere[2,] > attributes(test$biosphere)$thresholds$highrisk) # nolint
+    all(boundary_status$biosphere[1,] > attributes(boundary_status$biosphere)$thresholds$pb) && # nolint
+    all(boundary_status$biosphere[2,] > attributes(boundary_status$biosphere)$thresholds$highrisk) # nolint
   )
 })
 
@@ -184,7 +184,7 @@ test_that("test calc_biosphere_status subglobal", {
 
   testthat::expect_true(
     all(
-      boundary_status$biosphere > attributes(test$biosphere)$thresholds$highrisk
+      boundary_status$biosphere > attributes(boundary_status$biosphere)$thresholds$highrisk # nolint
     )
   )
 

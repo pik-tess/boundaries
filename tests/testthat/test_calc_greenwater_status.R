@@ -102,4 +102,20 @@ test_that("test calc_greenwater_status subglobal", {
         sum(test$greenwater[2,] >= attributes(test$greenwater)$thresholds$pb[2]) == 30 # nolint 
     )
   )
+
+  # TODO: not working highrisk threshold == NA
+  #  browser()
+  #  # test for as_risk_level
+  #  boundary_status <- as_risk_level(test)
+  #
+  #  testthat::expect_true(
+  #    class(boundary_status$greenwater) == "boundary_status"
+  #  )
+  #
+  #  testthat::expect_true(
+  #    all(
+  #      boundary_status$bluewater < 0.5
+  #    )
+  #  )
+
 })

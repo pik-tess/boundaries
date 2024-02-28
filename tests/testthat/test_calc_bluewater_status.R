@@ -49,6 +49,19 @@ test_that("test calc_bluewater_status global", {
       test$bluewater < attributes(test$bluewater)$thresholds$highrisk
     )
   )
+
+  # test for as_risk_level
+  boundary_status <- as_risk_level(test)
+
+  testthat::expect_true(
+    class(boundary_status$bluewater) == "boundary_status"
+  )
+
+  testthat::expect_true(
+    all(
+      boundary_status$bluewater < 0.5
+    )
+  )
 })
 
 
@@ -102,6 +115,15 @@ test_that("test calc_bluewater_status grid", {
   testthat::expect_true(
     any(
       test$bluewater > attributes(test$bluewater)$thresholds$highrisk
+    )
+  )
+
+  # test for as_risk_level
+  boundary_status <- as_risk_level(test)
+
+  testthat::expect_true(
+    any(
+      boundary_status$bluewater > attributes(boundary_status$bluewater)$thresholds$highrisk # nolint
     )
   )
 })

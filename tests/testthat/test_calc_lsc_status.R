@@ -51,6 +51,21 @@ test_that("test calc_lsc_status global", {
         test$lsc < attributes(test$lsc)$thresholds$highrisk
     )
   )
+
+  # test for as_risk_level
+  boundary_status <- as_risk_level(test)
+
+  testthat::expect_true(
+    class(boundary_status$lsc) == "boundary_status"
+  )
+
+  testthat::expect_true(
+    all(
+      boundary_status$lsc > attributes(boundary_status$lsc)$thresholds$pb &
+        boundary_status$lsc < attributes(boundary_status$lsc)$thresholds$highrisk # nolint
+    )
+  )
+
 })
 
 
@@ -100,6 +115,18 @@ test_that("test calc_lsc_status grid", {
         test$lsc < lpjmlkit::asub(attributes(test$lsc)$thresholds, thresholds = "highrisk") # nolint
     )
   )
+
+  # TODO: Error in thresholds[[, , "holocene"]] : subscript out of bounds
+  # test for as_risk_level
+  #   boundary_status <- as_risk_level(test)
+  # 
+  #   testthat::expect_true(
+  #     all(
+  #       boundary_status$lsc > attributes(boundary_status$lsc)$thresholds$pb &
+  #         boundary_status$lsc < attributes(boundary_status$lsc)$thresholds$highrisk # nolint
+  #     )
+  #   )
+
 })
 
 test_that("test classify_biomes grid", {
