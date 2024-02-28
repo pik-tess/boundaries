@@ -358,8 +358,11 @@ classify_biomes <- function(path_reference = NULL,
                                dimnames = dimnames(avg_temp))
   }
 
+  # catch low fpc values
+  low_fpc <- 0.05
   # Desert
-  low_temp_threshold <- 0 #TODO temperature still hard coded --> ok?, in Ostberg et al. 2013: -2
+  #TODO temperature still hard coded --> ok?, in Ostberg et al. 2013: -2
+  low_temp_threshold <- 0
 
   is_desert <- {
     fpc_total <= low_fpc &
@@ -576,7 +579,7 @@ classify_biomes <- function(path_reference = NULL,
 
   # GRASSLAND ---------------------------------------------------------------- #
   # TODO: add all hard coded assumptions to the beginning of the function
-  low_fpc <- 0.05
+
   # Temperate grassland
   is_temperate_grassland <- {
     fpc_total > low_fpc &

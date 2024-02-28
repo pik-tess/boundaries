@@ -11,12 +11,9 @@
 #' provided. E.g.: list(grid = "/temp/grid.bin.json",
 #'                      npp = "/temp/npp.bin.json")
 #'
-<<<<<<< HEAD
-=======
 #' @param path_baseline character string with path to outputs for the baseline
 #' run, file names are taken from files scenario.
 #'
->>>>>>> development
 #' @param files_reference list with variable names and corresponding file paths
 #' (character string) of the reference NPP, HANPP should be compared against.
 #' In this case only NPP is required. list(npp = "/temp/npp.bin.json").
@@ -57,8 +54,6 @@
 #' according to Haberl et al. 2007). Below BioCol will be set to 0.
 #' (default: 20 gC/m2)
 #'
-<<<<<<< HEAD
-=======
 #' @param avg_nyear_args list of arguments to be passed to
 #' \link[boundaries]{average_nyear_window} (see for more info).
 #' To be used for time series analysis
@@ -66,7 +61,6 @@
 #' @param biocol_option which biocol values to use for aggregation. options:
 #' netsum, only_above_zero, abs - TODO: finish
 #'
->>>>>>> development
 #' @param ... arguments forwarded to \link[boundaries](classify_biomes)
 #'
 #' @return pb_status list data object
@@ -89,11 +83,8 @@ calc_biosphere_status <- function(
   time_span_baseline = time_span_reference,
   gridbased = TRUE,
   npp_threshold = 20,
-<<<<<<< HEAD
-=======
   avg_nyear_args = list(),
-  biocol_option = "only_above_zero",
->>>>>>> development
+  biocol_option = "abs",
   ...
 ) {
 
@@ -169,45 +160,21 @@ calc_biosphere_status <- function(
 
     # TODO: also for global
     # initialize control variable vector
-    if (biocol_option == "abs"){
+    if (biocol_option == "abs") {
       control_variable_raw <- abs(biocol$biocol)
-    }else if (biocol_option == "only_above_zero"){
+    }else if (biocol_option == "only_above_zero") {
       control_variable_raw <- biocol$biocol
-      control_variable_raw[control_variable_raw<0] <- 0
-    }else if (biocol_option == "netsum"){
+      control_variable_raw[control_variable_raw < 0] <- 0
+    }else if (biocol_option == "netsum") {
       control_variable_raw <- biocol$biocol
     }else { # TODO: do with matcharg
       stop("Not defined option for biocol_option.")
     }
 
     # get continents mask - pass arg of whether to merge europe and asia
-    continent_grid %<-% calc_continents_mask(files_reference$grid) # implicit eurasia = TRUE
+    # implicit eurasia = TRUE
+    continent_grid %<-% calc_continents_mask(files_reference$grid)
 
-<<<<<<< HEAD
-    terr_area <- lpjmlkit::read_io(
-      files_scenario$terr_area
-    ) %>%
-      conditional_subset(config_args$spatial_subset) %>%
-      lpjmlkit::as_array()
-
-    # TODO: this is averaged over all cells in a biomes, but
-    # (i) could be weighted by area of each cell
-    # (ii) the calculation should be done for each continent seperately (?)
-    for (year_i in seq_len(dim(biome_classes$biome_id)["year"])) {
-      biome_id <- biome_classes$biome_id[, year_i]
-      for (b in sort(unique(biome_id))){
-        biome_cells <- which(biome_id == b)
-        control_variable_raw[biome_cells, year_i] <- (
-          weighted.mean(
-            abs(biocol$biocol)[biome_cells, year_i],
-            w = terr_area[biome_cells]
-          ) /
-            weighted.mean(
-              biocol$npp_ref[biome_cells, year_i],
-              w = terr_area[biome_cells]
-            )
-        )
-=======
     # create space of combinations to loop over (even though not all make sense)
     comb <- expand.grid(
       continent = sort(
@@ -241,7 +208,6 @@ calc_biosphere_status <- function(
       }
       if (!any(sub_cells)) {
         next
->>>>>>> development
       }
       subset_biocol[!sub_cells] <- NA
       summed_biocol <- apply(
