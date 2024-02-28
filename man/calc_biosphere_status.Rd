@@ -20,7 +20,7 @@ calc_biosphere_status(
   method = "stenzel2023",
   gridbased = TRUE,
   npp_threshold = 20,
-  avg_nyear_args = list(),
+  time_aggregation_args = list(),
   ...
 )
 }
@@ -63,8 +63,8 @@ values from metric_files.yml will be used.}
 according to Haberl et al. 2007). Below BioCol will be set to 0.
 (default: 20 gC/m2)}
 
-\item{avg_nyear_args}{list of arguments to be passed to
-\link[boundaries]{average_nyear_window} (see for more info).
+\item{time_aggregation_args}{list of arguments to be passed to
+\link[boundaries]{aggregate_time} (see for more info).
 To be used for time series analysis}
 
 \item{...}{arguments forwarded to \link\href{classify_biomes}{boundaries}}

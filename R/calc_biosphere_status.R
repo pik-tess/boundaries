@@ -1,4 +1,4 @@
-#' Calculate biosphere status based on BioCol (HANPP) from a PNV run (reference) 
+#' Calculate biosphere status based on BioCol (HANPP) from a PNV run (reference)
 #' and LU run (scenario) of LPJmL, both using time_span_scenario. Additionally
 #' a separate reference NPP file (e.g. from a Holocene run) can be supplied as
 #' reference_npp_file, which will use time_span_reference, or file index years
@@ -11,9 +11,6 @@
 #' provided. E.g.: list(grid = "/temp/grid.bin.json",
 #'                      npp = "/temp/npp.bin.json")
 #'
-#' @param path_baseline character string with path to outputs for the baseline
-#' run, file names are taken from files scenario. 
-#'
 #' @param files_reference list with variable names and corresponding file paths
 #' (character string) of the reference NPP, HANPP should be compared against.
 #' In this case only NPP is required. list(npp = "/temp/npp.bin.json").
@@ -21,11 +18,6 @@
 #' @param time_span_scenario time span to be used for the scenario run and
 #' parallel PNV run, defined as a character string,
 #' e.g. `as.character(1982:2011)`
-#'
-#' @param time_span_baseline time span to be used for the baseline run, defined
-#' as a character vector, e.g. `as.character(1901:1930)`. Can differ in offset
-#' and length from `time_span_scenario`! If `NULL` value of `time_span_scenario`
-#' is used
 #'
 #' @param time_span_reference time span to read reference_npp_file from, using
 #' index years 3:32 if set to NULL (default: NULL)
@@ -38,15 +30,26 @@
 #' e.g. c(holocene = 0.0, pb = 0.1, highrisk = 0.2). If set to NULL, default
 #' values from metric_files.yml will be used.
 #'
+#' @param time_aggregation_args list of arguments to be passed to
+#' \link[boundaries]{aggregate_time} (see for more info).
+#' To be used for time series analysis
+#'
+#' @param config_args list of arguments to be passed on from the model
+#' configuration.
+#'
+#' @param path_baseline character string with path to outputs for the baseline
+#' run, file names are taken from files scenario.
+#'
+#' @param time_span_baseline time span to be used for the baseline run, defined
+#' as a character vector, e.g. `as.character(1901:1930)`. Can differ in offset
+#' and length from `time_span_scenario`! If `NULL` value of `time_span_scenario`
+#' is used
+#'
 #' @param gridbased logical; are pft outputs from LPJmL gridbased or pft-based?
 #'
 #' @param npp_threshold lower threshold for npp (to mask out non-lu areas
 #' according to Haberl et al. 2007). Below BioCol will be set to 0.
 #' (default: 20 gC/m2)
-#'
-#' @param avg_nyear_args list of arguments to be passed to
-#' \link[boundaries]{average_nyear_window} (see for more info).
-#' To be used for time series analysis
 #'
 #' @param ... arguments forwarded to \link[boundaries](classify_biomes)
 #'
@@ -59,24 +62,41 @@
 calc_biosphere_status <- function(
   files_scenario,
   files_reference,
-  path_baseline,
   time_span_scenario = as.character(1982:2011),
-  time_span_baseline = time_span_scenario,
   time_span_reference = time_span_scenario,
   spatial_scale = "subglobal",
   thresholds = NULL,
   method = "stenzel2023",
+  time_aggregation_args = list(),
+  config_args = list(),
+  path_baseline,
+  time_span_baseline = time_span_reference,
   gridbased = TRUE,
   npp_threshold = 20,
-  avg_nyear_args = list(),
   ...
 ) {
-  #TODO does not work if other input files are specified -> Jannes
+
   files_baseline <- lapply(
     files_scenario,
     function(x) {
       file.path(path_baseline, basename(x))
     }
+  )
+
+  # workaround to filter input files (files_scenario and files_reference match)
+  files_baseline <- mapply(
+    function(x, y, z) {
+      if (x == y) {
+        z <- y
+      } else {
+        z
+      }
+      z
+    },
+    files_scenario,
+    files_reference,
+    files_baseline,
+    SIMPLIFY = FALSE
   )
 
   biocol <- biospheremetrics::read_calc_biocol(
@@ -100,7 +120,7 @@ calc_biosphere_status <- function(
     grass_harvest_file = NULL,
     external_fire_file = NULL,
     external_wood_harvest_file = NULL
-  )
+  ) %>% suppressMessages()
 
   if (spatial_scale == "grid") {
     control_variable_raw <- abs(biocol$biocol_frac_piref)
@@ -119,7 +139,7 @@ calc_biosphere_status <- function(
       classify_biomes,
       append(list(files_reference = files_baseline,
                time_span_reference = time_span_baseline,
-               avg_nyear_args = avg_nyear_args
+               time_aggregation_args = time_aggregation_args
              ),
              ellipsis_filtered)
     )
@@ -127,19 +147,29 @@ calc_biosphere_status <- function(
     # initialize control variable vector
     control_variable_raw <- biocol$biocol * 0
 
+    terr_area <- lpjmlkit::read_io(
+      files_scenario$terr_area
+    ) %>%
+      conditional_subset(config_args$spatial_subset) %>%
+      lpjmlkit::as_array()
+
     # TODO: this is averaged over all cells in a biomes, but
     # (i) could be weighted by area of each cell
     # (ii) the calculation should be done for each continent seperately (?)
-    for (b in sort(unique(biome_classes$biome_id))){
-      biome_cells <- which(biome_classes$biome_id == b)
-      if (length(biome_cells) > 1) {
-        control_variable_raw[biome_cells, ] <-
-          colSums(abs(biocol$biocol)[biome_cells, ]) /
-          sum(rowMeans(biocol$npp_ref[biome_cells, ]))
-      } else if (length(biome_cells) == 1) {
-        control_variable_raw[biome_cells, ] <-
-          abs(biocol$biocol)[biome_cells, ] /
-          mean(biocol$npp_ref[biome_cells, ])
+    for (year_i in seq_len(dim(biome_classes$biome_id)["year"])) {
+      biome_id <- biome_classes$biome_id[, year_i]
+      for (b in sort(unique(biome_id))){
+        biome_cells <- which(biome_id == b)
+        control_variable_raw[biome_cells, year_i] <- (
+          weighted.mean(
+            abs(biocol$biocol)[biome_cells, year_i],
+            w = terr_area[biome_cells]
+          ) /
+            weighted.mean(
+              biocol$npp_ref[biome_cells, year_i],
+              w = terr_area[biome_cells]
+            )
+        )
       }
     }
   } else if (spatial_scale == "global") {
@@ -147,12 +177,15 @@ calc_biosphere_status <- function(
   }
 
   # average
-  control_variable <- do.call(average_nyear_window,
+  control_variable <- do.call(aggregate_time,
                               append(list(x = control_variable_raw),
-                                     avg_nyear_args))
+                                     time_aggregation_args))
 
+  attr(control_variable, "spatial scale") <- spatial_scale
   attr(control_variable, "thresholds") <- thresholds
-  attr(control_variable, "control variable") <- "BioCol (in fraction of NPPref)"
+  attr(control_variable, "control_variable") <- "BioCol (in fraction of NPPref)"
+
+  class(control_variable) <- c("control_variable")
   return(control_variable)
 
 } # end of calc_biosphere_status

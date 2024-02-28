@@ -38,9 +38,9 @@
 plot_status <- function(
   x,
   file_name = NULL,
-  colors = c("safe zone" = "#74bca9e1",
-             "increasing risk" = "#f6ee0f",
-             "high risk" = "#e23a50"),
+  colors = c("safe zone" = green,
+             "increasing risk" = yellow,
+             "high risk" = red),
   bg_col = "white",
   to_robinson = TRUE,
   legend = TRUE
@@ -146,10 +146,9 @@ plot_status <- function(
                          boundary_box = bounding_box,
                          ext = lpjml_extent,
                          to_robinson = to_robinson)
-
-    image(plot_nat, zlim = c(-1, 0), asp = 1, xaxt = "n", yaxt = "n",
+    raster::image(plot_nat, zlim = c(-1, 0), asp = 1, xaxt = "n", yaxt = "n",
           xlab = "", ylab = "", col = "grey90", lwd = 0.1, bty = "n")
-    image(plotvar, asp = 1, xaxt = "n",
+    raster::image(plotvar, asp = 1, xaxt = "n",
           yaxt = "n", xlab = "", ylab = "", col = cols, breaks = brk,
           lwd = 0.1, bty = "n", add = TRUE)
     raster::plot(countries, add = TRUE, lwd = 0.3, border = "#33333366",

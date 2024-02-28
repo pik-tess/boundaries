@@ -11,7 +11,7 @@ calc_bluewater_status(
   time_span_reference = time_span_scenario,
   method = "gerten2020",
   cut_min = 0.0864,
-  avg_nyear_args = list(),
+  time_aggregation_args = list(),
   spatial_scale,
   thresholds = NULL
 )
@@ -46,8 +46,8 @@ spatial_scale = "global" or "subglobal"}
 and dismiss EFR transgresssions if < cut_min for "gerten2020" method,
 Default: 0.0864 hm3/day (=1 m3/s)}
 
-\item{avg_nyear_args}{list of arguments to be passed to
-\link[boundaries]{average_nyear_window} (see for more info). To be used for
+\item{time_aggregation_args}{list of arguments to be passed to
+\link[boundaries]{aggregate_time} (see for more info). To be used for
 time series analysis}
 
 \item{spatial_scale}{character string indicating spatial resolution

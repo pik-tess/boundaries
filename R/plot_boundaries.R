@@ -381,7 +381,7 @@ plot_boundaries <- function(
       size = 1,
       # alpha = 0.7,  # Add transparency
       linetype = 1,
-      color = orange
+      color = darkgreen
     ) +
     ggplot2::geom_segment(
       data = x_table,
@@ -453,7 +453,7 @@ plot_boundaries <- function(
         alpha = alpha
       ),
       fontface = "bold",
-      color = orange,
+      color = darkgreen,
       # alpha = 0.7,  # Add transparency
       size = 4  # Increase the size of the labels
     ) +
@@ -765,7 +765,6 @@ plot_legend <- function() {
       ggplot2::aes(
         x = 7.3,
         y = 3.65,
-        yend = 3.65,
         label = "High Risk Line"
       ),
       color = orange,

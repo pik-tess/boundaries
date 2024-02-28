@@ -11,7 +11,7 @@ calc_status(
   path_reference = NULL,
   time_span_scenario = as.character(1982:2011),
   time_span_reference = time_span_scenario,
-  avg_nyear_args = list(),
+  time_aggregation_args = list(),
   input_files = list(),
   diff_output_files = list(),
   method = list(),
@@ -38,8 +38,8 @@ as an integer vector, e.g. \code{1982:2011} (default)}
 as an integer vector, e.g. \code{1901:1930}. Can differ in offset and length from
 \code{time_span_scenario}! If \code{NULL} value of \code{time_span_scenario} is used}
 
-\item{avg_nyear_args}{list of arguments to be passed to
-\link[boundaries]{average_nyear_window} (see for more info). To be used for # nolint
+\item{time_aggregation_args}{list of arguments to be passed to
+\link[boundaries]{aggregate_time} (see for more info). To be used for # nolint
 time series analysis}
 
 \item{input_files}{list of required file(s) using ID (e.g. \code{prec}, \code{runoff})

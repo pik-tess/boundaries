@@ -22,7 +22,6 @@
 #' @export
 list_outputs <- function(metric = "all", method, spatial_scale,
                          only_first_filename = TRUE) {
-
   metric <- process_metric(metric = metric)
 
   system.file(
@@ -78,7 +77,6 @@ process_metric <- function(metric = "all") {
 #     highest temporal resolution (daily>monthly>annual)
 get_outputs <- function(x, metric_name, method, spatial_scale,
                         only_first_filename) {
-
   outputs <- list()
   # Iterate over all metrics
   i <- 0

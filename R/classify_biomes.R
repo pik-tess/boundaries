@@ -36,8 +36,8 @@
 #'        boreal forest threshold will be classified as boreal tundra.
 #' @param method character string indicating which biome classification method
 #'        to use. Currently only one is defined ("default").
-#' @param avg_nyear_args list of arguments to be passed to
-#'        \link[boundaries]{average_nyear_window} (see for more info).
+#' @param time_aggregation_args list of arguments to be passed to
+#'        \link[boundaries]{aggregate_time} (see for more info).
 #'        To be used for time series analysis
 #' @param input_files list of required file(s) using ID (e.g. `temp`,
 #'        `elevation`) and an absolute file path to the corresponding input file
@@ -60,11 +60,12 @@
 classify_biomes <- function(path_reference = NULL,
                             files_reference = NULL,
                             time_span_reference,
-                            savanna_proxy = list(pft_lai = 6),
+                            savanna_proxy = list(vegc = 7500),
                             montane_arctic_proxy = list(elevation = 1000),
                             tree_cover_thresholds = list(),
                             method = "default",
-                            avg_nyear_args = list(),
+                            time_aggregation_args = list(),
+                            config_args = list(),
                             input_files = list(),
                             diff_output_files = list()) {
 
@@ -73,7 +74,7 @@ classify_biomes <- function(path_reference = NULL,
 
   } else if (!is.null(path_reference) && is.null(files_reference)) {
     # Get main file type (meta, clm)
-    file_ext <- get_file_ext(path_reference)
+    file_ext <- biospheremetrics:::get_major_file_ext(path_reference)
 
     # List required output files for each boundary
     output_files <- list_outputs("biome",
@@ -81,7 +82,7 @@ classify_biomes <- function(path_reference = NULL,
                                  spatial_scale = "subglobal",
                                  only_first_filename = FALSE)
 
-    files_reference <- get_filenames(
+    files_reference <- biospheremetrics:::get_filenames(
       path = path_reference,
       output_files = output_files,
       diff_output_files = diff_output_files,
@@ -136,21 +137,25 @@ classify_biomes <- function(path_reference = NULL,
   grid <- lpjmlkit::read_io(
     files_reference$grid,
     silent = TRUE
-  )
+  ) %>%
+    conditional_subset(config_args$spatial_subset)
+
   # bands currently not named in grid file, therefore band 2 manually selected
   lat <- lpjmlkit::as_array(grid, subset = list(band = 2)) %>%
     drop()
+
   fpc %<-% read_io_format(
     files_reference$fpc,
-    time_span_reference
+    time_span_reference,
+    spatial_subset = config_args$spatial_subset
   )
-
   temp %<-% {
     lpjmlkit::read_io(
       files_reference$temp,
       subset = list(year = time_span_reference),
       silent = TRUE
     ) %>%
+      conditional_subset(config_args$spatial_subset) %>%
       lpjmlkit::transform(to = c("year_month_day")) %>%
       lpjmlkit::as_array(aggregate =
                            list(month = mean, day = mean, band = mean)) %>%
@@ -158,9 +163,11 @@ classify_biomes <- function(path_reference = NULL,
   }
 
   if (!is.na(savanna_proxy_name)) {
-    savanna_proxy_data %<-% read_io_format(
+    savanna_proxy_data <- read_io_format(
       files_reference[[savanna_proxy_name]],
-      time_span_reference
+      time_span_reference,
+      spatial_subset = config_args$spatial_subset,
+      aggregate = list(band = sum)
     )
   }
 
@@ -169,8 +176,10 @@ classify_biomes <- function(path_reference = NULL,
       elevation <- lpjmlkit::read_io(
         files_reference$elevation,
         silent = TRUE
-      )$data %>%
-      drop()
+      ) %>%
+        conditional_subset(config_args$spatial_subset) %>%
+        lpjmlkit::as_array() %>%
+        drop()
     }
   }
 
@@ -178,30 +187,29 @@ classify_biomes <- function(path_reference = NULL,
   npft <- fpc_nbands - 1
 
   # average fpc
-  avg_fpc %<-% do.call(
-    average_nyear_window,
+  avg_fpc <- do.call(
+    aggregate_time,
     append(list(x = fpc),
-           avg_nyear_args)
+           time_aggregation_args)
   )
 
   # average vegc or pft_lai
   if (!is.na(savanna_proxy_name)) {
-    avg_savanna_proxy_data %<-% drop(
+    avg_savanna_proxy_data <- drop(
       do.call(
-        average_nyear_window,
+        aggregate_time,
         append(list(x = savanna_proxy_data),
-               avg_nyear_args)
+               time_aggregation_args)
       )
     )
   }
-
   # average temp
   # TODO understand why additional dimension is added here but not for fpc
   # (67420, 1)
-  avg_temp %<-% do.call(
-    average_nyear_window,
+  avg_temp <- do.call(
+    aggregate_time,
     append(list(x = temp),
-           avg_nyear_args)
+           time_aggregation_args)
   )
 
   # biome_names after biome classification in Ostberg et al. 2013
@@ -268,49 +276,49 @@ classify_biomes <- function(path_reference = NULL,
   ] %>% {
     if (rlang::is_empty(.)) NULL else .
   }
-  fpc_tree_total %<-% apply(
+  fpc_tree_total <- apply(
     lpjmlkit::asub(avg_fpc, band = fpc_trees, drop = FALSE),
     c("cell", third_dim),
     sum,
     na.rm = TRUE
   )
-  fpc_tree_tropical %<-% apply(
+  fpc_tree_tropical <- apply(
     lpjmlkit::asub(avg_fpc, band = fpc_tropical_trees, drop = FALSE),
     c("cell", third_dim),
     sum,
     na.rm = TRUE
   )
-  fpc_tree_temperate %<-% apply(
+  fpc_tree_temperate <- apply(
     lpjmlkit::asub(avg_fpc, band = fpc_temperate_trees, drop = FALSE),
     c("cell", third_dim),
     sum,
     na.rm = TRUE
   )
-  fpc_tree_boreal %<-% apply(
+  fpc_tree_boreal <- apply(
     lpjmlkit::asub(avg_fpc, band = fpc_boreal_trees, drop = FALSE),
     c("cell", third_dim),
     sum,
     na.rm = TRUE
   )
-  fpc_tree_needle %<-% apply(
+  fpc_tree_needle <- apply(
     lpjmlkit::asub(avg_fpc, band = fpc_needle_trees, drop = FALSE),
     c("cell", third_dim),
     sum,
     na.rm = TRUE
   )
-  fpc_tree_evergreen %<-% apply(
+  fpc_tree_evergreen <- apply(
     lpjmlkit::asub(avg_fpc, band = fpc_evergreen_trees, drop = FALSE),
     c("cell", third_dim),
     sum,
     na.rm = TRUE
   )
-  fpc_grass_total %<-% apply(
+  fpc_grass_total <- apply(
     lpjmlkit::asub(avg_fpc, band = fpc_grass, drop = FALSE),
     c("cell", third_dim),
     sum,
     na.rm = TRUE
   )
-  fpc_total %<-% apply(
+  fpc_total <- apply(
     lpjmlkit::asub(avg_fpc, band = -1, drop = FALSE),
     c("cell", third_dim),
     sum,
@@ -318,7 +326,7 @@ classify_biomes <- function(path_reference = NULL,
   )
 
   # define maximum share of trees among all tree PFTs per grid cell
-  max_share_trees %<-% apply(
+  max_share_trees <- apply(
     lpjmlkit::asub(avg_fpc, band = fpc_trees, drop = FALSE),
     c("cell", third_dim),
     max,
@@ -331,7 +339,7 @@ classify_biomes <- function(path_reference = NULL,
   #   "boundary
   if (!is.null(savanna_proxy)) {
     if (savanna_proxy_name == "pft_lai") {
-      avg_savanna_proxy_data %<-% apply(
+      avg_savanna_proxy_data <- apply(
         lpjmlkit::asub(avg_savanna_proxy_data, band = 1:npft, drop = FALSE) * # nolint
           lpjmlkit::asub(avg_fpc, band = 2: (npft + 1), drop = FALSE) *
           lpjmlkit::asub(avg_fpc, band = 1, drop = FALSE),

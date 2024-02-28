@@ -39,7 +39,7 @@
 #' groundwater denitrification losses. Defaults to TRUE ( = simulated leaching
 #' is multiplied with 0.71 based on simulated denitrification losses in ground
 #' water from Bouwman et al 2013)
-#' 
+#'
 #' @param thresholds list with highrisk and pb threshold for N concentration
 #' (mg N/l) in runoff to surface water
 #' Default: highrisk = 5, pb = 2
@@ -49,9 +49,12 @@
 #' threshold was set to 5.0 mgN/l, based on the assumption that on average 50%
 #' of N entering surface water is removed through retention and sedimentation"))
 #'
-#' @param avg_nyear_args list of arguments to be passed to
-#' \link[boundaries]{average_nyear_window} (see for more info). To be used for
+#' @param time_aggregation_args list of arguments to be passed to
+#' \link[boundaries]{aggregate_time} (see for more info). To be used for
 #' time series analysis
+#'
+#' @param config_args list of arguments to be passed on from the model
+#' configuration.
 #'
 #' @examples
 #' \dontrun{
@@ -61,18 +64,20 @@
 #' @md
 #' @importFrom future %<-%
 #' @export
-calc_nitrogen_status <- function(files_scenario,
-                                 files_reference,
-                                 time_span_scenario = as.character(1982:2011),
-                                 time_span_reference = NULL,
-                                 method = "braun2022",
-                                 thresholds = NULL,
-                                 spatial_scale = "grid",
-                                 cut_arid = 0.2,
-                                 cut_runoff = 0,
-                                 with_groundwater_denit = TRUE,
-                                 avg_nyear_args = list()
-                                 ) {
+calc_nitrogen_status <- function(
+  files_scenario,
+  files_reference,
+  spatial_scale = "grid",
+  time_span_scenario = as.character(1982:2011),
+  time_span_reference = NULL,
+  method = "braun2022",
+  thresholds = NULL,
+  time_aggregation_args = list(),
+  config_args = list(),
+  cut_arid = 0.2,
+  cut_runoff = 0,
+  with_groundwater_denit = TRUE
+) {
 
   if (spatial_scale == "grid") {
     # verify available methods
@@ -81,36 +86,39 @@ calc_nitrogen_status <- function(files_scenario,
 
     # sub function to be used for scenario and reference run
     # (braun2022_minusref)
-    calc_nitrogen_leach <- function(path_data,
-                                    time_span,
-                                    with_groundwater_denit,
-                                    avg_nyear_args
-                                    ) {
+    calc_nitrogen_leach <- function(
+      path_data,
+      time_span,
+      with_groundwater_denit,
+      time_aggregation_args
+    ) {
 
       # read runoff ---------------------------------------------------------- #
       runoff %<-% read_io_format(
         file = path_data$runoff,
         timespan = time_span,
-        aggregate = list(month = sum)
+        aggregate = list(month = sum),
+        spatial_subset = config_args$spatial_subset
       )
 
       # read leaching -------------------------------------------------------- #
       leaching %<-% read_io_format(
         file = path_data$leaching,
         timespan = time_span,
-        aggregate = list(month = sum)
+        aggregate = list(month = sum),
+        spatial_subset = config_args$spatial_subset
       )
 
       # ---------------------------------------------------------------------- #
       # average runoff
-      avg_runoff %<-% do.call(average_nyear_window,
+      avg_runoff %<-% do.call(aggregate_time,
                               append(list(x = runoff),
-                                     avg_nyear_args))
+                                     time_aggregation_args))
 
       # average leaching
-      avg_leaching %<-% do.call(average_nyear_window,
+      avg_leaching %<-% do.call(aggregate_time,
                                 append(list(x = leaching),
-                                       avg_nyear_args))
+                                       time_aggregation_args))
 
       if (with_groundwater_denit) {
         # temporary solution using shares of global losses after
@@ -128,9 +136,9 @@ calc_nitrogen_status <- function(files_scenario,
       n_conc <- ifelse(
         avg_runoff > 0,
         (avg_leaching * 1e3 * loss_factor) /
-        (avg_runoff), 0
+          (avg_runoff), 0
       )
-  
+
       return(n_conc)
     }
 
@@ -141,7 +149,8 @@ calc_nitrogen_status <- function(files_scenario,
           path_data = files_scenario,
           time_span = time_span_scenario,
           with_groundwater_denit = with_groundwater_denit,
-          avg_nyear_args = avg_nyear_args)
+          time_aggregation_args = time_aggregation_args
+        )
       },
       braun2022_minusref = {
 
@@ -150,11 +159,12 @@ calc_nitrogen_status <- function(files_scenario,
           path_data = files_scenario,
           time_span = time_span_scenario,
           with_groundwater_denit = with_groundwater_denit,
-          avg_nyear_args = avg_nyear_args)
+          time_aggregation_args = time_aggregation_args
+        )
 
 
         if (length(time_span_reference) < length(time_span_scenario)) {
-          avg_nyear_args["nyear_reference"] <- length(time_span_scenario)
+          time_aggregation_args["nyear_reference"] <- length(time_span_scenario)
         }
 
         # calculate leaching concentration and loss rate for reference output
@@ -162,7 +172,8 @@ calc_nitrogen_status <- function(files_scenario,
           path_data = files_reference,
           time_span = time_span_reference,
           with_groundwater_denit = with_groundwater_denit,
-          avg_nyear_args = avg_nyear_args)
+          time_aggregation_args = time_aggregation_args
+        )
 
         # subtract scenario leaching concentration and loss rate from reference
         n_conc <- n_conc_scenario - n_conc_reference
@@ -174,25 +185,27 @@ calc_nitrogen_status <- function(files_scenario,
     pet %<-% read_io_format(
       file = files_scenario$pet,
       timespan = time_span_scenario,
-      aggregate = list(month = sum, band = sum)
+      aggregate = list(month = sum, band = sum),
+      spatial_subset = config_args$spatial_subset
     )
 
     # read precipitation ----------------------------------------------------- #
     prec %<-% read_io_format(
       file = files_scenario$prec,
       timespan = time_span_scenario,
-      aggregate = list(month = sum, band = sum, day = sum)
+      aggregate = list(month = sum, band = sum, day = sum),
+      spatial_subset = config_args$spatial_subset
     )
     # ------------------------------------------------------------------------ #
     # average pet
-    avg_pet <- do.call(average_nyear_window,
+    avg_pet <- do.call(aggregate_time,
                        append(list(x = pet),
-                              avg_nyear_args))
+                              time_aggregation_args))
 
     # average precipitation
-    avg_prec <- do.call(average_nyear_window,
+    avg_prec <- do.call(aggregate_time,
                         append(list(x = prec),
-                               avg_nyear_args))
+                               time_aggregation_args))
 
     # calculate global aridity index (AI) as an indicator for a level under
     #   which the calculation of leaching just cannot show realistic behavior,
@@ -210,15 +223,16 @@ calc_nitrogen_status <- function(files_scenario,
     runoff %<-% read_io_format(
       file = files_scenario$runoff,
       timespan = time_span_scenario,
-      aggregate = list(month = sum)
+      aggregate = list(month = sum),
+      spatial_subset = config_args$spatial_subset
     )
 
     # average runoff
     runoff_annual %<-% do.call(
-      average_nyear_window,
+      aggregate_time,
       append(
         list(x = runoff),
-        avg_nyear_args
+        time_aggregation_args
       )
     )
 
@@ -235,8 +249,19 @@ calc_nitrogen_status <- function(files_scenario,
     cells_low_runoff[which(runoff_annual <= cut_runoff)] <- TRUE
 
     # add thresholds as attributes
-    control_variable <- n_conc
+    if ("band" %in% names(dimnames(n_conc))) {
+      control_variable <- abind::adrop(
+        n_conc,
+        drop = which(names(dimnames(n_conc)) == "band")
+      )
+    } else {
+      control_variable <- n_conc
+    }
+
     attr(control_variable, "thresholds") <- thresholds
+    attr(control_variable, "control_variable") <- (
+      "nitrogen leaching in runoff to surface water"
+    )
     # non applicable cells
     control_variable[cells_arid] <- NA
     control_variable[cells_low_runoff] <- NA
@@ -251,40 +276,50 @@ calc_nitrogen_status <- function(files_scenario,
     fert_mg %<-% read_io_format(
       file = files_scenario$nfert_mg,
       time_span_scenario,
-      aggregate = list(month = sum, band = sum)
+      aggregate = list(month = sum, band = sum),
+      spatial_subset = config_args$spatial_subset
     )
 
     # read in biological nitrogen fixation on managed land
     bnf %<-% read_io_format(
       file = files_scenario$bnf_mg,
       time_span_scenario,
-      aggregate = list(month = sum, band = sum)
+      aggregate = list(month = sum, band = sum),
+      spatial_subset = config_args$spatial_subset
     )
 
     # read in nitrogen deposition on managed land
     dep %<-% read_io_format(
       file = files_scenario$ndepo_mg,
       time_span_scenario,
-      aggregate = list(month = sum, band = sum)
+      aggregate = list(month = sum, band = sum),
+      spatial_subset = config_args$spatial_subset
     )
 
     # read in establishemnt input on managed land
     flux_estabn <- read_io_format(
       file = files_scenario$flux_estabn_mg,
       time_span_scenario,
-      aggregate = list(month = sum, band = sum)
+      aggregate = list(month = sum, band = sum),
+      spatial_subset = config_args$spatial_subset
     )
 
     # read in N removal on managed land
     harvest %<-% read_io_format(
       file = files_scenario$harvestn,
       time_span_scenario,
-      aggregate = list(month = sum, band = sum)
+      aggregate = list(month = sum, band = sum),
+      spatial_subset = config_args$spatial_subset
     )
 
     # calc terrestrial area
     # TODO better asub?
-    terr_area <- lpjmlkit::read_io(files_scenario$terr_area) %>% as_array()
+    terr_area <- lpjmlkit::read_io(
+      files_scenario$terr_area
+    ) %>%
+      conditional_subset(config_args$spatial_subset) %>%
+      lpjmlkit::as_array()
+
     terr_area <- terr_area[, , 1]
 
     # calc n surplus
@@ -297,28 +332,37 @@ calc_nitrogen_status <- function(files_scenario,
     #             harvest) * cellarea * 10^-12
 
     # average over time
-    avg_nsurplus <- do.call(average_nyear_window,
+    avg_nsurplus <- do.call(aggregate_time,
                             append(list(x = nsurplus),
-                                   avg_nyear_args))
+                                   time_aggregation_args))
 
     # aggregate to global value
     dim_remain <- names(dim(avg_nsurplus))[names(dim(avg_nsurplus)) != "cell"]
     control_variable <- apply(avg_nsurplus, dim_remain, sum, na.rm = TRUE)
 
     attr(control_variable, "thresholds") <- thresholds
-    attr(control_variable, "control variable") <- (
+    attr(control_variable, "control_variable") <- (
       "nitrogen surplus on agricultural land"
     )
   }
+  attr(control_variable, "spatial scale") <- spatial_scale
+
+  class(control_variable) <- c("control_variable")
   return(control_variable)
 }
 
 
 # read file function --------------------------------------------------------- #
-read_io_format <- function(file, timespan, aggregate=list()) {
+read_io_format <- function(
+  file,
+  timespan,
+  aggregate=list(),
+  spatial_subset = NULL
+) {
   file <- lpjmlkit::read_io(
     file, subset = list(year = timespan)
   ) %>%
+    conditional_subset(spatial_subset) %>%
     lpjmlkit::transform(to = c("year_month_day")) %>%
     lpjmlkit::as_array(aggregate = aggregate) %>%
     suppressWarnings()
