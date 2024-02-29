@@ -31,7 +31,7 @@
 #'
 #' @param thresholds list with thresholds to be used to
 #' define the safe, increasing risk and high risk zone,
-#' For spatial scale = "global" and "subglobal", this refers to the quantiles of
+#' For spatial_scale = "global" and "subglobal", this refers to the quantiles of
 #' the global/basin area with deviations in the reference period. The default
 #' is: c(holocene = 0.5, pb = 0.95, highrisk = NULL).
 #' If set to NULL, the  default is taken from metric_files.yml
@@ -258,7 +258,7 @@ calc_water_deviations <- function(files_scenario,
   }
   attr(control_variable, "control_variable") <-
     "area with wet/dry departures (%)"
-  attr(control_variable, "spatial scale") <- spatial_scale
+  attr(control_variable, "spatial_scale") <- spatial_scale
 
   class(control_variable) <- c("control_variable")
   return(control_variable)

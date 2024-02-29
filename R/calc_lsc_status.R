@@ -42,7 +42,7 @@
 #' @param config_args list of arguments to be passed on from the model
 #' configuration.
 #'
-#' @param eurasia logical. If `spatial_scale` = `"biome"` merge continents
+#' @param eurasia logical. If `spatial_scale` = `"subglobal"` merge continents
 #' Europe and Asia to avoid arbitrary biome cut at europe/asia border.
 #' Defaults to `TRUE`
 #'
@@ -342,6 +342,7 @@ calc_lsc_status <- function(
   }
 
   attr(control_variable, "control_variable") <- "deforestation"
+  attr(control_variable, "spatial_scale") <- spatial_scale
   class(control_variable) <- c("control_variable")
   return(control_variable)
 }
