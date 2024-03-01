@@ -4,8 +4,10 @@
 #' LPJmL output plus either vegetation carbon or pft_lai depending on
 #' the savanna_proxy option and elevation if montane_arctic_proxy requires this
 #'
-#' @param path_reference path to the reference LPJmL run. If not provided,
-#'        the path is extracted from the file paths provided in files_reference.
+#' @param config_reference character string. File path to the LPjmL
+#'        configuration file (json) of the reference run. The configuration file
+#'        contains the information about the LPJmL run, e.g. the output
+#'        directory
 #' @param files_reference list with variable names and corresponding file paths
 #'        (character string) of the reference LPJmL run. All needed files are
 #'        provided as key value pairs, e.g.:
@@ -57,7 +59,7 @@
 #' }
 #'
 #' @export
-classify_biomes <- function(path_reference = NULL,
+classify_biomes <- function(config_reference = NULL,
                             files_reference = NULL,
                             time_span_reference,
                             savanna_proxy = list(vegc = 7500),
@@ -69,25 +71,28 @@ classify_biomes <- function(path_reference = NULL,
                             input_files = list(),
                             diff_output_files = list()) {
 
-  if (is.null(files_reference) && is.null(path_reference)) {
+  if (is.null(files_reference) && is.null(config_reference)) {
     stop("files_reference or path_reference must be provided")
 
-  } else if (!is.null(path_reference) && is.null(files_reference)) {
+  } else if (!is.null(config_reference) && is.null(files_reference)) {
     # Get main file type (meta, clm)
-    file_ext <- biospheremetrics:::get_major_file_ext(path_reference)
+    config_reference <- lpjmlkit::read_config(config_reference)
 
+    if (!all(time_span_reference %in% get_sim_time(config_reference))) {
+      stop("Time span not available in reference run.")
+    }
     # List required output files for each boundary
-    output_files <- list_outputs("biome",
-                                 method = list("biome" = method),
-                                 spatial_scale = "subglobal",
-                                 only_first_filename = FALSE)
 
-    files_reference <- biospheremetrics:::get_filenames(
-      path = path_reference,
-      output_files = output_files,
-      diff_output_files = diff_output_files,
-      input_files = input_files,
-      file_ext = file_ext
+    output_files <- list_outputs(
+      "biome",
+      method = list("biome" = method),
+      spatial_scale = "subglobal",
+      only_first_filename = FALSE
+    )
+
+    files_reference <- get_filenames(
+      config = config_reference,
+      output_files = output_files
     )
   }
 

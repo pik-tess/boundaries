@@ -134,8 +134,8 @@ test_that("test classify_biomes grid", {
   timeframe <- as.character(1986:2016)
 
   test <- classify_biomes(
-    path_reference = system.file(
-      "extdata/output/pnv_1500_2016",
+    config_reference = system.file(
+      "extdata/output/pnv_1500_2016/config_pnv_1500_2016.json",
       package = "boundaries"
     ),
     time_span_reference = timeframe,
