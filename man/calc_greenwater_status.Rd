@@ -9,7 +9,7 @@ calc_greenwater_status(
   files_reference,
   time_span_scenario = NULL,
   time_span_reference = NULL,
-  avg_nyear_args = list(),
+  time_aggregation_args = list(),
   spatial_scale = "grid",
   method = "wang-erlandsson2022",
   thresholds = NULL
@@ -32,8 +32,8 @@ defined as a character string (e.g. \code{as.character(1901:1930)}).
 Can differ in offset and length from \code{time_span_scenario}!
 If \code{NULL} value of \code{time_span_scenario} is used}
 
-\item{avg_nyear_args}{list of arguments to be passed to
-\link[boundaries]{average_nyear_window} (see for more info).
+\item{time_aggregation_args}{list of arguments to be passed to
+\link[boundaries]{aggregate_time} (see for more info).
 To be used for time series analysis}
 
 \item{spatial_scale}{character string indicating spatial resolution

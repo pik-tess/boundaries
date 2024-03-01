@@ -22,11 +22,6 @@
 #' parallel PNV run, defined as a character string,
 #' e.g. `as.character(1982:2011)`
 #'
-#' @param time_span_baseline time span to be used for the baseline run, defined
-#' as a character vector, e.g. `as.character(1901:1930)`. Can differ in offset
-#' and length from `time_span_scenario`! If `NULL` value of `time_span_scenario`
-#' is used
-#'
 #' @param time_span_reference time span to read reference_npp_file from, using
 #' index years 3:32 if set to NULL (default: NULL)
 #'
@@ -38,18 +33,33 @@
 #' e.g. c(holocene = 0.0, pb = 0.1, highrisk = 0.2). If set to NULL, default
 #' values from metric_files.yml will be used.
 #'
+#' @param time_aggregation_args list of arguments to be passed to
+#' \link[boundaries]{aggregate_time} (see for more info).
+#' To be used for time series analysis
+#'
+#' @param config_args list of arguments to be passed on from the model
+#' configuration.
+#'
+#' @param path_baseline character string with path to outputs for the baseline
+#' run, file names are taken from files scenario.
+#'
+#' @param time_span_baseline time span to be used for the baseline run, defined
+#' as a character vector, e.g. `as.character(1901:1930)`. Can differ in offset
+#' and length from `time_span_scenario`! If `NULL` value of `time_span_scenario`
+#' is used
+#'
 #' @param gridbased logical; are pft outputs from LPJmL gridbased or pft-based?
 #'
 #' @param npp_threshold lower threshold for npp (to mask out non-lu areas
 #' according to Haberl et al. 2007). Below BioCol will be set to 0.
 #' (default: 20 gC/m2)
 #'
-#' @param avg_nyear_args list of arguments to be passed to
-#' \link[boundaries]{average_nyear_window} (see for more info).
-#' To be used for time series analysis
-#'
 #' @param biocol_option which biocol values to use for aggregation. options:
 #' netsum, only_above_zero, abs - TODO: finish
+#'
+#' @param eurasia logical. If `spatial_scale` = `"subglobal"` merge continents
+#' Europe and Asia to avoid arbitrary biome cut at europe/asia border.
+#' Defaults to `TRUE`
 #'
 #' @param ... arguments forwarded to \link[boundaries](classify_biomes)
 #'
@@ -62,25 +72,46 @@
 calc_biosphere_status <- function(
   files_scenario,
   files_reference,
-  path_baseline,
   time_span_scenario = as.character(1982:2011),
-  time_span_baseline = time_span_scenario,
   time_span_reference = time_span_scenario,
   spatial_scale = "subglobal",
   thresholds = NULL,
   method = "stenzel2023",
-  gridbased = TRUE,
+  time_aggregation_args = list(),
+  config_args = list(),
+  path_baseline,
+  time_span_baseline = time_span_reference,
+  gridbased = TRUE, #TODO gridbased can be retrieved from config!
   npp_threshold = 20,
-  avg_nyear_args = list(),
-  biocol_option = "only_above_zero",
+  biocol_option = "abs", #TODO change back to "only_above_zero" once it is working
+  eurasia = TRUE,
   ...
 ) {
-  #TODO does not work if other input files are specified -> Jannes
+
+  biocol_option <- match.arg(biocol_option,
+                             c("only_above_zero", "netsum", "abs"))
+
   files_baseline <- lapply(
     files_scenario,
     function(x) {
       file.path(path_baseline, basename(x))
     }
+  )
+
+  # workaround to filter input files (files_scenario and files_reference match)
+  files_baseline <- mapply(
+    function(x, y, z) {
+      if (x == y) {
+        z <- y
+      } else {
+        z
+      }
+      z
+    },
+    files_scenario,
+    files_reference,
+    files_baseline,
+    SIMPLIFY = FALSE
   )
 
   biocol <- biospheremetrics::read_calc_biocol(
@@ -104,7 +135,7 @@ calc_biosphere_status <- function(
     grass_harvest_file = NULL,
     external_fire_file = NULL,
     external_wood_harvest_file = NULL
-  )
+  ) %>% suppressMessages()
 
   if (spatial_scale == "grid") {
     control_variable_raw <- abs(biocol$biocol_frac_piref)
@@ -124,27 +155,29 @@ calc_biosphere_status <- function(
       classify_biomes,
       append(list(files_reference = files_baseline,
                time_span_reference = time_span_baseline,
-               avg_nyear_args = avg_nyear_args
+               time_aggregation_args = time_aggregation_args
              ),
              ellipsis_filtered)
     )
 
 
     # TODO: also for global
+    # TODO only_above_zero not working?
     # initialize control variable vector
-    if (biocol_option == "abs"){
+    if (biocol_option == "abs") {
       control_variable_raw <- abs(biocol$biocol)
-    }else if (biocol_option == "only_above_zero"){
+    }else if (biocol_option == "only_above_zero") {
       control_variable_raw <- biocol$biocol
-      control_variable_raw[control_variable_raw<0] <- 0
-    }else if (biocol_option == "netsum"){
+      control_variable_raw[control_variable_raw < 0] <- 0
+    }else if (biocol_option == "netsum") {
       control_variable_raw <- biocol$biocol
     }else { # TODO: do with matcharg
       stop("Not defined option for biocol_option.")
     }
 
     # get continents mask - pass arg of whether to merge europe and asia
-    continent_grid %<-% calc_continents_mask(files_reference$grid) # implicit eurasia = TRUE
+    continent_grid %<-% calc_continents_mask(files_reference$grid,
+                                             eurasia = eurasia)
 
     # create space of combinations to loop over (even though not all make sense)
     comb <- expand.grid(
@@ -220,12 +253,15 @@ calc_biosphere_status <- function(
   }
 
   # average
-  control_variable <- do.call(average_nyear_window,
+  control_variable <- do.call(aggregate_time,
                               append(list(x = control_variable_raw),
-                                     avg_nyear_args))
+                                     time_aggregation_args))
 
+  attr(control_variable, "spatial_scale") <- spatial_scale
   attr(control_variable, "thresholds") <- thresholds
-  attr(control_variable, "control variable") <- "BioCol (in fraction of NPPref)"
+  attr(control_variable, "control_variable") <- "BioCol (in fraction of NPPref)"
+
+  class(control_variable) <- c("control_variable")
   return(control_variable)
 
 } # end of calc_biosphere_status

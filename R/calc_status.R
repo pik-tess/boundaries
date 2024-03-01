@@ -7,12 +7,16 @@
 #' Available terrestrial boundaries are c("bluewater", "greenwater", "lsc",
 #' "nitrogen")
 #'
-#' @param path_scenario output directory (character string) of the scenario
-#' LPJmL run where binary files (soon with metafiles) are written
+#' @param config_scenario character string. File path to the LPjmL configuration
+#' file (json) of the scenario run. The configuration file contains the
+#' information about the LPJmL run, e.g. the output directory
 #'
-#' @param path_reference output directory (character string) of the reference
-#' LPJmL run where binary files (soon with metafiles) are written
+#' @param config_reference character string. See config_scenario. For the
+#' reference run
 #'
+#' @param spatial_scale character string indicating spatial resolution
+#' options: "global", "subglobal", "grid";
+#' 
 #' @param time_span_scenario time span to be used for the scenario run, defined
 #' as an integer vector, e.g. `1982:2011` (default)
 #'
@@ -20,15 +24,9 @@
 #' as an integer vector, e.g. `1901:1930`. Can differ in offset and length from
 #' `time_span_scenario`! If `NULL` value of `time_span_scenario` is used
 #'
-#' @param avg_nyear_args list of arguments to be passed to
-#' \link[boundaries]{average_nyear_window} (see for more info). To be used for # nolint
+#' @param time_aggregation_args list of arguments to be passed to
+#' \link[boundaries]{aggregate_time} (see for more info). To be used for # nolint
 #' time series analysis
-#'
-#' @param input_files list of required file(s) using ID (e.g. `prec`, `runoff`)
-#' and an absolute file path to the corresponding input file
-#'
-#' @param diff_output_files list of required file(s) using ID 
-#' (e.g. prec, runoff) and the alternative writing (e.g. `"my_runoff"`)
 #'
 #' @param method list of methods to be used for each boundary. If `NULL` the
 #' default method is used
@@ -51,21 +49,20 @@
 #' @md
 #' @export
 calc_status <- function(boundary,
+                        config_scenario,
+                        config_reference,
                         spatial_scale,
-                        path_scenario,
-                        path_reference = NULL,
                         time_span_scenario = as.character(1982:2011),
                         time_span_reference = time_span_scenario,
-                        avg_nyear_args = list(),
-                        input_files = list(),
-                        diff_output_files = list(),
+                        time_aggregation_args = list(),
                         method = list(),
                         thresholds = list(),
                         in_parallel = TRUE,
                         ...) {
+
   # If in_parallel use future package for asynchronous parallelization
-  rlang::local_options(future.globals.maxSize = 1500*1024^2)
   if (in_parallel) {
+    rlang::local_options(future.globals.maxSize = 3000 * 1024^2)
     if (.Platform$OS.type == "windows") {
       future_plan <- future::plan("multisession")
     } else {
@@ -80,8 +77,15 @@ calc_status <- function(boundary,
     c("global", "subglobal", "grid")
   )
 
-  # Get main file type (meta, clm)
-  file_ext <- get_file_ext(path_scenario)
+  config_scenario <- lpjmlkit::read_config(config_scenario)
+  config_reference <- lpjmlkit::read_config(config_reference)
+
+  if (!all(time_span_scenario %in% get_sim_time(config_scenario))) {
+    stop("Time span not available in scenario run.")
+  }
+  if (!all(time_span_reference %in% get_sim_time(config_reference))) {
+    stop("Time span not available in reference run.")
+  }
 
   # List required output files for each boundary
   output_files <- list_outputs(
@@ -93,18 +97,18 @@ calc_status <- function(boundary,
 
   # Get filenames for scenario and reference
   files_scenario <- get_filenames(
-    path = path_scenario,
-    output_files = output_files,
-    diff_output_files = diff_output_files,
-    input_files = input_files,
-    file_ext = file_ext
+    config = config_scenario,
+    output_files = output_files
   )
   files_reference <- get_filenames(
-    path = path_reference,
-    output_files = output_files,
-    diff_output_files = diff_output_files,
-    input_files = input_files,
-    file_ext = file_ext
+    config = config_reference,
+    output_files = output_files
+  )
+
+  config_args <- list()
+  config_args$spatial_subset <- get_spatial_subset(
+    config_scenario,
+    config_reference
   )
 
   # Get arguments for each boundary function
@@ -127,20 +131,24 @@ calc_status <- function(boundary,
       time_span_scenario = time_span_scenario,
       time_span_reference = time_span_reference,
       spatial_scale = spatial_scale,
-      avg_nyear_args = avg_nyear_args
+      time_aggregation_args = time_aggregation_args,
+      config_args = config_args
     )
+
     if (length(method[[bound]]) > 0) {
       inner_args$method <- method_i <- method[[bound]]
     } else {
       method_i <- formals(get(fun_name))$method
     }
+
     if (length(thresholds[[bound]]) > 0) {
       inner_args$thresholds <- thresholds[[bound]]
     } else {
       inner_args$thresholds <- list_thresholds(bound, method_i, spatial_scale)
     }
+
     # Calculate status
-    print(bound)
+    message(bound)
     all_status[[bound]] <- do.call(
       fun_name,
       args = c(
@@ -149,6 +157,7 @@ calc_status <- function(boundary,
       )
     )
   }
+
   # Check if all arguments were used
   if (length(check_args) != 0) {
     warning(paste0("The following arguments were not used: ",
@@ -159,72 +168,16 @@ calc_status <- function(boundary,
 }
 
 
-get_file_ext <- function(path) {
-  # Get all files in path
-  all_files <- list.files(
-    path,
-    full.names = TRUE
-  )
-
-  # Get file extensions
-  all_file_types <- all_files %>%
-    strsplit("/") %>%
-    sapply(tail, 1) %>%
-    strsplit("^([^\\.]+)") %>%
-    sapply(function(x) {
-      y <- x[2]
-      return(y)
-    }) %>%
-    substr(2, nchar(.))
-
-  # Get most frequent file types
-  #TODO not yet working
-  most_frequent <- all_file_types %>%
-    factor() %>%
-    table() %>%
-    names()
-
-  # exemplaric files to detect type
-  files_to_check <- sapply(
-    most_frequent,
-    function(x, y, z) {
-      y[which(z == x)[1]]
-    },
-    y = all_files,
-    z = all_file_types)
-
-  # Detect actual LPJmL data type
-  types <- sapply(
-    files_to_check,
-    lpjmlkit:::detect_io_type
-  ) %>%
-  setNames(names(.), .)
-
-  # Assign file type after ranking which is available
-  # first preferable: "meta", second: "clm", last: "raw"
-  if ("meta" %in% names(types)) {
-   file_type <- types["meta"]
-  } else if ("clm" %in% names(types)) {
-   file_type <- types["clm"]
-  } else if ("raw" %in% names(types)) {
-   file_type <- types["raw"]
-  }
-  return(file_type)
-}
-
-
-get_filenames <- function(path,
-                          output_files,
-                          diff_output_files,
-                          input_files,
-                          file_ext) {
+get_filenames <- function(config,
+                          output_files) {
 
   file_names <- list()
+  sim_data <- get_sim_data(config)
   # Iterate over required outputs
-  for (ofile in names(output_files)) {
+  for (data_file in names(output_files)) {
 
-  # Get required max. temporal resolution and convert to nstep
-    resolution <- output_files[[ofile]]$resolution
+    # Get required max. temporal resolution and convert to nstep
+    resolution <- output_files[[data_file]]$resolution
     nstep <- switch(
       resolution,
       annual = 1,
@@ -234,22 +187,13 @@ get_filenames <- function(path,
     )
 
     # If input file supplied use it as first priority
-    if (ofile %in% names(input_files)) {
-      file_name <- input_files[[ofile]]
-
-    } else if (ofile %in% names(diff_output_files)) {
-
-      # If different output file should be used - as second priority
-      file_name <- paste0(
-        path, "/",
-        diff_output_files[[ofile]], ".",
-        file_ext
-      )
+    if (data_file %in% names(sim_data)) {
+      file_name <- sim_data[[data_file]]
     } else {
       file_name <- NULL
     }
 
-    if (!is.null(file_name)) {
+    if (!is.null(file_name) && endsWith(file_name, "json")) {
 
       # Check if data could be read in
       meta <- lpjmlkit::read_meta(file_name)
@@ -264,42 +208,8 @@ get_filenames <- function(path,
           )
         )
       }
-
-    # If nothing specified try to read required files from provided path
-    } else {
-
-      # Iterate over different used file name options (e.g. runoff, mrunoff, ...) # nolint
-      for (cfile in seq_along(output_files[[ofile]]$file_name)) {
-        file_name <- paste0(
-          path, "/",
-          output_files[[ofile]]$file_name[cfile], ".",
-          file_ext
-        )
-
-        # Check if file exists and if so check required temporal resolution
-        # else next
-        if (file.exists(file_name)) {
-          meta <- lpjmlkit::read_meta(file_name)
-          if (nstep <= meta$nstep || nstep == meta$nbands) {
-            # Matching file found, break and use current file_name
-            break
-          }
-        }
-
-        # At end of iteraton raise error that no matching file_name was found
-        if (cfile == length(output_files[[ofile]]$file_name) &&
-            !output_files[[ofile]]$optional) {
-          stop(
-            paste0(
-              "No matching output for ", dQuote(ofile),
-              " with required temporal resolution (nstep = ", nstep, ") ",
-              "found at path ", dQuote(path), "."
-            )
-          )
-        }
-      }
     }
-    file_names[[ofile]] <- file_name
+    file_names[[data_file]] <- file_name
   }
   file_names
 }

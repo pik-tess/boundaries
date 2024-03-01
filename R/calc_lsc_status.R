@@ -12,6 +12,9 @@
 #' provided in XXX. E.g.: list(leaching = "/temp/leaching.bin.json"). If not
 #' needed for the applied method, set to NULL.
 #'
+#' @param spatial_scale character. Spatial resolution, available options
+#' are `"subglobal"` (at the biome level, default), `"global"` and `"grid"`
+#'
 #' @param time_span_scenario time span to be used for the scenario run, defined
 #' as a character string, e.g. `as.character(1982:2011)` (default)
 #'
@@ -20,31 +23,28 @@
 #' and length from `time_span_scenario`! If `NULL` value of `time_span_scenario`
 #' is used
 #'
-#' @param spatial_scale character. Spatial resolution, available options
-#'        are `"subglobal"` (at the biome level, default), `"global"` and
-#'        `"grid"`
-#'
-#' @param eurasia logical. If `spatial_scale` = `"biome"` merge continents
-#'        Europe and Asia to avoid arbitrary biome cut at europe/asia border.
-#'        Defaults to `TRUE`
-#'
 #' @param thresholds list with deforestation thresholds for defining safe,
-#'        increasing risk and high risk zone
-#'        Default based on Steffen et al. 2015 if thresholds set to NULL
-#'        (https://doi.org/10.1126/science.1259855):
-#'        for gridded and biome scale application:
-#'        list(pb = list(temperate = 0.5, tropical = 0.15, boreal = 0.15),
-#'             highrisk = list(temperate = 0.7, tropical = 0.4, boreal = 0.4))
-#'        for global scale application:
-#'        list(holocene = 0, pb = 0.25, highrisk = 0.46)
-#'        pb = threshold between safe zone and increasing risk zone
-#'             (e.g. 50% for boreal forest with default value)
-#'        highrisk = threshold between increasing risk and high risk zone
-#' 
+#' increasing risk and high risk zone. Default based on Steffen et al. 2015 if
+#' thresholds set to NULL (https://doi.org/10.1126/science.1259855):
+#' for gridded and biome scale application:
+#' `list(pb = list(temperate = 0.5, tropical = 0.15, boreal = 0.15),
+#'      highrisk = list(temperate = 0.7, tropical = 0.4, boreal = 0.4))
+#' for global scale application:
+#' list(holocene = 0, pb = 0.25, highrisk = 0.46)
+#' pb = threshold between safe zone and increasing risk zone
+#'      (e.g. 50% for boreal forest with default value)
+#' highrisk = threshold between increasing risk and high risk zone
 #'
-#' @param avg_nyear_args list of arguments to be passed to
-#'        \link[boundaries]{average_nyear_window} (see for more info).
-#'        To be used for time series analysis
+#' @param time_aggregation_args list of arguments to be passed to
+#' \link[boundaries]{aggregate_time} (see for more info). To be used for time
+#' series analysis
+#'
+#' @param config_args list of arguments to be passed on from the model
+#' configuration.
+#'
+#' @param eurasia logical. If `spatial_scale` = `"subglobal"` merge continents
+#' Europe and Asia to avoid arbitrary biome cut at europe/asia border.
+#' Defaults to `TRUE`
 #'
 #' @param ... arguments forwarded to \link[boundaries](classify_biomes)
 #'
@@ -58,13 +58,14 @@
 calc_lsc_status <- function(
   files_scenario,
   files_reference,
+  spatial_scale = "subglobal",
   time_span_scenario = as.character(1982:2011),
   time_span_reference = time_span_scenario,
-  spatial_scale = "subglobal",
-  eurasia = TRUE,
   thresholds = NULL,
   method = "steffen2015",
-  avg_nyear_args = list(),
+  time_aggregation_args = list(),
+  config_args = list(),
+  eurasia = TRUE,
   ...
 ) {
 
@@ -79,7 +80,8 @@ calc_lsc_status <- function(
     classify_biomes,
     append(list(files_reference = files_reference,
                 time_span_reference = time_span_reference,
-                avg_nyear_args = list(),
+                time_aggregation_args = list(),
+                config_args = config_args,
                 montane_arctic_proxy = NULL),
            ellipsis_filtered)
   )
@@ -110,6 +112,7 @@ calc_lsc_status <- function(
       subset = list(year = time_span_scenario),
       silent = TRUE
     ) %>%
+      conditional_subset(config_args$spatial_subset) %>%
       lpjmlkit::transform(to = c("year_month_day")) %>%
       lpjmlkit::as_array()
   }
@@ -120,6 +123,7 @@ calc_lsc_status <- function(
       subset = list(year = time_span_reference),
       silent = TRUE
     ) %>%
+      conditional_subset(config_args$spatial_subset) %>%
       lpjmlkit::transform(to = c("year_month_day")) %>%
       lpjmlkit::as_array()
   }
@@ -188,9 +192,9 @@ calc_lsc_status <- function(
   )
 
   # average forest over time
-  avg_trees_scenario %<-% do.call(average_nyear_window,
+  avg_trees_scenario %<-% do.call(aggregate_time,
                                   append(list(x = all_tree_cover_scenario),
-                                         avg_nyear_args))
+                                         time_aggregation_args))
 
 
   # average forest over time
@@ -251,10 +255,6 @@ calc_lsc_status <- function(
   deforestation[deforestation > 1] <- 1
   deforestation[deforestation > 0] <- 1 - deforestation[deforestation > 0]
 
-  # get flexibly named time dimension
-  third_dim <- names(dim(deforestation))[
-    !names(dim(deforestation)) %in% c("cell")
-  ]
 
   if (spatial_scale == "subglobal") {
 
@@ -281,6 +281,10 @@ calc_lsc_status <- function(
       if (!any(sub_cells)) {
         next
       }
+      # get flexibly named time dimension
+      third_dim <- names(dim(deforestation))[
+        !names(dim(deforestation)) %in% c("cell")
+      ]
       sub_deforest[!sub_cells] <- NA
       sub_deforest <- apply(
         sub_deforest,
@@ -334,12 +338,15 @@ calc_lsc_status <- function(
     deforestation[as.vector(is_forest == 0), ] <- NA
     control_variable <- apply(deforestation, dim_remain, mean, na.rm = TRUE)
     attr(control_variable, "thresholds") <- thresholds
-    attr(control_variable, "control variable") <- "deforestation"
 
   }
 
+  attr(control_variable, "control_variable") <- "deforestation"
+  attr(control_variable, "spatial_scale") <- spatial_scale
+  class(control_variable) <- c("control_variable")
   return(control_variable)
 }
+
 
 read_biome_mapping <- function(file_path) {
   # read_delim, col_types = readr::cols(), delim = ";")to suppress messages

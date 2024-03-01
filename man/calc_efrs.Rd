@@ -4,7 +4,7 @@
 \alias{calc_efrs}
 \title{Calculate environmental flow requirements (EFRs)}
 \usage{
-calc_efrs(x, method = "vmf", avg_nyear_args = list())
+calc_efrs(x, method = "vmf", time_aggregation_args = list())
 }
 \arguments{
 \item{x}{discharge array with \code{dim(x)=c(cell, month, year)}}
@@ -14,8 +14,8 @@ calc_efrs(x, method = "vmf", avg_nyear_args = list())
 as well as \code{"steffen2015"}, a modified version of vmf by
 \href{https://doi.org/10.1126/science.1259855}{Steffen et al. 2015}}
 
-\item{avg_nyear_args}{list of arguments to be passed to
-\link[boundaries]{average_nyear_window} (see for more info). To be used for
+\item{time_aggregation_args}{list of arguments to be passed to
+\link[boundaries]{aggregate_time} (see for more info). To be used for
 time series analysis.}
 }
 \value{
@@ -39,7 +39,7 @@ dim(efrs1)
 #  interpolate between 3 windows afterwards to return 90 years (interpolated)
 efrs2 <- calcEFRs(discharge_90y = discharge,
                   method="vmf",
-                  avg_nyear_args = list(nyear_avg = 30, interpolate = TRUE))
+                  time_aggregation_args = list(nyear_avg = 30, interpolate = TRUE))
 
 dim(efrs2)
 # c(67420, 12, 90)
@@ -48,7 +48,7 @@ dim(efrs2)
 # example for using a 1 year (no average) bin for a 100 year discharge
 efrs3 <- calcEFRs(discharge_100y = discharge,
                   method = "vmfmin",
-                  avg_nyear_args = list(nyear_avg = 1))
+                  time_aggregation_args = list(nyear_avg = 1))
 
 dim(efrs3)
 # c(67420, 12, 100)

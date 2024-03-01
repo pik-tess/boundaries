@@ -19,9 +19,12 @@
 #' Can differ in offset and length from `time_span_scenario`!
 #' If `NULL` value of `time_span_scenario` is used
 #'
-#' @param avg_nyear_args list of arguments to be passed to
-#' \link[boundaries]{average_nyear_window} (see for more info).
+#' @param time_aggregation_args list of arguments to be passed to
+#' \link[boundaries]{aggregate_time} (see for more info).
 #' To be used for time series analysis
+#'
+#' @param config_args list of arguments to be passed on from the model
+#' configuration.
 #'
 #' @param method method (character string) to be used , currently available
 #' method is `c("wang-erlandsson2022")` based on
@@ -35,7 +38,7 @@
 #' either "grid", "subglobal" or "global" for calculation of the share (%) 
 #' of total global area with deviations
 #'
-#' #' @param thresholds named character string with thresholds to be used to
+#' @param thresholds named character string with thresholds to be used to
 #' define the safe, increasing risk and high risk zone,
 #' e.g. c(holocene = 0.5, pb = 0.95, highrisk = 0.99).
 #' For spatial resolution = "grid", this refers to the p value
@@ -56,12 +59,14 @@
 #'
 #' @md
 #' @export
-calc_greenwater_status <- function(files_scenario,
+calc_greenwater_status <- function(
+  files_scenario,
   files_reference,
+  spatial_scale = "global",
   time_span_scenario = NULL,
   time_span_reference = NULL,
-  avg_nyear_args = list(),
-  spatial_scale = "grid",
+  time_aggregation_args = list(),
+  config_args = list(),
   method = "wang-erlandsson2022",
   thresholds = NULL
 ) {
@@ -74,17 +79,17 @@ calc_greenwater_status <- function(files_scenario,
 
   # -------------------------------------------------------------------------- #
   # calc deviations for rootmoisture
-  deviations_rootmoisture <- calc_water_status(
-    file_scenario = files_scenario$rootmoist,
-    file_reference = files_reference$rootmoist,
-    terr_area_path = files_reference$terr_area,
-    drainage_path = files_reference$drainage,
+  deviations_rootmoisture <- calc_water_deviations(
+    files_scenario = files_scenario,
+    files_reference = files_reference,
+    spatial_scale = spatial_scale,
     time_span_scenario = time_span_scenario,
     time_span_reference =  time_span_reference,
     method = method,
-    avg_nyear_args = avg_nyear_args,
-    spatial_scale = spatial_scale,
-    thresholds = thresholds
+    time_aggregation_args = time_aggregation_args,
+    config_args = config_args,
+    thresholds = thresholds,
+    variable = "rootmoist"
   )
 
   return(deviations_rootmoisture)

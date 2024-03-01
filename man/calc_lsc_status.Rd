@@ -13,7 +13,7 @@ calc_lsc_status(
   eurasia = TRUE,
   thresholds = NULL,
   method = "steffen2015",
-  avg_nyear_args = list(),
+  time_aggregation_args = list(),
   ...
 )
 }
@@ -56,8 +56,8 @@ pb = threshold between safe zone and increasing risk zone
 (e.g. 50\% for boreal forest with default value)
 highrisk = threshold between increasing risk and high risk zone}
 
-\item{avg_nyear_args}{list of arguments to be passed to
-\link[boundaries]{average_nyear_window} (see for more info).
+\item{time_aggregation_args}{list of arguments to be passed to
+\link[boundaries]{aggregate_time} (see for more info).
 To be used for time series analysis}
 
 \item{...}{arguments forwarded to \link\href{classify_biomes}{boundaries}}

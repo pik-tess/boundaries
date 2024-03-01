@@ -15,7 +15,7 @@ calc_nitrogen_status(
   cut_arid = 0.2,
   cut_runoff = 0,
   with_groundwater_denit = TRUE,
-  avg_nyear_args = list()
+  time_aggregation_args = list()
 )
 }
 \arguments{
@@ -65,8 +65,8 @@ groundwater denitrification losses. Defaults to TRUE ( = simulated leaching
 is multiplied with 0.71 based on simulated denitrification losses in ground
 water from Bouwman et al 2013)}
 
-\item{avg_nyear_args}{list of arguments to be passed to
-\link[boundaries]{average_nyear_window} (see for more info). To be used for
+\item{time_aggregation_args}{list of arguments to be passed to
+\link[boundaries]{aggregate_time} (see for more info). To be used for
 time series analysis}
 }
 \description{

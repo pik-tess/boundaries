@@ -4,8 +4,10 @@
 #' LPJmL output plus either vegetation carbon or pft_lai depending on
 #' the savanna_proxy option and elevation if montane_arctic_proxy requires this
 #'
-#' @param path_reference path to the reference LPJmL run. If not provided,
-#'        the path is extracted from the file paths provided in files_reference.
+#' @param config_reference character string. File path to the LPjmL
+#'        configuration file (json) of the reference run. The configuration file
+#'        contains the information about the LPJmL run, e.g. the output
+#'        directory
 #' @param files_reference list with variable names and corresponding file paths
 #'        (character string) of the reference LPJmL run. All needed files are
 #'        provided as key value pairs, e.g.:
@@ -36,8 +38,8 @@
 #'        boreal forest threshold will be classified as boreal tundra.
 #' @param method character string indicating which biome classification method
 #'        to use. Currently only one is defined ("default").
-#' @param avg_nyear_args list of arguments to be passed to
-#'        \link[boundaries]{average_nyear_window} (see for more info).
+#' @param time_aggregation_args list of arguments to be passed to
+#'        \link[boundaries]{aggregate_time} (see for more info).
 #'        To be used for time series analysis
 #' @param input_files list of required file(s) using ID (e.g. `temp`,
 #'        `elevation`) and an absolute file path to the corresponding input file
@@ -57,36 +59,40 @@
 #' }
 #'
 #' @export
-classify_biomes <- function(path_reference = NULL,
+classify_biomes <- function(config_reference = NULL,
                             files_reference = NULL,
                             time_span_reference,
-                            savanna_proxy = list(pft_lai = 6),
+                            savanna_proxy = list(vegc = 7500),
                             montane_arctic_proxy = list(elevation = 1000),
                             tree_cover_thresholds = list(),
                             method = "default",
-                            avg_nyear_args = list(),
+                            time_aggregation_args = list(),
+                            config_args = list(),
                             input_files = list(),
                             diff_output_files = list()) {
 
-  if (is.null(files_reference) && is.null(path_reference)) {
+  if (is.null(files_reference) && is.null(config_reference)) {
     stop("files_reference or path_reference must be provided")
 
-  } else if (!is.null(path_reference) && is.null(files_reference)) {
+  } else if (!is.null(config_reference) && is.null(files_reference)) {
     # Get main file type (meta, clm)
-    file_ext <- get_file_ext(path_reference)
+    config_reference <- lpjmlkit::read_config(config_reference)
 
+    if (!all(time_span_reference %in% get_sim_time(config_reference))) {
+      stop("Time span not available in reference run.")
+    }
     # List required output files for each boundary
-    output_files <- list_outputs("biome",
-                                 method = list("biome" = method),
-                                 spatial_scale = "subglobal",
-                                 only_first_filename = FALSE)
+
+    output_files <- list_outputs(
+      "biome",
+      method = list("biome" = method),
+      spatial_scale = "subglobal",
+      only_first_filename = FALSE
+    )
 
     files_reference <- get_filenames(
-      path = path_reference,
-      output_files = output_files,
-      diff_output_files = diff_output_files,
-      input_files = input_files,
-      file_ext = file_ext
+      config = config_reference,
+      output_files = output_files
     )
   }
 
@@ -136,21 +142,25 @@ classify_biomes <- function(path_reference = NULL,
   grid <- lpjmlkit::read_io(
     files_reference$grid,
     silent = TRUE
-  )
+  ) %>%
+    conditional_subset(config_args$spatial_subset)
+
   # bands currently not named in grid file, therefore band 2 manually selected
   lat <- lpjmlkit::as_array(grid, subset = list(band = 2)) %>%
     drop()
+
   fpc %<-% read_io_format(
     files_reference$fpc,
-    time_span_reference
+    time_span_reference,
+    spatial_subset = config_args$spatial_subset
   )
-
   temp %<-% {
     lpjmlkit::read_io(
       files_reference$temp,
       subset = list(year = time_span_reference),
       silent = TRUE
     ) %>%
+      conditional_subset(config_args$spatial_subset) %>%
       lpjmlkit::transform(to = c("year_month_day")) %>%
       lpjmlkit::as_array(aggregate =
                            list(month = mean, day = mean, band = mean)) %>%
@@ -160,7 +170,9 @@ classify_biomes <- function(path_reference = NULL,
   if (!is.na(savanna_proxy_name)) {
     savanna_proxy_data %<-% read_io_format(
       files_reference[[savanna_proxy_name]],
-      time_span_reference
+      time_span_reference,
+      spatial_subset = config_args$spatial_subset,
+      aggregate = list(band = sum)
     )
   }
 
@@ -169,8 +181,10 @@ classify_biomes <- function(path_reference = NULL,
       elevation <- lpjmlkit::read_io(
         files_reference$elevation,
         silent = TRUE
-      )$data %>%
-      drop()
+      ) %>%
+        conditional_subset(config_args$spatial_subset) %>%
+        lpjmlkit::as_array() %>%
+        drop()
     }
   }
 
@@ -179,29 +193,28 @@ classify_biomes <- function(path_reference = NULL,
 
   # average fpc
   avg_fpc %<-% do.call(
-    average_nyear_window,
+    aggregate_time,
     append(list(x = fpc),
-           avg_nyear_args)
+           time_aggregation_args)
   )
 
   # average vegc or pft_lai
   if (!is.na(savanna_proxy_name)) {
     avg_savanna_proxy_data %<-% drop(
       do.call(
-        average_nyear_window,
+        aggregate_time,
         append(list(x = savanna_proxy_data),
-               avg_nyear_args)
+               time_aggregation_args)
       )
     )
   }
-
   # average temp
   # TODO understand why additional dimension is added here but not for fpc
   # (67420, 1)
   avg_temp %<-% do.call(
-    average_nyear_window,
+    aggregate_time,
     append(list(x = temp),
-           avg_nyear_args)
+           time_aggregation_args)
   )
 
   # biome_names after biome classification in Ostberg et al. 2013
@@ -350,8 +363,11 @@ classify_biomes <- function(path_reference = NULL,
                                dimnames = dimnames(avg_temp))
   }
 
+  # catch low fpc values
+  low_fpc <- 0.05
   # Desert
-  low_temp_threshold <- 0 #TODO temperature still hard coded --> ok?, in Ostberg et al. 2013: -2
+  #TODO temperature still hard coded --> ok?, in Ostberg et al. 2013: -2
+  low_temp_threshold <- 0
 
   is_desert <- {
     fpc_total <= low_fpc &
@@ -568,7 +584,7 @@ classify_biomes <- function(path_reference = NULL,
 
   # GRASSLAND ---------------------------------------------------------------- #
   # TODO: add all hard coded assumptions to the beginning of the function
-  low_fpc <- 0.05
+
   # Temperate grassland
   is_temperate_grassland <- {
     fpc_total > low_fpc &
