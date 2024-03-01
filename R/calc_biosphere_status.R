@@ -54,12 +54,12 @@
 #' according to Haberl et al. 2007). Below BioCol will be set to 0.
 #' (default: 20 gC/m2)
 #'
-#' @param avg_nyear_args list of arguments to be passed to
-#' \link[boundaries]{average_nyear_window} (see for more info).
-#' To be used for time series analysis
-#'
 #' @param biocol_option which biocol values to use for aggregation. options:
 #' netsum, only_above_zero, abs - TODO: finish
+#'
+#' @param eurasia logical. If `spatial_scale` = `"subglobal"` merge continents
+#' Europe and Asia to avoid arbitrary biome cut at europe/asia border.
+#' Defaults to `TRUE`
 #'
 #' @param ... arguments forwarded to \link[boundaries](classify_biomes)
 #'
@@ -83,10 +83,13 @@ calc_biosphere_status <- function(
   time_span_baseline = time_span_reference,
   gridbased = TRUE,
   npp_threshold = 20,
-  avg_nyear_args = list(),
-  biocol_option = "abs",
+  biocol_option = "abs", #TODO change back to "only_above_zero" once it is working
+  eurasia = TRUE,
   ...
 ) {
+
+  biocol_option <- match.arg(biocol_option,
+                             c("only_above_zero", "netsum", "abs"))
 
   files_baseline <- lapply(
     files_scenario,
@@ -159,6 +162,7 @@ calc_biosphere_status <- function(
 
 
     # TODO: also for global
+    # TODO only_above_zero not working?
     # initialize control variable vector
     if (biocol_option == "abs") {
       control_variable_raw <- abs(biocol$biocol)
@@ -172,8 +176,8 @@ calc_biosphere_status <- function(
     }
 
     # get continents mask - pass arg of whether to merge europe and asia
-    # implicit eurasia = TRUE
-    continent_grid %<-% calc_continents_mask(files_reference$grid)
+    continent_grid %<-% calc_continents_mask(files_reference$grid,
+                                             eurasia = eurasia)
 
     # create space of combinations to loop over (even though not all make sense)
     comb <- expand.grid(
@@ -253,7 +257,7 @@ calc_biosphere_status <- function(
                               append(list(x = control_variable_raw),
                                      time_aggregation_args))
 
-  attr(control_variable, "spatial scale") <- spatial_scale
+  attr(control_variable, "spatial_scale") <- spatial_scale
   attr(control_variable, "thresholds") <- thresholds
   attr(control_variable, "control_variable") <- "BioCol (in fraction of NPPref)"
 

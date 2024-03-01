@@ -28,10 +28,6 @@
 #' "wang_erlandsson2022" as well as "porkka2023" for
 #' spatial_scale = "global" or "subglobal"
 #'
-#' @param cut_min double. Exclude boundary calculations for discharge < cut_min
-#' and dismiss EFR transgresssions if < cut_min for "gerten2020" method,
-#' Default: 0.0864 hm3/day (=1 m3/s)
-#'
 #' @param time_aggregation_args list of arguments to be passed to
 #' \link[boundaries]{aggregate_time} (see for more info). To be used for
 #' time series analysis
@@ -49,6 +45,10 @@
 #' define the safe, increasing risk and high risk zone, the method and scale
 #' specific default thresholds are defined in metric_files.yml are are applied
 #' if thresholds are set to NULL.
+#' 
+#' @param cut_min double. Exclude boundary calculations for discharge < cut_min
+#' and dismiss EFR transgresssions if < cut_min for "gerten2020" method,
+#' Default: 0.0864 hm3/day (=1 m3/s)
 #'
 #'@return todo: describe returned object
 #'
@@ -93,7 +93,8 @@ calc_bluewater_status <- function(files_scenario,
       method = method,
       time_aggregation_args = time_aggregation_args,
       config_args = config_args,
-      thresholds = thresholds
+      thresholds = thresholds,
+      cut_min = cut_min
     )
 
   } else if (spatial_scale %in% c("subglobal", "global")) {
@@ -133,10 +134,10 @@ calc_bluewater_efrs <- function(
   time_span_scenario = time_span_scenario,
   time_span_reference = NULL,
   method = "gerten2020",
-  cut_min = 0.0864,
   time_aggregation_args = list(),
   config_args = list(),
-  thresholds = NULL
+  thresholds = NULL,
+  cut_min = 0.0864
 ) {
 
   if (spatial_scale != "grid") {
@@ -255,7 +256,7 @@ calc_bluewater_efrs <- function(
   attr(control_variable, "control_variable") <-
     "environmental flow requirements"
   attr(control_variable, "thresholds") <- thresholds
-  attr(control_variable, "spatial scale") <- spatial_scale
+  attr(control_variable, "spatial_scale") <- spatial_scale
 
   class(control_variable) <- c("control_variable")
   return(control_variable)

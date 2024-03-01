@@ -168,7 +168,7 @@ classify_biomes <- function(config_reference = NULL,
   }
 
   if (!is.na(savanna_proxy_name)) {
-    savanna_proxy_data <- read_io_format(
+    savanna_proxy_data %<-% read_io_format(
       files_reference[[savanna_proxy_name]],
       time_span_reference,
       spatial_subset = config_args$spatial_subset,
@@ -192,7 +192,7 @@ classify_biomes <- function(config_reference = NULL,
   npft <- fpc_nbands - 1
 
   # average fpc
-  avg_fpc <- do.call(
+  avg_fpc %<-% do.call(
     aggregate_time,
     append(list(x = fpc),
            time_aggregation_args)
@@ -200,7 +200,7 @@ classify_biomes <- function(config_reference = NULL,
 
   # average vegc or pft_lai
   if (!is.na(savanna_proxy_name)) {
-    avg_savanna_proxy_data <- drop(
+    avg_savanna_proxy_data %<-% drop(
       do.call(
         aggregate_time,
         append(list(x = savanna_proxy_data),
@@ -211,7 +211,7 @@ classify_biomes <- function(config_reference = NULL,
   # average temp
   # TODO understand why additional dimension is added here but not for fpc
   # (67420, 1)
-  avg_temp <- do.call(
+  avg_temp %<-% do.call(
     aggregate_time,
     append(list(x = temp),
            time_aggregation_args)
@@ -281,49 +281,49 @@ classify_biomes <- function(config_reference = NULL,
   ] %>% {
     if (rlang::is_empty(.)) NULL else .
   }
-  fpc_tree_total <- apply(
+  fpc_tree_total %<-% apply(
     lpjmlkit::asub(avg_fpc, band = fpc_trees, drop = FALSE),
     c("cell", third_dim),
     sum,
     na.rm = TRUE
   )
-  fpc_tree_tropical <- apply(
+  fpc_tree_tropical %<-% apply(
     lpjmlkit::asub(avg_fpc, band = fpc_tropical_trees, drop = FALSE),
     c("cell", third_dim),
     sum,
     na.rm = TRUE
   )
-  fpc_tree_temperate <- apply(
+  fpc_tree_temperate %<-% apply(
     lpjmlkit::asub(avg_fpc, band = fpc_temperate_trees, drop = FALSE),
     c("cell", third_dim),
     sum,
     na.rm = TRUE
   )
-  fpc_tree_boreal <- apply(
+  fpc_tree_boreal %<-% apply(
     lpjmlkit::asub(avg_fpc, band = fpc_boreal_trees, drop = FALSE),
     c("cell", third_dim),
     sum,
     na.rm = TRUE
   )
-  fpc_tree_needle <- apply(
+  fpc_tree_needle %<-% apply(
     lpjmlkit::asub(avg_fpc, band = fpc_needle_trees, drop = FALSE),
     c("cell", third_dim),
     sum,
     na.rm = TRUE
   )
-  fpc_tree_evergreen <- apply(
+  fpc_tree_evergreen %<-% apply(
     lpjmlkit::asub(avg_fpc, band = fpc_evergreen_trees, drop = FALSE),
     c("cell", third_dim),
     sum,
     na.rm = TRUE
   )
-  fpc_grass_total <- apply(
+  fpc_grass_total %<-% apply(
     lpjmlkit::asub(avg_fpc, band = fpc_grass, drop = FALSE),
     c("cell", third_dim),
     sum,
     na.rm = TRUE
   )
-  fpc_total <- apply(
+  fpc_total %<-% apply(
     lpjmlkit::asub(avg_fpc, band = -1, drop = FALSE),
     c("cell", third_dim),
     sum,
@@ -331,7 +331,7 @@ classify_biomes <- function(config_reference = NULL,
   )
 
   # define maximum share of trees among all tree PFTs per grid cell
-  max_share_trees <- apply(
+  max_share_trees %<-% apply(
     lpjmlkit::asub(avg_fpc, band = fpc_trees, drop = FALSE),
     c("cell", third_dim),
     max,
@@ -344,7 +344,7 @@ classify_biomes <- function(config_reference = NULL,
   #   "boundary
   if (!is.null(savanna_proxy)) {
     if (savanna_proxy_name == "pft_lai") {
-      avg_savanna_proxy_data <- apply(
+      avg_savanna_proxy_data %<-% apply(
         lpjmlkit::asub(avg_savanna_proxy_data, band = 1:npft, drop = FALSE) * # nolint
           lpjmlkit::asub(avg_fpc, band = 2: (npft + 1), drop = FALSE) *
           lpjmlkit::asub(avg_fpc, band = 1, drop = FALSE),

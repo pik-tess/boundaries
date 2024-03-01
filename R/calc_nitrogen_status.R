@@ -345,7 +345,7 @@ calc_nitrogen_status <- function(
       "nitrogen surplus on agricultural land"
     )
   }
-  attr(control_variable, "spatial scale") <- spatial_scale
+  attr(control_variable, "spatial_scale") <- spatial_scale
 
   class(control_variable) <- c("control_variable")
   return(control_variable)

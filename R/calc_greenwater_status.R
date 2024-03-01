@@ -62,7 +62,7 @@
 calc_greenwater_status <- function(
   files_scenario,
   files_reference,
-  spatial_scale = "grid",
+  spatial_scale = "global",
   time_span_scenario = NULL,
   time_span_reference = NULL,
   time_aggregation_args = list(),

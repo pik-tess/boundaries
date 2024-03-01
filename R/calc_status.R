@@ -62,7 +62,7 @@ calc_status <- function(boundary,
 
   # If in_parallel use future package for asynchronous parallelization
   if (in_parallel) {
-    rlang::local_options(future.globals.maxSize = 1500 * 1024^2)
+    rlang::local_options(future.globals.maxSize = 3000 * 1024^2)
     if (.Platform$OS.type == "windows") {
       future_plan <- future::plan("multisession")
     } else {
