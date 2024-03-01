@@ -2,14 +2,17 @@ get_sim_time <- function(config) {
   if (is.character(config)) {
     config <- lpjmlkit::read_config(config)
   }
-  return(as.character(config$firstyear:config$lastyear))
+  return(as.character(config$outputyear:config$lastyear))
 }
 
-get_sim_cells <- function(config, all_as_null = FALSE) {
+get_sim_cells <- function(config, all_as_null = TRUE) {
   if (is.character(config)) {
     config <- lpjmlkit::read_config(config)
   }
-
+  if (config$startgrid == "all" && config$endgrid == "all") {
+    config$startgrid <- 0
+    config$endgrid <- 67419
+  }
   if (all_as_null && config$startgrid == 0 && config$endgrid == 67419) {
     return(NULL)
   }

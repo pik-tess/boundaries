@@ -81,7 +81,7 @@ calc_biosphere_status <- function(
   config_args = list(),
   path_baseline,
   time_span_baseline = time_span_reference,
-  gridbased = TRUE,
+  gridbased = TRUE, #TODO gridbased can be retrieved from config!
   npp_threshold = 20,
   biocol_option = "abs", #TODO change back to "only_above_zero" once it is working
   eurasia = TRUE,
