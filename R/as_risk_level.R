@@ -82,11 +82,16 @@ as_risk_level <- function(
       # normalized to 0 (holocene) to 1 (pb)
       if (class(thresholds) == "list") {
         risk_level <- control_variable
-        risk_level[control_variable >= thresholds[["pb"]]] <-
-          (control_variable[control_variable >= thresholds[["pb"]]] - thresholds[["pb"]]) / # nolint
+        risk_level[control_variable >= thresholds[["pb"]] &
+                     is.na(control_variable) == FALSE] <-
+          (control_variable[control_variable >= thresholds[["pb"]] &
+                            is.na(control_variable) == FALSE] -
+          thresholds[["pb"]]) / # nolint
           (thresholds[["highrisk"]] - thresholds[["pb"]]) + 1
-        risk_level[control_variable < thresholds[["pb"]]] <-
-          1 - (control_variable[control_variable < thresholds[["pb"]]] - thresholds[["pb"]]) / # nolint
+        risk_level[control_variable < thresholds[["pb"]] &
+                     is.na(control_variable) == FALSE] <-
+          1 - (control_variable[control_variable < thresholds[["pb"]] &
+                     is.na(control_variable) == FALSE] - thresholds[["pb"]]) / # nolint
           (thresholds[["holocene"]] - thresholds[["pb"]])
         attr(risk_level, "thresholds") <-
           list(
@@ -101,14 +106,22 @@ as_risk_level <- function(
 
       } else if (class(thresholds) == "array") {
         risk_level <- control_variable
-        risk_level[control_variable >= thresholds[[, , "pb"]]] <-
-          (control_variable[control_variable >= thresholds[[, , "pb"]]] -
-           thresholds[[, , "pb"]]) /
-          (thresholds[[, , "highrisk"]] - thresholds[[, , "pb"]]) + 1
-        risk_level[control_variable < thresholds[[, , "pb"]]] <-
-          1 - (control_variable[control_variable < thresholds[[, , "pb"]]] -
-               thresholds[[, , "pb"]]) /
-          (thresholds[[, , "holocene"]] - thresholds[[, , "pb"]])
+        thresh_holocene <- thresholds[, , "holocene"]
+        thresh_pb <- thresholds[, , "pb"]
+        thresh_highrisk <- thresholds[, , "highrisk"]
+        subset_safe <- which(control_variable < thresh_pb &
+                               is.na(control_variable) == FALSE)
+        subset_increasingrisk <- which(control_variable >= thresh_pb  &
+                                         is.na(control_variable) == FALSE)
+        risk_level[subset_increasingrisk] <-
+          (control_variable[subset_increasingrisk] -
+           thresh_pb[subset_increasingrisk]) /
+          (thresh_highrisk[subset_increasingrisk] -
+           thresh_pb[subset_increasingrisk]) + 1
+        risk_level[subset_safe] <-
+          1 - (control_variable[subset_safe] -
+               thresh_pb[subset_safe]) /
+          (thresh_holocene[subset_safe] - thresh_pb[subset_safe])
         attr(risk_level, "thresholds") <-
           list(
             holocene = 0,

@@ -254,7 +254,7 @@ calc_lsc_status <- function(
   deforestation <- avg_trees_scenario / (avg_trees_reference + 1e-9)
   deforestation[deforestation > 1] <- 1
   deforestation[deforestation > 0] <- 1 - deforestation[deforestation > 0]
-
+  deforestation[!is_forest] <- NA
 
   if (spatial_scale == "subglobal") {
 

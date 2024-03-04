@@ -1,35 +1,29 @@
 #' Plot the global status of planetary boundaries
 #'
-#' Plot global map(s) with the status of 1-4 planetary boundaries for
+#' Plot global map(s) with the status of planetary boundaries for
 #' a scenario LPJmL run and derived planetary boundary statuses
+#'
+#' @param x  output object from calc_* with the status of the
+#' control variable for one point in time, incl. pb thresholds as attribute
 #'
 #' @param file_name character string providing file name (including directory
 #' and file extension). Defaults to NULL (plotting to screen)
 #'
-#' @param x list with one to four LPJmL vectors (length: ncells) with
-#' the outputs from the calc_* functions for one point in time.
-#' Given element names within the list will be displayed underneath the
-#' respective map. Order in the list determines the plotting order (by row).
-#'
-#' @param colors definition of colors for plotting of the safe, increasing
-#' risk and high risk zone (3 elements, do not change the order). Colors used
-#' for previous plots: "#008B0099" (green), "#FFEB00", "brown3"
-#'
 #' @param legend logical, specify whether a legend should be plotted
 #'
-#' @param to_robinson logical to define if robinson projection should be used
-#' for plotting
+#' @param projection character string defining the projection, default set to
+#' "+proj=robin"
 #'
-#' @param bg_col character, specify background possible (`NA` for transparent)
+#' @param ncol integer, number of columns in the plot, default set to 2
+#'
+#' @param grid_path character string providing the path to a grid file
 #'
 #' @examples
 #' \dontrun{
 #'  plot_status(file_name = "./my_boundary_status.png",
-#'                 x = list("land system change" = lsc_status,
-#'                                    "nitrogen" = nitrogen_status,
-#'                                    "bluewater" = water_status),
-#'  legend = FALSE
-#'  bg_col = NA)
+#'              x = calc_output
+#'              legend = FALSE
+#'              grid_path = "/path/to/gridfile.bin.json")
 #' }
 #'
 #' @md
@@ -38,66 +32,28 @@
 plot_status <- function(
   x,
   file_name = NULL,
-  colors = c("safe zone" = green,
-             "increasing risk" = yellow,
-             "high risk" = red),
-  bg_col = "white",
-  to_robinson = TRUE,
-  legend = TRUE
+  legend = TRUE,
+  projection = "+proj=robin",
+  ncol = 2,
+  grid_path = NULL
 ) {
-  # checking
-  if (length(x) == 0 || length(x) > 4) {
-    stop(paste0("Number of elements in status data (", length(x),
-            ") is out of scope. 1 - 4 PB status maps can be",
-            " plotted."))
+
+  if (class(x[[1]]) != "control_variable") {
+    stop("x elements must be of class control variable")
   }
-
-  if (length(colors) != 3) {
-    stop(paste0("Length of color vector (", length(colors), ") incorrect. ",
-                 "Three colors have to be provided"))
-  }
-
-  # load required data: bbox, countries
-  lpjml_extent <- c(-180, 180, -60, 85)
-
-  bounding_box <- system.file("extdata", "ne_110m_wgs84_bounding_box.shp",
-                              package = "boundaries") %>%
-    rgdal::readOGR(layer = "ne_110m_wgs84_bounding_box", verbose = FALSE) %>%
-    { if(to_robinson) sp::spTransform(., sp::CRS("+proj=robin")) else . } # nolint
-
-  countries <- system.file("extdata", "ne_110m_admin_0_countries.shp",
-                              package = "boundaries") %>%
-    rgdal::readOGR(layer = "ne_110m_admin_0_countries", verbose = FALSE) %>%
-    raster::crop(., lpjml_extent) %>%
-    { if(to_robinson) sp::spTransform(., sp::CRS("+proj=robin")) else . } # nolint
-
-  pb_names <- names(x)
-
-  plot_nat <- to_raster(lpjml_array = array(0, length(x[[which(!is.na(x))[1]]])), # nolint
-                        boundary_box = bounding_box,
-                        ext = lpjml_extent,
-                        to_robinson = to_robinson)
+  # TODO check for spatial scale!
 
   # plot settings
   if (length(x) == 1) {
-    n_row <- 1
-    n_col <- 1
-  } else if (length(x) == 2) {
-    n_row <- 1
-    n_col <- 2
-  } else {
-    n_row <- 2
-    n_col <- 2
+    ncol <- 1
   }
+  nrow <- ceiling(length(x) / ncol)
+  leg_adj <- ifelse(legend, 2, 0)
 
-  if (legend) {
-    lfrac <- 0.1
-    leg_adj <- 1
-  } else {
-    lfrac <- 0
-    leg_adj <- 0
-  }
-  fig_params <- definefig(n_row, n_col, lfrac)
+  plot_nat <- to_raster(lpjml_array = array(0, length(x[[which(!is.na(x))[1]]])), # nolint
+                        projection = projection,
+                        grid_path = grid_path)
+
 
   if (!is.null(file_name)) {
 
@@ -108,111 +64,92 @@ plot_status <- function(
     switch(file_extension,
       `png` = {
         png(file_name,
-            width = 8 * n_col,
-            height = 4 * n_row + leg_adj,
+            width = 8 * ncol,
+            height = 4 * nrow + leg_adj,
             units = "cm",
             res = 600,
             pointsize = 7)
       },
       `pdf` = {
         pdf(file_name,
-            width = 8 * n_col / 2.54,
-            height = (4 * n_row + leg_adj) / 2.54,
+            width = 8 * ncol / 2.54,
+            height = (4 * nrow + leg_adj) / 2.54,
             pointsize = 7)
       }, {
         stop("File extension ", dQuote(file_extension), " not supported.")
       }
     )
   }
-  textcex <- 0.5 + 0.125 * (n_row + n_col)
-  par(mar = rep(0, 4), xpd = TRUE, bg = bg_col)
-  brk <- c(-1:4)
-  cols <- c("grey92", colors, "darkgrey")
 
+  NA_col <- c("grey92")
+
+  # get country outlines
+  world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
+
+  plot_list <- list()
   for (i in seq_len(length(x))) {
-    if (i == 1) {
-      par(fig = fig_params[i, ])
-    } else {
-      par(fig = fig_params[i, ], new = TRUE)
-    }
 
     # convert lpjml vector with continuous control variable status to risk level
-    # with discrete scale
     plot_data <- x[[i]] %>%
-      as_risk_level(type = "discrete")
+      as_risk_level(type = "continuous", normalize = "increasing risk")
 
-    # convert lpjml vector to raster with robinson projection
+    # convert lpjml vector to raster with defined projection
     plotvar <- to_raster(lpjml_array = plot_data,
-                         boundary_box = bounding_box,
-                         ext = lpjml_extent,
-                         to_robinson = to_robinson)
-    raster::image(plot_nat, zlim = c(-1, 0), asp = 1, xaxt = "n", yaxt = "n",
-          xlab = "", ylab = "", col = "grey90", lwd = 0.1, bty = "n")
-    raster::image(plotvar, asp = 1, xaxt = "n",
-          yaxt = "n", xlab = "", ylab = "", col = cols, breaks = brk,
-          lwd = 0.1, bty = "n", add = TRUE)
-    raster::plot(countries, add = TRUE, lwd = 0.3, border = "#33333366",
-      usePolypath = FALSE)
-    mtext(pb_names[i], 1, -3, cex = textcex, font = 1,
-          adj = 0.57)
+                         projection = projection,
+                         grid_path = grid_path)
+
+    #combine NA cells with cells in safe zone
+    plot_nat[plotvar < 1] <- 1
+
+    # prepare plotting of values > pb threshold
+    plotvar_risk <- plotvar
+    plotvar_risk[plotvar_risk <= 1] <- NA
+    plotvar_risk[plotvar_risk > 3.5] <- 3.5
+
+    p <- ggplot2::ggplot() +
+      ggspatial::layer_spatial(data = plot_nat) +
+      ggplot2::scale_fill_continuous(na.value = NA,
+                                     low = NA_col,
+                                     high = "#7ac4a7") +
+      ggnewscale::new_scale_fill() +
+      ggspatial::layer_spatial(plotvar_risk) +
+      ggplot2::scale_fill_viridis_c(na.value = NA, direction = -1,
+                                    option = "A") +
+      ggplot2::theme(panel.background = ggplot2::element_rect(fill = "white"),
+                     panel.grid.major = ggplot2::element_line(linewidth = 0.1,
+                                                              color = "#8d8b8b"),
+                     axis.text = ggplot2::element_blank(),
+                     axis.ticks = ggplot2::element_blank(),
+                     legend.position = "none") +
+      ggplot2::geom_sf(data = world, fill = NA, linewidth = 0.12,
+                       color = "#7e7d7d") +
+      xlim(terra::ext(plotvar)[1], terra::ext(plotvar)[2]) +
+      ylim(terra::ext(plotvar)[3], terra::ext(plotvar)[4]) +
+      xlab(names(x)[i])
+
+    # combine all plots in one list
+    plot_list[[i]] <- p
   }
 
   if (legend) {
-    # Legend
-    par(fig = fig_params[n_row * n_col + 1, ], new = TRUE, xpd = TRUE)
-    legend(
-        x = -1500000, y = 35000000 / (n_row), cex = textcex,
-        legend = c("safe zone", "increasing risk", "high risk"), horiz = F,
-        pch = 22, pt.bg = cols[2:4], pt.lwd = 0.0, pt.cex = 1.6,
-        box.col = NA, xpd = NA, bg = NA
-    )
+    plot_list["legend"] <- plot_legend()
   }
+
+  gridExtra::grid.arrange(grobs = plot_list, ncol = ncol)
+
   if (!is.null(file_name)) dev.off()
 }
 
 
 # convert lpjml vector to raster and change projection to robinson
-to_raster <- function(lpjml_array, boundary_box, ext, to_robinson) {
-
-  crs_init <- "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
-  lpj_ras <- raster::raster(res = 0.5, crs = crs_init)
-  #TODO replace lpjmliotools
-  lpj_ras[raster::cellFromXY(lpj_ras, cbind(lpjmliotools::lon, lpjmliotools::lat))] <-
-        lpjml_array
-  if (to_robinson) {
-    ras_to <- raster::raster(xmn = -18000000,
-                             xmx = 18000000,
-                             ymn = -9000000,
-                             ymx = 9000000,
-                             crs = "+proj=robin",
-                             nrows = 2 * 360,
-                             ncols = 2 * 720)
-
-    out_ras <- raster::crop(lpj_ras, ext) %>%
-               raster::projectRaster(to = ras_to, crs = "+proj=robin",
-                                     na.rm = TRUE, method = "ngb") %>%
-               raster::mask(boundary_box) %>%
-               suppressWarnings()
-  } else {
-    out_ras <- raster::crop(lpj_ras, ext)
-  }
-  return(out_ras)
-}
-
-# define plotting locations for par(fig = ...), depending on the number
-#   of maps and whether or not a legend is plotted
-definefig <- function(n_row, n_col, legfrac) {
-  n <- (n_row * n_col) + 1 # number of plots
-  rs <- (1 - legfrac) / n_row # rowsize
-  top <- 1
-  figs <- array(0, dim = c(n, 4)) # dim=c(number of plots, length(x1,x2,y1,y2))
-  for (nr in 0:(n_row - 1)) {
-    for (nc in 1:n_col) {
-      figs[(nr * n_col) + nc, ] <- c(
-        (nc - 1) / n_col, (nc) / n_col, top - (rs * (nr + 1)), top - (rs * nr)
-      )
-    } # of n_col loop
-  } # of n_row loop
-  figs[n, ] <- c(0, 1, 0, legfrac)
-  return(figs)
+to_raster <- function(lpjml_array, projection, grid_path) {
+  grid <- read_io(grid_path)$data %>% drop
+  lon <- grid[, 1]
+  lat <- grid[, 2]
+  ra <- terra::rast(ncols = 720, nrows = 360)
+  ra[terra::cellFromXY(ra, cbind(lon, lat))] <- c(lpjml_array)
+  extent <- terra::ext(c(-180, 180, -53, 85))
+  ra <- crop(ra, extent)
+  ra <- terra::project(ra, projection)
+  return(ra)
 }
