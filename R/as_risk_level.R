@@ -33,6 +33,7 @@ as_risk_level <- function(
     control_variable,
     type = "continuous",
     normalize = "safe") {
+
   if (class(control_variable) == "list") {
     return(
       lapply(control_variable, as_risk_level,

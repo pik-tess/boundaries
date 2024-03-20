@@ -29,11 +29,6 @@ plot_biomes <- function(biome_data,
   # load required data: bbox, countries
   lpjml_extent <- c(-180, 180, -60, 85)
 
-  bounding_box <- system.file("extdata", "ne_110m_wgs84_bounding_box.shp",
-                              package = "boundaries") %>%
-      rgdal::readOGR(layer = "ne_110m_wgs84_bounding_box", verbose = FALSE) %>%
-      { if(to_robinson) sp::spTransform(., sp::CRS("+proj=robin")) else . } # nolint
-
   countries <- system.file("extdata", "ne_110m_admin_0_countries.shp",
                               package = "boundaries") %>%
       rgdal::readOGR(layer = "ne_110m_admin_0_countries", verbose = FALSE) %>%
@@ -58,10 +53,11 @@ plot_biomes <- function(biome_data,
 
   biome_names_legend <- biome_mapping$short_name[order_legend]
 
-  biomes_lpjml <- to_raster(lpjml_array = biome_data$biome_id,
-                         boundary_box = bounding_box,
-                         ext = lpjml_extent,
-                         to_robinson = to_robinson)
+  biomes_lpjml <- to_raster(
+    lpjml_array = biome_data$biome_id,
+    ext = lpjml_extent,
+    to_robinson = to_robinson
+  )
 
   if (!is.null(file_name)) {
     file_extension <- strsplit(file_name, split = "\\.")[[1]][-1]

@@ -34,7 +34,8 @@ Imports:
     lpjmlkit,
     sp,
     rgdal,
-    raster
+    raster,
+    biospheremetrics
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3

@@ -16,7 +16,7 @@
 #'
 #' @param spatial_scale character string indicating spatial resolution
 #' options: "global", "subglobal", "grid";
-#' 
+#'
 #' @param time_span_scenario time span to be used for the scenario run, defined
 #' as an integer vector, e.g. `1982:2011` (default)
 #'
