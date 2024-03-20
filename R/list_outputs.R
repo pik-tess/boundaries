@@ -5,8 +5,8 @@
 #' in the boundaries package (`"./inst/metric_files.yml"`).
 #'
 #' @param metric Character string containing name of metric to get
-#'        required outputs. Available options are `c("meco", "mcol", "biome",
-#'        "nitrogen", "lsc", "bluewater", "greenwater", "water", "biosphere")`
+#'        required outputs. Available options are `c("biome",
+#'        "nitrogen", "lsc", "bluewater", "greenwater", "biosphere")`
 #'        or just `"all"` or `"benchmark"`.
 #'
 #' @param only_first_filename Logical. If TRUE, only the first file name will be
@@ -52,7 +52,7 @@ list_function_args <- function(metric = "all") {
 process_metric <- function(metric = "all") {
   all_metrics <- c(
     "biome", "nitrogen", "lsc",
-    "bluewater", "greenwater", "water", "biosphere"
+    "bluewater", "greenwater", "biosphere"
   )
 
   if ("all" %in% metric) {
