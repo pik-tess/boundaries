@@ -8,3 +8,4 @@
 ^.lintr$
 ^tests/.lintr$
 ^.*CITATION.cff$
+^\.github$

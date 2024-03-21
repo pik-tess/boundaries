@@ -1,7 +1,7 @@
 # Functions to calculate the Planetary boundary status based on LPJmL
     simulation data
 
-R package **boundaries**, version **0.1.0**
+R package **boundaries**, version **0.1.1**
 
 [![CRAN status](https://www.r-pkg.org/badges/version/boundaries)](https://cran.r-project.org/package=boundaries)  [![R build status](https://gitlab.pik-potsdam.de/tess/boundaries/workflows/check/badge.svg)](https://gitlab.pik-potsdam.de/tess/boundaries/actions) [![codecov](https://codecov.io/gh/tess/boundaries/branch/master/graph/badge.svg)](https://app.codecov.io/gh/tess/boundaries) 
 
@@ -39,7 +39,7 @@ In case of questions / problems please contact Jannes Breier <jannesbr@pik-potsd
 
 To cite package **boundaries** in publications use:
 
-Breier J, Stenzel F, Braun J (2024). _boundaries: Functions to calculate the Planetary boundary status based on LPJmL simulation data_. R package version 0.1.0.
+Breier J, Stenzel F, Braun J (2024). _boundaries: Functions to calculate the Planetary boundary status based on LPJmL simulation data_. R package version 0.1.1.
 
 A BibTeX entry for LaTeX users is
 
@@ -49,6 +49,6 @@ A BibTeX entry for LaTeX users is
 simulation data},
   author = {Jannes Breier and Fabian Stenzel and Johanna Braun},
   year = {2024},
-  note = {R package version 0.1.0},
+  note = {R package version 0.1.1},
 }
 ```

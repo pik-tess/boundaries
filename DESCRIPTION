@@ -1,7 +1,7 @@
 Package: boundaries
 Title: Functions to calculate the Planetary boundary status based on LPJmL
     simulation data
-Version: 0.1.0
+Version: 0.1.1
 Authors@R: c(
     person("Jannes", "Breier", , "jannesbr@pik-potsdam.de", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-9055-6904")),
     person("Fabian", "Stenzel", , "stenzel@pik-potsdam.de", role = c("aut"), comment = c(ORCID = "0000-0002-5109-0048")),
