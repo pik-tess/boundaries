@@ -13,6 +13,11 @@
 #'
 #' @param normalization see [`as_risk_level()`]
 #'
+#' @param high_risk numeric, specify the value for high risk limit (default 3.5)
+#'
+#' @param background_alpha numeric, specify the alpha value for the background
+#' (default 1 - transparent)
+#'
 #' @examples
 #' \dontrun{
 #' pb_status <- calc_status(
@@ -22,20 +27,14 @@
 #'   time_span_scenario =  as.character(1986:2016),
 #'   time_span_reference =  as.character(1986:2016),
 #'   spatial_scale = "global",
-#'   method = list(bluewater = "porkka2023",
+#'   approach = list(bluewater = "porkka2023",
 #'                 nitrogen = "schulte_uebbing2022"),
 #'   savanna_proxy = list(vegc = 7500),
 #'   time_aggregation_args = 1,
 #'   path_baseline = "./pnv_1500_2016/",
 #' )
 #'
-#' ggplot2::ggsave(
-#'   "test_boundaries_plot.png",
-#'   plot_status_stylized(pb_status),
-#'   width = 16,
-#'   height = 9,
-#'   dpi = 300
-#' )
+#' plot_status_stylized(pb_status, "status_stylized.png")
 #' }
 #'
 #' @md
@@ -124,7 +123,7 @@ draw_stylized <- function(
   )
 
   # get year in which boundary is transgressed
-  x_table$transgression_year <- sapply(
+  x_table$transgression_year <- sapply( # nolint:undesirable_function_linter
     x_table$name,
     function(x) {
       as.integer(
@@ -135,7 +134,7 @@ draw_stylized <- function(
 
   # if boundary is not transgressed or near to start_year end_year set alpha to
   #   1 so label for transgression year is not drawn (else 0)
-  x_table$alpha <- sapply(
+  x_table$alpha <- sapply( # nolint:undesirable_function_linter
     x_table$transgression_year,
     function(x) {
       ifelse(
@@ -222,6 +221,8 @@ draw_stylized <- function(
     )
   }
 
+  # please R CMD check for use of dplyr/tidyr syntax
+  vals <- y <- NULL
   # Create table with distribution of safe space values
   safe_space <- tibble::tibble(x = 1:5, y = rep(1, 5)) %>%
     dplyr::mutate(vals = purrr::map(y, ~seq(0.3, .x, by = 0.01))) %>%
@@ -257,7 +258,9 @@ draw_stylized <- function(
   } else {
     # else create table with distribution of very high risk values larger than
     #   maximum values to be covered by white overlay
-    ultra_risk <- tibble::tibble(x = 1:5, y = rep(high_risk + high_risk * 0.1, 5)) %>%
+    ultra_risk <- tibble::tibble(
+      x = 1:5, y = rep(high_risk + high_risk * 0.1, 5)
+    ) %>%
       dplyr::mutate(vals = purrr::map(y, ~seq(max_y, .x, by = 0.01))) %>%
       tidyr::unnest(cols = c(vals)) %>%
       dplyr::mutate(xend = x + 0.45, x = x - 0.45, yend = vals) %>%
@@ -265,6 +268,9 @@ draw_stylized <- function(
       dplyr::rename(y = vals)
   }
 
+  # Please R CMD check for use of ggplot2 syntax
+  xend <- yend <- status <- alpha <- start_year <- transgression_year <- NULL
+  end_year <- name <- NULL
   # Create ggplot, first with the segments that include the colour gradient for
   #   each level of risk (safe space, uncertainty zone, high risk)
   p <- ggplot2::ggplot() +
@@ -533,8 +539,8 @@ draw_stylized <- function(
     )
 
   # Reformat ggplot for better half circle display
-  #   install.packages("remotes")
-  #   remotes::install_github("yjunechoe/ggtrace")
+  #   install.packages("remotes") # nolint
+  #   remotes::install_github("yjunechoe/ggtrace") # nolint
   final <- ggtrace::with_ggtrace(
     x = p + ggplot2::theme(aspect.ratio = .52),
     method = ggplot2::Layout$render,
@@ -543,7 +549,9 @@ draw_stylized <- function(
       panels <- lapply(
         panels,
         grid::editGrob,
-        vp = grid::viewport(yscale = c(0.48, 1)))
+        vp = grid::viewport(yscale = c(0.48, 1)
+        )
+      )
     }),
     out = "g"
   )

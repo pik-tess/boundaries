@@ -1,3 +1,10 @@
 ^boundaries\.Rproj$
 ^\.Rproj\.user$
 ^LICENSE\.md$
+^\.buildlibrary$
+^\.pre-commit-config\.yaml$
+^Makefile$
+^workflow$
+^.lintr$
+^tests/.lintr$
+^.*CITATION.cff$

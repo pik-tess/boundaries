@@ -10,7 +10,7 @@
 #' @param files_reference list with variable names and corresponding file paths
 #' (character string) of the reference LPJmL run. All needed files are
 #' provided in XXX. E.g.: list(leaching = "/temp/leaching.bin.json"). If not
-#' needed for the applied method, set to NULL.
+#' needed for the applied approach, set to NULL.
 #'
 #' @param spatial_scale character. Spatial resolution, available options
 #' are `"subglobal"` (at the biome level, default), `"global"` and `"grid"`
@@ -22,6 +22,9 @@
 #' as an integer vector, e.g. `as.character(1901:1930)`. Can differ in offset
 #' and length from `time_span_scenario`! If `NULL` value of `time_span_scenario`
 #' is used
+#'
+#' @param approach approach (character string) to be used , currently available
+#' approach is `"steffen2015"`
 #'
 #' @param thresholds list with deforestation thresholds for defining safe,
 #' increasing risk and high risk zone. Default based on Steffen et al. 2015 if
@@ -36,7 +39,7 @@
 #' highrisk = threshold between increasing risk and high risk zone
 #'
 #' @param time_aggregation_args list of arguments to be passed to
-#' \link[boundaries]{aggregate_time} (see for more info). To be used for time
+#' [`aggregate_time`] (see for more info). To be used for time
 #' series analysis
 #'
 #' @param config_args list of arguments to be passed on from the model
@@ -46,7 +49,7 @@
 #' Europe and Asia to avoid arbitrary biome cut at europe/asia border.
 #' Defaults to `TRUE`
 #'
-#' @param ... arguments forwarded to \link[boundaries](classify_biomes)
+#' @param ... arguments forwarded to [`classify_biomes`]
 #'
 #' @examples
 #' \dontrun{
@@ -61,19 +64,24 @@ calc_lsc_status <- function(
   spatial_scale = "subglobal",
   time_span_scenario = as.character(1982:2011),
   time_span_reference = time_span_scenario,
-  thresholds = NULL,
-  method = "steffen2015",
+  approach = "steffen2015",
   time_aggregation_args = list(),
   config_args = list(),
+  thresholds = NULL,
   eurasia = TRUE,
   ...
 ) {
 
 
-  # Filter out method and thresholds arguments from ellipsis
+  # Filter out approach and thresholds arguments from ellipsis
   ellipsis_filtered <- list(...)
-  ellipsis_filtered$method <- NULL
+  ellipsis_filtered$approach <- NULL
   ellipsis_filtered$thresholds <- NULL
+
+  # please R CMD check for use of future operator
+  biome_classes <- NULL
+  # please R CMD check for dplyr syntax
+  npft_proxy <- category <- type <- NULL
 
   # classify biomes based on foliage projected cover (FPC) output
   biome_classes %<-% do.call(
@@ -87,6 +95,8 @@ calc_lsc_status <- function(
   )
 
   if (spatial_scale == "subglobal") {
+    # please R CMD check for use of future operator
+    continent_grid <- NULL
     # get continents mask - pass arg of whether to merge europe and asia
     continent_grid %<-% calc_continents_mask(files_reference$grid,
                                              eurasia = eurasia)
@@ -97,6 +107,8 @@ calc_lsc_status <- function(
     system.file("extdata", "biomes.csv", package = "boundaries")
   )
 
+  # please R CMD check for use of future operator
+  terr_area <- NULL
   # calculate cell area
   terr_area %<-% {
     lpjmlkit::read_io(
@@ -105,6 +117,8 @@ calc_lsc_status <- function(
     )$data %>% drop()
   }
 
+  # please R CMD check for use of future operator
+  fpc_scenario <- fpc_reference <- NULL
   # read fpc
   fpc_scenario %<-% {
     lpjmlkit::read_io(
@@ -136,11 +150,11 @@ calc_lsc_status <- function(
                                 "pft_categories.csv",
                                 package = "boundaries") %>%
     read_pft_categories() %>%
-    dplyr::filter(., npft_proxy == npft)
+    dplyr::filter(., `npft_proxy` == npft)
 
   # add band names for clm outputs
   if (lpjmlkit::detect_io_type(files_reference$fpc) == "clm") {
-    fpc_names <- dplyr::filter(pft_categories, category == "natural")$pft
+    fpc_names <- dplyr::filter(pft_categories, `category` == "natural")$pft
     dimnames(fpc_scenario)$band <- c("natural stand fraction", fpc_names)
     dimnames(fpc_reference)$band <- c("natural stand fraction", fpc_names)
   }
@@ -148,7 +162,7 @@ calc_lsc_status <- function(
   # subset only tree pfts
   fpc_trees <- dplyr::filter(
     pft_categories,
-    type == "tree" & category == "natural"
+    `type` == "tree" & `category` == "natural"
   )$pft
 
   tree_share_scenario <- lpjmlkit::asub(
@@ -176,6 +190,8 @@ calc_lsc_status <- function(
             dim = dim(tree_share_reference)) * terr_area
   )
 
+  # please R CMD check for use of future operator
+  all_tree_cover_scenario <- all_tree_cover_reference <- NULL
   # sum tree pfts for forest cover
   all_tree_cover_scenario %<-% apply(
     tree_cover_scenario,
@@ -191,6 +207,8 @@ calc_lsc_status <- function(
     na.rm = TRUE
   )
 
+  # please R CMD check for use of future operator
+  avg_trees_scenario <- avg_trees_reference <- NULL
   # average forest over time
   avg_trees_scenario %<-% do.call(aggregate_time,
                                   append(list(x = all_tree_cover_scenario),
@@ -222,14 +240,16 @@ calc_lsc_status <- function(
   # forest biomes
   is_forest[
     biome_classes$biome_id %in% dplyr::filter(
-      biome_mapping, category == "forest"
+      biome_mapping, `category` == "forest"
     )$id
   ] <- 1
 
+  # please R CMD check for use of dplyr syntax
+  zone <- NULL
   # tropical forest biomes
   is_tropical_forest[
     biome_classes$biome_id %in% dplyr::filter(
-      biome_mapping, category == "forest" & zone == "tropical"
+      biome_mapping, `category` == "forest" & `zone` == "tropical"
     )$id
   ] <- 1
   forest_type[which(is_tropical_forest == 1)] <- 1
@@ -237,7 +257,7 @@ calc_lsc_status <- function(
   # temperate forest biomes
   is_temperate_forest[
     biome_classes$biome_id %in% dplyr::filter(
-      biome_mapping, category == "forest" & zone == "temperate"
+      biome_mapping, `category` == "forest" & `zone` == "temperate"
     )$id
   ] <- 1
   forest_type[which(is_temperate_forest == 1)] <- 2
@@ -245,7 +265,7 @@ calc_lsc_status <- function(
   # boreal forest biomes
   is_boreal_forest[
     biome_classes$biome_id %in% dplyr::filter(
-      biome_mapping, category == "forest" & zone == "boreal"
+      biome_mapping, `category` == "forest" & `zone` == "boreal"
     )$id
   ] <- 1
   forest_type[which(is_boreal_forest == 1)] <- 3
@@ -292,7 +312,9 @@ calc_lsc_status <- function(
         function(x) {
           # mean over cell subset of forest type and continent
           # weighted by cell area
-          return(rep(weighted.mean(x, terr_area, na.rm = TRUE), length(x)))
+          return(
+            rep(stats::weighted.mean(x, terr_area, na.rm = TRUE), length(x))
+          )
         }
       )
       deforestation[sub_cells] <- sub_deforest[sub_cells]
@@ -352,12 +374,14 @@ read_biome_mapping <- function(file_path) {
   # read_delim, col_types = readr::cols(), delim = ";")to suppress messages
   readr::read_delim(file_path, col_types = readr::cols(), delim = ";") %>%
     # change 1, 0.5, 0 values to TRUE and NAs (NA's can be dropped)
-    dplyr::mutate_at(dplyr::vars(dplyr::starts_with(c("category_", "zone_"))),
-                     function(x) ifelse(as.logical(x), TRUE, NA)) %>%
+    dplyr::mutate_at(
+      dplyr::vars(tidyselect::starts_with(c("category_", "zone_"))),
+      function(x) ifelse(as.logical(x), TRUE, NA)
+    ) %>%
     # all binary zone columns (tropical, temperate, boreal) in one categorical
     #   zone column
     tidyr::pivot_longer(
-      cols = starts_with("zone_"),
+      cols = tidyselect::starts_with("zone_"),
       names_to = "zone",
       names_prefix = "zone_",
       values_to = "zone_value",
@@ -366,7 +390,7 @@ read_biome_mapping <- function(file_path) {
     # all binary category columns (forest, xx) in one categorical
     #   category column
     tidyr::pivot_longer(
-      cols = starts_with("category_"),
+      cols = tidyselect::starts_with("category_"),
       names_to = "category",
       names_prefix = "category_",
       values_to = "category_value",

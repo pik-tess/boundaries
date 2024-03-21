@@ -7,13 +7,14 @@
 calc_bluewater_status(
   files_scenario,
   files_reference,
-  time_span_scenario = NULL,
-  time_span_reference = time_span_scenario,
-  method = "gerten2020",
-  cut_min = 0.0864,
-  time_aggregation_args = list(),
   spatial_scale,
-  thresholds = NULL
+  time_span_scenario = as.character(1982:2011),
+  time_span_reference = time_span_scenario,
+  approach = "gerten2020",
+  time_aggregation_args = list(),
+  config_args = list(),
+  thresholds = NULL,
+  cut_min = 0.0864
 )
 }
 \arguments{
@@ -27,6 +28,12 @@ E.g.: list(leaching = "/temp/leaching.bin.json")}
 provided in metric_files.yml.
 E.g.: list(leaching = "/temp/leaching.bin.json").}
 
+\item{spatial_scale}{character string indicating spatial resolution
+options: "global", "subglobal", "grid";
+for "grid" the approach "gerten2020" is applicable based on EFR calculations;
+for "global"/"subglobal" the share (\%) of total global/basin area with
+deviations is calculated}
+
 \item{time_span_scenario}{time span to be used for the scenario run, defined
 as character string}
 
@@ -35,31 +42,28 @@ as character string, e.g. \code{as.character(1901:1930)}. Can differ in offset a
 length from \code{time_span_scenario}! If \code{NULL} value of \code{time_span_scenario} is
 used}
 
-\item{method}{method (character string) to be used , currently available
-method is \code{"gerten2020"} based on
+\item{approach}{approach (character string) to be used , currently available
+approach is \code{"gerten2020"} based on
 \href{https://doi.org/10.1038/s41893-019-0465-1}{Gerten et al. 2020}
 for spatial_scale = "grid" and
 "wang_erlandsson2022" as well as "porkka2023" for
 spatial_scale = "global" or "subglobal"}
 
-\item{cut_min}{double. Exclude boundary calculations for discharge < cut_min
-and dismiss EFR transgresssions if < cut_min for "gerten2020" method,
-Default: 0.0864 hm3/day (=1 m3/s)}
-
 \item{time_aggregation_args}{list of arguments to be passed to
-\link[boundaries]{aggregate_time} (see for more info). To be used for
+\code{\link{aggregate_time}} (see for more info). To be used for
 time series analysis}
 
-\item{spatial_scale}{character string indicating spatial resolution
-options: "global", "subglobal", "grid";
-for "grid" the method "gerten2020" is applicable based on EFR calculations;
-for "global"/"subglobal" the share (\%) of total global/basin area with
-deviations is calculated}
+\item{config_args}{list of arguments to be passed on from the model
+configuration.}
 
 \item{thresholds}{named character string with thresholds to be used to
-define the safe, increasing risk and high risk zone, the method and scale
+define the safe, increasing risk and high risk zone, the approach and scale
 specific default thresholds are defined in metric_files.yml are are applied
 if thresholds are set to NULL.}
+
+\item{cut_min}{double. Exclude boundary calculations for discharge < cut_min
+and dismiss EFR transgresssions if < cut_min for "gerten2020" approach,
+Default: 0.0864 hm3/day (=1 m3/s)}
 }
 \value{
 todo: describe returned object

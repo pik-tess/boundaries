@@ -6,15 +6,13 @@
 \usage{
 calc_status(
   boundary,
+  config_scenario,
+  config_reference,
   spatial_scale,
-  path_scenario,
-  path_reference = NULL,
   time_span_scenario = as.character(1982:2011),
   time_span_reference = time_span_scenario,
   time_aggregation_args = list(),
-  input_files = list(),
-  diff_output_files = list(),
-  method = list(),
+  approach = list(),
   thresholds = list(),
   in_parallel = TRUE,
   ...
@@ -25,11 +23,15 @@ calc_status(
 Available terrestrial boundaries are c("bluewater", "greenwater", "lsc",
 "nitrogen")}
 
-\item{path_scenario}{output directory (character string) of the scenario
-LPJmL run where binary files (soon with metafiles) are written}
+\item{config_scenario}{character string. File path to the LPjmL configuration
+file (json) of the scenario run. The configuration file contains the
+information about the LPJmL run, e.g. the output directory}
 
-\item{path_reference}{output directory (character string) of the reference
-LPJmL run where binary files (soon with metafiles) are written}
+\item{config_reference}{character string. See config_scenario. For the
+reference run}
+
+\item{spatial_scale}{character string indicating spatial resolution
+options: "global", "subglobal", "grid";}
 
 \item{time_span_scenario}{time span to be used for the scenario run, defined
 as an integer vector, e.g. \code{1982:2011} (default)}
@@ -39,20 +41,18 @@ as an integer vector, e.g. \code{1901:1930}. Can differ in offset and length fro
 \code{time_span_scenario}! If \code{NULL} value of \code{time_span_scenario} is used}
 
 \item{time_aggregation_args}{list of arguments to be passed to
-\link[boundaries]{aggregate_time} (see for more info). To be used for # nolint
+\code{\link{aggregate_time}} (see for more info). To be used for # nolint
 time series analysis}
 
-\item{input_files}{list of required file(s) using ID (e.g. \code{prec}, \code{runoff})
-and an absolute file path to the corresponding input file}
-
-\item{diff_output_files}{list of required file(s) using ID
-(e.g. prec, runoff) and the alternative writing (e.g. \code{"my_runoff"})}
-
-\item{method}{list of methods to be used for each boundary. If \code{NULL} the
-default method is used}
+\item{approach}{list of methods to be used for each boundary. If \code{NULL} the
+default approach is used}
 
 \item{thresholds}{list of thresholds to be used for each boundary. If \code{NULL}
 the default thresholds are used}
+
+\item{in_parallel}{logical, if \code{TRUE} the function uses parallelization
+(default) based on the \code{future} package (asynchronous execution). If \code{FALSE}
+no parallelization is used}
 
 \item{...}{further arguments to be passed to each calc_* function}
 }

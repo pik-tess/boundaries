@@ -7,13 +7,14 @@
 calc_lsc_status(
   files_scenario,
   files_reference,
+  spatial_scale = "subglobal",
   time_span_scenario = as.character(1982:2011),
   time_span_reference = time_span_scenario,
-  spatial_scale = "subglobal",
-  eurasia = TRUE,
-  thresholds = NULL,
-  method = "steffen2015",
+  approach = "steffen2015",
   time_aggregation_args = list(),
+  config_args = list(),
+  thresholds = NULL,
+  eurasia = TRUE,
   ...
 )
 }
@@ -25,7 +26,10 @@ provided in XXX. E.g.: list(leaching = "/temp/leaching.bin.json")}
 \item{files_reference}{list with variable names and corresponding file paths
 (character string) of the reference LPJmL run. All needed files are
 provided in XXX. E.g.: list(leaching = "/temp/leaching.bin.json"). If not
-needed for the applied method, set to NULL.}
+needed for the applied approach, set to NULL.}
+
+\item{spatial_scale}{character. Spatial resolution, available options
+are \code{"subglobal"} (at the biome level, default), \code{"global"} and \code{"grid"}}
 
 \item{time_span_scenario}{time span to be used for the scenario run, defined
 as a character string, e.g. \code{as.character(1982:2011)} (default)}
@@ -35,20 +39,21 @@ as an integer vector, e.g. \code{as.character(1901:1930)}. Can differ in offset
 and length from \code{time_span_scenario}! If \code{NULL} value of \code{time_span_scenario}
 is used}
 
-\item{spatial_scale}{character. Spatial resolution, available options
-are \code{"subglobal"} (at the biome level, default), \code{"global"} and
-\code{"grid"}}
+\item{approach}{approach (character string) to be used , currently available
+approach is \code{"steffen2015"}}
 
-\item{eurasia}{logical. If \code{spatial_scale} = \code{"biome"} merge continents
-Europe and Asia to avoid arbitrary biome cut at europe/asia border.
-Defaults to \code{TRUE}}
+\item{time_aggregation_args}{list of arguments to be passed to
+\code{\link{aggregate_time}} (see for more info). To be used for time
+series analysis}
+
+\item{config_args}{list of arguments to be passed on from the model
+configuration.}
 
 \item{thresholds}{list with deforestation thresholds for defining safe,
-increasing risk and high risk zone
-Default based on Steffen et al. 2015 if thresholds set to NULL
-(https://doi.org/10.1126/science.1259855):
+increasing risk and high risk zone. Default based on Steffen et al. 2015 if
+thresholds set to NULL (https://doi.org/10.1126/science.1259855):
 for gridded and biome scale application:
-list(pb = list(temperate = 0.5, tropical = 0.15, boreal = 0.15),
+`list(pb = list(temperate = 0.5, tropical = 0.15, boreal = 0.15),
 highrisk = list(temperate = 0.7, tropical = 0.4, boreal = 0.4))
 for global scale application:
 list(holocene = 0, pb = 0.25, highrisk = 0.46)
@@ -56,11 +61,11 @@ pb = threshold between safe zone and increasing risk zone
 (e.g. 50\% for boreal forest with default value)
 highrisk = threshold between increasing risk and high risk zone}
 
-\item{time_aggregation_args}{list of arguments to be passed to
-\link[boundaries]{aggregate_time} (see for more info).
-To be used for time series analysis}
+\item{eurasia}{logical. If \code{spatial_scale} = \code{"subglobal"} merge continents
+Europe and Asia to avoid arbitrary biome cut at europe/asia border.
+Defaults to \code{TRUE}}
 
-\item{...}{arguments forwarded to \link\href{classify_biomes}{boundaries}}
+\item{...}{arguments forwarded to \code{\link{classify_biomes}}}
 }
 \description{
 Calculate the PB status for the LSC (land-system change) boundary based

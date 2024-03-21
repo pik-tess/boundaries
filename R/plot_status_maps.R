@@ -9,7 +9,7 @@
 #' @param filename character string providing file name (including directory
 #' and file extension). Defaults to NULL (plotting to screen)
 #'
-#' @param add_legend logical, specify whether a legend should be plotted
+#' @param add_legend logical, specify whether a add_legend should be plotted
 #'
 #' @param projection character string defining the projection, default set to
 #' "+proj=robin"
@@ -23,7 +23,7 @@
 #'  plot_status_maps(
 #'   filename = "./my_boundary_status.png",
 #'   x = calc_output
-#'   legend = FALSE
+#'   add_legend = FALSE
 #'   grid_path = "/path/to/gridfile.bin.json"
 #' )
 #' }
@@ -34,7 +34,7 @@
 plot_status_maps <- function(
   x,
   filename = NULL,
-  legend = TRUE,
+  add_legend = TRUE,
   projection = "+proj=robin",
   ncol = 2,
   grid_path = NULL
@@ -50,7 +50,7 @@ plot_status_maps <- function(
     ncol <- 1
   }
   nrow <- ceiling(length(x) / ncol)
-  leg_adj <- ifelse(legend, 2, 0)
+  leg_adj <- ifelse(add_legend, 2, 0)
 
   plot_nat <- to_raster(lpjml_array = array(0, length(x[[which(!is.na(x))[1]]])), # nolint
                         projection = projection,
@@ -58,26 +58,30 @@ plot_status_maps <- function(
 
 
   if (!is.null(filename)) {
-    file_extension <- file_ext(filename)
+    file_extension <- file_ext(filename) # nolint:object_usage_linter
     switch(file_extension,
       `png` = {
-        png(filename,
-            width = 8 * ncol,
-            height = 4 * nrow + leg_adj,
-            units = "cm",
-            res = 600,
-            pointsize = 7)
+        grDevices::png(
+          filename,
+          width = 8 * ncol,
+          height = 4 * nrow + leg_adj,
+          units = "cm",
+          res = 600,
+          pointsize = 7
+        )
       },
       `pdf` = {
-        pdf(filename,
-            width = 8 * ncol / 2.54,
-            height = (4 * nrow + leg_adj) / 2.54,
-            pointsize = 7)
+        grDevices::pdf(
+          filename,
+          width = 8 * ncol / 2.54,
+          height = (4 * nrow + leg_adj) / 2.54,
+          pointsize = 7
+        )
       }
     )
   }
 
-  NA_col <- c("grey92")
+  na_col <- c("grey92")
 
   # get country outlines
   world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
@@ -105,7 +109,7 @@ plot_status_maps <- function(
     p <- ggplot2::ggplot() +
       ggspatial::layer_spatial(data = plot_nat) +
       ggplot2::scale_fill_continuous(na.value = NA,
-                                     low = NA_col,
+                                     low = na_col,
                                      high = "#7ac4a7") +
       ggnewscale::new_scale_fill() +
       ggspatial::layer_spatial(plotvar_risk) +
@@ -113,27 +117,27 @@ plot_status_maps <- function(
                                     option = "A") +
       ggplot2::theme(panel.background = ggplot2::element_rect(fill = "white"),
                      panel.grid.major = ggplot2::element_line(linewidth = 0.1,
-                                                              color = "#8d8b8b"),
+                                                              color = "#8d8b8b"), # nolint:line_length_linter
                      axis.text = ggplot2::element_blank(),
                      axis.ticks = ggplot2::element_blank(),
-                     legend.position = "none") +
+                     add_legend.position = "none") +
       ggplot2::geom_sf(data = world, fill = NA, linewidth = 0.12,
                        color = "#7e7d7d") +
-      xlim(terra::ext(plotvar)[1], terra::ext(plotvar)[2]) +
-      ylim(terra::ext(plotvar)[3], terra::ext(plotvar)[4]) +
-      xlab(names(x)[i])
+      ggplot2::xlim(terra::ext(plotvar)[1], terra::ext(plotvar)[2]) +
+      ggplot2::ylim(terra::ext(plotvar)[3], terra::ext(plotvar)[4]) +
+      ggplot2::xlab(names(x)[i])
 
     # combine all plots in one list
     plot_list[[i]] <- p
   }
 
-  if (legend) {
-    plot_list["legend"] <- plot_legend()
+  if (add_legend) {
+    plot_list["add_legend"] <- plot_legend() # nolint:object_usage_linter
   }
 
   gridExtra::grid.arrange(grobs = plot_list, ncol = ncol)
 
-  if (!is.null(filename)) dev.off()
+  if (!is.null(filename)) grDevices::dev.off()
 }
 
 

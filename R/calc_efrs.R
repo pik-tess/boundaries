@@ -6,14 +6,14 @@
 #'
 #' @param x discharge array with `dim(x)=c(cell, month, year)`
 #'
-#' @param method EFR method to be used , available methods are `c("vmf",
+#' @param approach EFR approach to be used , available methods are `c("vmf",
 #' "vmf_min", "vmf_max", "q90q50")` based on
 #' [Pastor et al. 2014](https://doi.org/10.5194/hess-18-5041-2014)
 #' as well as `"steffen2015"`, a modified version of vmf by
 #' [Steffen et al. 2015](https://doi.org/10.1126/science.1259855)
 #'
 #' @param time_aggregation_args list of arguments to be passed to
-#' \link[boundaries]{aggregate_time} (see for more info). To be used for
+#' [`aggregate_time`] (see for more info). To be used for
 #' time series analysis.
 #'
 #' @return EFRs with same unit as `x` (discharge), with `dim(x)=c(ncells, 12)`
@@ -22,16 +22,18 @@
 #' @examples
 #' \dontrun{
 #' # basic example
-#' efrs1 <- calcEFRs(discharge_30y = discharge, method = "vmf")
+#' efrs1 <- calcEFRs(discharge_30y = discharge, approach = "vmf")
 #'
 #' dim(efrs1)
 #' # c(67420, 12)
 #'
 #' # example for using a 30 year average bin for a 90 year discharge and
 #' #  interpolate between 3 windows afterwards to return 90 years (interpolated)
-#' efrs2 <- calcEFRs(discharge_90y = discharge,
-#'                   method="vmf",
-#'                   time_aggregation_args = list(nyear_avg = 30, interpolate = TRUE))
+#' efrs2 <- calcEFRs(
+#'   discharge_90y = discharge,
+#'   approach="vmf",
+#'   time_aggregation_args = list(nyear_avg = 30, interpolate = TRUE)
+#' )
 #'
 #' dim(efrs2)
 #' # c(67420, 12, 90)
@@ -39,7 +41,7 @@
 #'
 #' # example for using a 1 year (no average) bin for a 100 year discharge
 #' efrs3 <- calcEFRs(discharge_100y = discharge,
-#'                   method = "vmfmin",
+#'                   approach = "vmfmin",
 #'                   time_aggregation_args = list(nyear_avg = 1))
 #'
 #' dim(efrs3)
@@ -48,14 +50,12 @@
 #' @md
 #' @export
 calc_efrs <- function(x,
-                      method = "vmf",
+                      approach = "vmf",
                       time_aggregation_args = list()) {
   # verify available methods
-  method <- match.arg(method, c("vmf",
-                                "vmf_min",
-                                "vmf_max",
-                                "q90q50",
-                                "steffen2015"))
+  approach <- match.arg(approach,
+    c("vmf", "vmf_min", "vmf_max", "q90q50", "steffen2015")
+  )
 
   # function to repeat maf mean for dimension length within apply
   maf_fun <- function(x) {
@@ -79,8 +79,8 @@ calc_efrs <- function(x,
   # initialize efrs array
   efrs <- array(0, dim = dim(mmf), dimnames = dimnames(mmf))
 
-  # apply defined method
-  switch(method,
+  # apply defined approach
+  switch(approach,
     # "vmf" - Pastor et al. 2014
     vmf = {
       # low flow months
@@ -131,7 +131,7 @@ calc_efrs <- function(x,
 
         quantiles <- apply(x,
                            c("cell", "month"),
-                           quantile,
+                           stats::quantile,
                            probs = c(0.5, 0.9),
                            na.rm = TRUE)
         q90 <- quantiles[2, , ]

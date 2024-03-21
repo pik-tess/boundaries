@@ -4,7 +4,13 @@
 \alias{plot_biomes}
 \title{Plot global distribution of lpjml simulated biomes}
 \usage{
-plot_biomes(biome_data, file_name = NULL, to_robinson = TRUE, bg_col = "white")
+plot_biomes(
+  biome_data,
+  file_name = NULL,
+  to_robinson = TRUE,
+  bg_col = "white",
+  grid_path = NULL
+)
 }
 \arguments{
 \item{biome_data}{output (list) from classify_biomes()}
@@ -15,6 +21,8 @@ plot_biomes(biome_data, file_name = NULL, to_robinson = TRUE, bg_col = "white")
 for plotting}
 
 \item{bg_col}{character, specify background possible (\code{NA} for transparent)#}
+
+\item{grid_path}{character string providing the path to a grid file}
 }
 \description{
 Plots a map with the biome distribution as derived from a lpjml run based
@@ -22,8 +30,11 @@ on the "classify_biomes" function
 }
 \examples{
 \dontrun{
- plot_biomes(biome_data = biomes,
-             file_name ="/p/projects/open/Johanna/R/biomes.pfd")
+plot_biomes(
+  biome_data = biomes,
+  file_name = "/p/projects/open/Johanna/R/biomes.pfd"
+  grid_path = ".grid.bin.json"
+)
 }
 
 }

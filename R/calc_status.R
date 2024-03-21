@@ -25,14 +25,18 @@
 #' `time_span_scenario`! If `NULL` value of `time_span_scenario` is used
 #'
 #' @param time_aggregation_args list of arguments to be passed to
-#' \link[boundaries]{aggregate_time} (see for more info). To be used for # nolint
+#' [`aggregate_time`] (see for more info). To be used for # nolint
 #' time series analysis
 #'
-#' @param method list of methods to be used for each boundary. If `NULL` the
-#' default method is used
+#' @param approach list of methods to be used for each boundary. If `NULL` the
+#' default approach is used
 #'
 #' @param thresholds list of thresholds to be used for each boundary. If `NULL`
 #' the default thresholds are used
+#'
+#' @param in_parallel logical, if `TRUE` the function uses parallelization
+#' (default) based on the `future` package (asynchronous execution). If `FALSE`
+#' no parallelization is used
 #'
 #' @param ... further arguments to be passed to each calc_* function
 #'
@@ -55,20 +59,22 @@ calc_status <- function(boundary,
                         time_span_scenario = as.character(1982:2011),
                         time_span_reference = time_span_scenario,
                         time_aggregation_args = list(),
-                        method = list(),
+                        approach = list(),
                         thresholds = list(),
                         in_parallel = TRUE,
                         ...) {
 
   # If in_parallel use future package for asynchronous parallelization
   if (in_parallel) {
-    rlang::local_options(future.globals.maxSize = 3000 * 1024^2)
+    rlang::local_options(
+      future.globals.maxSize = 3000 * 1024^2
+    )
     if (.Platform$OS.type == "windows") {
       future_plan <- future::plan("multisession")
     } else {
       future_plan <- future::plan("multicore")
     }
-    on.exit(future::plan(future_plan))
+    on.exit(future::plan(future_plan)) # nolint:undesirable_function_linter
   }
 
   # verify available spatial resolution
@@ -90,7 +96,7 @@ calc_status <- function(boundary,
   # List required output files for each boundary
   output_files <- list_outputs(
     boundary,
-    method,
+    approach,
     spatial_scale,
     only_first_filename = FALSE
   )
@@ -135,10 +141,10 @@ calc_status <- function(boundary,
       config_args = config_args
     )
 
-    if (length(method[[bound]]) > 0) {
-      inner_args$method <- method_i <- method[[bound]]
+    if (length(approach[[bound]]) > 0) {
+      inner_args$approach <- method_i <- approach[[bound]]
     } else {
-      method_i <- formals(get(fun_name))$method
+      method_i <- formals(get(fun_name))$approach
     }
 
     if (length(thresholds[[bound]]) > 0) {

@@ -62,6 +62,9 @@ plot_status_global <- function(
     x <- as_risk_level(x, type = "continuous", normalize = normalize)
   }
 
+  # please R CMD check for use of dplyr syntax
+  years <- NULL
+
   data_tibble <- tidyr::as_tibble(x)
   data_tibble$years <- as.numeric(names(x[[1]]))
   data_tibble <- tidyr::pivot_longer(
@@ -86,7 +89,7 @@ plot_status_global <- function(
     }
     switch(file_extension,
       `png` = {
-        png(filename,
+        grDevices::png(filename,
           width = width,
           height = height,
           units = "cm",
@@ -95,7 +98,7 @@ plot_status_global <- function(
         )
       },
       `pdf` = {
-        pdf(filename,
+        grDevices::pdf(filename,
           width = width / 2.54,
           height = height / 2.54,
           pointsize = 7
@@ -108,7 +111,7 @@ plot_status_global <- function(
     # holocene value
     holo_all <- NULL
     for (i in seq_len(length(x))) {
-      holo_all <- abind(holo_all, attr(x[[i]], "thresholds")$holocene)
+      holo_all <- abind::abind(holo_all, attr(x[[i]], "thresholds")$holocene)
     }
     holo <- min(holo_all)
     pl_b <- attr(x[[1]], "thresholds")$pb
@@ -126,11 +129,13 @@ plot_status_global <- function(
         col = NA
       )
 
+    # please R CMD check for use of ggplot syntax
+    values <- pb <- NULL
     if (normalize == "safe") {
       plot <- plot +
         ggplot2::scale_y_continuous(
           limits = c(holo, c(max(data_tibble$values) +
-            max(data_tibble$values) * 0.05)),
+                               max(data_tibble$values) * 0.05)),
           expand = c(0, 0), breaks = c(holo, pl_b),
           labels = c("holocene", "pb")
         ) +
@@ -149,8 +154,11 @@ plot_status_global <- function(
         )
     } else if (normalize == "increasing risk") {
       plot <- plot +
-        ggplot2::coord_cartesian(ylim = c(holo, c(max(data_tibble$values) +
-          max(data_tibble$values) * 0.05))) +
+        ggplot2::coord_cartesian(
+          ylim = c(holo, c(max(data_tibble$values) +
+                             max(data_tibble$values) * 0.05)
+          )
+        ) +
         ggplot2::scale_y_continuous(
           expand = c(0, 0),
           breaks = c(holo, pl_b, h_risk),
@@ -216,15 +224,15 @@ plot_status_global <- function(
         expand = c(0, 0)
       ) +
       ggplot2::theme_classic(base_line_size = 0.25, base_rect_size = 0.25) +
-      ggplot2::theme(legend.title = ggplot2::element_blank()) +
+      ggplot2::theme(legend.title = ggplot2::element_blank()) + # nolint:object_usage_linter
       ggplot2::theme(
         panel.border = ggplot2::element_rect(
           colour = "#6b6767",
           fill = NA, size = 0.5
         )
       ) +
-      ggplot2::theme(axis.title = element_blank()) +
-      theme(aspect.ratio = 1)
+      ggplot2::theme(axis.title = ggplot2::element_blank()) +
+      ggplot2::theme(aspect.ratio = 1)
   } else {
     # create dataframe for plotting of pb specific background filling
     pb_thresh <- highrisk_thresh <- holocene <- ylabel <- max_y <-
@@ -246,8 +254,8 @@ plot_status_global <- function(
       pb_thresh = pb_thresh,
       highrisk_thresh = highrisk_thresh,
       holocene = holocene,
-      years = data_tibble$years[1:length(unique(data_tibble$pb))],
-      values = data_tibble$values[1:length(unique(data_tibble$pb))]
+      years = data_tibble$years[seq_along(unique(data_tibble$pb))],
+      values = data_tibble$values[seq_along(unique(data_tibble$pb))]
     )
     min_years <- min(data_tibble$years)
     max_years <- max(data_tibble$years)
@@ -306,7 +314,6 @@ plot_status_global <- function(
         pattern_fill2 = darkpurple,
         alpha = 0.8
       )
-    # ggplot2::coord_cartesian(ylim = c(0, pb_thresh + 3 * (holocene - pb_thresh)))
 
     # create scales for each pb
     upper_lim <- ifelse(max_y > highrisk_thresh, max_y, highrisk_thresh)
@@ -374,5 +381,5 @@ plot_status_global <- function(
       ggplot2::scale_y_continuous(expand = c(0, NA))
   }
   print(plot)
-  if (!is.null(filename)) dev.off()
+  if (!is.null(filename)) grDevices::dev.off()
 }

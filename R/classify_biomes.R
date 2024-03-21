@@ -8,20 +8,35 @@
 #'        configuration file (json) of the reference run. The configuration file
 #'        contains the information about the LPJmL run, e.g. the output
 #'        directory
+#'
 #' @param files_reference list with variable names and corresponding file paths
 #'        (character string) of the reference LPJmL run. All needed files are
 #'        provided as key value pairs, e.g.:
 #'        list(leaching = "/temp/leaching.bin.json"). If path_reference is
 #'        supplied with all needed files, files reference can be set to NULL.
+#'
 #' @param time_span_reference time span to be used for the classification of
 #'        biomes, defined as character string, e.g. `as.character(1901:1930)`.
+#'
+#' @param approach character string indicating which biome classification
+#'        approach to use. Currently only one is defined ("default").
+#'
+#' @param time_aggregation_args list of arguments to be passed to
+#'        [`aggregate_time`] (see for more info).
+#'        To be used for time series analysis
+#'
+#' @param config_args list of arguments to be passed on from the model
+#' configuration.
+#'
 #' @param savanna_proxy `list` with either pft_lai or vegc as
 #'        key and value in m2/m2 for pft_lai (default: 6) and gC/m2 for
 #'        vegc (current default: 7500); set to `NULL` if no proxy should be
 #'        used.
+#'
 #' @param montane_arctic_proxy `list` with either "elevation" or "latitude" as
 #'        name/key and value in m for elevation (default: 1000) and degree for
 #'        latitude (default: 55); set to `NULL` if no proxy is used.
+#'
 #' @param tree_cover_thresholds list with minimum tree cover thresholds for
 #'        definition of forest, woodland, savanna and grassland. Only changes to
 #'        the default have to be included in the list, for the rest the default
@@ -36,20 +51,20 @@
 #'        "tropical savanna" = 0.1
 #'        In the boreal zone, there is no woodland, everything below the
 #'        boreal forest threshold will be classified as boreal tundra.
-#' @param method character string indicating which biome classification method
-#'        to use. Currently only one is defined ("default").
-#' @param time_aggregation_args list of arguments to be passed to
-#'        \link[boundaries]{aggregate_time} (see for more info).
-#'        To be used for time series analysis
+#'
+#'
 #' @param input_files list of required file(s) using ID (e.g. `temp`,
 #'        `elevation`) and an absolute file path to the corresponding input file
 #'        if files_reference are not provided and if temp and elevation are
 #'        needed and not among the output files under path_reference
-#' @param diff_output_files list of required file(s) using ID 
-#'        (e.g. prec, runoff) and the alternative writing (e.g. `"my_runoff"`). 
+#'
+#' @param diff_output_files list of required file(s) using ID
+#'        (e.g. prec, runoff) and the alternative writing (e.g. `"my_runoff"`).
 #'        Only required if files_reference are not provided
-#' @return list object containing biome_id (main biome per grid cell [dim=c(ncells)]), # nolint
-#' and list of respective biome_names[dim=c(nbiomes)]
+#'
+#' @return list object containing biome_id (main biome per grid
+#'         `cell[dim=c(ncells)]`), and list of respective
+#'         `biome_names[dim=c(nbiomes)]`
 #'
 #' @examples
 #' \dontrun{
@@ -59,13 +74,13 @@
 #' }
 #'
 #' @export
-classify_biomes <- function(config_reference = NULL,
+classify_biomes <- function(config_reference = NULL, # nolint:cyclocomp_linter
                             files_reference = NULL,
                             time_span_reference,
                             savanna_proxy = list(vegc = 7500),
                             montane_arctic_proxy = list(elevation = 1000),
                             tree_cover_thresholds = list(),
-                            method = "default",
+                            approach = "default",
                             time_aggregation_args = list(),
                             config_args = list(),
                             input_files = list(),
@@ -85,7 +100,7 @@ classify_biomes <- function(config_reference = NULL,
 
     output_files <- list_outputs(
       "biome",
-      method = list("biome" = method),
+      approach = list("biome" = approach),
       spatial_scale = "subglobal",
       only_first_filename = FALSE
     )
@@ -127,13 +142,14 @@ classify_biomes <- function(config_reference = NULL,
 
   # test if forest threshold is always > woodland threshold > savanna threshold
   if (min_tree_cover[["temperate forest"]] <=
-        min_tree_cover[["temperate woodland"]] |
+      min_tree_cover[["temperate woodland"]] | # nolint
       min_tree_cover[["temperate woodland"]] <=
-        min_tree_cover[["temperate savanna"]] |
+        min_tree_cover[["temperate savanna"]] | # nolint
       min_tree_cover[["tropical woodland"]] <=
-        min_tree_cover[["tropical savanna"]] |
+        min_tree_cover[["tropical savanna"]] | # nolint
       min_tree_cover[["tropical forest"]] <=
-        min_tree_cover[["tropical woodland"]]) {
+        min_tree_cover[["tropical woodland"]]
+  ) {
     stop(paste0("Tree cover threshold for forest are not always higher than",
                 "tree cover thresholds for woodland and savanna. Aborting."))
   }
@@ -149,6 +165,8 @@ classify_biomes <- function(config_reference = NULL,
   lat <- lpjmlkit::as_array(grid, subset = list(band = 2)) %>%
     drop()
 
+  # please R CMD check for use of future operator
+  fpc <- temp <- NULL
   fpc %<-% read_io_format(
     files_reference$fpc,
     time_span_reference,
@@ -168,6 +186,8 @@ classify_biomes <- function(config_reference = NULL,
   }
 
   if (!is.na(savanna_proxy_name)) {
+    # please R CMD check for use of future operator
+    savanna_proxy_data <- NULL
     savanna_proxy_data %<-% read_io_format(
       files_reference[[savanna_proxy_name]],
       time_span_reference,
@@ -191,6 +211,8 @@ classify_biomes <- function(config_reference = NULL,
   fpc_nbands <- dim(fpc)[["band"]]
   npft <- fpc_nbands - 1
 
+  # please R CMD check for use of future operator
+  avg_fpc <- NULL
   # average fpc
   avg_fpc %<-% do.call(
     aggregate_time,
@@ -200,6 +222,8 @@ classify_biomes <- function(config_reference = NULL,
 
   # average vegc or pft_lai
   if (!is.na(savanna_proxy_name)) {
+    # please R CMD check for use of future operator
+    avg_savanna_proxy_data <- NULL
     avg_savanna_proxy_data %<-% drop(
       do.call(
         aggregate_time,
@@ -208,6 +232,8 @@ classify_biomes <- function(config_reference = NULL,
       )
     )
   }
+  # please R CMD check for use of future operator
+  avg_temp <- NULL
   # average temp
   # TODO understand why additional dimension is added here but not for fpc
   # (67420, 1)
@@ -230,14 +256,14 @@ classify_biomes <- function(config_reference = NULL,
   biome_names <- biome_mapping$id
   names(biome_names) <- biome_mapping$name
 
+  # please R CMD check for use of dplyr syntax
+  npft_proxy <- zone <- category <- type <- NULL
   # read in pft categories
   pft_categories <- system.file("extdata",
                                 "pft_categories.csv",
                                 package = "boundaries") %>%
     read_pft_categories() %>%
     dplyr::filter(., npft_proxy == npft)
-
-  fpc_names <- dplyr::filter(pft_categories, category == "natural")$pft
 
   # define pft categories
   fpc_temperate_trees <- dplyr::filter(
@@ -281,48 +307,64 @@ classify_biomes <- function(config_reference = NULL,
   ] %>% {
     if (rlang::is_empty(.)) NULL else .
   }
+  # please R CMD check for use of future operator
+  fpc_tree_total <- NULL
   fpc_tree_total %<-% apply(
     lpjmlkit::asub(avg_fpc, band = fpc_trees, drop = FALSE),
     c("cell", third_dim),
     sum,
     na.rm = TRUE
   )
+  # please R CMD check for use of future operator
+  fpc_tree_tropical <- NULL
   fpc_tree_tropical %<-% apply(
     lpjmlkit::asub(avg_fpc, band = fpc_tropical_trees, drop = FALSE),
     c("cell", third_dim),
     sum,
     na.rm = TRUE
   )
+  # please R CMD check for use of future operator
+  fpc_tree_temperate <- NULL
   fpc_tree_temperate %<-% apply(
     lpjmlkit::asub(avg_fpc, band = fpc_temperate_trees, drop = FALSE),
     c("cell", third_dim),
     sum,
     na.rm = TRUE
   )
+  # please R CMD check for use of future operator
+  fpc_tree_boreal <- NULL
   fpc_tree_boreal %<-% apply(
     lpjmlkit::asub(avg_fpc, band = fpc_boreal_trees, drop = FALSE),
     c("cell", third_dim),
     sum,
     na.rm = TRUE
   )
+  # please R CMD check for use of future operator
+  fpc_tree_needle <- NULL
   fpc_tree_needle %<-% apply(
     lpjmlkit::asub(avg_fpc, band = fpc_needle_trees, drop = FALSE),
     c("cell", third_dim),
     sum,
     na.rm = TRUE
   )
+  # please R CMD check for use of future operator
+  fpc_tree_evergreen <- NULL
   fpc_tree_evergreen %<-% apply(
     lpjmlkit::asub(avg_fpc, band = fpc_evergreen_trees, drop = FALSE),
     c("cell", third_dim),
     sum,
     na.rm = TRUE
   )
+  # please R CMD check for use of future operator
+  fpc_grass_total <- NULL
   fpc_grass_total %<-% apply(
     lpjmlkit::asub(avg_fpc, band = fpc_grass, drop = FALSE),
     c("cell", third_dim),
     sum,
     na.rm = TRUE
   )
+  # please R CMD check for use of future operator
+  fpc_total <- NULL
   fpc_total %<-% apply(
     lpjmlkit::asub(avg_fpc, band = -1, drop = FALSE),
     c("cell", third_dim),
@@ -330,6 +372,8 @@ classify_biomes <- function(config_reference = NULL,
     na.rm = TRUE
   )
 
+  # please R CMD check for use of future operator
+  max_share_trees <- NULL
   # define maximum share of trees among all tree PFTs per grid cell
   max_share_trees %<-% apply(
     lpjmlkit::asub(avg_fpc, band = fpc_trees, drop = FALSE),
@@ -338,12 +382,12 @@ classify_biomes <- function(config_reference = NULL,
     na.rm = TRUE
   )
 
-  fpc_tree_broadleaf <- fpc_tree_total - fpc_tree_needle
-
   # use vegc 7500 gC/m2 or natLAI 6 as proxy threshold for forest/savanna
   #   "boundary
   if (!is.null(savanna_proxy)) {
     if (savanna_proxy_name == "pft_lai") {
+      # please R CMD check for use of future operator
+      avg_savanna_proxy_data <- NULL
       avg_savanna_proxy_data %<-% apply(
         lpjmlkit::asub(avg_savanna_proxy_data, band = 1:npft, drop = FALSE) * # nolint
           lpjmlkit::asub(avg_fpc, band = 2: (npft + 1), drop = FALSE) *
@@ -359,8 +403,8 @@ classify_biomes <- function(config_reference = NULL,
                                dim = dim(avg_temp),
                                dimnames = dimnames(avg_temp))
     is_savanna_proxy <- array(FALSE,
-                               dim = dim(avg_temp),
-                               dimnames = dimnames(avg_temp))
+                              dim = dim(avg_temp),
+                              dimnames = dimnames(avg_temp))
   }
 
   # catch low fpc values
@@ -475,7 +519,7 @@ classify_biomes <- function(config_reference = NULL,
       ) == max_share_trees)
   }
   # Temperate Broadleaved Deciduous Forest
-  is_temperate_broadleaved_deciduous <- {
+  is_temperate_broadleaved_deciduous <- { # nolint
     is_temperate_forest &
       (abind::adrop(
         lpjmlkit::asub(
@@ -630,7 +674,7 @@ classify_biomes <- function(config_reference = NULL,
   # Water body
   is_water <- {
     abind::adrop(lpjmlkit::asub(avg_fpc, band = 1, drop = FALSE),
-                               drop = "band") == 0
+                 drop = "band") == 0
   }
 
   # CLASSIFY BIOMES ---------------------------------------------------------- #
@@ -680,23 +724,27 @@ classify_biomes <- function(config_reference = NULL,
 
 
 read_pft_categories <- function(file_path) {
+  # please R CMD check for use of dplyr syntax
+  category_natural <- NULL
   # read_delim, col_types = readr::cols(), delim = ";")to suppress messages
   readr::read_delim(file_path, col_types = readr::cols(), delim = ";") %>%
     # change 1, 0.5, 0 values to TRUE and NAs (NA's can be dropped)
-    dplyr::mutate_at(dplyr::vars(dplyr::starts_with(c("category_", "zone_"))),
-                     function(x) ifelse(as.logical(x), TRUE, NA)) %>%
+    dplyr::mutate_at(
+      dplyr::vars(tidyselect::starts_with(c("category_", "zone_"))),
+      function(x) ifelse(as.logical(x), TRUE, NA)
+    ) %>%
     # filter natural pfts
     dplyr::filter(category_natural) %>%
     # all binary zone columns (tropical, temperate, boreal) in one categorical
     #   zone column
-    tidyr::pivot_longer(cols = starts_with("zone_"),
+    tidyr::pivot_longer(cols = tidyselect::starts_with("zone_"),
                         names_to = "zone",
                         names_prefix = "zone_",
                         values_to = "zone_value",
                         values_drop_na = TRUE) %>%
-    # all binary category columns (natural, needle, evergreen) in one categorical # nolint
+    # all binary category columns (natural, needle, evergreen) in one
     #   category column
-    tidyr::pivot_longer(cols = starts_with("category_"),
+    tidyr::pivot_longer(cols = tidyselect::starts_with("category_"),
                         names_to = "category",
                         names_prefix = "category_",
                         values_to = "category_value",
@@ -704,7 +752,7 @@ read_pft_categories <- function(file_path) {
     # delete side product - logical columns
     dplyr::select(-c("category_value", "zone_value")) %>%
     # values to lpjml_index, names to length of npft (convert to numeric)
-    tidyr::pivot_longer(cols = starts_with("lpjml_index_npft_"),
+    tidyr::pivot_longer(cols = tidyselect::starts_with("lpjml_index_npft_"),
                         values_to = "lpjml_index",
                         names_to = "npft_proxy",
                         names_transform = list(npft_proxy = function(x) suppressWarnings(as.numeric(x))), # nolint

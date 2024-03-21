@@ -4,12 +4,19 @@
 \alias{list_outputs}
 \title{List required LPJmL outputs and temporal resolution}
 \usage{
-list_outputs(metric = "all", method, spatial_scale, only_first_filename = TRUE)
+list_outputs(metric, approach, spatial_scale, only_first_filename = TRUE)
 }
 \arguments{
 \item{metric}{Character string containing name of metric to get
-required outputs. Available options are \code{c("meco", "mcol", "biome", "nitrogen", "lsc", "bluewater", "greenwater", "water", "biosphere")}
+required outputs. Available options are \code{c("biome", "nitrogen", "lsc", "bluewater", "greenwater", "biosphere")}
 or just \code{"all"} or \code{"benchmark"}.}
+
+\item{approach}{List of character strings containing the approach to
+calculate the metric.}
+
+\item{spatial_scale}{character. Spatial resolution, available options
+are \code{"subglobal"} (at the biome level, default), \code{"global"} and
+\code{"grid"}}
 
 \item{only_first_filename}{Logical. If TRUE, only the first file name will be
 returned for each output. If FALSE, all file names will be returned.}
@@ -25,6 +32,11 @@ in the boundaries package (\code{"./inst/metric_files.yml"}).
 }
 \examples{
 \dontrun{
-
+list_outputs(
+  "biome",
+  approach = list("biome" = approach),
+  spatial_scale = "subglobal",
+  only_first_filename = FALSE
+)
 }
 }

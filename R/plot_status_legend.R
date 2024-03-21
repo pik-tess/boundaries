@@ -1,5 +1,7 @@
 plot_legend <- function() {
 
+  # please R CMD check for use of dplyr syntax
+  vals <- y <- x <- NULL
   # Create table with distribution of safe space values
   safe_space <- tibble::tibble(x = 7.5, y = rep(3, 5)) %>%
     dplyr::mutate(vals = purrr::map(y, ~seq(2, .x, by = 0.01))) %>%
@@ -21,15 +23,8 @@ plot_legend <- function() {
     dplyr::select(-y) %>%
     dplyr::rename(y = vals)
 
-  # Create table with distribution of high risk values
-  ultra_risk <- tibble::tibble(x = 7.5, y = rep(7, 5)) %>%
-    dplyr::mutate(vals = purrr::map(y, ~seq(5.5, .x, by = 0.01))) %>%
-    tidyr::unnest(cols = c(vals)) %>%
-    dplyr::mutate(xend = x, x = x - 0.13, yend = vals) %>%
-    dplyr::select(-y) %>%
-    dplyr::rename(y = vals)
-
-
+  # please R CMD check for use of dplyr syntax
+  xend <- yend <- NULL
   p <- ggplot2::ggplot() +
     ggplot2::geom_segment(
       data = increasing_risk,
@@ -96,20 +91,20 @@ plot_legend <- function() {
       linetype = 1
     ) +
 
-    geom_segment(
-      aes(x = 7.556, xend = 7.52, y = 1.975, yend = 5.61),
+    ggplot2::geom_segment(
+      ggplot2::aes(x = 7.556, xend = 7.52, y = 1.975, yend = 5.61),
       arrow = ggplot2::arrow(
         length = ggplot2::unit(0.25, "cm"), type = "closed"
       ),
       size = 1.1,
     ) +
-    geom_segment(
-      aes(x = 7.54, xend = 7.54, y = 2.96, yend = 3.03),
+    ggplot2::geom_segment(
+      ggplot2::aes(x = 7.54, xend = 7.54, y = 2.96, yend = 3.03),
       size = 3,
       color = "white"
     ) +
-    geom_segment(
-      aes(x = 7.53, xend = 7.53, y = 3.96, yend = 4.03),
+    ggplot2::geom_segment(
+      ggplot2::aes(x = 7.53, xend = 7.53, y = 3.96, yend = 4.03),
       size = 3,
       color = "white"
     ) +
@@ -204,7 +199,9 @@ plot_legend <- function() {
         grid::editGrob,
         vp = grid::viewport(
           yscale = c(0.45, 1),
-          xscale = c(0.45, 1)))
+          xscale = c(0.45, 1)
+        )
+      )
     }),
     out = "g"
   )

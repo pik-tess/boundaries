@@ -15,7 +15,7 @@ test_that("test calc_bluewater_status global", {
     time_span_scenario = timeframe,
     time_span_reference = timeframe,
     spatial_scale = "global",
-    method = list(bluewater = "porkka2023"),
+    approach = list(bluewater = "porkka2023"),
     time_aggregation_args = c(1),
     in_parallel = FALSE,
   ) %>% suppressMessages()
@@ -27,7 +27,7 @@ test_that("test calc_bluewater_status global", {
 
   # test for thresholds attributes (0 or manually set to 50)
   testthat::expect_true(
-    all(sapply(attributes(test$bluewater)$thresholds, function(x) {
+    all(sapply(attributes(test$bluewater)$thresholds, function(x) { # nolint:undesirable_function_linter
       x == 0 || x == 50 || x == 100
     }))
   )
@@ -145,7 +145,7 @@ test_that("test calc_efrs", {
 
   efrs <- calc_efrs(
     discharge,
-    method = "steffen2015",
+    approach = "steffen2015",
     time_aggregation_args = c(1)
   )
 
@@ -178,10 +178,10 @@ test_that("test calc_efrs", {
     drop()
 
 
-  # VMF method --------------------------------------------------------------- #
+  # VMF approach --------------------------------------------------------------- #
   efrs_vmf <- calc_efrs(
     discharge,
-    method = "vmf",
+    approach = "vmf",
     time_aggregation_args = c(1)
   )
 
@@ -197,10 +197,10 @@ test_that("test calc_efrs", {
     )
   )
 
-  # steffen2015 method ------------------------------------------------------- #
+  # steffen2015 approach ------------------------------------------------------- #
   efrs_steffen2015 <- calc_efrs(
     discharge,
-    method = "steffen2015",
+    approach = "steffen2015",
     time_aggregation_args = c(1)
   )
 
@@ -216,10 +216,10 @@ test_that("test calc_efrs", {
     )
   )
 
-  # q90q50 method ------------------------------------------------------------ #
+  # q90q50 approach ------------------------------------------------------------ #
   efrs_q90q50 <- calc_efrs(
     discharge,
-    method = "q90q50"
+    approach = "q90q50"
   )
 
   # test for length of time series

@@ -25,7 +25,7 @@
 #'
 #' @return array with same amount of cells and months as x. 3rd dimension is
 #' defined by nyear_window, basically `dim(x)[3]/nyear_window` or equal to
-#' dim(x)[3] if `moving_average == TRUE` or `interpolate == TRUE`
+#' `dim(x)[3]` if `moving_average == TRUE` or `interpolate == TRUE`
 #'
 #' @md
 #' @importFrom magrittr %>%
@@ -73,7 +73,7 @@ aggregate_time <- function(x,
   interpolate_spline <- function(x, y, nyear_window) {
     rep(NA, dim(y)["year"]) %>%
       `[<-`(seq(round(nyear_window / 2), dim(y)["year"], nyear_window),
-                value = x) %>%
+            value = x) %>%
       zoo::na.spline()
   }
 
@@ -84,7 +84,7 @@ aggregate_time <- function(x,
       x <- lpjmlkit::asub(x, year = 1:nyear_reference, drop = FALSE)
     }
     # only valid for nyear_window <  years of x (dim(x)[3])
-    if (nyear_window > 1 & nyear_window <= dim(x)["year"]) {
+    if (nyear_window > 1 & nyear_window <= dim(x)["year"]) { # nolint:vector_logic_linter
       # check if multiple (can also be left out)
       # if (dim(x)[3] %% nyear_window == 0) {
       if (moving_average) {
@@ -115,7 +115,7 @@ aggregate_time <- function(x,
                            interpolate_spline,
                            x,
                            nyear_window),
-                       c("cell", third_dim, ""))
+                     c("cell", third_dim, ""))
         }
       }
       # }
@@ -130,14 +130,14 @@ aggregate_time <- function(x,
       nmultiple <- round(dim(orig_x)[["year"]] / nyear_reference)
       replace_multiple_id <- nmultiple * dim(y)[[3]]
       # if average window is returned as year dimension
-      if (!moving_average & !interpolate) {
+      if (!moving_average & !interpolate) { # nolint:vector_logic_linter
         z <- array(NA,
                    dim = c(dim(y)[c("cell", third_dim)],
                            window = replace_multiple_id),
                    dimnames = append(dimnames(y)[c("cell", third_dim)],
                                      list(window = rep(dimnames(y)[[3]],
-                                                        nmultiple))))
-      # return as original year dimension
+                                                       nmultiple))))
+        # return as original year dimension
       } else {
         # years vector also for non multiples (subset only partly recycled)
         years <- rep(NA, dim(orig_x)[["year"]]) %>%

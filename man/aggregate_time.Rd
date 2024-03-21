@@ -35,7 +35,7 @@ time_span for ideally reference runs to be used as a baseline. E.g.
 \value{
 array with same amount of cells and months as x. 3rd dimension is
 defined by nyear_window, basically \code{dim(x)[3]/nyear_window} or equal to
-dim(x)\link{3} if \code{moving_average == TRUE} or \code{interpolate == TRUE}
+\code{dim(x)[3]} if \code{moving_average == TRUE} or \code{interpolate == TRUE}
 }
 \description{
 Define window sizes (nyear_window) to be used to calculate averages (mean)

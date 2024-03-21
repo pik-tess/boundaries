@@ -2,25 +2,29 @@
 % Please edit documentation in R/calc_biosphere_status.R
 \name{calc_biosphere_status}
 \alias{calc_biosphere_status}
-\title{Calculate biosphere status based on BioCol (HANPP) from a PNV run (reference)
+\title{Calculate biosphere status based on BioCol from a PNV run and LU run of LPJmL
+Calculate biosphere status based on BioCol (HANPP) from a PNV run (reference)
 and LU run (scenario) of LPJmL, both using time_span_scenario. Additionally
 a separate reference NPP file (e.g. from a Holocene run) can be supplied as
 reference_npp_file, which will use time_span_reference, or file index years
-3:32 if time_span_reference is not supplied}
+3:32 if time_span_reference is not supplied.}
 \usage{
 calc_biosphere_status(
   files_scenario,
   files_reference,
-  path_baseline,
-  time_span_scenario = as.character(1982:2011),
-  time_span_baseline = time_span_scenario,
-  time_span_reference = time_span_scenario,
   spatial_scale = "subglobal",
+  time_span_scenario = as.character(1982:2011),
+  time_span_reference = time_span_scenario,
+  approach = "stenzel2023",
+  time_aggregation_args = list(),
+  config_args = list(),
   thresholds = NULL,
-  method = "stenzel2023",
+  path_baseline,
+  time_span_baseline = time_span_reference,
   gridbased = TRUE,
   npp_threshold = 20,
-  time_aggregation_args = list(),
+  biocol_option = "abs",
+  eurasia = TRUE,
   ...
 )
 }
@@ -34,28 +38,38 @@ npp = "/temp/npp.bin.json")}
 (character string) of the reference NPP, HANPP should be compared against.
 In this case only NPP is required. list(npp = "/temp/npp.bin.json").}
 
-\item{path_baseline}{character string with path to outputs for the baseline
-run, file names are taken from files scenario.}
+\item{spatial_scale}{character string indicating spatial resolution
+either "grid", "subglobal" or "global"}
 
 \item{time_span_scenario}{time span to be used for the scenario run and
 parallel PNV run, defined as a character string,
 e.g. \code{as.character(1982:2011)}}
 
-\item{time_span_baseline}{time span to be used for the baseline run, defined
-as a character vector, e.g. \code{as.character(1901:1930)}. Can differ in offset
-and length from \code{time_span_scenario}! If \code{NULL} value of \code{time_span_scenario}
-is used}
-
 \item{time_span_reference}{time span to read reference_npp_file from, using
 index years 3:32 if set to NULL (default: NULL)}
 
-\item{spatial_scale}{character string indicating spatial resolution
-either "grid", "subglobal" or "global"}
+\item{approach}{approach (character string) to be used , currently available
+approach is \code{"stenzel2023"}}
+
+\item{time_aggregation_args}{list of arguments to be passed to
+\code{\link{aggregate_time}} (see for more info).
+To be used for time series analysis}
+
+\item{config_args}{list of arguments to be passed on from the model
+configuration.}
 
 \item{thresholds}{named character string with thresholds to be used to
 define the lower end of safe, increasing risk and high risk zone,
 e.g. c(holocene = 0.0, pb = 0.1, highrisk = 0.2). If set to NULL, default
 values from metric_files.yml will be used.}
+
+\item{path_baseline}{character string with path to outputs for the baseline
+run, file names are taken from files scenario.}
+
+\item{time_span_baseline}{time span to be used for the baseline run, defined
+as a character vector, e.g. \code{as.character(1901:1930)}. Can differ in offset
+and length from \code{time_span_scenario}! If \code{NULL} value of \code{time_span_scenario}
+is used}
 
 \item{gridbased}{logical; are pft outputs from LPJmL gridbased or pft-based?}
 
@@ -63,19 +77,35 @@ values from metric_files.yml will be used.}
 according to Haberl et al. 2007). Below BioCol will be set to 0.
 (default: 20 gC/m2)}
 
-\item{time_aggregation_args}{list of arguments to be passed to
-\link[boundaries]{aggregate_time} (see for more info).
-To be used for time series analysis}
+\item{biocol_option}{which biocol values to use for aggregation. options:
+netsum, only_above_zero, abs - TODO: finish}
 
-\item{...}{arguments forwarded to \link\href{classify_biomes}{boundaries}}
+\item{eurasia}{logical. If \code{spatial_scale} = \code{"subglobal"} merge continents
+Europe and Asia to avoid arbitrary biome cut at europe/asia border.
+Defaults to \code{TRUE}}
+
+\item{...}{arguments forwarded to \code{\link{classify_biomes}}}
 }
 \value{
 pb_status list data object
 }
 \description{
 Calculate biosphere status based on BioCol from a PNV run and LU run of LPJmL
+Calculate biosphere status based on BioCol (HANPP) from a PNV run (reference)
+and LU run (scenario) of LPJmL, both using time_span_scenario. Additionally
+a separate reference NPP file (e.g. from a Holocene run) can be supplied as
+reference_npp_file, which will use time_span_reference, or file index years
+3:32 if time_span_reference is not supplied.
 }
 \examples{
 \dontrun{
+calc_biosphere_status(
+  files_scenario,
+  files_reference,
+  time_span_reference,
+  spatial_scale = "grid",
+  path_baseline,
+  time_span_reference
+)
 }
 }

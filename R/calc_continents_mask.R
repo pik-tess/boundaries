@@ -13,12 +13,12 @@ calc_continents_mask <- function(path_grid, eurasia = TRUE) {
   )$data %>% drop()
 
 
-  # grid to simple feature collection (sfc) 
+  # grid to simple feature collection (sfc)
   #   https://r-spatial.github.io/sf/articles/sf1.html
   grid_sf <- lpjml_grid %>%
     reshape2::melt() %>%
     tibble::as_tibble() %>%
-    tidyr::spread(band, value) %>%
+    tidyr::spread("band", "value") %>%
     sf::st_as_sf(coords = c("lon", "lat"), crs = sf::st_crs("epsg:4326"))
 
   # read continents from shapefile as sfc
@@ -29,16 +29,16 @@ calc_continents_mask <- function(path_grid, eurasia = TRUE) {
 
   # intersect both for coastal points that do not intersect calculate nearest
   #   feature; also assign continent names
+  # workaround to avoid no visible binding error
+  geometry <- intersection <- NULL
   continent_grid <- grid_sf %>% dplyr::mutate(
     intersection = as.integer(sf::st_intersects(geometry, continents)),
-    continent = dplyr::if_else(is.na(intersection),
-                               as.character(
-                                 continents$CONTINENT)[
-                                   sf::st_nearest_feature(., continents)
-                                 ],
-                               as.character(
-                                 continents$CONTINENT)[intersection]
-                               ))
+    continent = dplyr::if_else(
+      is.na(intersection),
+      as.character(continents$CONTINENT)[ sf::st_nearest_feature(., continents)], #nolint
+      as.character(continents$CONTINENT)[intersection]
+    )
+  )
   # workaround to overwrite intersection continent factor with actual factor
   continent_grid$intersection[
     is.na(continent_grid$intersection)
@@ -56,7 +56,7 @@ calc_continents_mask <- function(path_grid, eurasia = TRUE) {
     ] <- 1
   }
 
-  # bind to lpjml_grid 
+  # bind to lpjml_grid
   continent_mask <- rbind(lpjml_grid, continent = continent_grid$intersection)
 
   # add additional continent "band"

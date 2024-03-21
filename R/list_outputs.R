@@ -9,6 +9,13 @@
 #'        "nitrogen", "lsc", "bluewater", "greenwater", "biosphere")`
 #'        or just `"all"` or `"benchmark"`.
 #'
+#' @param approach List of character strings containing the approach to
+#'       calculate the metric.
+#'
+#' @param spatial_scale character. Spatial resolution, available options
+#'        are `"subglobal"` (at the biome level, default), `"global"` and
+#'        `"grid"`
+#'
 #' @param only_first_filename Logical. If TRUE, only the first file name will be
 #'        returned for each output. If FALSE, all file names will be returned.
 #'
@@ -17,11 +24,20 @@
 #'
 #' @examples
 #' \dontrun{
-#'
+#' list_outputs(
+#'   "biome",
+#'   approach = list("biome" = approach),
+#'   spatial_scale = "subglobal",
+#'   only_first_filename = FALSE
+#' )
 #' }
 #' @export
-list_outputs <- function(metric = "all", method, spatial_scale,
-                         only_first_filename = TRUE) {
+list_outputs <- function(
+  metric,
+  approach,
+  spatial_scale,
+  only_first_filename = TRUE
+) {
   metric <- process_metric(metric = metric)
 
   system.file(
@@ -30,7 +46,7 @@ list_outputs <- function(metric = "all", method, spatial_scale,
     package = "boundaries"
   ) %>%
     yaml::read_yaml() %>%
-    get_outputs(metric, method, spatial_scale, only_first_filename)
+    get_outputs(metric, approach, spatial_scale, only_first_filename)
 
 }
 
@@ -75,7 +91,7 @@ process_metric <- function(metric = "all") {
 
 # for input list a, all duplicate keys are unified, taking the value with
 #     highest temporal resolution (daily>monthly>annual)
-get_outputs <- function(x, metric_name, method, spatial_scale,
+get_outputs <- function(x, metric_name, approach, spatial_scale, # nolint:cyclocomp_linter
                         only_first_filename) {
   outputs <- list()
   # Iterate over all metrics
@@ -83,16 +99,19 @@ get_outputs <- function(x, metric_name, method, spatial_scale,
   for (metric in x$metric[metric_name]) {
     i <- i + 1
     boundary_name <- metric_name[i]
-    if (length(method[[boundary_name]]) > 0) {
-      method_i <- method[[boundary_name]]
+    if (length(approach[[boundary_name]]) > 0) {
+      method_i <- approach[[boundary_name]]
     } else {
-      method_i <- formals(get(paste0("calc_", boundary_name, "_status")))$method
+      method_i <- formals(
+        get(paste0("calc_", boundary_name, "_status"))
+      )$approach
     }
     if (length(spatial_scale) > 0) {
       spatial_scale_i <- spatial_scale
     } else {
-      spatial_scale_i <- formals(get(paste0("calc_", boundary_name,
-                                                 "_status")))$spatial_scale
+      spatial_scale_i <- formals(
+        get(paste0("calc_", boundary_name, "_status"))
+      )$spatial_scale
     }
     # Iterate over all unique keys
     for (item in names(metric$spatial_scale[[spatial_scale_i]][[method_i]]$output)) { #nolint
@@ -100,8 +119,8 @@ get_outputs <- function(x, metric_name, method, spatial_scale,
       # Check if output is already in list or if it has higher resolution
       if (!item %in% names(outputs) ||
           (item %in% names(outputs) &&
-           higher_res(metric$output[[item]]$resolution,
-                      outputs[[item]]$resolution))
+             higher_res(metric$output[[item]]$resolution,
+                        outputs[[item]]$resolution))
       ) {
         # Assign output resolution from metric file
         outputs[[item]]$resolution <- metric$spatial_scale[[spatial_scale_i]][[method_i]]$output[[item]]$resolution #nolint
@@ -131,7 +150,10 @@ get_function_args <- function(x, metric_name) {
   # Get arguments of functions
   funs %>%
     lapply(function(x) {
-      unlist(lapply(mget(x, inherits = TRUE), formalArgs), use.names = FALSE)
+      unlist(
+        lapply(mget(x, inherits = TRUE), methods::formalArgs),
+        use.names = FALSE
+      )
     })
 }
 
@@ -149,16 +171,16 @@ higher_res <- function(x, y) {
   }
 }
 
-list_thresholds <- function(metric, method, spatial_scale) {
-    metric <- process_metric(metric = metric)
+list_thresholds <- function(metric, approach, spatial_scale) {
+  metric <- process_metric(metric = metric)
 
-    yaml_data <- system.file(
-      "extdata",
-      "metric_files.yml",
-      package = "boundaries"
-    ) %>%
-      yaml::read_yaml()
+  yaml_data <- system.file(
+    "extdata",
+    "metric_files.yml",
+    package = "boundaries"
+  ) %>%
+    yaml::read_yaml()
 
-    return(yaml_data$metric[[metric]]$spatial_scale[[spatial_scale]][[method]]$threshold)
+  return(yaml_data$metric[[metric]]$spatial_scale[[spatial_scale]][[approach]]$threshold) # nolint:line_length_linter
 
 }

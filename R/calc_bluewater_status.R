@@ -13,6 +13,12 @@
 #' provided in metric_files.yml.
 #' E.g.: list(leaching = "/temp/leaching.bin.json").
 #'
+#' @param spatial_scale character string indicating spatial resolution
+#' options: "global", "subglobal", "grid";
+#' for "grid" the approach "gerten2020" is applicable based on EFR calculations;
+#' for "global"/"subglobal" the share (%) of total global/basin area with
+#' deviations is calculated
+#'
 #' @param time_span_scenario time span to be used for the scenario run, defined
 #' as character string
 #'
@@ -21,33 +27,27 @@
 #' length from `time_span_scenario`! If `NULL` value of `time_span_scenario` is
 #' used
 #'
-#' @param method method (character string) to be used , currently available
-#' method is `"gerten2020"` based on
+#' @param approach approach (character string) to be used , currently available
+#' approach is `"gerten2020"` based on
 #' [Gerten et al. 2020](https://doi.org/10.1038/s41893-019-0465-1)
 #' for spatial_scale = "grid" and
 #' "wang_erlandsson2022" as well as "porkka2023" for
 #' spatial_scale = "global" or "subglobal"
 #'
 #' @param time_aggregation_args list of arguments to be passed to
-#' \link[boundaries]{aggregate_time} (see for more info). To be used for
+#' [`aggregate_time`] (see for more info). To be used for
 #' time series analysis
 #'
 #' @param config_args list of arguments to be passed on from the model
 #' configuration.
 #'
-#' @param spatial_scale character string indicating spatial resolution
-#' options: "global", "subglobal", "grid";
-#' for "grid" the method "gerten2020" is applicable based on EFR calculations;
-#' for "global"/"subglobal" the share (%) of total global/basin area with
-#' deviations is calculated
-#'
 #' @param thresholds named character string with thresholds to be used to
-#' define the safe, increasing risk and high risk zone, the method and scale
+#' define the safe, increasing risk and high risk zone, the approach and scale
 #' specific default thresholds are defined in metric_files.yml are are applied
 #' if thresholds are set to NULL.
-#' 
+#'
 #' @param cut_min double. Exclude boundary calculations for discharge < cut_min
-#' and dismiss EFR transgresssions if < cut_min for "gerten2020" method,
+#' and dismiss EFR transgresssions if < cut_min for "gerten2020" approach,
 #' Default: 0.0864 hm3/day (=1 m3/s)
 #'
 #'@return todo: describe returned object
@@ -62,25 +62,26 @@
 calc_bluewater_status <- function(files_scenario,
                                   files_reference,
                                   spatial_scale,
-                                  time_span_scenario = time_span_scenario,
-                                  time_span_reference = NULL,
-                                  method = "gerten2020",
+                                  time_span_scenario = as.character(1982:2011),
+                                  time_span_reference = time_span_scenario,
+                                  approach = "gerten2020",
                                   time_aggregation_args = list(),
                                   config_args = list(),
                                   thresholds = NULL,
                                   cut_min = 0.0864) {
 
   # verify available methods and resolution
-  method <- match.arg(method, c("gerten2020",
-                                "wang-erlandsson2022",
-                                "porkka2023"))
+  approach <- match.arg(
+    approach,
+    c("gerten2020", "wang-erlandsson2022", "porkka2023")
+  )
   spatial_scale <- match.arg(spatial_scale, c("global", "subglobal", "grid"))
 
-  # apply defined method
+  # apply defined approach
   if (spatial_scale == "grid") {
-    if (method != "gerten2020") {
+    if (approach != "gerten2020") {
       stop(
-        "Method \"gerten2020\" is the only available method for ",
+        "Method \"gerten2020\" is the only available approach for ",
         "spatial_scale = \"grid\"."
       )
     }
@@ -90,7 +91,7 @@ calc_bluewater_status <- function(files_scenario,
       spatial_scale = spatial_scale,
       time_span_scenario = time_span_scenario,
       time_span_reference =  time_span_reference,
-      method = method,
+      approach = approach,
       time_aggregation_args = time_aggregation_args,
       config_args = config_args,
       thresholds = thresholds,
@@ -98,10 +99,10 @@ calc_bluewater_status <- function(files_scenario,
     )
 
   } else if (spatial_scale %in% c("subglobal", "global")) {
-    if (!method %in% c("wang-erlandsson2022", "porkka2023")) {
+    if (!approach %in% c("wang-erlandsson2022", "porkka2023")) {
       stop(
         "Method \"",
-        method,
+        approach,
         "\" is not available for spatial_scale = ",
         spatial_scale,
         "."
@@ -115,7 +116,7 @@ calc_bluewater_status <- function(files_scenario,
       spatial_scale = spatial_scale,
       time_span_scenario = time_span_scenario,
       time_span_reference =  time_span_reference,
-      method = method,
+      approach = approach,
       time_aggregation_args = time_aggregation_args,
       config_args = config_args,
       thresholds = thresholds,
@@ -133,7 +134,7 @@ calc_bluewater_efrs <- function(
   spatial_scale,
   time_span_scenario = time_span_scenario,
   time_span_reference = NULL,
-  method = "gerten2020",
+  approach = "gerten2020",
   time_aggregation_args = list(),
   config_args = list(),
   thresholds = NULL,
@@ -144,6 +145,8 @@ calc_bluewater_efrs <- function(
     stop("Method \"gerten2020\" is only applicable for spatial_scale = \"grid\"") #nolint
   }
 
+  # please R CMD check for use of future operator
+  discharge_reference <- NULL
   # reference discharge ---------------------------------------------------- #
   discharge_reference %<-% read_io_format(
     files_reference$discharge,
@@ -152,6 +155,8 @@ calc_bluewater_efrs <- function(
     spatial_subset = config_args$spatial_subset
   )
 
+  # please R CMD check for use of future operator
+  discharge_scenario <- NULL
   # scenario discharge ----------------------------------------------------- #
   discharge_scenario %<-% read_io_format(
     files_scenario$discharge,
@@ -169,6 +174,8 @@ calc_bluewater_efrs <- function(
     nyear_ref <- NULL
   }
 
+  # please R CMD check for use of future operator
+  avg_discharge_reference <- NULL
   # average discharge reference
   avg_discharge_reference %<-% do.call(
     aggregate_time,
@@ -177,6 +184,8 @@ calc_bluewater_efrs <- function(
            time_aggregation_args)
   )
 
+  # please R CMD check for use of future operator
+  avg_discharge_scenario <- NULL
   # average discharge scenario
   avg_discharge_scenario %<-% do.call(
     aggregate_time,
@@ -185,10 +194,12 @@ calc_bluewater_efrs <- function(
   )
 
 
+  # please R CMD check for use of future operator
+  efr_uncertain <- efr_safe <- NULL
   # calc efrs for vmf_min and vmf_max
   efr_uncertain %<-% calc_efrs(discharge_reference,
-                                "vmf_min",
-                                time_aggregation_args)
+                               "vmf_min",
+                               time_aggregation_args)
   efr_safe %<-% calc_efrs(discharge_reference,
                           "vmf_max",
                           time_aggregation_args)
