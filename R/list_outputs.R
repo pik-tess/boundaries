@@ -68,7 +68,7 @@ list_function_args <- function(metric = "all") {
 process_metric <- function(metric = "all") {
   all_metrics <- c(
     "biome", "nitrogen", "lsc",
-    "bluewater", "greenwater", "biosphere"
+    "bluewater", "greenwater", "biosphere", "benchmark"
   )
 
   if ("all" %in% metric) {

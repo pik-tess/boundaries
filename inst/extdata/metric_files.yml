@@ -300,6 +300,48 @@ metric:
             - *biome_fun
             - calc_biosphere_status
 
+    # Calculate validation table
+    benchmark:
+        spatial_scale:
+            global:
+                benchmark:
+                    # LPJmL output IDs with required resolution
+                    output:
+                        grid:
+                            resolution: "annual"
+                            optional: false
+                        terr_area:
+                            resolution: "annual"
+                            optional: false
+                        npp:
+                            resolution: "annual"
+                            optional: false
+                        pft_npp:
+                            resolution: "annual"
+                            optional: false
+                        pft_harvestc:
+                            resolution: "annual"
+                            optional: false
+                        pft_rharvestc:
+                            resolution: "annual"
+                            optional: false
+                        firec:
+                            resolution: "annual"
+                            optional: false
+                        timber_harvestc:
+                            resolution: "annual"
+                            optional: false
+                        cftfrac:
+                            resolution: "annual"
+                            optional: false
+                        fpc:
+                            resolution: "annual"
+                            optional: false
+
+        # Called boundaries functions
+        fun_name: "validation_table"
+        funs:
+            - validation_table                    
 
 
 # ---------------------------------------------------------------------------- #

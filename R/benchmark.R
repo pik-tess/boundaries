@@ -1,93 +1,85 @@
-rm(list = ls(all = TRUE))
-
-library(lpjmlkit)
-# library(abind)
-library(stringr)
-library(dplyr)
-# library(tidyr)
-
-# TODO:
-# 1. improve documentation and formatting. is there a standardised way?
-# 2. link to .yaml file
-# 3. improve readability (at least two lit values for each variables, cosider ranges, formattable?)
-# 4. consistent rounding
-
-
-# function to benchmark lpjml-based PB calculations to literature values
-# currently still using explicit path (in JB folder), for the future use .yaml file
-# what should be the name of the main function?
-validation_table <- function(dir_output, table_path, timeframe, calculate_pb_status = TRUE) { #nolint
+#' Validate simulated global PB-relevant variables against literature
+#'
+#' Calculate a table with global modelled vs literature values for key variables
+#' relevant to planetary boundaries
+#'
+#' @param dir_output
+#'
+#' @param table_path
+#'
+#' @return table (csv) with...
+#'
+#' @examples
+#'
+#' \dontrun{
+#'  validation <- validation_table(
+#'    table_path = "./my_path/table.csv",
+#'    timeframe = as.character(2010:2017)
+#'  )
+#' }
+#'
+#' @md
+#' @export
+validation_table <- function(
+  config_scenario,
+  config_reference,
+  time_span_scenario,
+  time_span_reference,
+  table_path,
+  calculate_pb_status = TRUE
+) {
   # load literature table
-  ref_table <- read.csv2(ref_table_path)
+  ref_table <- system.file("extdata", "biomes.csv", package = "boundaries") %>%
+    read.csv2()
 
-  # define set of helper functions
-  # functions to deal with time and spacial scales of lpjml output
-  global_sum_yearly <- function(file, timeframe) {
-    output <- read_io(file, subset = list(year = as.character(timeframe))) %>%
-      transform(to = "year_month_day") %>%
-      as_array(aggregate = list(year = mean)) %>%
-      sum(. * terr_area) * 10^-12 # why this factor?
-    return(output)
+  config_scenario <- lpjmlkit::read_config(config_scenario)
+  config_reference <- lpjmlkit::read_config(config_reference)
+
+  if (!all(time_span_scenario %in% get_sim_time(config_scenario))) {
+    stop("Time span not available in scenario run.")
+  }
+  if (!all(time_span_reference %in% get_sim_time(config_reference))) {
+    stop("Time span not available in reference run.")
   }
 
-  grid_mean_yearly <- function(file, timeframe) {
-    data <- read_io(file, subset = list(year = as.character(timeframe))) %>%
-      transform(to = "year_month_day") %>%
-      as_array(aggregate = list(year = mean)) %>%
-      drop()
-    return(data)
-  }
+  # List required output files for each boundary
+  output_files <- list_outputs(
+    "benchmark",
+    approach = list(benchmark = "benchmark"),
+    spatial_scale = "global",
+    only_first_filename = FALSE
+  )
 
-  grid_sum_monthly_mean_yearly <- function(file, timeframe) {
-    data <- read_io(file, subset = list(year = as.character(timeframe))) %>%
-      transform(to = "year_month_day") %>%
-      as_array(aggregate = list(
-        year = mean,
-        month = sum
-      )) %>%
-      drop()
-    return(data)
-  }
+  # Get filenames for scenario and reference
+  files_scenario <- get_filenames(
+    config = config_scenario,
+    output_files = output_files
+  )
+  files_reference <- get_filenames(
+    config = config_reference,
+    output_files = output_files
+  )
 
-  # insert the computed variables in the literature table through matching by variable and unit patterns, make sure the structure of original .csv table is mantained
-  insert_lpjml_value <- function(ref_table, var_patterns, unit_patterns, calculated_vars) {
-    lpjml_values <- rep(NA_real_, nrow(ref_table))
-    for (i in seq_along(var_patterns)) {
-      matching_indices <- grepl(var_patterns[[i]], ref_table$variable, ignore.case = TRUE) &
-        grepl(unit_patterns[[i]], ref_table$unit, ignore.case = TRUE)
-      lpjml_values[matching_indices] <- round(eval(parse(text = calculated_vars[[i]]))[1], digits)
-    }
-    ref_table$lpjml_value <- lpjml_values
-    return(ref_table)
-  }
-
-  # insert the PB status values (calculated with calc_status) in the benchmarking table
-  evaluate_pb_status <- function(ref_table, pb_list, temp2) {
-    for (pb in pb_list) { # add calculation of PBs
-      ref_table <- ref_table %>%
-        mutate(lpjml_value = ifelse(grepl(pb, variable, ignore.case = TRUE) & grepl("PB status", variable, ignore.case = TRUE),
-          round(temp2[[pb]][1], digits = 4),
-          lpjml_value
-        ))
-    }
-    return(ref_table)
-  }
-
-  # end of helper function definition
   # read in terrestrial area
-  terr_area <- read_io(paste0(dir_output, "/terr_area.bin.json"))$data %>% drop() # in m2
-
-  cftfrac <- grid_mean_yearly(paste0(dir_output, "/cftfrac.bin.json"), timeframe)
-
+  terr_area <- read_io(files_scenario$terr_area)$data %>% drop() # in m2
   ncell <- length(terr_area)
 
-  # PB Land-system change
+  ####### PB Land-system change ################################################
+
+  cftfrac <- aggregate_lpjml_output(
+    files_scenario$cftfrac,
+    time_span_scenario,
+    aggregate = list(year = mean)
+  )
 
   #-------------- total agricultural area --------------------------------------
-  # better based on input than on output (to include areas with failed harvest)?
+  # TODO: JB: better based on input than on output
+  # (to include areas with failed harvest)?
 
-  area_cft <- apply(cftfrac * terr_area * 10^-10, c(2), sum) # in mio ha
+  # calculate global area for each band, conversion from m2 to mio ha
+  area_cft <- apply(cftfrac * terr_area * 10^-10, "band", sum)
 
+  #TODO replace hard-coded indices based on dimnames of bands
   crop_area <- sum(area_cft[c(1:13, 17:29)])
 
   pasture_area <- sum(area_cft[c(14, 30)])
@@ -95,28 +87,32 @@ validation_table <- function(dir_output, table_path, timeframe, calculate_pb_sta
   irrig_area <- sum(area_cft[c(17:32)])
 
   #------------- potential forest extent ---------------------------------------
-
-  fpc <- grid_mean_yearly(paste0(dir_output, "/fpc.bin.json"), timeframe)
-
+  #TODO make sure to always use the correct files (reference or scenario)
+  fpc <- aggregate_lpjml_output(
+    files_reference$fpc,
+    time_span_reference,
+    aggregate = list(year = mean)
+  )
+  #TODO replace hard coded indices based on band names?
   # ids for tree plant funtional types
   tree_ids <- c(2:9)
-  fpc_tree_total <- apply(fpc[, tree_ids], c(1), sum)
+  fpc_tree_total <- apply(fpc[, tree_ids], "cell", sum)
 
+  # TODO: JB: take out savannas in the tropics?
   is_forest <- fpc_tree_total >= 0.6
   forest_area <- sum(terr_area[is_forest]) * 10^-10
-  # TODO: take out savannas in the tropics?
 
-  #------------- deforestation share ---------------------------------------------
+  #------------- deforestation share -------------------------------------------
 
   forest <- rep(0, ncell)
   forest[is_forest] <- 1
-  deforest_area <- sum(apply(cftfrac, c(1), sum) * terr_area * forest) * 10^-10
+  deforest_area <- sum(apply(cftfrac, "cell", sum) * terr_area * forest) * 10^-10
   deforest_share <- deforest_area / forest_area * 100
 
-  # PB freshwater change
+  ####### PB freshwater change #################################################
+
   #------------- Irrigation withdrawals and consumption ------------------------
-
-
+  #TODO apply aggregate_lpjml_output function instead
   irrig <- grid_sum_monthly_mean_yearly(paste0(dir_output, "/irrig.bin.json"), timeframe)
   conv_loss_evap <- grid_sum_monthly_mean_yearly(paste0(dir_output, "/aconv_loss_evap.bin.json"), timeframe)
   conv_loss_drain <- grid_sum_monthly_mean_yearly(paste0(dir_output, "/aconv_loss_drain.bin.json"), timeframe)
@@ -125,12 +121,14 @@ validation_table <- function(dir_output, table_path, timeframe, calculate_pb_sta
   wd <- sum((irrig + conv_loss_drain + conv_loss_evap) * terr_area) * 10^-12
 
   # consumption in km3
+  #TODO apply global_sum function
   cons <- sum((irrig + conv_loss_evap - return_flow_b) * terr_area) * 10^-12
 
   # PB Biogechemical flows
   #------------- Nitrogen balance and leaching ---------------------------------
 
   # N leaching (total) in Tg
+
   leaching <- global_sum_yearly(
     file = paste0(dir_output, "/mleaching.bin.json"),
     # timeframe = timeframe
@@ -289,9 +287,89 @@ validation_table <- function(dir_output, table_path, timeframe, calculate_pb_sta
   return(ref_table)
 }
 
-# test
-my_dir <- getwd()
-dir_output <- "/p/projects/open/Johanna/boundaries/lpjml/output/lu_1901_2017_mg/"
-ref_table_path <- "/p/projects/open/Caterina/benchmarking/scripts/data/reference_list.csv"
-timeframe <- as.character(c(2010:2017))
-benchmark_pb_table <- validation_table(dir_output, table_path, timeframe, calculate_pb_status = TRUE)
+#TODO merge to one function (see function from Jannes)
+# define set of helper functions
+# functions to deal with time and spacial scales of lpjml output
+
+aggregate_lpjml_output <- function(
+  file,
+  timespan,
+  aggregate = list()
+) {
+  file <- lpjmlkit::read_io(
+    file, subset = list(year = timespan)
+  ) %>%
+    lpjmlkit::transform(to = c("year_month_day")) %>%
+    lpjmlkit::as_array(aggregate = aggregate) %>%
+    suppressWarnings()
+  return(file)
+}
+
+global_sum <- function(variable) {
+  # conversion from g/m2 to Tg
+  global_sum <- sum(variable * terr_area) * 10^-12
+}
+
+
+global_sum_yearly <- function(file, timeframe) {
+  output <- read_io(file, subset = list(year = as.character(timeframe))) %>%
+    transform(to = "year_month_day") %>%
+    as_array(aggregate = list(year = mean)) %>%
+    sum(. * terr_area) * 10^-12 # why this factor?
+  return(output)
+}
+
+grid_mean_yearly <- function(file, timeframe) {
+  data <- read_io(file, subset = list(year = as.character(timeframe))) %>%
+    transform(to = "year_month_day") %>%
+    as_array(aggregate = list(year = mean)) %>%
+    drop()
+  return(data)
+}
+
+grid_sum_monthly_mean_yearly <- function(file, timeframe) {
+  data <- read_io(file, subset = list(year = as.character(timeframe))) %>%
+    transform(to = "year_month_day") %>%
+    as_array(aggregate = list(
+      year = mean,
+      month = sum
+    )) %>%
+    drop()
+  return(data)
+}
+
+# insert the computed variables in the literature table through matching by variable and unit patterns, make sure the structure of original .csv table is mantained
+insert_lpjml_value <- function(ref_table, var_patterns, unit_patterns, calculated_vars) {
+  lpjml_values <- rep(NA_real_, nrow(ref_table))
+  for (i in seq_along(var_patterns)) {
+    matching_indices <- grepl(var_patterns[[i]], ref_table$variable, ignore.case = TRUE) &
+      grepl(unit_patterns[[i]], ref_table$unit, ignore.case = TRUE)
+    lpjml_values[matching_indices] <- round(eval(parse(text = calculated_vars[[i]]))[1], digits)
+  }
+  ref_table$lpjml_value <- lpjml_values
+  return(ref_table)
+}
+
+# insert the PB status values (calculated with calc_status) in the benchmarking table
+evaluate_pb_status <- function(ref_table, pb_list, temp2) {
+  for (pb in pb_list) { # add calculation of PBs
+    ref_table <- ref_table %>%
+      mutate(lpjml_value = ifelse(grepl(pb, variable, ignore.case = TRUE) & grepl("PB status", variable, ignore.case = TRUE),
+        round(temp2[[pb]][1], digits = 4),
+        lpjml_value
+      ))
+  }
+  return(ref_table)
+}
+
+
+
+
+
+
+## test
+#my_dir <- getwd()
+#dir_output <- "/p/projects/open/Johanna/boundaries/lpjml/output/lu_1901_2017_mg/"
+#ref_table_path <- "/p/projects/open/Caterina/benchmarking/scripts/data/reference_list.csv"
+#timeframe <- as.character(c(2010:2017))
+#benchmark_pb_table <- validation_table(dir_output, table_path, timeframe, calculate_pb_status = TRUE)
