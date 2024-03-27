@@ -14,15 +14,18 @@
 #' @param files_reference list with variable names and corresponding file paths
 #' (character string) of the reference LPJmL run. All needed files are
 #' provided in XXX. E.g.: list(leaching = "/temp/leaching.bin.json"). If not
-#' needed for the applied method, set to NULL.
+#' needed for the applied approach, set to NULL.
+#'
+#' @param time_span_scenario time span to be used for the scenario run, defined
+#' as character string, e.g. `as.character(1982:2011)` (default)
 #'
 #' @param time_span_reference time span to be used for the reference run,
 #' defined as a character string (e.g. `as.character(1901:1930)`).
 #' Can differ in offset and length from `time_span_scenario`!
 #' If `NULL` value of `time_span_scenario` is used
 #'
-#' @param method method (character string) to be used , currently available
-#' method is `c("wang-erlandsson2022")` based on
+#' @param approach approach (character string) to be used , currently available
+#' approach is `c("wang-erlandsson2022")` based on
 #' [Wang-Erlandsson et al. 2022](https://doi.org/10.1038/s43017-022-00287-8)
 #' (referring only to the driest/wettest month of each year) or
 #' `porkka2023` based on
@@ -45,7 +48,7 @@
 #' not yet defined
 #'
 #' @param time_aggregation_args list of arguments to be passed to
-#' \link[boundaries]{aggregate_time} (see for more info).
+#' [`aggregate_time`] (see for more info).
 #' To be used for time series analysis
 #'
 #' @param config_args list of arguments to be passed on from the model
@@ -64,16 +67,18 @@
 #' @export
 calc_water_deviations <- function(files_scenario,
                                   files_reference,
+                                  spatial_scale = "subglobal",
                                   time_span_scenario = NULL,
                                   time_span_reference,
-                                  method = "porkka2023",
+                                  approach = "porkka2023",
                                   thresholds = NULL,
                                   time_aggregation_args = list(),
                                   config_args = list(),
-                                  spatial_scale = "subglobal",
                                   variable = "rootmoist") {
 
   # read in reference and scenario output
+  # please R CMD check for use of future operator
+  var_reference <- var_scenario <- NULL
   # reference
   var_reference %<-% read_io_format(
     files_reference[[variable]],
@@ -93,9 +98,9 @@ calc_water_deviations <- function(files_scenario,
   # -------------------------------------------------------------------------- #
   # calculate the 5% and 95% quantiles of the baseline period for each cell
   # either for each month of the year or only for driest/wettest month
-  # depending on the defined method
+  # depending on the defined approach
   quants <- calc_baseline(var_reference,
-                          method = method)
+                          approach = approach)
 
   # -------------------------------------------------------------------------- #
   # calculate the area with dry/wet departures (subglobal and global resolution)
@@ -113,12 +118,14 @@ calc_water_deviations <- function(files_scenario,
     endcell <- NULL
   }
 
+  # please R CMD check for use of future operator
+  ref_depart <- scen_depart <- NULL
   ref_depart %<-% calc_departures(
     data = var_reference,
     files_path = files_reference,
     quants = quants,
     spatial_scale = spatial_scale,
-    method = method,
+    approach = approach,
     spatial_subset = config_args$spatial_subset,
     endcell = endcell
   )
@@ -128,11 +135,13 @@ calc_water_deviations <- function(files_scenario,
     files_path = files_scenario,
     quants = quants,
     spatial_scale = spatial_scale,
-    method = method,
+    approach = approach,
     spatial_subset = config_args$spatial_subset,
     endcell = endcell
   )
 
+  # please R CMD check for use of future operator
+  area_high_risk <- area_pb <- area_holocene <- NULL
   # -------------------------------------------------------------------------- #
   if (spatial_scale == "global") {
 
@@ -140,25 +149,25 @@ calc_water_deviations <- function(files_scenario,
     if (is.null(thresholds[["highrisk"]])) {
       area_high_risk <- 50 # hard-coded based on Richardson et al. 2023 (SI)
     } else {
-      area_high_risk %<-% quantile(
+      area_high_risk %<-% stats::quantile(
         ref_depart$wet_or_dry,
         probs = thresholds[["highrisk"]],
         na.rm = TRUE
       )
     }
 
-    area_pb %<-% quantile(
+    area_pb %<-% stats::quantile(
       ref_depart$wet_or_dry,
       probs = thresholds[["pb"]],
       na.rm = TRUE
     )
-    area_holocene %<-% quantile(
+    area_holocene %<-% stats::quantile(
       ref_depart$wet_or_dry,
       probs = thresholds[["holocene"]],
       na.rm = TRUE
     )
 
-    if (method == "porkka2023") {
+    if (approach == "porkka2023") {
       scen_depart$wet_or_dry <- apply(
         scen_depart$wet_or_dry,
         "year",
@@ -181,28 +190,34 @@ calc_water_deviations <- function(files_scenario,
     )
 
   } else if (spatial_scale == "subglobal") {
+
     # calculate for each basin: thresholds for translation into pb status
     area_high_risk %<-% apply(
       ref_depart$wet_or_dry,
       "basin",
       function(x) {
-        y <- quantile(x, probs = thresholds[["highrisk"]], na.rm = TRUE)
+        y <- stats::quantile(x, probs = thresholds[["highrisk"]], na.rm = TRUE)
         y
       }
     )
+
     area_pb %<-% apply(
       ref_depart$wet_or_dry,
       "basin",
       function(x) {
-        y <- quantile(x, probs = thresholds[["pb"]], na.rm = TRUE)
+        y <- stats::quantile(x, probs = thresholds[["pb"]], na.rm = TRUE)
+        y
       }
     )
+
     area_holocene %<-% apply(
       ref_depart$wet_or_dry,
       "basin",
       function(x) {
-        y <- quantile(x, probs = thresholds[["holocene"]], na.rm = TRUE)
-      })
+        y <- stats::quantile(x, probs = thresholds[["holocene"]], na.rm = TRUE)
+        y
+      }
+    )
 
     # transform to array with cell dim as in lpjml
     # for vectors:
@@ -274,7 +289,7 @@ calc_departures <- function(
   files_path,
   quants,
   spatial_scale,
-  method,
+  approach,
   spatial_subset,
   endcell
 ) {
@@ -282,11 +297,11 @@ calc_departures <- function(
   q5_base <- rep(quants[["q5"]], dim(data)["year"])
   q95_base <- rep(quants[["q95"]], dim(data)["year"])
 
-  if (method == "wang-erlandsson2022") {
+  if (approach == "wang-erlandsson2022") {
     # driest/ wettest month per gridcell for each year -> ignores which month
     dry <- apply(data, c("cell", "year"), min)
     wet <- apply(data, c("cell", "year"), max)
-  } else if (method == "porkka2023") {
+  } else if (approach == "porkka2023") {
     dry <- wet <- dry_or_wet <- data
   }
 
@@ -301,7 +316,7 @@ calc_departures <- function(
 
   # calc terrestrial area if spatial resolution is subglobal or global
   # TODO this should be better the percentage of ice-free land surface!
-  if (spatial_scale == "global" | spatial_scale == "subglobal") {
+  if (spatial_scale == "global" | spatial_scale == "subglobal") { # nolint
     terr_area <- lpjmlkit::read_io(
       files_path$terr_area,
       silent = TRUE
@@ -364,18 +379,18 @@ calc_departures <- function(
 
 
 # quantile functions
-q5  <- function(x) quantile(x, probs = 0.05, na.rm = TRUE)
-q95 <- function(x) quantile(x, probs = 0.95, na.rm = TRUE)
+q5  <- function(x) stats::quantile(x, probs = 0.05, na.rm = TRUE)
+q95 <- function(x) stats::quantile(x, probs = 0.95, na.rm = TRUE)
 
 
 # calculate the baseline quantiles
-calc_baseline <- function(file_reference, method) {
+calc_baseline <- function(file_reference, approach) {
 
-  if (method == "wang-erlandsson2022") {
+  if (approach == "wang-erlandsson2022") {
     dry_base_yr <- apply(file_reference, c("cell", "year"), min)
     wet_base_yr <- apply(file_reference, c("cell", "year"), max)
 
-  } else if (method == "porkka2023") {
+  } else if (approach == "porkka2023") {
     dry_base_yr <- wet_base_yr <- file_reference
   }
 

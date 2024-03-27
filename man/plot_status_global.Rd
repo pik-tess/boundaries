@@ -6,9 +6,10 @@
 \usage{
 plot_status_global(
   x,
-  file_name = NULL,
-  colors = c(`safe zone` = "#e3f5ec", `increasing risk` = "#fcf8d8", `high risk` =
-    "#f7e4dd"),
+  filename = NULL,
+  add_legend = TRUE,
+  colors = c(bluewater = "#377eb8", greenwater = "#4daf4a", lsc = "#ff7f00", biosphere =
+    "#e41a1c", nitrogen = "#984ea3"),
   all_in_one = FALSE,
   ncol = 2,
   normalize = "safe"
@@ -17,8 +18,10 @@ plot_status_global(
 \arguments{
 \item{x}{list with global output from calc_status}
 
-\item{file_name}{character string providing file name (including directory
+\item{filename}{character string providing file name (including directory
 and file extension). Defaults to NULL (plotting to screen)}
+
+\item{add_legend}{logical, specify whether a legend should be plotted}
 
 \item{colors}{named vector for definition of colors for plotting of
 the safe, increasingnrisk and high risk zone}
@@ -41,12 +44,16 @@ a scenario LPJmL run and derived planetary boundary statuses
 }
 \examples{
 \dontrun{
- plot_status(file_name = "./my_boundary_status.png",
-                x = list("land system change" = lsc_status,
-                                   "nitrogen" = nitrogen_status,
-                                   "bluewater" = water_status),
- legend = FALSE
- bg_col = NA)
+plot_status(
+  filename = "./my_boundary_status.png",
+  x = list(
+    "land system change" = lsc_status,
+    "nitrogen" = nitrogen_status,
+    "bluewater" = water_status
+  ),
+  legend = FALSE,
+  bg_col = NA
+)
 }
 
 }

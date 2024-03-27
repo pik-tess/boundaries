@@ -15,7 +15,7 @@ test_that("test calc_greenwater_status global", {
     time_span_scenario = timeframe,
     time_span_reference = timeframe,
     spatial_scale = "global",
-    method = list(greenwater = "porkka2023"),
+    approach = list(greenwater = "porkka2023"),
     time_aggregation_args = c(1),
     in_parallel = FALSE,
   ) %>% suppressMessages()
@@ -67,7 +67,7 @@ test_that("test calc_greenwater_status subglobal", {
     time_span_scenario = timeframe,
     time_span_reference = timeframe,
     spatial_scale = "subglobal",
-    method = list(greenwater = "porkka2023"),
+    approach = list(greenwater = "porkka2023"),
     time_aggregation_args = c(1),
     in_parallel = FALSE,
   ) %>% suppressMessages()
@@ -97,25 +97,9 @@ test_that("test calc_greenwater_status subglobal", {
   # test for expected output
   testthat::expect_true(
     all(
-      test$greenwater[1,] > attributes(test$greenwater)$thresholds$holocene[1] && # nolint
-        # test for almost all (1 is FALSE) > pb
-        sum(test$greenwater[2,] >= attributes(test$greenwater)$thresholds$pb[2]) == 30 # nolint 
-    )
+      test$greenwater[1, ] > attributes(test$greenwater)$thresholds$holocene[[1]] # nolint 
+    ) && # nolint
+      # test for almost all (1 is FALSE) > pb
+      sum(test$greenwater[2,] >= attributes(test$greenwater)$thresholds$pb[2]) == 30 # nolint 
   )
-
-  # TODO: not working highrisk threshold == NA
-  #  browser()
-  #  # test for as_risk_level
-  #  boundary_status <- as_risk_level(test)
-  #
-  #  testthat::expect_true(
-  #    class(boundary_status$greenwater) == "boundary_status"
-  #  )
-  #
-  #  testthat::expect_true(
-  #    all(
-  #      boundary_status$bluewater < 0.5
-  #    )
-  #  )
-
 })

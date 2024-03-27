@@ -28,7 +28,7 @@ calc_irrigation_mask <- function(
   )
 
   # ------------------------------------------------------------------------- #
-  cellinfo <- indexing_drainage(drainge_file = files_scenario$drainage)
+  cellinfo <- indexing_drainage(drainage_file = files_scenario$drainage)
   if (!is.null(config_args$spatial_subset)) {
     cellinfo <- lpjmlkit::asub(cellinfo, cell = config_args$spatial_subset)
   }
@@ -49,7 +49,7 @@ calc_irrigation_mask <- function(
 
   for (id in seq_len(length(basin_ids))) {
     basincell <- which(endcell == basin_ids[id])
-    if (is.null(third_dim) | length(dim(drop(avg_irrigation_scenario))) < 3) {
+    if (is.null(third_dim) | length(dim(drop(avg_irrigation_scenario))) < 3) { # nolint
       check_gt0 <- sum(
         lpjmlkit::asub(avg_irrigation_scenario, cell = basincell)
       )

@@ -5,21 +5,24 @@
 \title{Classify biomes}
 \usage{
 classify_biomes(
-  path_reference = NULL,
+  config_reference = NULL,
   files_reference = NULL,
   time_span_reference,
-  savanna_proxy = list(pft_lai = 6),
+  savanna_proxy = list(vegc = 7500),
   montane_arctic_proxy = list(elevation = 1000),
   tree_cover_thresholds = list(),
-  method = "default",
+  approach = "default",
   time_aggregation_args = list(),
+  config_args = list(),
   input_files = list(),
   diff_output_files = list()
 )
 }
 \arguments{
-\item{path_reference}{path to the reference LPJmL run. If not provided,
-the path is extracted from the file paths provided in files_reference.}
+\item{config_reference}{character string. File path to the LPjmL
+configuration file (json) of the reference run. The configuration file
+contains the information about the LPJmL run, e.g. the output
+directory}
 
 \item{files_reference}{list with variable names and corresponding file paths
 (character string) of the reference LPJmL run. All needed files are
@@ -54,12 +57,15 @@ Default values, based on the IGBP land cover classification system:
 In the boreal zone, there is no woodland, everything below the
 boreal forest threshold will be classified as boreal tundra.}
 
-\item{method}{character string indicating which biome classification method
-to use. Currently only one is defined ("default").}
+\item{approach}{character string indicating which biome classification
+approach to use. Currently only one is defined ("default").}
 
 \item{time_aggregation_args}{list of arguments to be passed to
-\link[boundaries]{aggregate_time} (see for more info).
+\code{\link{aggregate_time}} (see for more info).
 To be used for time series analysis}
+
+\item{config_args}{list of arguments to be passed on from the model
+configuration.}
 
 \item{input_files}{list of required file(s) using ID (e.g. \code{temp},
 \code{elevation}) and an absolute file path to the corresponding input file
@@ -71,8 +77,9 @@ needed and not among the output files under path_reference}
 Only required if files_reference are not provided}
 }
 \value{
-list object containing biome_id (main biome per grid cell \link{dim=c(ncells)}), # nolint
-and list of respective biome_names\link{dim=c(nbiomes)}
+list object containing biome_id (main biome per grid
+\code{cell[dim=c(ncells)]}), and list of respective
+\code{biome_names[dim=c(nbiomes)]}
 }
 \description{
 Classify biomes based on foliage protected cover (FPC) and temperature

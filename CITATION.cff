@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: If you use this software, please cite it using the metadata from this file.
+type: software
+title: |-
+  boundaries: Functions to calculate the Planetary boundary status based on LPJmL
+      simulation data
+version: 0.1.1
+date-released: '2024-03-21'
+abstract: Provide calculation & visualizations functions for planetary boundaries.
+authors:
+- family-names: Breier
+  given-names: Jannes
+  email: jannesbr@pik-potsdam.de
+  orcid: 0000-0002-9055-6904
+- family-names: Stenzel
+  given-names: Fabian
+  email: stenzel@pik-potsdam.de
+  orcid: 0000-0002-5109-0048
+- family-names: Braun
+  given-names: Johanna
+  email: braun@pik-potsdam.de
+  orcid: 0000-0002-0000-0000
+license: AGPL-3.0
+

@@ -7,15 +7,16 @@
 calc_nitrogen_status(
   files_scenario,
   files_reference,
+  spatial_scale = "grid",
   time_span_scenario = as.character(1982:2011),
   time_span_reference = NULL,
-  method = "braun2022",
+  approach = "braun2022",
+  time_aggregation_args = list(),
+  config_args = list(),
   thresholds = NULL,
-  spatial_scale = "grid",
   cut_arid = 0.2,
   cut_runoff = 0,
-  with_groundwater_denit = TRUE,
-  time_aggregation_args = list()
+  with_groundwater_denit = TRUE
 )
 }
 \arguments{
@@ -26,7 +27,10 @@ provided in XXX. E.g.: list(leaching = "/temp/leaching.bin.json")}
 \item{files_reference}{list with variable names and corresponding file paths
 (character string) of the reference LPJmL run. All needed files are
 provided in XXX. E.g.: list(leaching = "/temp/leaching.bin.json"). If not
-needed for the applied method, set to NULL.}
+needed for the applied approach, set to NULL.}
+
+\item{spatial_scale}{character. Spatial resolution, available options
+are \code{"global"} and \code{"grid"}}
 
 \item{time_span_scenario}{time span to be used for the scenario run, defined
 as character string, e.g. \code{as.character(1982:2011)} (default)}
@@ -36,10 +40,17 @@ as character string, e.g. \code{as.character(1901:1930)}. Can differ in offset a
 length from \code{time_span_scenario}! If \code{NULL} value of \code{time_span_scenario} is
 used}
 
-\item{method}{(character string) to be used , currently available
-method is \code{"braun2022"} based on unpublished suggestion by Johanna Braun.
-Second method option is \code{"braun2022_minusref"} to subtract reference run
+\item{approach}{(character string) to be used , currently available
+approach is \code{"braun2022"} based on unpublished suggestion by Johanna Braun.
+Second approach option is \code{"braun2022_minusref"} to subtract reference run
 output}
+
+\item{time_aggregation_args}{list of arguments to be passed to
+\code{\link{aggregate_time}} (see for more info). To be used for
+time series analysis}
+
+\item{config_args}{list of arguments to be passed on from the model
+configuration.}
 
 \item{thresholds}{list with highrisk and pb threshold for N concentration
 (mg N/l) in runoff to surface water
@@ -49,9 +60,6 @@ https://doi.org/10.1038/s41586-022-05158-2:
 "we used a threshold for N concentration in run-off to surface water. This
 threshold was set to 5.0 mgN/l, based on the assumption that on average 50\%
 of N entering surface water is removed through retention and sedimentation"))}
-
-\item{spatial_scale}{character. Spatial resolution, available options
-are \code{"global"} and \code{"grid"}}
 
 \item{cut_arid}{double. Exclude boundary calculations below the defined
 threshold for aridity (annual precipitation / annual potential
@@ -64,14 +72,10 @@ runoff threshold; Default: 0 mm per year (no treshold)}
 groundwater denitrification losses. Defaults to TRUE ( = simulated leaching
 is multiplied with 0.71 based on simulated denitrification losses in ground
 water from Bouwman et al 2013)}
-
-\item{time_aggregation_args}{list of arguments to be passed to
-\link[boundaries]{aggregate_time} (see for more info). To be used for
-time series analysis}
 }
 \description{
 Calculate the PB status for the nitrogen boundary based on a scenario LPJmL
-run and if \code{method == "braun2022_minusref"} a reference LPJmL run.
+run and if \code{approach == "braun2022_minusref"} a reference LPJmL run.
 }
 \examples{
 \dontrun{

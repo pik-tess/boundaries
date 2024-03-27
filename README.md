@@ -1,47 +1,54 @@
-# boundaries <a href=''><img src='man/figures/logo.png' align="right" height="139" /></a>
+# Functions to calculate the Planetary boundary status based on LPJmL
+    simulation data
 
+R package **boundaries**, version **0.1.1**
 
-*The goal of boundaries is to provide a toolset of functions that can be used   
-to calculate and optimize the status of a planetary boundary (PB)  
-in connection with [LPJmL](https://gitlab.pik-potsdam.de/lpjml/LPJmL_internal).*
+[![CRAN status](https://www.r-pkg.org/badges/version/boundaries)](https://cran.r-project.org/package=boundaries)  [![R build status](https://gitlab.pik-potsdam.de/tess/boundaries/workflows/check/badge.svg)](https://gitlab.pik-potsdam.de/tess/boundaries/actions) [![codecov](https://codecov.io/gh/tess/boundaries/branch/master/graph/badge.svg)](https://app.codecov.io/gh/tess/boundaries) 
 
-The boundaries considered here are
+## Purpose and Functionality
 
-* **freshwater use**, tag *freshwater*
-    * **bluewater use**, tag *bluewater*
-    * **greenwater use**, tag *greenwater*
-* **land-system change**, tag *lsc*
-* **biosphere integrity**, tag *biosphere*
-* **nitrogen flows**, tag *nitrogen*
+Provide calculation & visualizations functions for planetary boundaries.
 
 
 ## Installation
 
-You can install `boundaries` by git cloning this repository ...
+For installation of the most recent package version an additional repository has to be added in R:
 
-```bash
-git clone https://gitlab.pik-potsdam.de/tess/boundaries.git
+```r
+options(repos = c(CRAN = "@CRAN@", pik = "https://rse.pik-potsdam.de/r/packages"))
+```
+The additional repository can be made available permanently by adding the line above to a file called `.Rprofile` stored in the home folder of your system (`Sys.glob("~")` in R returns the home directory).
+
+After that the most recent version of the package can be installed using `install.packages`:
+
+```r 
+install.packages("boundaries")
 ```
 
-and install via  [`devtools`](https://rawgit.com/rstudio/cheatsheets/master/package-development.pdf) ...
-```R
-devtools::install("<path_to_boundaries>/boundaries")
+Package updates can be installed using `update.packages` (make sure that the additional repository has been added before running that command):
 
-library("boundaries")
+```r 
+update.packages()
 ```
 
-## Scripts
+## Questions / Problems
 
-For now this repository also serves as a collection of PB calculation and optimization
-scripts that are stored at `./scripts`  
+In case of questions / problems please contact Jannes Breier <jannesbr@pik-potsdam.de>.
 
+## Citation
 
-## Example
+To cite package **boundaries** in publications use:
 
-This is a basic example which shows you how to solve a common problem:
+Breier J, Stenzel F, Braun J (2024). _boundaries: Functions to calculate the Planetary boundary status based on LPJmL simulation data_. R package version 0.1.1.
 
-``` r
-library(boundaries)
-## basic example code
+A BibTeX entry for LaTeX users is
+
+ ```latex
+@Manual{,
+  title = {boundaries: Functions to calculate the Planetary boundary status based on LPJmL
+simulation data},
+  author = {Jannes Breier and Fabian Stenzel and Johanna Braun},
+  year = {2024},
+  note = {R package version 0.1.1},
+}
 ```
-

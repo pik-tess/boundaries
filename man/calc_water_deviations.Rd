@@ -6,37 +6,44 @@
 from a corresponding monthly reference variable}
 \usage{
 calc_water_deviations(
-  file_scenario,
-  file_reference,
-  terr_area_path,
-  drainage_path,
+  files_scenario,
+  files_reference,
+  spatial_scale = "subglobal",
   time_span_scenario = NULL,
   time_span_reference,
-  method = "porkka2023",
+  approach = "porkka2023",
   thresholds = NULL,
   time_aggregation_args = list(),
-  spatial_scale = "subglobal"
+  config_args = list(),
+  variable = "rootmoist"
 )
 }
 \arguments{
-\item{file_scenario}{character string with path to monthly variable of the
-scenario LPJmL run.}
+\item{files_scenario}{list with variable names and corresponding file paths
+(character string) of the scenario LPJmL run. All needed files are
+provided in XXX. E.g.: list(leaching = "/temp/leaching.bin.json")}
 
-\item{file_reference}{character string with path to monthly variable of the
-reference LPJmL run.}
+\item{files_reference}{list with variable names and corresponding file paths
+(character string) of the reference LPJmL run. All needed files are
+provided in XXX. E.g.: list(leaching = "/temp/leaching.bin.json"). If not
+needed for the applied approach, set to NULL.}
 
-\item{terr_area_path}{character string with path to a grid file}
+\item{spatial_scale}{character string indicating spatial scale;
+"global" or "subglobal" for calculation of the share (\%) of total
+global/basin area with deviations (either one value per year
+(wang-erlandsson2022) or one value per year and month (porkka2023)); "grid"
+not yet defined}
 
 \item{time_span_scenario}{time span to be used for the scenario run, defined
-as a character string, e.g. \code{as.character(1982:2011)} (default)}
+as character string, e.g. \code{as.character(1982:2011)} (default)}
 
 \item{time_span_reference}{time span to be used for the reference run,
 defined as a character string (e.g. \code{as.character(1901:1930)}).
 Can differ in offset and length from \code{time_span_scenario}!
 If \code{NULL} value of \code{time_span_scenario} is used}
 
-\item{method}{method (character string) to be used , currently available
-method is \code{c("wang-erlandsson2022")} based on
+\item{approach}{approach (character string) to be used , currently available
+approach is \code{c("wang-erlandsson2022")} based on
 \href{https://doi.org/10.1038/s43017-022-00287-8}{Wang-Erlandsson et al. 2022}
 (referring only to the driest/wettest month of each year) or
 \code{porkka2023} based on
@@ -45,7 +52,7 @@ method is \code{c("wang-erlandsson2022")} based on
 
 \item{thresholds}{list with thresholds to be used to
 define the safe, increasing risk and high risk zone,
-For spatial scale = "global" and "subglobal", this refers to the quantiles of
+For spatial_scale = "global" and "subglobal", this refers to the quantiles of
 the global/basin area with deviations in the reference period. The default
 is: c(holocene = 0.5, pb = 0.95, highrisk = NULL).
 If set to NULL, the  default is taken from metric_files.yml
@@ -53,14 +60,14 @@ For highrisk, the value is currently hard-coded to 0.5
 (following Richardson et al. 2023)}
 
 \item{time_aggregation_args}{list of arguments to be passed to
-\link[boundaries]{aggregate_time} (see for more info).
+\code{\link{aggregate_time}} (see for more info).
 To be used for time series analysis}
 
-\item{spatial_scale}{character string indicating spatial scale;
-"global" or "subglobal" for calculation of the share (\%) of total
-global/basin area with deviations (either one value per year
-(wang-erlandsson2022) or one value per year and month (porkka2023)); "grid"
-not yet defined}
+\item{config_args}{list of arguments to be passed on from the model
+configuration.}
+
+\item{variable}{character string with the name of the variable to be used
+for the calculation of the water deviations. Default is "rootmoist"}
 }
 \description{
 Calculate deviations (<q5 / >q95) for a monhtly variable in a scenario LPJmL

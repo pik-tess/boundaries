@@ -15,7 +15,7 @@ test_that("test calc_nitrogen_status global", {
     time_span_scenario = timeframe,
     time_span_reference = timeframe,
     spatial_scale = "global",
-    method = list(nitrogen = "schulte_uebbing2022"),
+    approach = list(nitrogen = "schulte_uebbing2022"),
     time_aggregation_args = c(1),
     in_parallel = FALSE,
   ) %>% suppressMessages()
@@ -103,8 +103,8 @@ test_that("test calc_nitrogen_status grid", {
 
   # test for expected output
   testthat::expect_true(
-    all(test$nitrogen[1,] < attributes(test$nitrogen)$thresholds$pb) &&
-      all(test$nitrogen[2,] > attributes(test$nitrogen)$thresholds$pb)
+    all(test$nitrogen[1, ] < attributes(test$nitrogen)$thresholds$pb) &&
+      all(test$nitrogen[2, ] > attributes(test$nitrogen)$thresholds$pb)
   )
 
   # test for as_risk_level
@@ -141,7 +141,7 @@ test_that("test calc_nitrogen_status grid (minusref)", {
     ),
     time_span_scenario = timeframe,
     time_span_reference = timeframe,
-    method = list(nitrogen = "braun2022_minusref"),
+    approach = list(nitrogen = "braun2022_minusref"),
     spatial_scale = "grid",
     time_aggregation_args = c(1),
     in_parallel = FALSE,
@@ -150,6 +150,6 @@ test_that("test calc_nitrogen_status grid (minusref)", {
   # test for expected output
   testthat::expect_true(
     all(test$nitrogen[1, ] < attributes(test$nitrogen)$thresholds$pb) &&
-    all(test$nitrogen[2, ] > attributes(test$nitrogen)$thresholds$pb)
+      all(test$nitrogen[2, ] > attributes(test$nitrogen)$thresholds$pb)
   )
 })

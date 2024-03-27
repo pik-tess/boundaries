@@ -1,22 +1,22 @@
+#' Calculate biosphere status based on BioCol from a PNV run and LU run of LPJmL
+
 #' Calculate biosphere status based on BioCol (HANPP) from a PNV run (reference)
 #' and LU run (scenario) of LPJmL, both using time_span_scenario. Additionally
 #' a separate reference NPP file (e.g. from a Holocene run) can be supplied as
 #' reference_npp_file, which will use time_span_reference, or file index years
-#' 3:32 if time_span_reference is not supplied
-#'
-#' Calculate biosphere status based on BioCol from a PNV run and LU run of LPJmL
+#' 3:32 if time_span_reference is not supplied.
 #'
 #' @param files_scenario list with variable names and corresponding file paths
 #' (character string) of the scenario LPJmL run. All needed files need to be
 #' provided. E.g.: list(grid = "/temp/grid.bin.json",
 #'                      npp = "/temp/npp.bin.json")
 #'
-#' @param path_baseline character string with path to outputs for the baseline
-#' run, file names are taken from files scenario.
-#'
 #' @param files_reference list with variable names and corresponding file paths
 #' (character string) of the reference NPP, HANPP should be compared against.
 #' In this case only NPP is required. list(npp = "/temp/npp.bin.json").
+#'
+#' @param spatial_scale character string indicating spatial resolution
+#' either "grid", "subglobal" or "global"
 #'
 #' @param time_span_scenario time span to be used for the scenario run and
 #' parallel PNV run, defined as a character string,
@@ -25,20 +25,20 @@
 #' @param time_span_reference time span to read reference_npp_file from, using
 #' index years 3:32 if set to NULL (default: NULL)
 #'
-#' @param spatial_scale character string indicating spatial resolution
-#' either "grid", "subglobal" or "global"
+#' @param approach approach (character string) to be used , currently available
+#' approach is `"stenzel2023"`
+#'
+#' @param time_aggregation_args list of arguments to be passed to
+#' [`aggregate_time`] (see for more info).
+#' To be used for time series analysis
+#'
+#' @param config_args list of arguments to be passed on from the model
+#' configuration.
 #'
 #' @param thresholds named character string with thresholds to be used to
 #' define the lower end of safe, increasing risk and high risk zone,
 #' e.g. c(holocene = 0.0, pb = 0.1, highrisk = 0.2). If set to NULL, default
 #' values from metric_files.yml will be used.
-#'
-#' @param time_aggregation_args list of arguments to be passed to
-#' \link[boundaries]{aggregate_time} (see for more info).
-#' To be used for time series analysis
-#'
-#' @param config_args list of arguments to be passed on from the model
-#' configuration.
 #'
 #' @param path_baseline character string with path to outputs for the baseline
 #' run, file names are taken from files scenario.
@@ -61,29 +61,39 @@
 #' Europe and Asia to avoid arbitrary biome cut at europe/asia border.
 #' Defaults to `TRUE`
 #'
-#' @param ... arguments forwarded to \link[boundaries](classify_biomes)
+#' @param ... arguments forwarded to [`classify_biomes`]
 #'
 #' @return pb_status list data object
 #'
 #' @examples
 #' \dontrun{
+#' calc_biosphere_status(
+#'   files_scenario,
+#'   files_reference,
+#'   time_span_reference,
+#'   spatial_scale = "grid",
+#'   path_baseline,
+#'   time_span_reference
+#' )
 #' }
 #' @export
 calc_biosphere_status <- function(
   files_scenario,
   files_reference,
+  spatial_scale = "subglobal",
   time_span_scenario = as.character(1982:2011),
   time_span_reference = time_span_scenario,
-  spatial_scale = "subglobal",
-  thresholds = NULL,
-  method = "stenzel2023",
+  approach = "stenzel2023",
   time_aggregation_args = list(),
   config_args = list(),
+  thresholds = NULL,
   path_baseline,
   time_span_baseline = time_span_reference,
-  gridbased = TRUE, #TODO gridbased can be retrieved from config!
+  # TODO gridbased can be retrieved from config!
+  gridbased = TRUE,
   npp_threshold = 20,
-  biocol_option = "abs", #TODO change back to "only_above_zero" once it is working
+  # TODO change back to "only_above_zero" once it is working
+  biocol_option = "abs",
   eurasia = TRUE,
   ...
 ) {
@@ -99,7 +109,7 @@ calc_biosphere_status <- function(
   )
 
   # workaround to filter input files (files_scenario and files_reference match)
-  files_baseline <- mapply(
+  files_baseline <- mapply( # nolint:undesirable_function_linter
     function(x, y, z) {
       if (x == y) {
         z <- y
@@ -143,11 +153,11 @@ calc_biosphere_status <- function(
   } else if (spatial_scale == "subglobal") {
 
     # classify biomes
-    # Filter out method and thresholds arguments from ellipsis (thresholds
-    # is not used in classify_biomes and method should not be passed on to use
-    # the default method defined for classify biomes)
+    # Filter out approach and thresholds arguments from ellipsis (thresholds
+    # is not used in classify_biomes and approach should not be passed on to use
+    # the default approach defined for classify biomes)
     ellipsis_filtered <- list(...)
-    ellipsis_filtered$method <- NULL
+    ellipsis_filtered$approach <- NULL
     ellipsis_filtered$thresholds <- NULL
 
     # classify biomes based on foliage projected cover (FPC) output
@@ -175,6 +185,8 @@ calc_biosphere_status <- function(
       stop("Not defined option for biocol_option.")
     }
 
+    # please R CMD check for use of future operator
+    continent_grid <- NULL
     # get continents mask - pass arg of whether to merge europe and asia
     continent_grid %<-% calc_continents_mask(files_reference$grid,
                                              eurasia = eurasia)
@@ -204,8 +216,11 @@ calc_biosphere_status <- function(
         ) &
           # match continent for cells
           array(
-            lpjmlkit::asub(continent_grid, band = "continent", drop = FALSE) ==
-                                            comb$continent[idx],
+            lpjmlkit::asub(
+              continent_grid,
+              band = "continent",
+              drop = FALSE
+            ) == comb$continent[idx],
             dim = dim(control_variable_raw),
             dimnames = dimnames(control_variable_raw)
           )
@@ -234,18 +249,18 @@ calc_biosphere_status <- function(
         }
       )
       control_variable_raw[sub_cells] <- summed_biocol[sub_cells] /
-                                         summed_npp[sub_cells]
+        summed_npp[sub_cells]
     }
 
   } else if (spatial_scale == "global") {
     # TODO: also for global
     # initialize control variable vector
-    if (biocol_option == "abs"){
+    if (biocol_option == "abs") {
       control_variable_raw <- biocol$biocol_overtime_abs_frac_piref
-    }else if (biocol_option == "only_above_zero"){
+    }else if (biocol_option == "only_above_zero") {
       stop("Missing")
       # TODO: recompute, does not exist as overtime yet
-    }else if (biocol_option == "netsum"){
+    }else if (biocol_option == "netsum") {
       control_variable_raw <- biocol$biocol_overtime_frac
     }else { # TODO: do with matcharg
       stop("Not defined option for biocol_option.")
