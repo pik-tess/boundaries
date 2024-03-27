@@ -9,6 +9,9 @@
 #' @param file_name character string providing file name (including directory
 #' and file extension). Defaults to NULL (plotting to screen)
 #'
+#' @param risk_level logical, specify whether the status should be plotted as
+#' risk level. Default set to TRUE
+#'
 #' @param legend logical, specify whether a legend should be plotted
 #'
 #' @param projection character string defining the projection, default set to
@@ -32,6 +35,7 @@
 plot_status <- function(
   x,
   file_name = NULL,
+  risk_level = TRUE,
   legend = TRUE,
   projection = "+proj=robin",
   ncol = 2,
@@ -48,6 +52,9 @@ plot_status <- function(
     ncol <- 1
   }
   nrow <- ceiling(length(x) / ncol)
+  if (!risk_level) {
+    nrow <- nrow + 1
+  }
   leg_adj <- ifelse(legend, 2, 0)
 
   plot_nat <- to_raster(lpjml_array = array(0, length(x[[which(!is.na(x))[1]]])), # nolint
@@ -89,49 +96,100 @@ plot_status <- function(
   plot_list <- list()
   for (i in seq_len(length(x))) {
 
-    # convert lpjml vector with continuous control variable status to risk level
-    plot_data <- x[[i]] %>%
-      as_risk_level(type = "continuous", normalize = "increasing risk")
+    if (risk_level) {
+      # convert lpjml vector with continuous control variable status to risk
+      # level
+      plot_data <- x[[i]] %>%
+        as_risk_level(type = "continuous", normalize = "increasing risk")
+    } else {
+      plot_data <- x[[i]]
+      plot_data[plot_data > quantile(plot_data, 0.95, na.rm = TRUE)] <-
+        quantile(plot_data, 0.95,  na.rm = TRUE)
+      plot_data[plot_data < quantile(plot_data, 0.05, na.rm = TRUE)] <-
+        quantile(plot_data, 0.05,  na.rm = TRUE)
+
+      legend_title <- attr(x[[i]], "control_variable")
+    }
 
     # convert lpjml vector to raster with defined projection
     plotvar <- to_raster(lpjml_array = plot_data,
                          projection = projection,
                          grid_path = grid_path)
 
-    #combine NA cells with cells in safe zone
-    plot_nat[plotvar < 1] <- 1
+    if (risk_level) {
+      #combine NA cells with cells in safe zone
+      plot_nat[plotvar < 1] <- 1
 
-    # prepare plotting of values > pb threshold
-    plotvar_risk <- plotvar
-    plotvar_risk[plotvar_risk <= 1] <- NA
-    plotvar_risk[plotvar_risk > 3.5] <- 3.5
+      # prepare plotting of values > pb threshold
+      plotvar_risk <- plotvar
+      plotvar_risk[plotvar_risk <= 1] <- NA
+      plotvar_risk[plotvar_risk > 3.5] <- 3.5
 
-    p <- ggplot2::ggplot() +
-      ggspatial::layer_spatial(data = plot_nat) +
-      ggplot2::scale_fill_continuous(na.value = NA,
-                                     low = NA_col,
-                                     high = "#7ac4a7") +
-      ggnewscale::new_scale_fill() +
-      ggspatial::layer_spatial(plotvar_risk) +
-      ggplot2::scale_fill_viridis_c(na.value = NA, direction = -1,
-                                    option = "A") +
-      ggplot2::theme(panel.background = ggplot2::element_rect(fill = "white"),
-                     panel.grid.major = ggplot2::element_line(linewidth = 0.1,
-                                                              color = "#8d8b8b"),
-                     axis.text = ggplot2::element_blank(),
-                     axis.ticks = ggplot2::element_blank(),
-                     legend.position = "none") +
-      ggplot2::geom_sf(data = world, fill = NA, linewidth = 0.12,
-                       color = "#7e7d7d") +
-      xlim(terra::ext(plotvar)[1], terra::ext(plotvar)[2]) +
-      ylim(terra::ext(plotvar)[3], terra::ext(plotvar)[4]) +
-      xlab(names(x)[i])
+      # define viridis color scale end value, depending on max value
+      max_value <- terra::minmax(plotvar_risk)[2]
+      end_value <- max_value / 3.5
+      if (end_value > 1) {
+        end_value <- 1
+      }
 
+      p <- ggplot2::ggplot() +
+        ggspatial::layer_spatial(data = plot_nat) +
+        ggplot2::scale_fill_continuous(na.value = NA,
+                                       low = NA_col,
+                                       high = green) + #"#7ac4a7"
+        ggnewscale::new_scale_fill() +
+        ggspatial::layer_spatial(plotvar_risk) +
+        ggplot2::scale_fill_viridis_c(na.value = NA, direction = -1,
+                                      option = "A", begin = 1 - end_value) +
+        ggplot2::theme(panel.background = ggplot2::element_rect(fill = "white"),
+                       panel.grid.major = ggplot2::element_line(linewidth = 0.1,
+                                                                color = "#8d8b8b"),
+                       axis.text = ggplot2::element_blank(),
+                       axis.ticks = ggplot2::element_blank(),
+                       legend.position = "none") +
+        ggplot2::geom_sf(data = world, fill = NA, linewidth = 0.12,
+                         color = "#7e7d7d") +
+        ggplot2::xlim(terra::ext(plotvar)[1], terra::ext(plotvar)[2]) +
+        ggplot2::ylim(terra::ext(plotvar)[3], terra::ext(plotvar)[4]) +
+        ggplot2::xlab(names(x)[i])
+
+    } else {
+      p <- ggplot2::ggplot() +
+        ggspatial::layer_spatial(data = plot_nat) +
+        ggplot2::scale_fill_continuous(
+          na.value = NA,
+          low = NA_col,
+          high = NA_col,
+          guide = "none"
+        ) +
+        ggnewscale::new_scale_fill() +
+        ggspatial::layer_spatial(plotvar) +
+        ggplot2::scale_fill_viridis_c(na.value = NA, name = legend_title,
+                                     option = "D", direction = -1, end = 0.9) +
+        ggplot2::guides(fill = ggplot2::guide_colourbar(title.position = "top",
+                                                        title.hjust = 0.5,
+                                                        barwidth = 15)) +
+        ggplot2::theme(panel.background = ggplot2::element_rect(fill = "white"),
+          panel.grid.major = ggplot2::element_line(linewidth = 0.1,
+                                                   color = "#8d8b8b"),
+          axis.text = ggplot2::element_blank(),
+          axis.ticks = ggplot2::element_blank(),
+          legend.position = "bottom",
+          plot.title = ggplot2::element_text(hjust = 0.5),
+          plot.margin = ggplot2::margin(0, 0, 0, 0, "cm"),
+          panel.spacing = ggplot2::unit(0, "lines")
+        ) +
+        ggplot2::geom_sf(data = world, fill = NA, linewidth = 0.12,
+                         color = "#7e7d7d") +
+        ggplot2::xlim(terra::ext(plotvar)[1], terra::ext(plotvar)[2]) +
+        ggplot2::ylim(terra::ext(plotvar)[3], terra::ext(plotvar)[4]) +
+        ggplot2::ggtitle(names(x)[i])
+    }
     # combine all plots in one list
     plot_list[[i]] <- p
   }
 
-  if (legend) {
+  if (legend && risk_level) {
     plot_list["legend"] <- plot_legend()
   }
 
@@ -143,13 +201,13 @@ plot_status <- function(
 
 # convert lpjml vector to raster and change projection to robinson
 to_raster <- function(lpjml_array, projection, grid_path) {
-  grid <- read_io(grid_path)$data %>% drop
+  grid <- lpjmlkit::read_io(grid_path)$data %>% drop
   lon <- grid[, 1]
   lat <- grid[, 2]
   ra <- terra::rast(ncols = 720, nrows = 360)
   ra[terra::cellFromXY(ra, cbind(lon, lat))] <- c(lpjml_array)
   extent <- terra::ext(c(-180, 180, -53, 85))
-  ra <- crop(ra, extent)
+  ra <- terra::crop(ra, extent)
   ra <- terra::project(ra, projection)
   return(ra)
 }
