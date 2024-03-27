@@ -342,6 +342,7 @@ calc_lsc_status <- function(
   }
 
   attr(control_variable, "control_variable") <- "deforestation"
+  #TODO: add unit attribute, convert to %?
   attr(control_variable, "spatial_scale") <- spatial_scale
   class(control_variable) <- c("control_variable")
   return(control_variable)

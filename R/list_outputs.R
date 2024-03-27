@@ -20,7 +20,7 @@
 #'
 #' }
 #' @export
-list_outputs <- function(metric = "all", method, spatial_scale,
+list_outputs <- function(metric = "all", method, spatial_scale, #TODO document method and spatial_scale
                          only_first_filename = TRUE) {
   metric <- process_metric(metric = metric)
 
