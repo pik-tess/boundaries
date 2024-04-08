@@ -46,6 +46,7 @@ validation_table <- function(
     calculate_pb_status = TRUE) {
   # TODO: add option for different path?
   # load literature table
+  #TODO: fix table loading 
   ref_table <- system.file("extdata", "global_validation_data.csv", package = "boundaries") %>%
     read.csv2()
 
@@ -191,7 +192,6 @@ validation_table <- function(
   # # global_sum(terr_area)
 
   leaching <- sum(leaching * terr_area) * 10^-12
-
   # N leaching from cropland
   leaching_agr <- aggregate_lpjml_output(files_scenario$nleaching_agr, time_span_scenario,
     aggregate = list(
@@ -291,8 +291,6 @@ validation_table <- function(
   dm2fm <- 1 / fm2dm
 
   # ### simulated lpjml harvest
-  # TODO: fix yield (file not found)
-  # TODO: substitute hardcoded CFTs indices
   
   yield <- aggregate_lpjml_output(files_scenario$pft_harvestc,
     time_span_scenario,
@@ -316,46 +314,40 @@ validation_table <- function(
   crop_fm_prod <- array(0, dim = c(ncell, 12)) # fm production for all CFTs
 
   # include "rainfed" and exclude "grass", "tree", and "other" in crop indices
-  # crop_ids_explicit_rainfed <- grep("^(?!.*(grass|tree|other)).*rainfed.*$",
-  # names(area_cft), ignore.case = TRUE, perl = TRUE)
-  # #include "irig" and exclude "grass", "tree", and "other" in crop indices
-  # crop_ids_explicit_irrig <- grep("^(?!.*(grass|tree|other)).*irrig.*$",
-  # names(area_cft), ignore.case = TRUE, perl = TRUE)
-  # #crop_fm_prod <- 0 # to check if it worked
+  crop_ids_explicit_rainfed <- grep("^(?!.*(grass|tree|other)).*rainfed.*$",
+  names(area_cft), ignore.case = TRUE, perl = TRUE)
 
-  # for (c in 1:length(crop_ids_explicit_rainfed)) {
-  #   crop_fm_prod[, c] <- (harvest_dm[, crop_ids_explicit_rainfed[c]] + harvest_dm[, crop_ids_explicit_irrig[c]]) *
-  #     dm2fm[c] / 1000 # kg FM
-  # }
-  # harvest_dm[, crop_ids_explicit_rainfed[2]]
+  #include "irig" and exclude "grass", "tree", and "other" in crop indices
+  crop_ids_explicit_irrig <- grep("^(?!.*(grass|tree|other)).*irrig.*$",
+  names(area_cft), ignore.case = TRUE, perl = TRUE)
 
-  for (c in 1:12) {
-    crop_fm_prod[, c] <- (harvest_dm[, c] + harvest_dm[, c + 16]) *
+  for (c in 1:length(crop_ids_explicit_rainfed)) {
+    crop_fm_prod[, c] <- (harvest_dm[, crop_ids_explicit_rainfed[c]] + harvest_dm[, crop_ids_explicit_irrig[c]]) *
       dm2fm[c] / 1000 # kg FM
   }
 
-  crop_sum <- sum(crop_fm_prod) / 10^9
+  # for (c in 1:12) {
+  #   crop_fm_prod[, c] <- (harvest_dm[, c] + harvest_dm[, c + 16]) *
+  #     dm2fm[c] / 1000 # kg FM
+  # }
+
+  crop_sum <- sum(crop_fm_prod) / 10^9 #in Gt
 
 
 
   # lists to match literature character strings with the here computed variables
-  var_match <- list("crop", "irrig", "pasture", "forest", "def", "withdr", "cons", "leaching (total)", "leaching from crop", "efficiency", "surplus", "npp", "prod")
-  units_match <- list("Mha", "Mha", "Mha", "Mha", "%", "km3", "km3", "TgN", "TgN", "%", "TgN", "PgC", "Gt")
+  var_match <- list("crop", "irrig", "pasture", "forest", "def", "withdr", "cons", "leaching", "leaching from crop", "efficiency", "surplus", "npp", "prod")
+  units_match <- list("Mha", "Mha", "Mha", "Mha", "%", "km3", "km3", "Tg N", "Tg N", "%", "Tg N", "PgC", "Gt")
   calc_var <- list(
     crop_area, irrig_area, pasture_area, forest_area, deforest_share, wd, cons, leaching,
     leaching_agr, nue, nsurplus, npp_lu, crop_sum
   )
-
+# TODO: change this when other import is implemented
   ref_table <- read.csv2("/p/projects/open/Caterina/benchmarking/scripts/data/reference_list.csv")
 
   # insert lpjml values in table (pb status variables later)
   ref_table <- insert_lpjml_value(ref_table, var_match, units_match, calc_var)
-
-  # TODO: correct units of Nitrogen leaching
-
-  # ref_table %>%
-  #   filter(!is.numeric(lpjml_value) | is.na(lpjml_value))
-
+ 
   # include PB status values
   if (calculate_pb_status == TRUE) {
     # calculate PB status
@@ -418,24 +410,26 @@ aggregate_lpjml_output <- function(
 
 
 
-# global_sum <- function(data_frame) {
-#   sum_result <- sum(data_frame * terr_area) * 10^-12
-#   return(sum_result)
-# }
-
 # insert computed variables in literature table through matching by variable and unit patterns,
 # make sure structure of original .csv table is mantained
-
 insert_lpjml_value <- function(
-    ref_table, var_patterns, unit_patterns,
-    calculated_vars, set_nan_if_empty = TRUE) {
+    ref_table, 
+    var_patterns, 
+    unit_patterns,
+    calculated_vars, 
+    set_nan_if_empty = TRUE) {
   lpjml_values <- rep(NA_real_, nrow(ref_table))
   for (i in seq_along(var_patterns)) {
-    matching_indices <- grepl(var_patterns[[i]], ref_table$variable, ignore.case = TRUE) &
-      grepl(unit_patterns[[i]], ref_table$unit, ignore.case = TRUE)
+    matching_indices <- grepl(var_patterns[[i]], 
+    ref_table$variable, 
+    ignore.case = TRUE) &
+      grepl(unit_patterns[[i]], 
+      ref_table$unit,
+      ignore.case = TRUE)
     lpjml_values[matching_indices] <- ifelse(
-      set_nan_if_empty && (calculated_vars[[i]] == 0 || is.nan(calculated_vars[[i]])),
-      NaN, # set to NaN if set_nan_if_empty is TRUE and the calculated value is empty or NaN
+      set_nan_if_empty && 
+      (calculated_vars[[i]] == 0 || is.nan(calculated_vars[[i]])),
+      NaN, # set to NaN the calculated value is empty or NaN
       round(eval(parse(text = calculated_vars[[i]]))[1], digits = 2)
     )
   }
