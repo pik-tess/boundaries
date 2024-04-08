@@ -322,22 +322,48 @@ metric:
                         pft_harvestc:
                             resolution: "annual"
                             optional: false
-                        pft_rharvestc:
-                            resolution: "annual"
-                            optional: false
-                        firec:
-                            resolution: "annual"
-                            optional: false
-                        timber_harvestc:
-                            resolution: "annual"
-                            optional: false
                         cftfrac:
                             resolution: "annual"
                             optional: false
                         fpc:
                             resolution: "annual"
                             optional: false
-
+                        irrig:
+                            resolution: "monthly"
+                            optional: false
+                        conv_loss_evap:
+                            resolution: "monthly"
+                            optional: false
+                        conv_loss_drain:
+                            resolution: "monthly"
+                            optional: false
+                        return_flow_b:
+                            resolution: "monthly"
+                            optional: false
+                        leaching:
+                            resolution: "annual"
+                            optional: false
+                        nleaching_agr:
+                            resolution: "annual"
+                            optional: false
+                        nfert_agr:
+                            resolution: "annual"
+                            optional: false
+                        nmanure_agr:
+                            resolution: "annual"
+                            optional: false   
+                        ndepo_agr:
+                            resolution: "annual"
+                            optional: false 
+                        bnf_agr:
+                            resolution: "annual"
+                            optional: false                    
+                        seedn_agr:
+                            resolution: "annual"
+                            optional: false   
+                        harvestn_agr:
+                            resolution: "annual"
+                            optional: false   
         # Called boundaries functions
         fun_name: "validation_table"
         funs:
