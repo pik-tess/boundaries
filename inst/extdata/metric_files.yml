@@ -18,9 +18,9 @@ metric:
                         vegc:
                             resolution: "annual"
                             optional: true
-                        pft_lai:
-                            resolution: "annual"
-                            optional: true
+                        #pft_lai:
+                        #    resolution: "annual"
+                        #    optional: true
                         temp:
                             resolution: "annual"
                             optional: false
@@ -169,7 +169,7 @@ metric:
                         terr_area: 
                             resolution: "annual"
                             optional: false
-                        nfert_mg:
+                        napplied_mg:
                             resolution: "annual"
                             optional: false
                         bnf_mg:

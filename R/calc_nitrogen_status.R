@@ -296,7 +296,7 @@ calc_nitrogen_status <- function(
     fert_mg <- NULL
     # read in fertilizer and manure input on managed land
     fert_mg %<-% read_io_format(
-      file = files_scenario$nfert_mg,
+      file = files_scenario$napplied_mg,
       time_span_scenario,
       aggregate = list(month = sum, band = sum),
       spatial_subset = config_args$spatial_subset
