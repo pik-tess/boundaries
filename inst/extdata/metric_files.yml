@@ -18,9 +18,9 @@ metric:
                         vegc:
                             resolution: "annual"
                             optional: true
-                        pft_lai:
-                            resolution: "annual"
-                            optional: true
+                        #pft_lai:
+                        #    resolution: "annual"
+                        #    optional: true
                         temp:
                             resolution: "annual"
                             optional: false
@@ -46,9 +46,10 @@ metric:
                             resolution: "monthly"
                             optional: false
                     threshold:
-                        holocene: 0.5
-                        pb: 0.95
+                        holocene: 50
+                        pb: 95
                         highrisk: NULL
+                    unit: "%"
                 porkka2023: 
                     <<: *wang-erlandsson2022_bw
             subglobal:
@@ -64,9 +65,10 @@ metric:
                             resolution: "annual"
                             optional: false
                     threshold:
-                        holocene: 0.5
-                        pb: 0.95
+                        holocene: 50
+                        pb: 95
                         highrisk: NULL
+                    unit: "%"
                 porkka2023:
                     <<: *wang-erlandsson2022_bw_sub
             grid:
@@ -81,8 +83,9 @@ metric:
                             optional: false
                     threshold:
                         holocene: 0
-                        pb: 0.05
-                        highrisk: 0.75
+                        pb: 5
+                        highrisk: 75
+                    unit: "%"
         fun_name: "calc_bluewater_status"
         # Called boundaries functions
         funs:
@@ -94,17 +97,18 @@ metric:
             global:
                 wang-erlandsson2022: &wang-erlandsson2022_gw
                    # LPJmL output IDs with required resolution
-                   output:
+                    output:
                        terr_area:
                            resolution: "annual"
                            optional: false
                        rootmoist:
                            resolution: "monthly"
                            optional: false
-                   threshold:
-                       holocene: 0.5
-                       pb: 0.95
+                    threshold:
+                       holocene: 5
+                       pb: 95
                        highrisk: NULL
+                    unit: "%"
                 porkka2023: 
                     <<: *wang-erlandsson2022_gw #TODO correct?
             subglobal:
@@ -120,9 +124,10 @@ metric:
                             resolution: "annual"
                             optional: false
                     threshold:
-                        holocene: 0.5
-                        pb: 0.95
+                        holocene: 5
+                        pb: 95
                         highrisk: NULL
+                    unit: "%"
                 porkka2023:
                     <<: *wang-erlandsson2022_gw_sub
             grid:
@@ -161,6 +166,7 @@ metric:
                         holocene: 0
                         pb: 2
                         highrisk: 5
+                    unit: "mg N l-1"
                 braun2022_minusref:
                     <<: *braun2022_n
             global:
@@ -169,7 +175,7 @@ metric:
                         terr_area: 
                             resolution: "annual"
                             optional: false
-                        nfert_mg:
+                        napplied_mg:
                             resolution: "annual"
                             optional: false
                         bnf_mg:
@@ -188,6 +194,7 @@ metric:
                         holocene: 0
                         pb: 35
                         highrisk: 84
+                    unit: "Tg N yr-1"
         # Called boundaries functions
         fun_name: "calc_nitrogen_status"
         funs: &nitrogen_fun
@@ -206,8 +213,9 @@ metric:
                             optional: false
                     threshold:
                         holocene: 0
-                        pb: 0.25
-                        highrisk: 0.46
+                        pb: 25
+                        highrisk: 46
+                    unit: "%"
             subglobal:
                 steffen2015: &steffen2015_lsc
                     # LPJmL output IDs with required resolution
@@ -222,13 +230,14 @@ metric:
                             temperate: 0
                             tropical: 0
                         pb:
-                            boreal: 0.15
-                            temperate: 0.5
-                            tropical: 0.15
+                            boreal: 15
+                            temperate: 50
+                            tropical: 15
                         highrisk:
-                            boreal: 0.4
-                            temperate: 0.7
-                            tropical: 0.4
+                            boreal: 40
+                            temperate: 70
+                            tropical: 40
+                    unit: "%"
             grid:
                 steffen2015:
                    <<: *steffen2015_lsc
@@ -277,8 +286,9 @@ metric:
                             optional: false
                     threshold: &stenzel2023_biosphere_threshold
                         holocene: 0
-                        pb: 0.1
-                        highrisk: 0.2
+                        pb: 10
+                        highrisk: 20
+                    unit: "%"
             subglobal:
                 stenzel2023:
                     output:

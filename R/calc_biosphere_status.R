@@ -82,13 +82,13 @@ calc_biosphere_status <- function(
   files_reference,
   spatial_scale = "subglobal",
   time_span_scenario = as.character(1982:2011),
-  time_span_reference = time_span_scenario,
+  time_span_reference = NULL,
   approach = "stenzel2023",
   time_aggregation_args = list(),
   config_args = list(),
   thresholds = NULL,
   path_baseline,
-  time_span_baseline = time_span_reference,
+  time_span_baseline = time_span_scenario,
   # TODO gridbased can be retrieved from config!
   gridbased = TRUE,
   npp_threshold = 20,
@@ -267,13 +267,16 @@ calc_biosphere_status <- function(
     }
   }
 
+  rm(biocol)
   # average
   control_variable <- do.call(aggregate_time,
-                              append(list(x = control_variable_raw),
+                              append(list(x = control_variable_raw * 100), #in%
                                      time_aggregation_args))
 
   attr(control_variable, "spatial_scale") <- spatial_scale
   attr(control_variable, "thresholds") <- thresholds
+  attr(control_variable, "unit") <- list_unit("biosphere", approach,
+                                              spatial_scale)
   attr(control_variable, "control_variable") <- "BioCol (in fraction of NPPref)"
 
   class(control_variable) <- c("control_variable")

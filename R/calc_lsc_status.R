@@ -275,6 +275,7 @@ calc_lsc_status <- function(
   deforestation[deforestation > 1] <- 1
   deforestation[deforestation > 0] <- 1 - deforestation[deforestation > 0]
   deforestation[!is_forest] <- NA
+  deforestation <- deforestation * 100 # in percent
 
   if (spatial_scale == "subglobal") {
 
@@ -364,8 +365,8 @@ calc_lsc_status <- function(
   }
 
   attr(control_variable, "control_variable") <- "deforestation"
-  #TODO: add unit attribute, convert to %?
   attr(control_variable, "spatial_scale") <- spatial_scale
+  attr(control_variable, "unit") <- list_unit("lsc", approach, spatial_scale)
   class(control_variable) <- c("control_variable")
   return(control_variable)
 }

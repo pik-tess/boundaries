@@ -1,5 +1,5 @@
-" Validate simulated global PB-relevant variables against literature
-#"
+#' Validate simulated global PB-relevant variables against literature
+
 #' Calculate a table with global modelled vs literature values for key variables
 #' relevant to planetary boundaries
 #'
@@ -18,9 +18,9 @@
 #' as an integer vector, e.g. `1901:1930`. Can differ in offset and length from
 #' `time_span_scenario`! If `NULL` value of `time_span_scenario` is used
 #'
-#' @param table_path path to literature table (.csv file). Default:
-#'  "/inst/extdata/global_validation_data.csv"
-#'
+#' @param table_path character string. File path to save csv file with
+#' comparison between lpjml values and literature
+#' 
 #' @return  table (data frame or csv or both) with comparison between lpjml values and literature ranges
 #'
 #' @examples
@@ -44,11 +44,6 @@ validation_table <- function(
     time_span_reference,
     table_path,
     calculate_pb_status = TRUE) {
-  # TODO: add option for different path?
-  # load literature table
-  #TODO: fix table loading 
-  ref_table <- system.file("extdata", "global_validation_data.csv", package = "boundaries") %>%
-    read.csv2()
 
   config_scenario <- lpjmlkit::read_config(config_scenario)
   config_reference <- lpjmlkit::read_config(config_reference)
@@ -78,24 +73,8 @@ validation_table <- function(
     output_files = output_files
   )
 
-
-  # Initialize empty numeric vectors
-  crop_area <- numeric()
-  irrig_area <- numeric()
-  pasture_area <- numeric()
-  forest_area <- numeric()
-  deforest_share <- numeric()
-  wd <- numeric()
-  cons <- numeric()
-  leaching <- numeric()
-  leaching_agr <- numeric()
-  nue <- numeric()
-  nsurplus <- numeric()
-  npp_lu <- numeric()
-  crop_sum <- numeric()
-
-  # read in terrestrial area
-  terr_area <- lpjmlkit::read_io(files_scenario$terr_area)$data %>% drop() # in m2
+  # read in terrestrial area (in m2)
+  terr_area <- lpjmlkit::read_io(files_scenario$terr_area)$data %>% drop()
   ncell <- length(terr_area)
 
   ####### PB Land-system change ################################################
@@ -113,12 +92,16 @@ validation_table <- function(
   # calculate global area for each band, conversion from m2 to mio ha
   area_cft <- apply(cftfrac * terr_area * 10^-10, "band", sum)
 
-  indices_crops <- grep("grass|tree", names(area_cft), ignore.case = TRUE, invert = TRUE)
+  # global cropland area
+  indices_crops <- grep("grass|tree", names(area_cft),
+                        ignore.case = TRUE, invert = TRUE)
   crop_area <- sum(area_cft[indices_crops])
 
+  # global pasture area
   indices_pastures <- grep("grassland", names(area_cft), ignore.case = TRUE)
   pasture_area <- sum(area_cft[indices_pastures])
 
+  # global irrigated area
   indices_irrig <- grep("irrig", names(area_cft), ignore.case = TRUE)
   irrig_area <- sum(area_cft[indices_irrig])
 
@@ -147,77 +130,85 @@ validation_table <- function(
 
   #------------- Irrigation withdrawals and consumption ------------------------
 
-  irrig <- aggregate_lpjml_output(files_scenario$irrig, time_span_scenario,
+  irrig <- aggregate_lpjml_output(
+    files_scenario$irrig,
+    time_span_scenario,
     aggregate = list(
       year = mean,
       month = sum
     )
   )
 
-  conv_loss_evap <- aggregate_lpjml_output(files_scenario$conv_loss_evap, time_span_scenario,
+  conv_loss_evap <- aggregate_lpjml_output(
+    files_scenario$conv_loss_evap,
+    time_span_scenario,
     aggregate = list(
       year = mean,
       month = sum
     )
   )
 
-  conv_loss_drain <- aggregate_lpjml_output(files_scenario$conv_loss_drain, time_span_scenario,
+  conv_loss_drain <- aggregate_lpjml_output(
+    files_scenario$conv_loss_drain,
+    time_span_scenario,
     aggregate = list(
       year = mean,
       month = sum
     )
   )
 
-  return_flow_b <- aggregate_lpjml_output(files_scenario$return_flow_b, time_span_scenario,
+  return_flow_b <- aggregate_lpjml_output(
+    files_scenario$return_flow_b,
+    time_span_scenario,
     aggregate = list(
       year = mean,
       month = sum
     )
   )
   # withdrawals in km3
-  wd <- sum((irrig + conv_loss_drain + conv_loss_evap) * terr_area) * 10^-12
+  wd <- global_sum((irrig + conv_loss_drain + conv_loss_evap))
 
   # consumption in km3
-  cons <- sum((irrig + conv_loss_evap - return_flow_b) * terr_area) * 10^-12
+  cons <- global_sum((irrig + conv_loss_evap - return_flow_b))
 
   # PB Biogechemical flows
   #------------- Nitrogen balance and leaching ---------------------------------
 
   # # N leaching (total) in Tg
-  leaching <- aggregate_lpjml_output(files_scenario$leaching, time_span_scenario,
-    aggregate = list(
-      year = mean
-    )
-  ) # %>%
-  # # global_sum(terr_area)
-
-  leaching <- sum(leaching * terr_area) * 10^-12
-  # N leaching from cropland
-  leaching_agr <- aggregate_lpjml_output(files_scenario$nleaching_agr, time_span_scenario,
-    aggregate = list(
-      year = mean
-    )
-  ) # %>% global_sum(terr_area)
-  leaching_agr <- sum(leaching_agr * terr_area) * 10^-12
-
-  # N use efficiency on cropland
-  # inputs
-  total_fert <- aggregate_lpjml_output(files_scenario$nfert_agr, time_span_scenario,
-    aggregate = list(
-      year = mean
-    )
-  ) # %>% global_sum(terr_area)
-
-  total_fert <- sum(total_fert * terr_area) * 10^-12
-
-  total_man <- aggregate_lpjml_output(files_scenario$nmanure_agr,
+  leaching <- aggregate_lpjml_output(
+    files_scenario$leaching,
     time_span_scenario,
     aggregate = list(
       year = mean
     )
-  ) # %>% global_sum(terr_area)
-  total_man <- sum(total_man * terr_area) * 10^-12
+  ) %>% global_sum()
 
+  # N leaching from cropland
+  leaching_agr <- aggregate_lpjml_output(
+    files_scenario$nleaching_agr,
+    time_span_scenario,
+    aggregate = list(
+      year = mean
+    )
+  ) %>% global_sum()
+
+  # N use efficiency on cropland
+  # inputs
+  total_fert <- aggregate_lpjml_output(
+    files_scenario$nfert_agr,
+    time_span_scenario,
+    aggregate = list(
+      year = mean
+    )
+  ) %>% global_sum()
+
+  total_man <- aggregate_lpjml_output(
+    files_scenario$nmanure_agr,
+    time_span_scenario,
+    aggregate = list(
+      year = mean
+    )
+  )  %>% global_sum()
 
   # For total_dep
   total_dep <- aggregate_lpjml_output(files_scenario$ndepo_agr,
@@ -225,8 +216,7 @@ validation_table <- function(
     aggregate = list(
       year = mean
     )
-  )
-  total_dep <- sum(total_dep * terr_area) * 10^-12
+  ) %>% global_sum()
 
 
   # For total_bnf
@@ -235,27 +225,25 @@ validation_table <- function(
     aggregate = list(
       year = mean
     )
-  )
-  total_bnf <- sum(total_bnf * terr_area) * 10^-12
+  ) %>% global_sum()
 
   total_seed <- aggregate_lpjml_output(files_scenario$seedn_agr,
     time_span_scenario,
     aggregate = list(
       year = mean
     )
-  )
-  total_seed <- sum(total_seed * terr_area) * 10^-12
+  ) %>% global_sum()
 
 
   n_inputs <- total_fert + total_man + total_dep + total_bnf + total_seed
 
-  nharvest <- aggregate_lpjml_output(files_scenario$harvestn_agr,
-    time_span_reference,
+  nharvest <- aggregate_lpjml_output(
+    files_scenario$harvestn_agr,
+    time_span_scenario,
     aggregate = list(
       year = mean
     )
-  )
-  nharvest <- sum(nharvest * terr_area) * 10^-12
+  ) %>% global_sum()
 
   nue <- nharvest / n_inputs * 100
 
@@ -270,10 +258,7 @@ validation_table <- function(
     aggregate = list(
       year = mean
     )
-  ) * 10^-3
-
-
-  npp_lu <- sum(npp_lu * terr_area) * 10^-12
+  ) %>% global_sum() * 10^-3 # in PgC
 
 
   #-------------- total crop production CFT1-12 in freshmatter--------------------
@@ -290,25 +275,17 @@ validation_table <- function(
   )
   dm2fm <- 1 / fm2dm
 
-  # ### simulated lpjml harvest
-  
-  yield <- aggregate_lpjml_output(files_scenario$pft_harvestc,
-    time_span_scenario,
-    aggregate = list(year = mean)
-  )
+  #------------- simulated lpjml harvest ---------------------------------------
+  # TODO: substitute hardcoded CFTs indices
 
   yield <- aggregate_lpjml_output(
-    paste0(
-      dir_output,
-      "/pft_harvest.pft.bin.json"
-    ),
-    timeframe,
+    files_scenario$pft_harvestc,
+    time_span_scenario,
     aggregate = list(year = mean)
   )
 
   # dry matter harvest g
   harvest_dm <- cftfrac * yield * terr_area * (1 / dm_factor)
-
 
   # freshmatter harvest
   crop_fm_prod <- array(0, dim = c(ncell, 12)) # fm production for all CFTs
@@ -326,65 +303,89 @@ validation_table <- function(
       dm2fm[c] / 1000 # kg FM
   }
 
-  # for (c in 1:12) {
-  #   crop_fm_prod[, c] <- (harvest_dm[, c] + harvest_dm[, c + 16]) *
-  #     dm2fm[c] / 1000 # kg FM
-  # }
+  crop_sum <- sum(crop_fm_prod) / 10^9
 
   crop_sum <- sum(crop_fm_prod) / 10^9 #in Gt
 
-
+  ##### combine simulated values with literature ###############################
 
   # lists to match literature character strings with the here computed variables
-  var_match <- list("crop", "irrig", "pasture", "forest", "def", "withdr", "cons", "leaching", "leaching from crop", "efficiency", "surplus", "npp", "prod")
-  units_match <- list("Mha", "Mha", "Mha", "Mha", "%", "km3", "km3", "Tg N", "Tg N", "%", "Tg N", "PgC", "Gt")
+  var_match <- list("crop", "irrig", "pasture", "forest", "def", "withdr",
+                    "cons", "leaching (total)", "leaching from crop",
+                    "efficiency", "surplus", "npp", "prod")
+  units_match <- list("Mha", "Mha", "Mha", "Mha", "%", "km3", "km3", "Tg N yr-1",
+                      "Tg N yr-1", "%", "Tg N yr-1", "PgC", "Gt")
   calc_var <- list(
-    crop_area, irrig_area, pasture_area, forest_area, deforest_share, wd, cons, leaching,
-    leaching_agr, nue, nsurplus, npp_lu, crop_sum
+    crop_area, irrig_area, pasture_area, forest_area, deforest_share, wd, cons,
+    leaching, leaching_agr, nue, nsurplus, npp_lu, crop_sum
   )
-# TODO: change this when other import is implemented
-  ref_table <- read.csv2("/p/projects/open/Caterina/benchmarking/scripts/data/reference_list.csv")
+
+  # load literature table
+  ref_table <- system.file("extdata", "global_validation_data.csv",
+                           package = "boundaries") %>%
+    read.csv2()
 
   # insert lpjml values in table (pb status variables later)
   ref_table <- insert_lpjml_value(ref_table, var_match, units_match, calc_var)
- 
+
+  # TODO: correct units of Nitrogen leaching
+
+  # ref_table %>%
+  #   filter(!is.numeric(lpjml_value) | is.na(lpjml_value))
+
   # include PB status values
   if (calculate_pb_status == TRUE) {
     # calculate PB status
 
-    # temp2 <- calc_status(boundary = c("lsc" ,"greenwater", "bluewater", "nitrogen"
-    #                                   ),
-    #   config_scenario = path_scenario,
-    #   config_reference = path_reference,
-    #   path_baseline = path_reference,
-    #   time_span_scenario = timeframe,
-    #   time_span_reference = timeframe_reference,
-    #   spatial_scale = "global",
-    #   with_groundwater_denit = FALSE,
-    #   savanna_proxy = list(vegc = 7500),
-    #   in_parallel = TRUE,
-    #   gridbased = FALSE,
-    #   method = list("bluewater" = "porkka2023",
-    #                 "greenwater" = "porkka2023",
-    #                 "nitrogen" = "schulte_uebbing2022"),
-    # )
+    pb_status <- calc_status(
+      boundary = c("lsc", "greenwater", "bluewater", "nitrogen", "biosphere"),
+      config_scenario = path_scenario,
+      config_reference = path_reference,
+      time_span_scenario = time_span_scenario,
+      time_span_reference = time_span_reference,
+      spatial_scale = "global",
+      with_groundwater_denit = FALSE,
+      savanna_proxy = list(vegc = 7500), 
+      in_parallel = TRUE,
+      path_baseline = paste0("/p/projects/open/Johanna/boundaries/", "lpjml/final_runs/output/pnv_1500_2017/"),
+      gridbased = TRUE, #TODO: JB how to deal with these option?
+      method = list("bluewater" = "porkka2023",
+                    "greenwater" = "porkka2023",
+                    "nitrogen" = "schulte_uebbing2022"),
+    )
 
-    # save calc_status output for later analysis
-    # save(temp2, file= paste0(my_dir, "/benchmarking/scripts/data/calc_status_data.RData"))
-
-    # load data from old calc_status
-    my_dir <- getwd()
-    load(file = paste0(my_dir, "/benchmarking/scripts/data/calc_status_data.RData"))
-
-    # list of pb varaibles to insert in the table
+    # list of pb variables to insert in the table
     pb_list <- list("lsc", "greenwater", "bluewater", "nitrogen", "biosphere")
 
     # insert values from calc_status in the table
-    ref_table <- evaluate_pb_status(ref_table, pb_list, temp2)
+    ref_table <- evaluate_pb_status(ref_table, pb_list, pb_status)
   } # option to calculate pb_status ends here
 
   # add column for normalized error values
-  ref_table <- ref_table %>% dplyr::mutate(norm_error = signif((lpjml_value - value) / value, digits = 2))
+  ref_table <- ref_table %>%
+    dplyr::mutate(norm_error = signif((lpjml_value - value) / value, digits = 2))
+
+  # create summary table
+  summary_tbl <- ref_table %>%
+    dplyr::group_by(variable) %>%
+    dplyr::mutate(
+      range = paste(range.lower, "-", range.upper),
+      literature.range = paste(
+        ifelse(
+          !is.na(value),
+          as.character(value),
+          as.character(range)
+        ),
+        paste("[", year, "] (", Author.s., year.of.publication, ")")
+      )
+    ) %>%
+    dplyr::select(boundary, variable, lpjml_value, literature.range, unit) %>%
+    dplyr::mutate(
+      literature.range = paste0(literature.range, collapse = "; ")
+    ) %>%
+    dplyr::distinct()
+
+  write.csv(summary_tbl, file = table_path, row.names = FALSE)
 
   return(ref_table)
 }
@@ -409,6 +410,11 @@ aggregate_lpjml_output <- function(
 }
 
 
+ # conversion from g/m2 to Tg
+ global_sum <- function(output, area = terr_area) {
+   sum_result <- sum(output * area) * 10^-12
+   return(sum_result)
+ }
 
 # insert computed variables in literature table through matching by variable and unit patterns,
 # make sure structure of original .csv table is mantained

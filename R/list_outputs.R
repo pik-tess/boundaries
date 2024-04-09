@@ -184,3 +184,17 @@ list_thresholds <- function(metric, approach, spatial_scale) {
   return(yaml_data$metric[[metric]]$spatial_scale[[spatial_scale]][[approach]]$threshold) # nolint:line_length_linter
 
 }
+
+list_unit <- function(metric, approach, spatial_scale) {
+  metric <- process_metric(metric = metric)
+
+  yaml_data <- system.file(
+    "extdata",
+    "metric_files.yml",
+    package = "boundaries"
+  ) %>%
+    yaml::read_yaml()
+
+  return(yaml_data$metric[[metric]]$spatial_scale[[spatial_scale]][[approach]]$unit) # nolint:line_length_linter
+
+}

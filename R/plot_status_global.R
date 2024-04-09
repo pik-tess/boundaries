@@ -63,8 +63,9 @@ plot_status_global <- function(
   }
 
   # please R CMD check for use of dplyr syntax
-  years <- NULL
-
+  for (i in seq_len(length(x))) {
+    class(x[[i]]) <- "numeric"
+  }
   data_tibble <- tidyr::as_tibble(x)
   data_tibble$years <- as.numeric(names(x[[1]]))
   data_tibble <- tidyr::pivot_longer(
@@ -108,6 +109,7 @@ plot_status_global <- function(
   }
 
   if (all_in_one) {
+
     # holocene value
     holo_all <- NULL
     for (i in seq_len(length(x))) {
@@ -233,8 +235,11 @@ plot_status_global <- function(
       ) +
       ggplot2::theme(axis.title = ggplot2::element_blank()) +
       ggplot2::theme(aspect.ratio = 1)
+
   } else {
+
     # create dataframe for plotting of pb specific background filling
+    # (needed for safe zone and beyond the increasing risk value)
     pb_thresh <- highrisk_thresh <- holocene <- ylabel <- max_y <-
       numeric(length(x))
     for (i in seq_len(length(x))) {
@@ -246,7 +251,8 @@ plot_status_global <- function(
         attr(x[[i]], "thresholds")[["holocene"]]
       )
       max_y[i] <- max(data_tibble$values[which(data_tibble$pb == names(x)[i])])
-      ylabel[i] <- attr(x[[i]], "control variable")
+      ylabel[i] <- paste0(attr(x[[i]], "control_variable"),
+                          " (", attr(x[[i]], "unit"), ")")
       names(ylabel)[i] <- names(x)[i]
     }
     df_bg <- data.frame(
@@ -260,6 +266,24 @@ plot_status_global <- function(
     min_years <- min(data_tibble$years)
     max_years <- max(data_tibble$years)
 
+    # create dataframe for pb-specific background filling in the increasing risk
+    # zone
+    df_inc_risk <- tibble::tibble()
+    for (i in seq_len(length(x))) {
+      temp <- tibble::tibble(
+        vals = seq((highrisk_thresh[i] +
+                                    (highrisk_thresh[i] - pb_thresh[i]) * 1.5), pb_thresh[i],
+                   length.out = 500)
+      ) %>%
+        dplyr::mutate(xend = min_years,
+                      x = max_years,
+                      yend = vals,
+                      pb = unique(data_tibble$pb)[i],
+                      col = seq(1, 0, length.out = length(vals))) %>%
+        dplyr::rename(y = vals)
+      df_inc_risk <- dplyr::bind_rows(df_inc_risk, temp)
+    }
+
     # plot background
     plot <- ggplot2::ggplot() +
       ggpattern::geom_rect_pattern(
@@ -271,35 +295,19 @@ plot_status_global <- function(
           ymax = pb_thresh
         ),
         pattern = "gradient",
-        pattern_fill = "white",
+        pattern_fill = green,
         pattern_fill2 = green,
         alpha = 0.8
       ) +
-      ggpattern::geom_rect_pattern(
-        data = df_bg,
-        ggplot2::aes(
-          xmin = min_years,
-          xmax = max_years,
-          ymin = pb_thresh,
-          ymax = highrisk_thresh
-        ),
-        pattern = "gradient",
-        pattern_fill = yellow,
-        pattern_fill2 = orange,
-        alpha = 0.8
+      ggplot2::geom_segment(
+        data = df_inc_risk,
+        ggplot2::aes(x = x, xend = xend, y = y, yend = yend, color = col),
+        size = 0.5,
+        show.legend = FALSE
       ) +
-      ggpattern::geom_rect_pattern(
-        data = df_bg,
-        ggplot2::aes(
-          xmin = min_years,
-          xmax = max_years,
-          ymin = highrisk_thresh,
-          ymax = highrisk_thresh + (highrisk_thresh - pb_thresh) * 1.5
-        ), # nolint
-        pattern = "gradient",
-        pattern_fill = orange,
-        pattern_fill2 = darkpurple,
-        alpha = 0.8
+      ggplot2::scale_colour_viridis_c(
+        option = "inferno",
+        direction = -1
       ) +
       ggpattern::geom_rect_pattern(
         data = df_bg,
@@ -310,8 +318,8 @@ plot_status_global <- function(
         ), # nolint
         ymax = Inf,
         pattern = "gradient",
-        pattern_fill = darkpurple,
-        pattern_fill2 = darkpurple,
+        pattern_fill = "#000004FF",
+        pattern_fill2 = "#000004FF",
         alpha = 0.8
       )
 
