@@ -376,7 +376,8 @@ calc_nitrogen_status <- function(
     )
   }
   attr(control_variable, "spatial_scale") <- spatial_scale
-
+  attr(control_variable, "unit") <- list_unit("nitrogen", approach,
+                                              spatial_scale)
   class(control_variable) <- c("control_variable")
   return(control_variable)
 }

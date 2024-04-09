@@ -36,7 +36,7 @@
 #' define the safe, increasing risk and high risk zone,
 #' For spatial_scale = "global" and "subglobal", this refers to the quantiles of
 #' the global/basin area with deviations in the reference period. The default
-#' is: c(holocene = 0.5, pb = 0.95, highrisk = NULL).
+#' is: c(holocene = 50, pb = 95, highrisk = NULL).
 #' If set to NULL, the  default is taken from metric_files.yml
 #' For highrisk, the value is currently hard-coded to 0.5
 #' (following Richardson et al. 2023)
@@ -151,19 +151,19 @@ calc_water_deviations <- function(files_scenario,
     } else {
       area_high_risk %<-% stats::quantile(
         ref_depart$wet_or_dry,
-        probs = thresholds[["highrisk"]],
+        probs = thresholds[["highrisk"]] / 100,
         na.rm = TRUE
       )
     }
 
     area_pb %<-% stats::quantile(
       ref_depart$wet_or_dry,
-      probs = thresholds[["pb"]],
+      probs = thresholds[["pb"]] / 100,
       na.rm = TRUE
     )
     area_holocene %<-% stats::quantile(
       ref_depart$wet_or_dry,
-      probs = thresholds[["holocene"]],
+      probs = thresholds[["holocene"]] / 100,
       na.rm = TRUE
     )
 
@@ -196,7 +196,7 @@ calc_water_deviations <- function(files_scenario,
       ref_depart$wet_or_dry,
       "basin",
       function(x) {
-        y <- stats::quantile(x, probs = thresholds[["highrisk"]], na.rm = TRUE)
+        y <- stats::quantile(x, probs = thresholds[["highrisk"]] / 100, na.rm = TRUE)
         y
       }
     )
@@ -205,7 +205,7 @@ calc_water_deviations <- function(files_scenario,
       ref_depart$wet_or_dry,
       "basin",
       function(x) {
-        y <- stats::quantile(x, probs = thresholds[["pb"]], na.rm = TRUE)
+        y <- stats::quantile(x, probs = thresholds[["pb"]] / 100, na.rm = TRUE)
         y
       }
     )
@@ -214,7 +214,7 @@ calc_water_deviations <- function(files_scenario,
       ref_depart$wet_or_dry,
       "basin",
       function(x) {
-        y <- stats::quantile(x, probs = thresholds[["holocene"]], na.rm = TRUE)
+        y <- stats::quantile(x, probs = thresholds[["holocene"]] / 100, na.rm = TRUE)
         y
       }
     )
@@ -272,8 +272,10 @@ calc_water_deviations <- function(files_scenario,
     )
   }
   attr(control_variable, "control_variable") <-
-    "area with wet/dry departures (%)"
+    "area with wet/dry departures"
   attr(control_variable, "spatial_scale") <- spatial_scale
+  attr(control_variable, "unit") <- list_unit("bluewater", approach,
+                                              spatial_scale)
 
   class(control_variable) <- c("control_variable")
   return(control_variable)

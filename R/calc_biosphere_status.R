@@ -270,11 +270,13 @@ calc_biosphere_status <- function(
   rm(biocol)
   # average
   control_variable <- do.call(aggregate_time,
-                              append(list(x = control_variable_raw),
+                              append(list(x = control_variable_raw * 100), #in%
                                      time_aggregation_args))
 
   attr(control_variable, "spatial_scale") <- spatial_scale
   attr(control_variable, "thresholds") <- thresholds
+  attr(control_variable, "unit") <- list_unit("biosphere", approach,
+                                              spatial_scale)
   attr(control_variable, "control_variable") <- "BioCol (in fraction of NPPref)"
 
   class(control_variable) <- c("control_variable")

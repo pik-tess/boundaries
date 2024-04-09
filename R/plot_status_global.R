@@ -67,7 +67,6 @@ plot_status_global <- function(
     class(x[[i]]) <- "numeric"
   }
   data_tibble <- tidyr::as_tibble(x)
-
   data_tibble$years <- as.numeric(names(x[[1]]))
   data_tibble <- tidyr::pivot_longer(
     data_tibble,
@@ -252,7 +251,8 @@ plot_status_global <- function(
         attr(x[[i]], "thresholds")[["holocene"]]
       )
       max_y[i] <- max(data_tibble$values[which(data_tibble$pb == names(x)[i])])
-      ylabel[i] <- attr(x[[i]], "control_variable")
+      ylabel[i] <- paste0(attr(x[[i]], "control_variable"),
+                          " (", attr(x[[i]], "unit"), ")")
       names(ylabel)[i] <- names(x)[i]
     }
     df_bg <- data.frame(
