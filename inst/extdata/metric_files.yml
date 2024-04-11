@@ -371,7 +371,7 @@ metric:
                         seedn_agr:
                             resolution: "annual"
                             optional: false   
-                        harvestn_agr:
+                        pft_harvestn:
                             resolution: "annual"
                             optional: false   
         # Called boundaries functions
