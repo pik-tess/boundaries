@@ -18,9 +18,16 @@
 #' as an integer vector, e.g. `1901:1930`. Can differ in offset and length from
 #' `time_span_scenario`! If `NULL` value of `time_span_scenario` is used
 #'
+#' @param path_baseline character string. character string with path to outputs
+#' for the baseline run, file names are taken from files scenario.
+#'
 #' @param table_path character string. File path to save csv file with
 #' comparison between lpjml values and literature
-#' 
+#'
+#' @param gridbased logical. Are pft outputs from LPJmL gridbased or pft-based?
+#'
+#' @param ... arguments to be passed to [calc_status]
+#'
 #' @return  table (data frame or csv or both) with comparison between lpjml values and literature ranges
 #'
 #' @examples
@@ -38,12 +45,15 @@
 # TODO: check parameter descriptions
 
 validation_table <- function(
-    config_scenario,
-    config_reference,
-    time_span_scenario,
-    time_span_reference,
-    table_path,
-    calculate_pb_status = TRUE) {
+  config_scenario,
+  config_reference,
+  time_span_scenario,
+  time_span_reference,
+  path_baseline,
+  table_path,
+  gridbased = TRUE,
+  ...
+) {
 
   config_scenario <- lpjmlkit::read_config(config_scenario)
   config_reference <- lpjmlkit::read_config(config_reference)
@@ -188,7 +198,7 @@ validation_table <- function(
   # consumption in km3
   cons <- global_sum((irrig + conv_loss_evap - return_flow_b), area = terr_area)
 
-  # PB Biogechemical flows
+  ####### PB Nitrogen ##########################################################
   #------------- Nitrogen balance and leaching ---------------------------------
 
   # # N leaching (total) in Tg
@@ -255,19 +265,19 @@ validation_table <- function(
   n_inputs <- total_fert + total_man + total_dep + total_bnf + total_seed
 
   nharvest <- aggregate_lpjml_output(
-    files_scenario$harvestn_agr,
+    files_scenario$pft_harvestn,
     time_span_scenario,
     aggregate = list(
       year = mean
     )
-  ) %>% global_sum(area = terr_area)
+  ) %>% global_sum()
 
   nue <- nharvest / n_inputs * 100
 
   # N surplus on cropland
   nsurplus <- n_inputs - nharvest
 
-  # PB biosphere integrity
+  ####### PB biosphere integrity ###############################################
   #------------- NPP -------------------------------------------
 
   npp_lu <- aggregate_lpjml_output(files_scenario$npp,
@@ -301,7 +311,11 @@ validation_table <- function(
   )
 
   # dry matter harvest g
-  harvest_dm <- cftfrac * yield * terr_area * (1 / dm_factor)
+  if (gridbased == FALSE) {
+    harvest_dm <- cftfrac * yield * terr_area * (1 / dm_factor)
+  } else {
+    harvest_dm <- yield * terr_area * (1 / dm_factor)
+  }
 
   # freshmatter harvest
   crop_fm_prod <- array(0, dim = c(ncell, 12)) # fm production for all CFTs
@@ -325,7 +339,7 @@ validation_table <- function(
   #     dm2fm[c] / 1000 # kg FM
   # }
 
-  crop_sum <- sum(crop_fm_prod) / 10^9
+  crop_sum <- sum(crop_fm_prod) / 10^9 # in Gt #TODO check if unit is correct
 
   ##### combine simulated values with literature ###############################
 
@@ -333,6 +347,7 @@ validation_table <- function(
   var_match <- list("crop", "irrig", "pasture", "forest", "def", "withdr",
                     "cons", "leaching", "leaching from crop",
                     "efficiency", "surplus", "npp", "prod")
+  # TODO: km3, PgC and Gt should also be per year
   units_match <- list("Mha", "Mha", "Mha", "Mha", "%", "km3", "km3", "Tg N yr-1",
                       "Tg N yr-1", "%", "Tg N yr-1", "PgC", "Gt")
   calc_var <- list(
@@ -349,33 +364,25 @@ validation_table <- function(
   ref_table <- insert_lpjml_value(ref_table, var_match, units_match, calc_var)
 
 
-  # include PB status values
-  if (calculate_pb_status == TRUE) {
-    # calculate PB status
+  # calculate PB status
 
-    pb_status <- calc_status(
-      boundary = c("lsc", "greenwater", "bluewater", "nitrogen", "biosphere"),
-      config_scenario = path_scenario,
-      config_reference = path_reference,
-      time_span_scenario = time_span_scenario,
-      time_span_reference = time_span_reference,
-      spatial_scale = "global",
-      with_groundwater_denit = FALSE,
-      savanna_proxy = list(vegc = 7500), 
-      in_parallel = TRUE,
-      path_baseline = paste0("/p/projects/open/Johanna/boundaries/", "lpjml/final_runs/output/pnv_1500_2017/"),
-      gridbased = TRUE, #TODO: JB how to deal with these option?
-      method = list("bluewater" = "porkka2023",
-                    "greenwater" = "porkka2023",
-                    "nitrogen" = "schulte_uebbing2022"),
-    )
+  pb_status <- calc_status(
+    boundary = c("lsc", "greenwater", "bluewater", "nitrogen", "biosphere"),
+    config_scenario = path_scenario,
+    config_reference = path_reference,
+    time_span_scenario = time_span_scenario,
+    time_span_reference = time_span_reference,
+    spatial_scale = "global",
+    gridbased = gridbased,
+    path_baseline = path_baseline,
+    ...
+  )
 
-    # list of pb variables to insert in the table
-    pb_list <- list("lsc", "greenwater", "bluewater", "nitrogen", "biosphere")
+  # list of pb variables to insert in the table
+  pb_list <- list("lsc", "greenwater", "bluewater", "nitrogen", "biosphere")
 
-    # insert values from calc_status in the table
-    ref_table <- evaluate_pb_status(ref_table, pb_list, pb_status)
-  } # option to calculate pb_status ends here
+  # insert values from calc_status in the table
+  ref_table <- evaluate_pb_status(ref_table, pb_list, pb_status)
 
   # add column for normalized error values
   ref_table <- ref_table %>%
