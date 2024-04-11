@@ -326,20 +326,13 @@ validation_table <- function(
   # #include "irig" and exclude "grass", "tree", and "other" in crop indices
   crop_ids_explicit_irrig <- grep("^(?!.*(grass|tree|other)).*irrig.*$",
   names(area_cft), ignore.case = TRUE, perl = TRUE)
-  # #crop_fm_prod <- 0 # to check if it worked
 
   for (c in 1:length(crop_ids_explicit_rainfed)) {
     crop_fm_prod[, c] <- (harvest_dm[, crop_ids_explicit_rainfed[c]] + harvest_dm[, crop_ids_explicit_irrig[c]]) *
       dm2fm[c] / 1000 # kg FM
   }
-  # harvest_dm[, crop_ids_explicit_rainfed[2]]
 
-  # for (c in 1:12) {
-  #   crop_fm_prod[, c] <- (harvest_dm[, c] + harvest_dm[, c + 16]) *
-  #     dm2fm[c] / 1000 # kg FM
-  # }
-
-  crop_sum <- sum(crop_fm_prod) / 10^9 # in Gt #TODO check if unit is correct
+  crop_sum <- sum(crop_fm_prod) / 10^9 # in Mt, 1 Mt = 10^9 kg #TODO check if unit is correct
 
   ##### combine simulated values with literature ###############################
 
@@ -347,7 +340,7 @@ validation_table <- function(
   var_match <- list("crop", "irrig", "pasture", "forest", "def", "withdr",
                     "cons", "leaching", "leaching from crop",
                     "efficiency", "surplus", "npp", "prod")
-  # TODO: km3, PgC and Gt should also be per year
+  # TODO: km3, PgC and Gt should also be per year, check literature
   units_match <- list("Mha", "Mha", "Mha", "Mha", "%", "km3", "km3", "Tg N yr-1",
                       "Tg N yr-1", "%", "Tg N yr-1", "PgC", "Gt")
   calc_var <- list(
