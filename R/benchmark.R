@@ -73,8 +73,24 @@ validation_table <- function(
     output_files = output_files
   )
 
+
+  # Initialize empty numeric vectors
+  crop_area <- numeric()
+  irrig_area <- numeric()
+  pasture_area <- numeric()
+  forest_area <- numeric()
+  deforest_share <- numeric()
+  wd <- numeric()
+  cons <- numeric()
+  leaching <- numeric()
+  leaching_agr <- numeric()
+  nue <- numeric()
+  nsurplus <- numeric()
+  npp_lu <- numeric()
+  crop_sum <- numeric()
+
   # read in terrestrial area (in m2)
-  terr_area <- lpjmlkit::read_io(files_scenario$terr_area)$data %>% drop()
+  terr_area <<- lpjmlkit::read_io(files_scenario$terr_area)$data %>% drop()
   ncell <- length(terr_area)
 
   ####### PB Land-system change ################################################
@@ -167,9 +183,10 @@ validation_table <- function(
   )
   # withdrawals in km3
   wd <- global_sum((irrig + conv_loss_drain + conv_loss_evap))
+  # wd <- global_sum((irrig + conv_loss_drain + conv_loss_evap), area = terr_area)
 
   # consumption in km3
-  cons <- global_sum((irrig + conv_loss_evap - return_flow_b))
+  cons <- global_sum((irrig + conv_loss_evap - return_flow_b), area = terr_area)
 
   # PB Biogechemical flows
   #------------- Nitrogen balance and leaching ---------------------------------
@@ -181,7 +198,7 @@ validation_table <- function(
     aggregate = list(
       year = mean
     )
-  ) %>% global_sum()
+  ) %>% global_sum(area = terr_area)
 
   # N leaching from cropland
   leaching_agr <- aggregate_lpjml_output(
@@ -190,7 +207,7 @@ validation_table <- function(
     aggregate = list(
       year = mean
     )
-  ) %>% global_sum()
+  ) %>% global_sum(area = terr_area)
 
   # N use efficiency on cropland
   # inputs
@@ -200,7 +217,7 @@ validation_table <- function(
     aggregate = list(
       year = mean
     )
-  ) %>% global_sum()
+  ) %>% global_sum(area = terr_area)
 
   total_man <- aggregate_lpjml_output(
     files_scenario$nmanure_agr,
@@ -208,7 +225,7 @@ validation_table <- function(
     aggregate = list(
       year = mean
     )
-  )  %>% global_sum()
+  )  %>% global_sum(area = terr_area)
 
   # For total_dep
   total_dep <- aggregate_lpjml_output(files_scenario$ndepo_agr,
@@ -216,7 +233,7 @@ validation_table <- function(
     aggregate = list(
       year = mean
     )
-  ) %>% global_sum()
+  ) %>% global_sum(area = terr_area)
 
 
   # For total_bnf
@@ -225,14 +242,14 @@ validation_table <- function(
     aggregate = list(
       year = mean
     )
-  ) %>% global_sum()
+  ) %>% global_sum(area = terr_area)
 
   total_seed <- aggregate_lpjml_output(files_scenario$seedn_agr,
     time_span_scenario,
     aggregate = list(
       year = mean
     )
-  ) %>% global_sum()
+  ) %>% global_sum(area = terr_area)
 
 
   n_inputs <- total_fert + total_man + total_dep + total_bnf + total_seed
@@ -243,7 +260,7 @@ validation_table <- function(
     aggregate = list(
       year = mean
     )
-  ) %>% global_sum()
+  ) %>% global_sum(area = terr_area)
 
   nue <- nharvest / n_inputs * 100
 
@@ -258,7 +275,7 @@ validation_table <- function(
     aggregate = list(
       year = mean
     )
-  ) %>% global_sum() * 10^-3 # in PgC
+  ) %>% global_sum(area = terr_area) * 10^-3 # in PgC
 
 
   #-------------- total crop production CFT1-12 in freshmatter--------------------
@@ -276,7 +293,6 @@ validation_table <- function(
   dm2fm <- 1 / fm2dm
 
   #------------- simulated lpjml harvest ---------------------------------------
-  # TODO: substitute hardcoded CFTs indices
 
   yield <- aggregate_lpjml_output(
     files_scenario$pft_harvestc,
@@ -293,25 +309,29 @@ validation_table <- function(
   # include "rainfed" and exclude "grass", "tree", and "other" in crop indices
   crop_ids_explicit_rainfed <- grep("^(?!.*(grass|tree|other)).*rainfed.*$",
   names(area_cft), ignore.case = TRUE, perl = TRUE)
-
-  #include "irig" and exclude "grass", "tree", and "other" in crop indices
+  # #include "irig" and exclude "grass", "tree", and "other" in crop indices
   crop_ids_explicit_irrig <- grep("^(?!.*(grass|tree|other)).*irrig.*$",
   names(area_cft), ignore.case = TRUE, perl = TRUE)
+  # #crop_fm_prod <- 0 # to check if it worked
 
   for (c in 1:length(crop_ids_explicit_rainfed)) {
     crop_fm_prod[, c] <- (harvest_dm[, crop_ids_explicit_rainfed[c]] + harvest_dm[, crop_ids_explicit_irrig[c]]) *
       dm2fm[c] / 1000 # kg FM
   }
+  # harvest_dm[, crop_ids_explicit_rainfed[2]]
+
+  # for (c in 1:12) {
+  #   crop_fm_prod[, c] <- (harvest_dm[, c] + harvest_dm[, c + 16]) *
+  #     dm2fm[c] / 1000 # kg FM
+  # }
 
   crop_sum <- sum(crop_fm_prod) / 10^9
 
-  crop_sum <- sum(crop_fm_prod) / 10^9 #in Gt
-
   ##### combine simulated values with literature ###############################
 
-  # lists to match literature character strings with the here computed variables
+  # lists to match literature character strings with the here computed variables 
   var_match <- list("crop", "irrig", "pasture", "forest", "def", "withdr",
-                    "cons", "leaching (total)", "leaching from crop",
+                    "cons", "leaching", "leaching from crop",
                     "efficiency", "surplus", "npp", "prod")
   units_match <- list("Mha", "Mha", "Mha", "Mha", "%", "km3", "km3", "Tg N yr-1",
                       "Tg N yr-1", "%", "Tg N yr-1", "PgC", "Gt")
@@ -328,10 +348,6 @@ validation_table <- function(
   # insert lpjml values in table (pb status variables later)
   ref_table <- insert_lpjml_value(ref_table, var_match, units_match, calc_var)
 
-  # TODO: correct units of Nitrogen leaching
-
-  # ref_table %>%
-  #   filter(!is.numeric(lpjml_value) | is.na(lpjml_value))
 
   # include PB status values
   if (calculate_pb_status == TRUE) {
@@ -418,24 +434,17 @@ aggregate_lpjml_output <- function(
 
 # insert computed variables in literature table through matching by variable and unit patterns,
 # make sure structure of original .csv table is mantained
+
 insert_lpjml_value <- function(
-    ref_table, 
-    var_patterns, 
-    unit_patterns,
-    calculated_vars, 
-    set_nan_if_empty = TRUE) {
+    ref_table, var_patterns, unit_patterns,
+    calculated_vars, set_nan_if_empty = TRUE) {
   lpjml_values <- rep(NA_real_, nrow(ref_table))
   for (i in seq_along(var_patterns)) {
-    matching_indices <- grepl(var_patterns[[i]], 
-    ref_table$variable, 
-    ignore.case = TRUE) &
-      grepl(unit_patterns[[i]], 
-      ref_table$unit,
-      ignore.case = TRUE)
+    matching_indices <- grepl(var_patterns[[i]], ref_table$variable, ignore.case = TRUE) &
+      grepl(unit_patterns[[i]], ref_table$unit, ignore.case = TRUE)
     lpjml_values[matching_indices] <- ifelse(
-      set_nan_if_empty && 
-      (calculated_vars[[i]] == 0 || is.nan(calculated_vars[[i]])),
-      NaN, # set to NaN the calculated value is empty or NaN
+      set_nan_if_empty && (calculated_vars[[i]] == 0 || is.nan(calculated_vars[[i]])),
+      NaN, # set to NaN if set_nan_if_empty is TRUE and the calculated value is empty or NaN
       round(eval(parse(text = calculated_vars[[i]]))[1], digits = 2)
     )
   }
