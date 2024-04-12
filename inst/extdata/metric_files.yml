@@ -34,6 +34,7 @@ metric:
 
     # Calculate bluewater boundary
     bluewater: &bluewater
+        long_name: "Bluewater change"
         spatial_scale:
             global:
                 wang-erlandsson2022: &wang-erlandsson2022_bw
@@ -93,6 +94,7 @@ metric:
 
     # Calculate greenwater boundary
     greenwater: &greenwater
+        long_name: "Bluewater change"
         spatial_scale:
             global:
                 wang-erlandsson2022: &wang-erlandsson2022_gw
@@ -142,6 +144,7 @@ metric:
 
     # Calculate nitrogen boundary
     nitrogen: &nitrogen
+        long_name: "Nitrogen flows"
         spatial_scale:
             grid:
                 braun2022: &braun2022_n
@@ -202,6 +205,7 @@ metric:
 
     # Calculate lsc boundary
     lsc: &lsc
+        long_name: "Land system change"
         spatial_scale:
             global:
                 steffen2015:
@@ -249,6 +253,7 @@ metric:
 
     # Calculate biosphere status based on biocol
     biosphere:
+        long_name: "Biosphere integrity"
         spatial_scale:
             global:
                 stenzel2023:
