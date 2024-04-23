@@ -198,3 +198,17 @@ list_unit <- function(metric, approach, spatial_scale) {
   return(yaml_data$metric[[metric]]$spatial_scale[[spatial_scale]][[approach]]$unit) # nolint:line_length_linter
 
 }
+
+list_long_name <- function(metric) {
+  metric <- process_metric(metric = metric)
+
+  yaml_data <- system.file(
+    "extdata",
+    "metric_files.yml",
+    package = "boundaries"
+  ) %>%
+    yaml::read_yaml()
+
+  return(yaml_data$metric[[metric]]$long_name)
+
+}

@@ -74,6 +74,10 @@ plot_status_global <- function(
     names_to = "pb",
     values_to = "values"
   )
+  # define order of PBs
+  data_tibble$pb <- factor(data_tibble$pb,
+                           levels = c("biosphere", "lsc", "bluewater",
+                                      "greenwater", "nitrogen"))
 
   if (length(x) == 1 || all_in_one == TRUE) {
     n_col <- 1
@@ -203,7 +207,8 @@ plot_status_global <- function(
       ggplot2::geom_hline(
         yintercept = pl_b,
         linetype = 1,
-        col = darkgreen
+        col = darkgreen,
+        linewidth = 0.45
       )
     if (normalize == "increasing risk") {
       plot <- plot +
@@ -211,7 +216,7 @@ plot_status_global <- function(
           yintercept = h_risk,
           linetype = 1,
           col = lightred,
-          linewidth = 0.25
+          linewidth = 0.45
         )
     }
     plot <- plot +
@@ -240,7 +245,7 @@ plot_status_global <- function(
 
     # create dataframe for plotting of pb specific background filling
     # (needed for safe zone and beyond the increasing risk value)
-    pb_thresh <- highrisk_thresh <- holocene <- ylabel <- max_y <-
+    pb_thresh <- highrisk_thresh <- holocene <- ylabel <- max_y <- long_name <-
       numeric(length(x))
     for (i in seq_len(length(x))) {
       pb_thresh[i] <- as.numeric(attr(x[[i]], "thresholds")[["pb"]])
@@ -254,6 +259,7 @@ plot_status_global <- function(
       ylabel[i] <- paste0(attr(x[[i]], "control_variable"),
                           " (", attr(x[[i]], "unit"), ")")
       names(ylabel)[i] <- names(x)[i]
+      long_name[i] <- attr(x[[i]], "long_name")
     }
     df_bg <- data.frame(
       pb = unique(data_tibble$pb),
@@ -272,7 +278,7 @@ plot_status_global <- function(
     for (i in seq_len(length(x))) {
       temp <- tibble::tibble(
         vals = seq((highrisk_thresh[i] +
-                                    (highrisk_thresh[i] - pb_thresh[i]) * 1.5), pb_thresh[i],
+                    (highrisk_thresh[i] - pb_thresh[i]) * 1.5), pb_thresh[i],
                    length.out = 500)
       ) %>%
         dplyr::mutate(xend = min_years,
@@ -295,8 +301,8 @@ plot_status_global <- function(
           ymax = pb_thresh
         ),
         pattern = "gradient",
-        pattern_fill = green,
-        pattern_fill2 = green,
+        pattern_fill = green, #"#96c99e",
+        pattern_fill2 = green, #"#96c99e",
         alpha = 0.8
       ) +
       ggplot2::geom_segment(
@@ -325,7 +331,6 @@ plot_status_global <- function(
 
     # create scales for each pb
     upper_lim <- ifelse(max_y > highrisk_thresh, max_y, highrisk_thresh)
-    max(data_tibble$values) + max(data_tibble$values) * 0.05
     df_scales <- data.frame(
       pb =  unique(data_tibble$pb),
       ymin = holocene,
@@ -353,7 +358,7 @@ plot_status_global <- function(
       ggplot2::geom_hline(
         data = df_bg,
         mapping = ggplot2::aes(yintercept = highrisk_thresh),
-        col = lightred, linewidth = 0.25
+        col = lightred, linewidth = 0.45
       ) +
       ggplot2::geom_line(
         data = data_tibble,
@@ -367,10 +372,10 @@ plot_status_global <- function(
       ) +
       ggh4x::facetted_pos_scales(y = scales) +
       ggplot2::geom_label(
-        data = data_tibble,
+        data = df_bg,
         mapping = ggplot2::aes(
           x = -Inf, y = Inf,
-          label = pb
+          label = long_name
         ),
         hjust = 0.09, vjust = 0.8, size = 3.5,
         label.padding = ggplot2::unit(0.75, "lines")
@@ -386,7 +391,11 @@ plot_status_global <- function(
         colour = "#6b6767",
         fill = NA, size = 0.5
       )) +
-      ggplot2::scale_y_continuous(expand = c(0, NA))
+      ggplot2::scale_y_continuous(expand = c(0, NA)) +
+      ggplot2::scale_x_continuous(
+        limits = range(data_tibble$years),
+        expand = c(0, 0)
+      )
   }
   print(plot)
   if (!is.null(filename)) grDevices::dev.off()

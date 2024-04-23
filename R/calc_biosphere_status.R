@@ -277,7 +277,8 @@ calc_biosphere_status <- function(
   attr(control_variable, "thresholds") <- thresholds
   attr(control_variable, "unit") <- list_unit("biosphere", approach,
                                               spatial_scale)
-  attr(control_variable, "control_variable") <- "BioCol (in fraction of NPPref)"
+  attr(control_variable, "control_variable") <- "BioCol"
+  attr(control_variable, "long_name") <- list_long_name("biosphere")
 
   class(control_variable) <- c("control_variable")
   return(control_variable)

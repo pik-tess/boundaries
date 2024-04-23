@@ -123,6 +123,7 @@ calc_bluewater_status <- function(files_scenario,
       variable = "discharge"
     )
   }
+  attr(control_variable, "long_name") <- list_long_name("bluewater")
 
   return(control_variable)
 }
@@ -197,12 +198,19 @@ calc_bluewater_efrs <- function(
   # please R CMD check for use of future operator
   efr_uncertain <- efr_safe <- NULL
   # calc efrs for vmf_min and vmf_max
-  efr_uncertain %<-% calc_efrs(discharge_reference,
-                               "vmf_min",
-                               time_aggregation_args)
-  efr_safe %<-% calc_efrs(discharge_reference,
-                          "vmf_max",
-                          time_aggregation_args)
+  efr_uncertain %<-% calc_efrs(
+    discharge_reference,
+    "vmf_min"
+  )
+  efr_safe %<-% calc_efrs(
+    discharge_reference,
+    "vmf_max"
+  )
+  # append efr_safe and efr_uncertain to have same dimensions as avg_discharge_scenario
+  efr_safe <- array(efr_safe, dim = dim(avg_discharge_scenario),
+                    dimnames = dimnames(avg_discharge_scenario))
+  efr_uncertain <- array(efr_uncertain, dim = dim(avg_discharge_scenario),
+                         dimnames = dimnames(avg_discharge_scenario))
 
   # calculation of EFR transgressions = EFR deficits in LU run
   efr_deficit <- efr_safe - avg_discharge_scenario
@@ -265,9 +273,12 @@ calc_bluewater_efrs <- function(
   # define PB thresholds as attributes
 
   attr(control_variable, "control_variable") <-
-    "environmental flow requirements"
+    "EFR transgression to uncertainty ratio"
   attr(control_variable, "thresholds") <- thresholds
   attr(control_variable, "spatial_scale") <- spatial_scale
+  attr(control_variable, "unit") <- list_unit("bluewater", approach,
+                                              spatial_scale)
+  attr(control_variable, "long_name") <- list_long_name("bluewater")
 
   class(control_variable) <- c("control_variable")
   return(control_variable)

@@ -183,7 +183,7 @@ plot_status_maps <- function(
                          color = "#7e7d7d") +
         ggplot2::xlim(terra::ext(plotvar)[1], terra::ext(plotvar)[2]) +
         ggplot2::ylim(terra::ext(plotvar)[3], terra::ext(plotvar)[4]) +
-        ggplot2::ggtitle(names(x)[i])
+        ggplot2::ggtitle(attr(x[[i]], "long_name"))
     }
     # combine all plots in one list
     plot_list[[i]] <- p

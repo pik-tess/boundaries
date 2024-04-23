@@ -367,6 +367,7 @@ calc_lsc_status <- function(
   attr(control_variable, "control_variable") <- "deforestation"
   attr(control_variable, "spatial_scale") <- spatial_scale
   attr(control_variable, "unit") <- list_unit("lsc", approach, spatial_scale)
+  attr(control_variable, "long_name") <- list_long_name("lsc")
   class(control_variable) <- c("control_variable")
   return(control_variable)
 }
