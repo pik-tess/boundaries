@@ -24,11 +24,13 @@
 #'   boundary = c("lsc", "biosphere", "bluewater", "greenwater", "nitrogen"),
 #'   config_scenario = "./config_lu_1500_2016.json",
 #'   config_reference = "./config_pnv_1500_2016.json",
-#'   time_span_scenario =  as.character(1986:2016),
-#'   time_span_reference =  as.character(1986:2016),
+#'   time_span_scenario = as.character(1986:2016),
+#'   time_span_reference = as.character(1986:2016),
 #'   spatial_scale = "global",
-#'   approach = list(bluewater = "porkka2023",
-#'                 nitrogen = "schulte_uebbing2022"),
+#'   approach = list(
+#'     bluewater = "porkka2023",
+#'     nitrogen = "schulte_uebbing2022"
+#'   ),
 #'   savanna_proxy = list(vegc = 7500),
 #'   time_aggregation_args = 1,
 #'   path_baseline = "./pnv_1500_2016/",
@@ -45,13 +47,11 @@
 #' @md
 #' @export
 plot_status <- function(
-  x,
-  filename = NULL,
-  add_legend = TRUE,
-  stylized = FALSE,
-  ...
-) {
-
+    x,
+    filename = NULL,
+    add_legend = TRUE,
+    stylized = FALSE,
+    ...) {
   if (!is.null(filename)) {
     file_extension <- file_ext(filename)
     if (!file_extension %in% c("pdf", "png")) {
@@ -74,3 +74,4 @@ file_ext <- function(x) {
   pos <- regexpr("\\.([[:alnum:]]+)$", x)
   ifelse(pos > -1L, substring(x, pos + 1L), "")
 }
+# TODO: remove this line
