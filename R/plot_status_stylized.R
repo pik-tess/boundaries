@@ -144,6 +144,12 @@ draw_stylized <- function(
       )
     }
   )
+  x_table$name <- factor(x_table$name,
+    levels = c("lsc", "biosphere", "bluewater",
+               "greenwater", "nitrogen")
+  )
+  # order x_table$x by x_table$name
+  x_table$x <- as.integer(x_table$name)
 
   # Create ggproto class to plot time series of boundaries into wedge
   TSBoundaryStatus <- ggplot2::ggproto( # nolint

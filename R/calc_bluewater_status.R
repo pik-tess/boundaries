@@ -194,23 +194,15 @@ calc_bluewater_efrs <- function(
            time_aggregation_args)
   )
 
-
   # please R CMD check for use of future operator
   efr_uncertain <- efr_safe <- NULL
   # calc efrs for vmf_min and vmf_max
-  efr_uncertain %<-% calc_efrs(
-    discharge_reference,
-    "vmf_min"
-  )
-  efr_safe %<-% calc_efrs(
-    discharge_reference,
-    "vmf_max"
-  )
-  # append efr_safe and efr_uncertain to have same dimensions as avg_discharge_scenario
-  efr_safe <- array(efr_safe, dim = dim(avg_discharge_scenario),
-                    dimnames = dimnames(avg_discharge_scenario))
-  efr_uncertain <- array(efr_uncertain, dim = dim(avg_discharge_scenario),
-                         dimnames = dimnames(avg_discharge_scenario))
+  efr_uncertain %<-% calc_efrs(discharge_reference,
+                               "vmf_min",
+                               time_aggregation_args)
+  efr_safe %<-% calc_efrs(discharge_reference,
+                          "vmf_max",
+                          time_aggregation_args)
 
   # calculation of EFR transgressions = EFR deficits in LU run
   efr_deficit <- efr_safe - avg_discharge_scenario
@@ -223,7 +215,7 @@ calc_bluewater_efrs <- function(
   # (as in Steffen 2015; degree to which EFRs are undermined)
 
   status_frac_monthly <- ifelse(uncertainty_zone > 0,
-                                efr_deficit / uncertainty_zone,
+                                efr_deficit / uncertainty_zone * 100,
                                 0)
 
   third_dim <- names(dim(status_frac_monthly))[

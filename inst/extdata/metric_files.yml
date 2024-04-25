@@ -94,7 +94,7 @@ metric:
 
     # Calculate greenwater boundary
     greenwater: &greenwater
-        long_name: "Bluewater change"
+        long_name: "Greenwater change"
         spatial_scale:
             global:
                 wang-erlandsson2022: &wang-erlandsson2022_gw
@@ -107,7 +107,7 @@ metric:
                            resolution: "monthly"
                            optional: false
                     threshold:
-                       holocene: 5
+                       holocene: 50
                        pb: 95
                        highrisk: NULL
                     unit: "%"
@@ -126,7 +126,7 @@ metric:
                             resolution: "annual"
                             optional: false
                     threshold:
-                        holocene: 5
+                        holocene: 50
                         pb: 95
                         highrisk: NULL
                     unit: "%"
