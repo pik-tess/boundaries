@@ -340,7 +340,6 @@ validation_table <- function(
   var_match <- list("crop", "irrig", "pasture", "forest", "def", "withdr",
                     "cons", "leaching", "leaching from crop",
                     "efficiency", "surplus", "npp", "prod")
-  # TODO: km3, PgC and Gt should also be per year, check literature
   units_match <- list("Mha", "Mha", "Mha", "Mha", "%", "km3", "km3", "Tg N yr-1",
                       "Tg N yr-1", "%", "Tg N yr-1", "PgC", "Gt")
   calc_var <- list(
