@@ -91,6 +91,6 @@ calc_greenwater_status <- function(
     thresholds = thresholds,
     variable = "rootmoist"
   )
-
+  attr(deviations_rootmoisture, "long_name") <- list_long_name("greenwater")
   return(deviations_rootmoisture)
 }
