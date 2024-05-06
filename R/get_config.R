@@ -65,7 +65,7 @@ get_sim_outputs <- function(config) {
         if (startsWith(y, "extdata")) {
           y <- system.file(y, package = "boundaries")
         }
-        has_suffix <- grepl(config$default_suffix, y, fixed = TRUE)
+        has_suffix <- grepl(".nc|.bin|.clm", y, fixed = TRUE)
         if (with_meta && !has_suffix) {
           y <- paste0(y, config$default_suffix, ".json")
         } else if(with_meta && has_suffix) {
