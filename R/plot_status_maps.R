@@ -221,6 +221,6 @@ to_raster <- function(lpjml_array, projection, grid_path) {
   ra[terra::cellFromXY(ra, cbind(lon, lat))] <- c(lpjml_array)
   extent <- terra::ext(c(-180, 180, -53, 85))
   ra <- terra::crop(ra, extent)
-  ra <- terra::project(ra, projection)
+  ra <- terra::project(ra, projection, method = "near")
   return(ra)
 }
