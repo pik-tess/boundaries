@@ -1,3 +1,6 @@
+# TODO: there are several functions in here that do not have anything to do with
+# listing outputs - was the name of the file not utilities e.g. before?
+
 #' List required LPJmL outputs and temporal resolution
 #'
 #' Function to return a list of output IDs with required resolution and
