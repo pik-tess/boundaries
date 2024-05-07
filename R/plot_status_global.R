@@ -62,8 +62,11 @@ plot_status_global <- function(
   }
 
   # please R CMD check for use of dplyr syntax
+    
+   long_name <- numeric(length(x))
   for (i in seq_len(length(x))) {
     class(x[[i]]) <- "numeric"
+      long_name[i] <- attr(x[[i]], "long_name")
   }
   data_tibble <- tidyr::as_tibble(x)
   data_tibble$years <- as.numeric(names(x[[1]]))
@@ -158,16 +161,11 @@ plot_status_global <- function(
     } else if (normalize == "increasing risk") {
       plot <- plot +
         ggplot2::coord_cartesian(
-          ylim = c(holo, c(max(data_tibble$values) +
-            max(data_tibble$values) * 0.05)),
+          # ylim = c(holo, c(max(data_tibble$values) +
+          #   max(data_tibble$values) * 0.05)),
           xlim = c(min(data_tibble$years), max(data_tibble$years)),
           expand = FALSE,
           clip = "off"
-        ) +
-        ggplot2::scale_y_continuous(
-          expand = c(0, 0),
-          breaks = c(holo, pl_b, h_risk),
-          labels = c("holocene", "pb", "highrisk")
         )
 
       df_inc_risk <- tibble::tibble()
@@ -195,6 +193,14 @@ plot_status_global <- function(
         ggplot2::scale_colour_viridis_c(
           option = "inferno",
           direction = 1,
+        ) +
+        ggplot2::scale_y_continuous(
+          limits = c(0, c(max(data_tibble$values) +
+            max(data_tibble$values) * 0.05)),
+          oob = scales::squish,
+          expand = c(0, NA),
+          breaks = c(holo, pl_b, h_risk),
+          labels = c("holocene", "pb", "highrisk")
         )
     }
     # add horizontal lines for thresholds
@@ -229,27 +235,51 @@ plot_status_global <- function(
         size = 0.5,
         inherit.aes = FALSE
       ) +
-      ggplot2::scale_y_continuous(
-        limits = c(0, 2.6), # max(df_inc_risk$y)),
-        oob = scales::squish,
-        expand = c(0.0)
-      ) +
       ggplot2::scale_color_manual(values = colors) +
-      # labels on plot
-      # ggrepel::geom_label_repel(
-      #   data = data_tibble %>% dplyr::filter(years == max(years)),
-      #   ggplot2::aes(
-      #     x = years + 1, y = values, label = pb
-      #   ),
-      #   col = "black",
-      #   size = 2
-      # ) +
+      # This will force the correct position of the link's right end
+      ggrepel::geom_text_repel(
+        data = data_tibble %>% dplyr::filter(years == max(years)),
+        ggplot2::aes(x = years, y = values, label = gsub("^.*$", " ", long_name)),
+        segment.square = TRUE,
+        segment.color = "black", # "#6b6767",
+        segment.alpha = 0.8,
+        segment.size = 0.4,
+        box.padding = 0.3,
+        point.padding = 0.1,
+        nudge_x = 0,
+        nudge_y = -0.2,
+        force = 0.5,
+        hjust = 0.2,
+        direction = "y",
+        min.segment.length = 0.1,
+        na.rm = TRUE,
+        xlim = c(max(data_tibble$years) + 3, max(data_tibble$years) + 11),
+        ylim = c(0, max(data_tibble$values))
+      ) +
+      ggrepel::geom_text_repel(
+        data = data_tibble %>% dplyr::filter(years == max(years)),
+        ggplot2::aes(x = years, y = values, label = paste0("  ", long_name)),
+        segment.alpha = 0, # This will 'hide' the link
+        segment.square = TRUE,
+        box.padding = 0.3,
+        point.padding = 0.1,
+        nudge_x = 0,
+        nudge_y = -0.2,
+        force = 0.5,
+        hjust = 0.2,
+        direction = "y",
+        na.rm = TRUE,
+        xlim = c(max(data_tibble$years), max(data_tibble$years) + 90),
+        ylim = c(0, max(data_tibble$values)),
+        min.segment.length = 0.1,
+        size = 3,
+        alpha = 0.8
+      ) +
       ggplot2::theme_classic(base_line_size = 0.25, base_rect_size = 0.25) +
       ggplot2::theme(
         legend.title = ggplot2::element_blank(),
         legend.position = "none"
       ) + # nolint:object_usage_linter
-
       ggplot2::theme(
         panel.border = ggplot2::element_rect(
           colour = "#6b6767",
@@ -258,40 +288,9 @@ plot_status_global <- function(
       ) +
       ggplot2::theme(axis.title = ggplot2::element_blank()) +
       ggplot2::theme(aspect.ratio = 1) +
-      # ggnewscale::new_scale_colour()
-      ggplot2::geom_label(
-        inherit.aes = FALSE,
-        data = data_tibble %>%
-          dplyr::filter(years == max(years)) %>%
-          dplyr::filter(
-            pb != "lsc"
-          ),
-        ggplot2::aes(
-          x = years + 1, y = values, label = pb, fill = pb
-        ),
-        col = "black",
-        alpha = 0.8,
-        size = 2,
-        hjust = 0,
-        vjust = 0
-      ) +
-
-      ggplot2::geom_label(
-        inherit.aes = FALSE,
-        data = data_tibble %>%
-          dplyr::filter(years == max(years)) %>%
-          dplyr::filter(pb ==
-            "lsc"),
-        ggplot2::aes(
-          x = years + 1, y = values, label = pb, fill = pb
-        ),
-        col = "black",
-        alpha = 0.8,
-        size = 2,
-        hjust = 0,
-        vjust = -0.5
-      ) #+
-    # ggplot2::scale_color_manual(fill = colors)
+      ggplot2::theme(
+        plot.margin = ggplot2::margin(, 3.2, , , "cm")
+      )
   } else {
     # all_in_one = FALSE
     # create dataframe for plotting of pb specific background filling
