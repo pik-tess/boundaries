@@ -153,6 +153,12 @@ classify_biomes <- function(config_reference = NULL, # nolint:cyclocomp_linter
     stop(paste0("Tree cover threshold for forest are not always higher than",
                 "tree cover thresholds for woodland and savanna. Aborting."))
   }
+
+  # Assumptions on fpc and temperature thresholds for biome classification
+  # (e.g. distinction between desert and grassland)
+  low_fpc <- 0.05
+  low_temp_threshold <- 0
+
   # -------------------------------------------------------------------------- #
   # read in relevant data
   grid <- lpjmlkit::read_io(
@@ -235,8 +241,6 @@ classify_biomes <- function(config_reference = NULL, # nolint:cyclocomp_linter
   # please R CMD check for use of future operator
   avg_temp <- NULL
   # average temp
-  # TODO understand why additional dimension is added here but not for fpc
-  # (67420, 1)
   avg_temp %<-% do.call(
     aggregate_time,
     append(list(x = temp),
@@ -407,12 +411,7 @@ classify_biomes <- function(config_reference = NULL, # nolint:cyclocomp_linter
                               dimnames = dimnames(avg_temp))
   }
 
-  # catch low fpc values
-  low_fpc <- 0.05
   # Desert
-  #TODO temperature still hard coded --> ok?, in Ostberg et al. 2013: -2
-  low_temp_threshold <- 0
-
   is_desert <- {
     fpc_total <= low_fpc &
       avg_temp >= low_temp_threshold
@@ -627,7 +626,6 @@ classify_biomes <- function(config_reference = NULL, # nolint:cyclocomp_linter
   }
 
   # GRASSLAND ---------------------------------------------------------------- #
-  # TODO: add all hard coded assumptions to the beginning of the function
 
   # Temperate grassland
   is_temperate_grassland <- {

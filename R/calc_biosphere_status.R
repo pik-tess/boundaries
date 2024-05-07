@@ -40,7 +40,6 @@
 #' e.g. c(holocene = 0.0, pb = 0.1, highrisk = 0.2). If set to NULL, default
 #' values from metric_files.yml will be used.
 #'
-#' TODO: are these files ever checked for existence?
 #' @param path_baseline character string with path to outputs for the baseline
 #' run, file names are taken from files scenario.
 #'
@@ -173,12 +172,12 @@ calc_biosphere_status <- function(
 
     # initialize control variable vector
     if (biocol_option == "abs") {
-      control_variable_raw <- abs(biocol$biocol_frac_piref)
+      control_variable_raw <- abs(biocol$biocol)
     }else if (biocol_option == "only_above_zero") {
-      control_variable_raw <- biocol$biocol_frac_piref
+      control_variable_raw <- biocol$biocol
       control_variable_raw[control_variable_raw < 0] <- 0
     }else if (biocol_option == "netsum") {
-      control_variable_raw <- biocol$biocol_frac_piref
+      control_variable_raw <- biocol$biocol
     }
 
     # please R CMD check for use of future operator

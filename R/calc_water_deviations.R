@@ -399,8 +399,8 @@ calc_baseline <- function(file_reference, approach) {
   # calc 5% and 95% percentile for each cell
   # for each year over all months over baseline period
   dim_remain <- names(dim(dry_base_yr))[names(dim(dry_base_yr)) != "year"]
-  q5_base  <- apply(dry_base_yr, dim_remain, q5)
-  q95_base <- apply(wet_base_yr, dim_remain, q95)
+  q5_base  %<-% apply(dry_base_yr, dim_remain, q5)
+  q95_base %<-% apply(wet_base_yr, dim_remain, q95)
   quants <- list(q5 = q5_base, q95 = q95_base)
 
   return(quants)
