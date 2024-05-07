@@ -10,14 +10,14 @@
 #' @param metric Character string containing name of metric to get
 #'        required outputs. Available options are `c("biome",
 #'        "nitrogen", "lsc", "bluewater", "greenwater", "biosphere")`
-#'        or just `"all"` or `"benchmark"`.
+#'        or just `"all"` or `"benchmark"`. Default is `"all"`.
 #'
 #' @param approach List of character strings containing the approach to
-#'       calculate the metric.
+#'       calculate the metric. Or `"all"` to get all approaches (default).
 #'
 #' @param spatial_scale character. Spatial resolution, available options
-#'        are `"subglobal"` (at the biome level, default), `"global"` and
-#'        `"grid"`
+#'        are `"subglobal"` (at the biome level), `"global"` and
+#'        `"grid"` or `"all"` (default).
 #'
 #' @param only_first_filename Logical. If TRUE, only the first file name will be
 #'        returned for each output. If FALSE, all file names will be returned.
@@ -38,7 +38,7 @@
 list_outputs <- function(
   metric = "all",
   spatial_scale = "all",
-  approach,
+  approach = "all",
   only_first_filename = TRUE
 ) {
   metric <- process_metric(metric = metric)

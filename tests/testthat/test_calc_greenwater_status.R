@@ -33,7 +33,7 @@ test_that("test calc_greenwater_status global", {
 
   # test for expected control variable and class
   testthat::expect_true(
-    attributes(test$greenwater)$control_variable == "area with wet/dry departures (%)" && # nolint
+    attributes(test$greenwater)$control_variable == "area with wet/dry departures" && # nolint
       attributes(test$greenwater)$class == "control_variable"
   )
 
@@ -85,7 +85,7 @@ test_that("test calc_greenwater_status subglobal", {
 
   # test for expected control variable and class
   testthat::expect_true(
-    attributes(test$greenwater)$control_variable == "area with wet/dry departures (%)" && # nolint
+    attributes(test$greenwater)$control_variable == "area with wet/dry departures" && # nolint
       attributes(test$greenwater)$class == "control_variable"
   )
 

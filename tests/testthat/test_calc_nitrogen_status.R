@@ -92,7 +92,7 @@ test_that("test calc_nitrogen_status grid", {
 
   # test for expected control variable and class
   testthat::expect_true(
-    attributes(test$nitrogen)$control_variable == "nitrogen leaching in runoff to surface water" && # nolint
+    attributes(test$nitrogen)$control_variable == "N leaching in runoff to surface water" && # nolint
       attributes(test$nitrogen)$class == "control_variable"
   )
 

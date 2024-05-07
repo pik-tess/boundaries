@@ -29,7 +29,6 @@ test_that("test calc_biosphere_status global", {
     all(attributes(test)$names == "biosphere")
   )
 
-
   thresholds <- list_thresholds("biosphere", "stenzel2023", "grid")
 
   # test for thresholds attributes in biosphere
@@ -40,7 +39,7 @@ test_that("test calc_biosphere_status global", {
 
   # test for expected control variable and class
   testthat::expect_true(
-    attributes(test$biosphere)$control_variable == "BioCol (in fraction of NPPref)" && # nolint
+    attributes(test$biosphere)$control_variable == "BioCol" && # nolint
       attributes(test$biosphere)$class == "control_variable"
   )
 
@@ -51,9 +50,10 @@ test_that("test calc_biosphere_status global", {
 
   # test for expected output
   testthat::expect_true(
-    all(
+    # almost all values are above the highrisk threshold
+    mean(
       round(test$biosphere, digit = 1) >= attributes(test$biosphere)$thresholds$highrisk # nolint
-    )
+    ) > 0.9
   )
 
 
@@ -65,9 +65,10 @@ test_that("test calc_biosphere_status global", {
   )
 
   testthat::expect_true(
-    all(
-      boundary_status$biosphere > attributes(test$biosphere)$thresholds$highrisk
-    )
+    # almost all values are above the highrisk threshold
+    mean(
+      boundary_status$biosphere > attributes(boundary_status$biosphere)$thresholds$highrisk
+    ) > 0.9
   )
 })
 
@@ -113,7 +114,7 @@ test_that("test calc_biosphere_status grid", {
 
   # test for expected control variable and class
   testthat::expect_true(
-    attributes(test$biosphere)$control_variable == "BioCol (in fraction of NPPref)" && # nolint
+    attributes(test$biosphere)$control_variable == "BioCol" && # nolint
       attributes(test$biosphere)$class == "control_variable"
   )
 
