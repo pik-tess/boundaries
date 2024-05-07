@@ -143,7 +143,7 @@ plot_status_global <- function(
           limits = c(holo, c(max(data_tibble$values) +
             max(data_tibble$values) * 0.05)),
           expand = c(0, 0), breaks = c(holo, pl_b),
-          labels = c("holocene", "pb")
+          labels = c("Holocene", "PB")
         ) +
         ggpattern::geom_rect_pattern(
           ggplot2::aes(
@@ -200,7 +200,7 @@ plot_status_global <- function(
           oob = scales::squish,
           expand = c(0, NA),
           breaks = c(holo, pl_b, h_risk),
-          labels = c("holocene", "pb", "highrisk")
+          labels = c("Holocene", "PB", "High risk")
         )
     }
     # add horizontal lines for thresholds
@@ -235,11 +235,15 @@ plot_status_global <- function(
         size = 0.5,
         inherit.aes = FALSE
       ) +
-      ggplot2::scale_color_manual(values = colors) +
+      ggplot2::scale_color_grey(start = 0.3,
+      end = 0.7) +
+      # ggplot2::scale_color_manual(values = colors) +
       # This will force the correct position of the link's right end
       ggrepel::geom_text_repel(
         data = data_tibble %>% dplyr::filter(years == max(years)),
-        ggplot2::aes(x = years, y = values, label = gsub("^.*$", " ", long_name)),
+        ggplot2::aes(x = years,
+         y = values,
+         label = gsub("^.*$", " ", long_name)),
         segment.square = TRUE,
         segment.color = "black", # "#6b6767",
         segment.alpha = 0.8,
@@ -247,24 +251,27 @@ plot_status_global <- function(
         box.padding = 0.3,
         point.padding = 0.1,
         nudge_x = 0,
-        nudge_y = -0.2,
+        nudge_y = -0.2, # change vertical alignment
         force = 0.5,
         hjust = 0.2,
         direction = "y",
         min.segment.length = 0.1,
         na.rm = TRUE,
-        xlim = c(max(data_tibble$years) + 3, max(data_tibble$years) + 11),
+        xlim = c(max(data_tibble$years) + 3, 
+        max(data_tibble$years) + 11),
         ylim = c(0, max(data_tibble$values))
       ) +
       ggrepel::geom_text_repel(
         data = data_tibble %>% dplyr::filter(years == max(years)),
-        ggplot2::aes(x = years, y = values, label = paste0("  ", long_name)),
+        ggplot2::aes(x = years, 
+        y = values, 
+        label = paste0("  ", long_name)),
         segment.alpha = 0, # This will 'hide' the link
         segment.square = TRUE,
         box.padding = 0.3,
         point.padding = 0.1,
         nudge_x = 0,
-        nudge_y = -0.2,
+        nudge_y = -0.2, # change vertical alignment
         force = 0.5,
         hjust = 0.2,
         direction = "y",
