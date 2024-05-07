@@ -24,11 +24,13 @@
 #'   boundary = c("lsc", "biosphere", "bluewater", "greenwater", "nitrogen"),
 #'   config_scenario = "./config_lu_1500_2016.json",
 #'   config_reference = "./config_pnv_1500_2016.json",
-#'   time_span_scenario =  as.character(1986:2016),
-#'   time_span_reference =  as.character(1986:2016),
+#'   time_span_scenario = as.character(1986:2016),
+#'   time_span_reference = as.character(1986:2016),
 #'   spatial_scale = "global",
-#'   approach = list(bluewater = "porkka2023",
-#'                 nitrogen = "schulte_uebbing2022"),
+#'   approach = list(
+#'     bluewater = "porkka2023",
+#'     nitrogen = "schulte_uebbing2022"
+#'   ),
 #'   savanna_proxy = list(vegc = 7500),
 #'   time_aggregation_args = 1,
 #'   path_baseline = "./pnv_1500_2016/",
@@ -40,14 +42,12 @@
 #' @md
 #' @export
 plot_status_stylized <- function(
-  x,
-  filename,
-  add_legend = TRUE,
-  normalization = "increasing risk",
-  high_risk = 3.5,
-  background_alpha = 1
-) {
-
+    x,
+    filename,
+    add_legend = TRUE,
+    normalization = "increasing risk",
+    high_risk = 3.5,
+    background_alpha = 1) {
   if (add_legend) {
     ggplot2::ggsave(
       filename,
@@ -87,12 +87,10 @@ plot_status_stylized <- function(
 
 
 draw_stylized <- function(
-  x,
-  normalization = "increasing risk",
-  high_risk = 3.5,
-  background_alpha = 1
-) {
-
+    x,
+    normalization = "increasing risk",
+    high_risk = 3.5,
+    background_alpha = 1) {
   # Convert control variable to risk_level and normalize for plotting
   x_lvl <- as_risk_level(
     x,
@@ -176,7 +174,7 @@ draw_stylized <- function(
     compute_group = function(data, scales, span_x = 1) {
       wedge_frame <- data.frame(
         x_map = c(
-          rev(seq(0.05, 0.95, by = (0.95 - 0.05) / (length(data$status[[1]]) - 1))), #nolint
+          rev(seq(0.05, 0.95, by = (0.95 - 0.05) / (length(data$status[[1]]) - 1))), # nolint
           0.05, 0.95
         ),
         y = c(
@@ -194,17 +192,16 @@ draw_stylized <- function(
 
   # Create geom function for ggplot to draw time series of boundaries into wedge
   geom_boundaries <- function(
-    mapping = NULL,
-    data = NULL,
-    stat = "identity",
-    position = "identity",
-    rule = "evenodd",
-    ...,
-    na.rm = FALSE, # nolint
-    show.legend = NA, # nolint
-    inherit.aes = TRUE, # nolint
-    negative = FALSE
-  ) {
+      mapping = NULL,
+      data = NULL,
+      stat = "identity",
+      position = "identity",
+      rule = "evenodd",
+      ...,
+      na.rm = FALSE, # nolint
+      show.legend = NA, # nolint
+      inherit.aes = TRUE, # nolint
+      negative = FALSE) {
     ggplot2::layer(
       data = data,
       mapping = mapping,
@@ -225,7 +222,7 @@ draw_stylized <- function(
   vals <- y <- NULL
   # Create table with distribution of safe space values
   safe_space <- tibble::tibble(x = 1:5, y = rep(1, 5)) %>%
-    dplyr::mutate(vals = purrr::map(y, ~seq(0.3, .x, by = 0.01))) %>%
+    dplyr::mutate(vals = purrr::map(y, ~ seq(0.3, .x, by = 0.01))) %>%
     tidyr::unnest(cols = c(vals)) %>%
     dplyr::mutate(xend = x + 0.44, x = x - 0.44, yend = vals) %>%
     dplyr::select(-y) %>%
@@ -233,7 +230,7 @@ draw_stylized <- function(
 
   # Create table with distribution of values below safe space (white circle)
   no_space <- tibble::tibble(x = 3, y = 0.29) %>%
-    dplyr::mutate(vals = purrr::map(y, ~seq(0, .x, by = 0.01))) %>%
+    dplyr::mutate(vals = purrr::map(y, ~ seq(0, .x, by = 0.01))) %>%
     tidyr::unnest(cols = c(vals)) %>%
     dplyr::mutate(xend = x + 2.6, x = x - 2.6, yend = vals) %>%
     dplyr::select(-y) %>%
@@ -241,7 +238,7 @@ draw_stylized <- function(
 
   # Create table with distribution of high risk values
   increasing_risk <- tibble::tibble(x = 1:5, y = rep(high_risk, 5)) %>%
-    dplyr::mutate(vals = purrr::map(y, ~seq(1, .x, by = 0.01))) %>%
+    dplyr::mutate(vals = purrr::map(y, ~ seq(1, .x, by = 0.01))) %>%
     tidyr::unnest(cols = c(vals)) %>%
     dplyr::mutate(xend = x + 0.44, x = x - 0.44, yend = vals) %>%
     dplyr::select(-y) %>%
@@ -250,7 +247,7 @@ draw_stylized <- function(
   if (max_y >= high_risk) {
     # Create table with distribution of very high risk values
     ultra_risk <- tibble::tibble(x = 1:5, y = rep(max_y, 5)) %>%
-      dplyr::mutate(vals = purrr::map(y, ~seq(high_risk, .x, by = 0.01))) %>%
+      dplyr::mutate(vals = purrr::map(y, ~ seq(high_risk, .x, by = 0.01))) %>%
       tidyr::unnest(cols = c(vals)) %>%
       dplyr::mutate(xend = x + 0.44, x = x - 0.44, yend = vals) %>%
       dplyr::select(-y) %>%
@@ -261,7 +258,7 @@ draw_stylized <- function(
     ultra_risk <- tibble::tibble(
       x = 1:5, y = rep(high_risk + high_risk * 0.1, 5)
     ) %>%
-      dplyr::mutate(vals = purrr::map(y, ~seq(max_y, .x, by = 0.01))) %>%
+      dplyr::mutate(vals = purrr::map(y, ~ seq(max_y, .x, by = 0.01))) %>%
       tidyr::unnest(cols = c(vals)) %>%
       dplyr::mutate(xend = x + 0.45, x = x - 0.45, yend = vals) %>%
       dplyr::select(-y) %>%
@@ -373,7 +370,7 @@ draw_stylized <- function(
       ggplot2::aes(x = x - 0.45, xend = x + 0.45, y = 1, yend = 1),
       size = 1.3,
       color = darkgreen,
-      alpha = 0.8,  # Add transparency
+      alpha = 0.8, # Add transparency
       linetype = 1
     ) +
     # Add shading for safe space line
@@ -382,7 +379,7 @@ draw_stylized <- function(
       ggplot2::aes(x = x - 0.45, xend = x + 0.45, y = 0.983, yend = 0.983),
       size = 1,
       color = "white",
-      alpha = 0.3,  # Add transparency
+      alpha = 0.3, # Add transparency
       linetype = 1
     ) +
     ggplot2::geom_segment(
@@ -390,7 +387,7 @@ draw_stylized <- function(
       ggplot2::aes(x = x - 0.45, xend = x + 0.45, y = 0.987, yend = 0.987),
       size = 0.55,
       color = "white",
-      alpha = 0.6,  # Add transparency
+      alpha = 0.6, # Add transparency
       linetype = 1
     ) +
     ggplot2::geom_segment(
@@ -398,7 +395,7 @@ draw_stylized <- function(
       ggplot2::aes(x = x - 0.45, xend = x + 0.45, y = 0.9885, yend = 0.9885),
       size = 0.2,
       color = "white",
-      alpha = 0.9,  # Add transparency
+      alpha = 0.9, # Add transparency
       linetype = 1
     ) +
     # add safe space line
@@ -415,7 +412,7 @@ draw_stylized <- function(
       ggplot2::aes(x = x - 0.45, xend = x + 0.45, y = 2, yend = 2),
       size = 0.6,
       color = orange,
-      alpha = 0.4,  # Add transparency
+      alpha = 0.4, # Add transparency
       linetype = 1
     ) +
     # add line for max y value for plotting + 5% margin
@@ -498,7 +495,7 @@ draw_stylized <- function(
       ),
       color = "#464646",
       # alpha = 0.7,  # Add transparency
-      size = 4  # Increase the size of the labels
+      size = 4 # Increase the size of the labels
     ) +
     # Add transgression_year label
     ggplot2::geom_text(
@@ -512,7 +509,7 @@ draw_stylized <- function(
       fontface = "bold",
       color = darkgreen,
       # alpha = 0.7,  # Add transparency
-      size = 4  # Increase the size of the labels
+      size = 4 # Increase the size of the labels
     ) +
     # Add end_year label
     ggplot2::geom_text(
@@ -524,7 +521,7 @@ draw_stylized <- function(
       ),
       color = "#464646",
       # alpha = 0.7,  # Add transparency
-      size = 4  # Increase the size of the labels
+      size = 4 # Increase the size of the labels
     ) +
     # Add boundary label on the plot
     ggplot2::geom_label(
@@ -535,7 +532,7 @@ draw_stylized <- function(
         label = name
       ),
       color = "black",
-      size = 6  # Increase the size of the labels
+      size = 6 # Increase the size of the labels
     )
 
   # Reformat ggplot for better half circle display
@@ -549,8 +546,7 @@ draw_stylized <- function(
       panels <- lapply(
         panels,
         grid::editGrob,
-        vp = grid::viewport(yscale = c(0.48, 1)
-        )
+        vp = grid::viewport(yscale = c(0.48, 1))
       )
     }),
     out = "g"

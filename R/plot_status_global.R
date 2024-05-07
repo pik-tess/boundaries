@@ -55,7 +55,6 @@ plot_status_global <- function(
     all_in_one = FALSE,
     ncol = 2,
     normalize = "safe") {
-
   normalize <- match.arg(normalize, c("safe", "increasing risk"))
 
   if (all_in_one == TRUE) {
@@ -76,8 +75,11 @@ plot_status_global <- function(
   )
   # define order of PBs
   data_tibble$pb <- factor(data_tibble$pb,
-                           levels = c("biosphere", "lsc", "bluewater",
-                                      "greenwater", "nitrogen"))
+    levels = c(
+      "biosphere", "lsc", "bluewater",
+      "greenwater", "nitrogen"
+    )
+  )
 
   if (length(x) == 1 || all_in_one == TRUE) {
     n_col <- 1
@@ -113,7 +115,6 @@ plot_status_global <- function(
   }
 
   if (all_in_one) {
-
     # holocene value
     holo_all <- NULL
     for (i in seq_len(length(x))) {
@@ -123,16 +124,12 @@ plot_status_global <- function(
     pl_b <- attr(x[[1]], "thresholds")$pb
     h_risk <- attr(x[[1]], "thresholds")$highrisk
     plot <- ggplot2::ggplot() +
-      ggpattern::geom_rect_pattern(
+      ggplot2::geom_rect(
+        fill = green,
         ggplot2::aes(
-          xmin = -Inf, xmax = Inf,
+          xmin = -Inf, xmax = max(data_tibble$years),
           ymin = -Inf, ymax = pl_b
-        ),
-        pattern = "gradient",
-        pattern_fill = "white",
-        pattern_fill2 = green,
-        pattern_alpha = 0.5,
-        col = NA
+        ), alpha = 0.9
       )
 
     # please R CMD check for use of ggplot syntax
@@ -141,7 +138,7 @@ plot_status_global <- function(
       plot <- plot +
         ggplot2::scale_y_continuous(
           limits = c(holo, c(max(data_tibble$values) +
-                               max(data_tibble$values) * 0.05)),
+            max(data_tibble$values) * 0.05)),
           expand = c(0, 0), breaks = c(holo, pl_b),
           labels = c("holocene", "pb")
         ) +
@@ -162,48 +159,46 @@ plot_status_global <- function(
       plot <- plot +
         ggplot2::coord_cartesian(
           ylim = c(holo, c(max(data_tibble$values) +
-                             max(data_tibble$values) * 0.05)
-          )
+            max(data_tibble$values) * 0.05)),
+          xlim = c(min(data_tibble$years), max(data_tibble$years)),
+          expand = FALSE,
+          clip = "off"
         ) +
         ggplot2::scale_y_continuous(
           expand = c(0, 0),
           breaks = c(holo, pl_b, h_risk),
           labels = c("holocene", "pb", "highrisk")
-        ) +
-        ggpattern::geom_rect_pattern(
-          ggplot2::aes(
-            xmin = -Inf, xmax = Inf,
-            ymin = pl_b,
-            ymax = h_risk
-          ),
-          pattern = "gradient",
-          pattern_fill = yellow,
-          pattern_fill2 = orange,
-          pattern_alpha = 0.5,
-          col = NA
-        ) +
-        ggpattern::geom_rect_pattern(
-          ggplot2::aes(
-            xmin = -Inf,
-            xmax = Inf,
-            ymin = h_risk,
-            ymax =  (h_risk + (h_risk - pl_b) * 1.5)
-          ),
-          pattern = "gradient",
-          pattern_fill = orange,
-          pattern_fill2 = darkpurple,
-          pattern_alpha = 0.5,
-          col = NA
+        )
+
+      df_inc_risk <- tibble::tibble()
+      temp <- tibble::tibble(
+        vals = seq(pl_b, (h_risk + (h_risk - pl_b) * 1.5),
+          length.out = 500 # adjusted to not affect color scale
+        )
+      ) %>%
+        dplyr::mutate(
+          xend = max(data_tibble$years),
+          x = min(data_tibble$years),
+          yend = vals,
+          col = seq(1, 0, length.out = length(vals))
+        ) %>%
+        dplyr::rename(y = vals)
+      df_inc_risk <- dplyr::bind_rows(df_inc_risk, temp)
+
+      # plot background
+      plot <- plot + ggplot2::geom_segment(
+        data = df_inc_risk,
+        ggplot2::aes(x = x, xend = xend, y = y, yend = yend, color = col),
+        size = 0.5,
+        show.legend = FALSE
+      ) +
+        ggplot2::scale_colour_viridis_c(
+          option = "inferno",
+          direction = 1,
         )
     }
-
+    # add horizontal lines for thresholds
     plot <- plot +
-      ggplot2::geom_rect(
-        ggplot2::aes(xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf),
-        fill = "white",
-        col = NA,
-        alpha = 0.68
-      ) +
       ggplot2::geom_hline(
         yintercept = pl_b,
         linetype = 1,
@@ -219,19 +214,42 @@ plot_status_global <- function(
           linewidth = 0.45
         )
     }
+    # add trajectories for different pbs
     plot <- plot +
+      ggnewscale::new_scale_colour() +
+      # draw a slightly thicker black line to distinguish trajectories from background
       ggplot2::geom_line(
         data = data_tibble,
-        mapping = ggplot2::aes(x = years, y = values, col = pb)
+        ggplot2::aes(x = years, y = values, group = pb),
+        size = 0.68, color = "black", alpha = 0.8
+      ) +
+      ggplot2::geom_line(
+        data = data_tibble,
+        ggplot2::aes(x = years, y = values, col = pb),
+        size = 0.5,
+        inherit.aes = FALSE
+      ) +
+      ggplot2::scale_y_continuous(
+        limits = c(0, 2.6), # max(df_inc_risk$y)),
+        oob = scales::squish,
+        expand = c(0.0)
       ) +
       ggplot2::scale_color_manual(values = colors) +
-
-      ggplot2::scale_x_continuous(
-        limits = range(data_tibble$years),
-        expand = c(0, 0)
-      ) +
+      # labels on plot
+      # ggrepel::geom_label_repel(
+      #   data = data_tibble %>% dplyr::filter(years == max(years)),
+      #   ggplot2::aes(
+      #     x = years + 1, y = values, label = pb
+      #   ),
+      #   col = "black",
+      #   size = 2
+      # ) +
       ggplot2::theme_classic(base_line_size = 0.25, base_rect_size = 0.25) +
-      ggplot2::theme(legend.title = ggplot2::element_blank()) + # nolint:object_usage_linter
+      ggplot2::theme(
+        legend.title = ggplot2::element_blank(),
+        legend.position = "none"
+      ) + # nolint:object_usage_linter
+
       ggplot2::theme(
         panel.border = ggplot2::element_rect(
           colour = "#6b6767",
@@ -239,10 +257,43 @@ plot_status_global <- function(
         )
       ) +
       ggplot2::theme(axis.title = ggplot2::element_blank()) +
-      ggplot2::theme(aspect.ratio = 1)
+      ggplot2::theme(aspect.ratio = 1) +
+      # ggnewscale::new_scale_colour()
+      ggplot2::geom_label(
+        inherit.aes = FALSE,
+        data = data_tibble %>%
+          dplyr::filter(years == max(years)) %>%
+          dplyr::filter(
+            pb != "lsc"
+          ),
+        ggplot2::aes(
+          x = years + 1, y = values, label = pb, fill = pb
+        ),
+        col = "black",
+        alpha = 0.8,
+        size = 2,
+        hjust = 0,
+        vjust = 0
+      ) +
 
+      ggplot2::geom_label(
+        inherit.aes = FALSE,
+        data = data_tibble %>%
+          dplyr::filter(years == max(years)) %>%
+          dplyr::filter(pb ==
+            "lsc"),
+        ggplot2::aes(
+          x = years + 1, y = values, label = pb, fill = pb
+        ),
+        col = "black",
+        alpha = 0.8,
+        size = 2,
+        hjust = 0,
+        vjust = -0.5
+      ) #+
+    # ggplot2::scale_color_manual(fill = colors)
   } else {
-
+    # all_in_one = FALSE
     # create dataframe for plotting of pb specific background filling
     # (needed for safe zone and beyond the increasing risk value)
     pb_thresh <- highrisk_thresh <- holocene <- ylabel <- max_y <- long_name <-
@@ -256,8 +307,10 @@ plot_status_global <- function(
         attr(x[[i]], "thresholds")[["holocene"]]
       )
       max_y[i] <- max(data_tibble$values[which(data_tibble$pb == names(x)[i])])
-      ylabel[i] <- paste0(attr(x[[i]], "control_variable"),
-                          " (", attr(x[[i]], "unit"), ")")
+      ylabel[i] <- paste0(
+        attr(x[[i]], "control_variable"),
+        " (", attr(x[[i]], "unit"), ")"
+      )
       names(ylabel)[i] <- names(x)[i]
       long_name[i] <- attr(x[[i]], "long_name")
     }
@@ -277,15 +330,19 @@ plot_status_global <- function(
     df_inc_risk <- tibble::tibble()
     for (i in seq_len(length(x))) {
       temp <- tibble::tibble(
-        vals = seq((highrisk_thresh[i] +
-                    (highrisk_thresh[i] - pb_thresh[i]) * 1.5), pb_thresh[i],
-                   length.out = 500)
+        vals = seq(
+          (highrisk_thresh[i] +
+            (highrisk_thresh[i] - pb_thresh[i]) * 1.5), pb_thresh[i],
+          length.out = 500
+        )
       ) %>%
-        dplyr::mutate(xend = min_years,
-                      x = max_years,
-                      yend = vals,
-                      pb = unique(data_tibble$pb)[i],
-                      col = seq(1, 0, length.out = length(vals))) %>%
+        dplyr::mutate(
+          xend = min_years,
+          x = max_years,
+          yend = vals,
+          pb = unique(data_tibble$pb)[i],
+          col = seq(1, 0, length.out = length(vals))
+        ) %>%
         dplyr::rename(y = vals)
       df_inc_risk <- dplyr::bind_rows(df_inc_risk, temp)
     }
@@ -301,8 +358,8 @@ plot_status_global <- function(
           ymax = pb_thresh
         ),
         pattern = "gradient",
-        pattern_fill = green, #"#96c99e",
-        pattern_fill2 = green, #"#96c99e",
+        pattern_fill = green, # "#96c99e",
+        pattern_fill2 = green, # "#96c99e",
         alpha = 0.8
       ) +
       ggplot2::geom_segment(
