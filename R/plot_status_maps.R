@@ -47,7 +47,6 @@ plot_status_maps <- function(
   if (class(x[[1]]) != "control_variable") {
     stop("x elements must be of class control variable")
   }
-  # TODO check for spatial scale!
 
   # plot settings
   if (length(x) == 1) {
