@@ -78,11 +78,8 @@ plot_status_global <- function(
   )
   # define order of PBs
   data_tibble$pb <- factor(data_tibble$pb,
-    levels = c(
-      "biosphere", "lsc", "bluewater",
-      "greenwater", "nitrogen"
-    )
-  )
+                           levels = c("lsc", "biosphere", "bluewater",
+                                      "greenwater", "nitrogen"))
 
   if (length(x) == 1 || all_in_one == TRUE) {
     n_col <- 1
@@ -318,7 +315,7 @@ plot_status_global <- function(
         " (", attr(x[[i]], "unit"), ")"
       )
       names(ylabel)[i] <- names(x)[i]
-      long_name[i] <- attr(x[[i]], "long_name")
+      long_name[i] <- paste0("  ", attr(x[[i]], "long_name"))
     }
     df_bg <- data.frame(
       pb = unique(data_tibble$pb),

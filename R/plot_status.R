@@ -28,7 +28,7 @@
 #'   time_span_reference = as.character(1986:2016),
 #'   spatial_scale = "global",
 #'   approach = list(
-#'     bluewater = "porkka2023",
+#'     bluewater = "porkka2024",
 #'     nitrogen = "schulte_uebbing2022"
 #'   ),
 #'   savanna_proxy = list(vegc = 7500),

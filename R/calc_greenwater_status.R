@@ -34,7 +34,7 @@
 #' approach is `c("wang-erlandsson2022")` based on
 #' [Wang-Erlandsson et al. 2022](https://doi.org/10.1038/s43017-022-00287-8)
 #' (referring only to the driest/wettest month of each year) or
-#' `porkka2023` based on
+#' `porkka2024` based on
 #' [Porkka et al. 2023](https://eartharxiv.org/repository/view/3438/)
 #' (referring to each month of a year)
 #'
@@ -72,7 +72,7 @@ calc_greenwater_status <- function(
 ) {
 
   # verify available methods
-  approach <- match.arg(approach, c("wang-erlandsson2022", "porkka2023"))
+  approach <- match.arg(approach, c("wang-erlandsson2022", "porkka2024"))
 
   # verify available spatial resolution
   spatial_scale <- match.arg(spatial_scale, c("global", "subglobal"))
@@ -91,6 +91,6 @@ calc_greenwater_status <- function(
     thresholds = thresholds,
     variable = "rootmoist"
   )
-
+  attr(deviations_rootmoisture, "long_name") <- list_long_name("greenwater")
   return(deviations_rootmoisture)
 }

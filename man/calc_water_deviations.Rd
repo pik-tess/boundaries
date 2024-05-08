@@ -11,7 +11,7 @@ calc_water_deviations(
   spatial_scale = "subglobal",
   time_span_scenario = NULL,
   time_span_reference,
-  approach = "porkka2023",
+  approach = "porkka2024",
   thresholds = NULL,
   time_aggregation_args = list(),
   config_args = list(),
@@ -31,7 +31,7 @@ needed for the applied approach, set to NULL.}
 \item{spatial_scale}{character string indicating spatial scale;
 "global" or "subglobal" for calculation of the share (\%) of total
 global/basin area with deviations (either one value per year
-(wang-erlandsson2022) or one value per year and month (porkka2023)); "grid"
+(wang-erlandsson2022) or one value per year and month (porkka2024)); "grid"
 not yet defined}
 
 \item{time_span_scenario}{time span to be used for the scenario run, defined
@@ -46,7 +46,7 @@ If \code{NULL} value of \code{time_span_scenario} is used}
 approach is \code{c("wang-erlandsson2022")} based on
 \href{https://doi.org/10.1038/s43017-022-00287-8}{Wang-Erlandsson et al. 2022}
 (referring only to the driest/wettest month of each year) or
-\code{porkka2023} based on
+\code{porkka2024} based on
 \href{https://eartharxiv.org/repository/view/3438/}{Porkka et al. 2023}
 (referring to each month of a year; default)}
 

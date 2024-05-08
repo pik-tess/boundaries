@@ -28,7 +28,7 @@
 #'   time_span_reference = as.character(1986:2016),
 #'   spatial_scale = "global",
 #'   approach = list(
-#'     bluewater = "porkka2023",
+#'     bluewater = "porkka2024",
 #'     nitrogen = "schulte_uebbing2022"
 #'   ),
 #'   savanna_proxy = list(vegc = 7500),
@@ -142,6 +142,12 @@ draw_stylized <- function(
       )
     }
   )
+  x_table$name <- factor(x_table$name,
+    levels = c("lsc", "biosphere", "bluewater",
+               "greenwater", "nitrogen")
+  )
+  # order x_table$x by x_table$name
+  x_table$x <- as.integer(x_table$name)
 
   # Create ggproto class to plot time series of boundaries into wedge
   TSBoundaryStatus <- ggplot2::ggproto( # nolint

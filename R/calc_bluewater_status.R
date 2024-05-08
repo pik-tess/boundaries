@@ -31,7 +31,7 @@
 #' approach is `"gerten2020"` based on
 #' [Gerten et al. 2020](https://doi.org/10.1038/s41893-019-0465-1)
 #' for spatial_scale = "grid" and
-#' "wang_erlandsson2022" as well as "porkka2023" for
+#' "wang_erlandsson2022" as well as "porkka2024" for
 #' spatial_scale = "global" or "subglobal"
 #'
 #' @param time_aggregation_args list of arguments to be passed to
@@ -73,7 +73,7 @@ calc_bluewater_status <- function(files_scenario,
   # verify available methods and resolution
   approach <- match.arg(
     approach,
-    c("gerten2020", "wang-erlandsson2022", "porkka2023")
+    c("gerten2020", "wang-erlandsson2022", "porkka2024")
   )
   spatial_scale <- match.arg(spatial_scale, c("global", "subglobal", "grid"))
 
@@ -99,7 +99,7 @@ calc_bluewater_status <- function(files_scenario,
     )
 
   } else if (spatial_scale %in% c("subglobal", "global")) {
-    if (!approach %in% c("wang-erlandsson2022", "porkka2023")) {
+    if (!approach %in% c("wang-erlandsson2022", "porkka2024")) {
       stop(
         "Method \"",
         approach,
@@ -194,23 +194,15 @@ calc_bluewater_efrs <- function(
            time_aggregation_args)
   )
 
-
   # please R CMD check for use of future operator
   efr_uncertain <- efr_safe <- NULL
   # calc efrs for vmf_min and vmf_max
-  efr_uncertain %<-% calc_efrs(
-    discharge_reference,
-    "vmf_min"
-  )
-  efr_safe %<-% calc_efrs(
-    discharge_reference,
-    "vmf_max"
-  )
-  # append efr_safe and efr_uncertain to have same dimensions as avg_discharge_scenario
-  efr_safe <- array(efr_safe, dim = dim(avg_discharge_scenario),
-                    dimnames = dimnames(avg_discharge_scenario))
-  efr_uncertain <- array(efr_uncertain, dim = dim(avg_discharge_scenario),
-                         dimnames = dimnames(avg_discharge_scenario))
+  efr_uncertain %<-% calc_efrs(discharge_reference,
+                               "vmf_min",
+                               time_aggregation_args)
+  efr_safe %<-% calc_efrs(discharge_reference,
+                          "vmf_max",
+                          time_aggregation_args)
 
   # calculation of EFR transgressions = EFR deficits in LU run
   efr_deficit <- efr_safe - avg_discharge_scenario
@@ -223,7 +215,7 @@ calc_bluewater_efrs <- function(
   # (as in Steffen 2015; degree to which EFRs are undermined)
 
   status_frac_monthly <- ifelse(uncertainty_zone > 0,
-                                efr_deficit / uncertainty_zone,
+                                efr_deficit / uncertainty_zone * 100,
                                 0)
 
   third_dim <- names(dim(status_frac_monthly))[

@@ -35,7 +35,7 @@ pb_status <- calc_status(
   time_span_scenario =  as.character(1986:2016),
   time_span_reference =  as.character(1986:2016),
   spatial_scale = "global",
-  approach = list(bluewater = "porkka2023",
+  approach = list(bluewater = "porkka2024",
                 nitrogen = "schulte_uebbing2022"),
   savanna_proxy = list(vegc = 7500),
   time_aggregation_args = 1,

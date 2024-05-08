@@ -15,7 +15,7 @@ test_that("test calc_bluewater_status global", {
     time_span_scenario = timeframe,
     time_span_reference = timeframe,
     spatial_scale = "global",
-    approach = list(bluewater = "porkka2023"),
+    approach = list(bluewater = "porkka2024"),
     time_aggregation_args = c(1),
     in_parallel = FALSE,
   ) %>% suppressMessages()
@@ -34,7 +34,7 @@ test_that("test calc_bluewater_status global", {
 
   # test for expected control variable and class
   testthat::expect_true(
-    attributes(test$bluewater)$control_variable == "area with wet/dry departures (%)" && # nolint
+    attributes(test$bluewater)$control_variable == "area with wet/dry departures" && # nolint
       attributes(test$bluewater)$class == "control_variable"
   )
 
@@ -99,10 +99,9 @@ test_that("test calc_bluewater_status grid", {
     thresholds
   )
 
-
   # test for expected control variable and class
   testthat::expect_true(
-    attributes(test$bluewater)$control_variable == "environmental flow requirements" && # nolint
+    attributes(test$bluewater)$control_variable == "EFR transgression to uncertainty ratio" && # nolint
       attributes(test$bluewater)$class == "control_variable"
   )
 

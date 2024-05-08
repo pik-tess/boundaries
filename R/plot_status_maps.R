@@ -47,7 +47,6 @@ plot_status_maps <- function(
   if (class(x[[1]]) != "control_variable") {
     stop("x elements must be of class control variable")
   }
-  # TODO check for spatial scale!
 
   # plot settings
   if (length(x) == 1) {
@@ -94,8 +93,14 @@ plot_status_maps <- function(
   world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
 
   plot_list <- list()
-  for (i in seq_len(length(x))) {
 
+  pbs_ordered <- factor(names(x),
+    levels = c("lsc", "biosphere", "bluewater", "greenwater", "nitrogen")
+  ) %>%
+    sort(decreasing = FALSE) %>%
+    as.character()
+
+  for (i in pbs_ordered) {
     if (risk_level) {
       # convert lpjml vector with continuous control variable status to risk
       # level
@@ -108,7 +113,8 @@ plot_status_maps <- function(
       plot_data[plot_data < quantile(plot_data, 0.05, na.rm = TRUE)] <-
         quantile(plot_data, 0.05,  na.rm = TRUE)
 
-      legend_title <- attr(x[[i]], "control_variable")
+      legend_title <- paste0(attr(x[[i]], "control_variable"),
+                          " (", attr(x[[i]], "unit"), ")")
     }
 
     # convert lpjml vector to raster with defined projection
@@ -146,12 +152,13 @@ plot_status_maps <- function(
                                                                 color = "#8d8b8b"), # nolint:line_length_linter
                        axis.text = ggplot2::element_blank(),
                        axis.ticks = ggplot2::element_blank(),
-                       legend.position = "none") +
+                       legend.position = "none",
+                       axis.title.x = ggplot2::element_text(size = 9)) +
         ggplot2::geom_sf(data = world, fill = NA, linewidth = 0.12,
                          color = "#7e7d7d") +
         ggplot2::xlim(terra::ext(plotvar)[1], terra::ext(plotvar)[2]) +
         ggplot2::ylim(terra::ext(plotvar)[3], terra::ext(plotvar)[4]) +
-        ggplot2::xlab(names(x)[i])
+        ggplot2::xlab(attr(x[[i]], "long_name"))
 
     } else {
       p <- ggplot2::ggplot() +
@@ -165,17 +172,22 @@ plot_status_maps <- function(
         ggnewscale::new_scale_fill() +
         ggspatial::layer_spatial(plotvar) +
         ggplot2::scale_fill_viridis_c(na.value = NA, name = legend_title,
-                                     option = "D", direction = -1, end = 0.9) +
+                                      option = "D", direction = -1, end = 0.9) +
         ggplot2::guides(fill = ggplot2::guide_colourbar(title.position = "top",
                                                         title.hjust = 0.5,
                                                         barwidth = 15)) +
-        ggplot2::theme(panel.background = ggplot2::element_rect(fill = "white"),
+        ggplot2::theme(
+          panel.background = ggplot2::element_rect(fill = "#ffffff"),
           panel.grid.major = ggplot2::element_line(linewidth = 0.1,
                                                    color = "#8d8b8b"),
           axis.text = ggplot2::element_blank(),
           axis.ticks = ggplot2::element_blank(),
           legend.position = "bottom",
-          plot.title = ggplot2::element_text(hjust = 0.5),
+          legend.title = ggplot2::element_text(size = 6),
+          legend.text = ggplot2::element_text(size = 6),
+          legend.margin = ggplot2::margin(0, 0, 0, 0),
+          legend.box.margin = ggplot2::margin(-10, -10, -10, -10),
+          plot.title = ggplot2::element_text(hjust = 0.5, size = 8),
           plot.margin = ggplot2::margin(0, 0, 0, 0, "cm"),
           panel.spacing = ggplot2::unit(0, "lines")
         ) +
@@ -208,6 +220,6 @@ to_raster <- function(lpjml_array, projection, grid_path) {
   ra[terra::cellFromXY(ra, cbind(lon, lat))] <- c(lpjml_array)
   extent <- terra::ext(c(-180, 180, -53, 85))
   ra <- terra::crop(ra, extent)
-  ra <- terra::project(ra, projection)
+  ra <- terra::project(ra, projection, method = "near")
   return(ra)
 }

@@ -46,7 +46,7 @@ used}
 approach is \code{"gerten2020"} based on
 \href{https://doi.org/10.1038/s41893-019-0465-1}{Gerten et al. 2020}
 for spatial_scale = "grid" and
-"wang_erlandsson2022" as well as "porkka2023" for
+"wang_erlandsson2022" as well as "porkka2024" for
 spatial_scale = "global" or "subglobal"}
 
 \item{time_aggregation_args}{list of arguments to be passed to

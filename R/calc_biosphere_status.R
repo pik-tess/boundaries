@@ -55,7 +55,7 @@
 #' (default: 20 gC/m2)
 #'
 #' @param biocol_option which biocol values to use for aggregation. options:
-#' netsum, only_above_zero, abs - TODO: finish
+#' netsum, only_above_zero, abs
 #'
 #' @param eurasia logical. If `spatial_scale` = `"subglobal"` merge continents
 #' Europe and Asia to avoid arbitrary biome cut at europe/asia border.
@@ -92,8 +92,7 @@ calc_biosphere_status <- function(
   # TODO gridbased can be retrieved from config!
   gridbased = TRUE,
   npp_threshold = 20,
-  # TODO change back to "only_above_zero" once it is working
-  biocol_option = "abs",
+  biocol_option = "only_above_zero",
   eurasia = TRUE,
   ...
 ) {
@@ -134,7 +133,7 @@ calc_biosphere_status <- function(
     gridbased = gridbased,
     npp_threshold = npp_threshold,
     # further options that can be defined in biospheremetrics:: read_calc_biocol
-    # are diregarded here:
+    # are disregarded here:
     read_saved_data = FALSE,
     save_data = FALSE,
     data_file = NULL,
@@ -171,8 +170,6 @@ calc_biosphere_status <- function(
     )
 
 
-    # TODO: also for global
-    # TODO only_above_zero not working?
     # initialize control variable vector
     if (biocol_option == "abs") {
       control_variable_raw <- abs(biocol$biocol)
@@ -181,8 +178,6 @@ calc_biosphere_status <- function(
       control_variable_raw[control_variable_raw < 0] <- 0
     }else if (biocol_option == "netsum") {
       control_variable_raw <- biocol$biocol
-    }else { # TODO: do with matcharg
-      stop("Not defined option for biocol_option.")
     }
 
     # please R CMD check for use of future operator
@@ -253,26 +248,21 @@ calc_biosphere_status <- function(
     }
 
   } else if (spatial_scale == "global") {
-    # TODO: also for global
     # initialize control variable vector
     if (biocol_option == "abs") {
       control_variable_raw <- biocol$biocol_overtime_abs_frac_piref
     }else if (biocol_option == "only_above_zero") {
-      stop("Missing")
-      # TODO: recompute, does not exist as overtime yet
+      control_variable_raw <- biocol$biocol_overtime_pos_frac_piref
     }else if (biocol_option == "netsum") {
       control_variable_raw <- biocol$biocol_overtime_frac
-    }else { # TODO: do with matcharg
-      stop("Not defined option for biocol_option.")
     }
-  }
+  } # end if spatial_scale == "global"
 
   rm(biocol)
   # average
   control_variable <- do.call(aggregate_time,
                               append(list(x = control_variable_raw * 100), #in%
                                      time_aggregation_args))
-
   attr(control_variable, "spatial_scale") <- spatial_scale
   attr(control_variable, "thresholds") <- thresholds
   attr(control_variable, "unit") <- list_unit("biosphere", approach,

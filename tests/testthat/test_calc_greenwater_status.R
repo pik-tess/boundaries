@@ -15,7 +15,7 @@ test_that("test calc_greenwater_status global", {
     time_span_scenario = timeframe,
     time_span_reference = timeframe,
     spatial_scale = "global",
-    approach = list(greenwater = "porkka2023"),
+    approach = list(greenwater = "porkka2024"),
     time_aggregation_args = c(1),
     in_parallel = FALSE,
   ) %>% suppressMessages()
@@ -33,7 +33,7 @@ test_that("test calc_greenwater_status global", {
 
   # test for expected control variable and class
   testthat::expect_true(
-    attributes(test$greenwater)$control_variable == "area with wet/dry departures (%)" && # nolint
+    attributes(test$greenwater)$control_variable == "area with wet/dry departures" && # nolint
       attributes(test$greenwater)$class == "control_variable"
   )
 
@@ -67,7 +67,7 @@ test_that("test calc_greenwater_status subglobal", {
     time_span_scenario = timeframe,
     time_span_reference = timeframe,
     spatial_scale = "subglobal",
-    approach = list(greenwater = "porkka2023"),
+    approach = list(greenwater = "porkka2024"),
     time_aggregation_args = c(1),
     in_parallel = FALSE,
   ) %>% suppressMessages()
@@ -85,7 +85,7 @@ test_that("test calc_greenwater_status subglobal", {
 
   # test for expected control variable and class
   testthat::expect_true(
-    attributes(test$greenwater)$control_variable == "area with wet/dry departures (%)" && # nolint
+    attributes(test$greenwater)$control_variable == "area with wet/dry departures" && # nolint
       attributes(test$greenwater)$class == "control_variable"
   )
 

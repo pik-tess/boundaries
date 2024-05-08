@@ -24,8 +24,6 @@
 #' @param table_path character string. File path to save csv file with
 #' comparison between lpjml values and literature
 #'
-#' @param gridbased logical. Are pft outputs from LPJmL gridbased or pft-based?
-#'
 #' @param ... arguments to be passed to [calc_status]
 #'
 #' @return  table (data frame or csv or both) with comparison between lpjml values and literature ranges
@@ -51,12 +49,14 @@ validation_table <- function(
   time_span_reference,
   path_baseline,
   table_path,
-  gridbased = TRUE,
   ...
 ) {
 
   config_scenario <- lpjmlkit::read_config(config_scenario)
   config_reference <- lpjmlkit::read_config(config_reference)
+
+  # are pft specific outputs grid or stand scaled?
+  gridbased <- config_scenario$grid_scaled
 
   if (!all(time_span_scenario %in% get_sim_time(config_scenario))) {
     stop("Time span not available in scenario run.")
