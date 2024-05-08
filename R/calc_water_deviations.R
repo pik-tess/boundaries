@@ -28,7 +28,7 @@
 #' approach is `c("wang-erlandsson2022")` based on
 #' [Wang-Erlandsson et al. 2022](https://doi.org/10.1038/s43017-022-00287-8)
 #' (referring only to the driest/wettest month of each year) or
-#' `porkka2023` based on
+#' `porkka2024` based on
 #' [Porkka et al. 2023](https://eartharxiv.org/repository/view/3438/)
 #' (referring to each month of a year; default)
 #'
@@ -44,7 +44,7 @@
 #' @param spatial_scale character string indicating spatial scale;
 #' "global" or "subglobal" for calculation of the share (%) of total
 #' global/basin area with deviations (either one value per year
-#' (wang-erlandsson2022) or one value per year and month (porkka2023)); "grid"
+#' (wang-erlandsson2022) or one value per year and month (porkka2024)); "grid"
 #' not yet defined
 #'
 #' @param time_aggregation_args list of arguments to be passed to
@@ -70,7 +70,7 @@ calc_water_deviations <- function(files_scenario,
                                   spatial_scale = "subglobal",
                                   time_span_scenario = NULL,
                                   time_span_reference,
-                                  approach = "porkka2023",
+                                  approach = "porkka2024",
                                   thresholds = NULL,
                                   time_aggregation_args = list(),
                                   config_args = list(),
@@ -105,10 +105,8 @@ calc_water_deviations <- function(files_scenario,
   # -------------------------------------------------------------------------- #
   # calculate the area with dry/wet departures (subglobal and global resolution)
 
+  # get basin information for subglobal resolution
   if (spatial_scale == "subglobal") {
-    # TODO: needs commenting
-    # calculate for each basin and year: area with wet/dry departures
-
     cellinfo <- indexing_drainage(drainage_file = files_scenario$drainage)
     if (!is.null(config_args$spatial_subset)) {
       cellinfo <- lpjmlkit::asub(cellinfo, cell = config_args$spatial_subset)
@@ -118,32 +116,56 @@ calc_water_deviations <- function(files_scenario,
     endcell <- NULL
   }
 
+  # calculate ice free area
+  icefree_area <- calc_icefree_area(
+    files_path = files_scenario,
+    time_span = time_span_scenario,
+    spatial_subset = config_args$spatial_subset
+  )
+
+  # calculate the area with wet/dry departues in the reference and scenario
   # please R CMD check for use of future operator
   ref_depart <- scen_depart <- NULL
   ref_depart %<-% calc_departures(
     data = var_reference,
-    files_path = files_reference,
+    icefree_area = icefree_area,
     quants = quants,
     spatial_scale = spatial_scale,
     approach = approach,
-    spatial_subset = config_args$spatial_subset,
     endcell = endcell
   )
 
   scen_depart %<-% calc_departures(
     data = var_scenario,
-    files_path = files_scenario,
+    icefree_area = icefree_area,
     quants = quants,
     spatial_scale = spatial_scale,
     approach = approach,
-    spatial_subset = config_args$spatial_subset,
     endcell = endcell
   )
 
+  # -------------------------------------------------------------------------- #
+  # calculate holocene, pb and highrisk area thresholds
   # please R CMD check for use of future operator
   area_high_risk <- area_pb <- area_holocene <- NULL
-  # -------------------------------------------------------------------------- #
+
   if (spatial_scale == "global") {
+
+    if (approach == "porkka2024") {
+      # from monthly to yearly mean area with deviations
+      scen_depart$wet_or_dry <- apply(
+        scen_depart$wet_or_dry,
+        "year",
+        mean,
+        na.rm = TRUE
+      )
+      ref_depart$wet_or_dry <- apply(
+        ref_depart$wet_or_dry,
+        "year",
+        mean,
+        na.rm = TRUE
+      )
+    }
 
     # calculate areas corresponding to the quantiles defined in thresholds
     if (is.null(thresholds[["highrisk"]])) {
@@ -167,14 +189,6 @@ calc_water_deviations <- function(files_scenario,
       na.rm = TRUE
     )
 
-    if (approach == "porkka2023") {
-      scen_depart$wet_or_dry <- apply(
-        scen_depart$wet_or_dry,
-        "year",
-        mean,
-        na.rm = TRUE
-      )
-    }
     control_variable <- do.call(
       aggregate_time,
       append(
@@ -191,17 +205,41 @@ calc_water_deviations <- function(files_scenario,
 
   } else if (spatial_scale == "subglobal") {
 
-    # calculate for each basin: thresholds for translation into pb status
-    area_high_risk %<-% apply(
-      ref_depart$wet_or_dry,
-      "basin",
-      function(x) {
-        y <- stats::quantile(x, probs = thresholds[["highrisk"]] / 100, na.rm = TRUE)
-        y
-      }
-    )
+    if (approach == "porkka2024") {
+      # calculate mean yearly area with transgression for each basin
+      dim_remain <- dim(scen_depart$wet_or_dry)[names(dim(scen_depart$wet_or_dry)) != "month"]
+      scen_depart$wet_or_dry <- apply(
+        scen_depart$wet_or_dry,
+        names(dim_remain),
+        mean,
+        na.rm = TRUE
+      )
+      dim_remain <- dim(ref_depart$wet_or_dry)[names(dim(ref_depart$wet_or_dry)) != "month"]
+      ref_depart$wet_or_dry <- apply(
+        ref_depart$wet_or_dry,
+        names(dim_remain),
+        mean,
+        na.rm = TRUE
+      )
+    }
 
-    area_pb %<-% apply(
+    # calculate for each basin: thresholds for translation into pb status
+    if (is.null(thresholds[["highrisk"]])) {
+      # hard-coded based on Richardson et al. 2023 (SI)
+      area_high_risk <- rep(50, length(unique(endcell)))
+      names(area_high_risk) <- unique(endcell)
+    } else {
+      area_high_risk %<-% apply(
+        ref_depart$wet_or_dry,
+        "basin",
+        function(x) {
+          y <- stats::quantile(x, probs = thresholds[["highrisk"]] / 100, na.rm = TRUE)
+          y
+        }
+      )
+    }
+
+    area_pb <- apply(
       ref_depart$wet_or_dry,
       "basin",
       function(x) {
@@ -210,7 +248,7 @@ calc_water_deviations <- function(files_scenario,
       }
     )
 
-    area_holocene %<-% apply(
+    area_holocene <- apply(
       ref_depart$wet_or_dry,
       "basin",
       function(x) {
@@ -237,23 +275,24 @@ calc_water_deviations <- function(files_scenario,
     area_pb %<-% basin_to_cell(area_pb, endcell)
     area_holocene %<-% basin_to_cell(area_holocene, endcell)
 
-    # for two dimensional array
+    # fill global array with basin values (i.e. assign the basin value to each
+    # cell belonging to the respective basin
     scen_departures <- array(
       NA,
       dim = c(
-        cell = length(endcell),
-        year = dim(scen_depart$wet_or_dry)[["year"]]
+        year = dim(scen_depart$wet_or_dry)[["year"]],
+        cell = length(endcell)
       ),
       dimnames = list(
-        cell = seq_along(endcell),
-        year = dimnames(scen_depart$wet_or_dry)[["year"]]
+        year = dimnames(scen_depart$wet_or_dry)[["year"]],
+        cell = seq_along(endcell)
       )
     )
 
     basins <- unique(endcell)
     for (i in seq_along(basins)) {
       y <- which(endcell == basins[i])
-      scen_departures[y, ] <- scen_depart$wet_or_dry[i, ]
+      scen_departures[, y] <- scen_depart$wet_or_dry[i, ]
     }
 
     control_variable <- do.call(
@@ -262,15 +301,32 @@ calc_water_deviations <- function(files_scenario,
         list(x = scen_departures),
         time_aggregation_args
       )
-    ) %>%
-      drop()
-
-    attr(control_variable, "thresholds") <- list(
-      holocene = area_holocene,
-      pb = area_pb,
-      highrisk = area_high_risk
     )
+
+    # create array with thresholds
+    threshold_attr <- array(
+      NA,
+      dim = c(
+        year = dim(control_variable)[["year"]],
+        cell = length(endcell),
+        thresholds = 3
+      ),
+      dimnames = list(
+        year = dimnames(control_variable)[["year"]],
+        cell = seq_along(endcell),
+        thresholds = names(thresholds)
+      )
+    )
+    threshold_attr[, , "pb"] <- area_pb
+    threshold_attr[, , "highrisk"] <- area_high_risk
+    threshold_attr[, , "holocene"] <- area_holocene
+
+    attr(control_variable, "thresholds") <- threshold_attr
   }
+
+  # set ice areas to NA
+  control_variable[, is.na(icefree_area[, 1, 1])] <- NA
+
   attr(control_variable, "control_variable") <-
     "area with wet/dry departures"
   attr(control_variable, "spatial_scale") <- spatial_scale
@@ -284,15 +340,14 @@ calc_water_deviations <- function(files_scenario,
 
 
 
-# calculate GW dry & wet departures and return mean annual area of departure
-#   (global or basic scale)
+# calculate dry & wet departures and return mean annual/monthly area of
+# departure # (global or basin scale)
 calc_departures <- function(
   data,
-  files_path,
+  icefree_area,
   quants,
   spatial_scale,
   approach,
-  spatial_subset,
   endcell
 ) {
 
@@ -303,7 +358,7 @@ calc_departures <- function(
     # driest/ wettest month per gridcell for each year -> ignores which month
     dry <- apply(data, c("cell", "year"), min)
     wet <- apply(data, c("cell", "year"), max)
-  } else if (approach == "porkka2023") {
+  } else if (approach == "porkka2024") {
     dry <- wet <- dry_or_wet <- data
   }
 
@@ -316,44 +371,36 @@ calc_departures <- function(
   dry[is.na(dry)] <- 0
   dry_or_wet <- ifelse((dry == 1 | wet == 1), 1, 0)
 
-  # calc terrestrial area if spatial resolution is subglobal or global
-  # TODO this should be better the percentage of ice-free land surface!
-  if (spatial_scale == "global" | spatial_scale == "subglobal") { # nolint
-    terr_area <- lpjmlkit::read_io(
-      files_path$terr_area,
-      silent = TRUE
-    ) %>%
-      lpjmlkit::transform("year_month_day") %>%
-      lpjmlkit::as_array()
-  }
-
   control_variable <- list()
   if (spatial_scale == "subglobal") {
-    # TODO: needs commenting
-    # calculate for each basin and year: area with wet/dry departures
+    # calculate for each basin and year/month: area with wet/dry departures
+    dim_remain <- dim(dry)[names(dim(dry)) != "cell"]
+    dimnames_remain <- dimnames(dry)[names(dim(dry)) != "cell"]
 
     nbasins <- length(unique(endcell))
     control_variable$wet_or_dry <- array(
       NA,
-      dim = c(basin = nbasins, dim(dry)["year"]),
-      dimnames = list(basin = unique(endcell),
-                      year = dimnames(dry)[["year"]])
+      dim = c(basin = nbasins, dim_remain),
+      dimnames = c(list(basin = unique(endcell)), dimnames_remain)
     )
 
     for (b in unique(endcell)) { # go through all basins
-      control_variable$wet_or_dry[which(unique(endcell) == b), ] <- (
+    #TODO needs to be made flexible --> 2 or 3 dimensions
+      control_variable$wet_or_dry[which(unique(endcell) == b), , ] <- (
         apply(
           (lpjmlkit::asub(dry_or_wet, cell = which(endcell == b)) *
-             lpjmlkit::asub(terr_area, cell = which(endcell == b))) /
-            sum(lpjmlkit::asub(terr_area, cell = which(endcell == b))) * 100,
-          c("year"), sum, na.rm = TRUE
+             lpjmlkit::asub(icefree_area, cell = which(endcell == b))) /
+            sum(lpjmlkit::asub(icefree_area, cell = which(endcell == b)),
+                na.rm = TRUE) * 100,
+          names(dim_remain), sum, na.rm = TRUE
         )
       )
     }
 
   } else if (spatial_scale == "global") {
-    # TODO: needs commenting
-    terr_area <- drop(terr_area)
+    # calculate for year/month: global area with wet/dry departures
+
+    terr_area <- drop(icefree_area)
 
     dim_remain <- names(dim(dry))[names(dim(dry)) != "cell"]
     control_variable$dry <- apply(
@@ -392,7 +439,7 @@ calc_baseline <- function(file_reference, approach) {
     dry_base_yr <- apply(file_reference, c("cell", "year"), min)
     wet_base_yr <- apply(file_reference, c("cell", "year"), max)
 
-  } else if (approach == "porkka2023") {
+  } else if (approach == "porkka2024") {
     dry_base_yr <- wet_base_yr <- file_reference
   }
 
@@ -404,4 +451,53 @@ calc_baseline <- function(file_reference, approach) {
   quants <- list(q5 = q5_base, q95 = q95_base)
 
   return(quants)
+}
+
+# calculate ice free area, return array with area per cell, cells with
+# ice and rock are set to NA
+calc_icefree_area <- function(files_path, time_span, spatial_subset) {
+  terr_area <- lpjmlkit::read_io(
+    files_path$terr_area,
+    silent = TRUE
+  ) %>%
+    lpjmlkit::transform("year_month_day") %>%
+    lpjmlkit::as_array()
+
+  # set ice and rock cells to 0 to only refer to ice-free land surface
+  # read in fpc
+  fpc <- read_io_format(
+    files_path$fpc,
+    time_span,
+    spatial_subset = spatial_subset
+  )
+
+  fpc_total <- apply(
+    lpjmlkit::asub(fpc, band = -1, drop = FALSE),
+    c("cell"),
+    sum,
+    na.rm = TRUE
+  )
+
+  # Temperature
+  temp <- {
+    lpjmlkit::read_io(
+      files_path$temp,
+      subset = list(year = time_span),
+      silent = TRUE
+    ) %>%
+      conditional_subset(spatial_subset) %>%
+      lpjmlkit::transform(to = c("year_month_day")) %>%
+      lpjmlkit::as_array(aggregate =
+                           list(month = mean, day = mean, band = mean,
+                                year = mean)) %>%
+      suppressWarnings()
+  }
+
+  # Rocks and Ice
+  is_rocks_and_ice <- {
+    fpc_total == 0 &
+      temp < 0 # defined in classify_biomes
+  }
+  terr_area[is_rocks_and_ice, , ] <- NA
+  return(terr_area)
 }

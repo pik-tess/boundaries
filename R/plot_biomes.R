@@ -69,7 +69,7 @@ plot_biomes <- function(x,
   world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
 
   if (!is.null(filename)) {
-    file_extension <- strsplit(filename, split = "\\.")[[1]][-1]
+    file_extension <- file_ext(filename) # nolint:object_usage_linter
     switch(file_extension,
       `png` = {
         grDevices::png(filename,
@@ -86,9 +86,6 @@ plot_biomes <- function(x,
           height = 12 / 2.54,
           pointsize = 7
         )
-      },
-      {
-        stop("File extension ", dQuote(file_extension), " not supported.")
       }
     )
   }

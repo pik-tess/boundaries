@@ -43,6 +43,12 @@ metric:
                         terr_area:
                             resolution: "annual"
                             optional: false
+                        fpc:
+                           resolution: "annual"
+                           optional: false
+                        temp: 
+                            resolution: "annual"
+                            optional: false
                         discharge:
                             resolution: "monthly"
                             optional: false
@@ -51,7 +57,7 @@ metric:
                         pb: 95
                         highrisk: NULL
                     unit: "%"
-                porkka2023: 
+                porkka2024: 
                     <<: *wang-erlandsson2022_bw
             subglobal:
                 wang-erlandsson2022: &wang-erlandsson2022_bw_sub
@@ -62,6 +68,12 @@ metric:
                         discharge:
                             resolution: "monthly"
                             optional: false
+                        fpc:
+                            resolution: "annual"
+                            optional: false
+                        temp: 
+                            resolution: "annual"
+                            optional: false
                         drainage:
                             resolution: "annual"
                             optional: false
@@ -70,12 +82,12 @@ metric:
                         pb: 95
                         highrisk: NULL
                     unit: "%"
-                porkka2023:
+                porkka2024:
                     <<: *wang-erlandsson2022_bw_sub
             grid:
                 wang-erlandsson2022:
                     <<: *wang-erlandsson2022_bw
-                porkka2023:
+                porkka2024:
                     <<: *wang-erlandsson2022_bw
                 gerten2020:
                     output:
@@ -100,18 +112,24 @@ metric:
                 wang-erlandsson2022: &wang-erlandsson2022_gw
                    # LPJmL output IDs with required resolution
                     output:
-                       terr_area:
-                           resolution: "annual"
-                           optional: false
-                       rootmoist:
-                           resolution: "monthly"
-                           optional: false
+                        terr_area:
+                            resolution: "annual"
+                            optional: false
+                        rootmoist:
+                            resolution: "monthly"
+                            optional: false
+                        fpc:
+                            resolution: "annual"
+                            optional: false
+                        temp: 
+                            resolution: "annual"
+                            optional: false
                     threshold:
                        holocene: 50
                        pb: 95
                        highrisk: NULL
                     unit: "%"
-                porkka2023: 
+                porkka2024: 
                     <<: *wang-erlandsson2022_gw #TODO correct?
             subglobal:
                 wang-erlandsson2022: &wang-erlandsson2022_gw_sub
@@ -122,6 +140,12 @@ metric:
                         rootmoist:
                             resolution: "monthly"
                             optional: false
+                        fpc:
+                            resolution: "annual"
+                            optional: false
+                        temp: 
+                            resolution: "annual"
+                            optional: false
                         drainage:
                             resolution: "annual"
                             optional: false
@@ -130,12 +154,12 @@ metric:
                         pb: 95
                         highrisk: NULL
                     unit: "%"
-                porkka2023:
+                porkka2024:
                     <<: *wang-erlandsson2022_gw_sub
             grid:
                 wang-erlandsson2022: 
                     <<: *wang-erlandsson2022_gw
-                porkka2023:
+                porkka2024:
                     <<: *wang-erlandsson2022_gw
         # Called boundaries functions#
         fun_name: "calc_greenwater_status"

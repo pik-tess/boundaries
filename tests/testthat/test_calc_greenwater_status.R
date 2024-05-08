@@ -15,7 +15,7 @@ test_that("test calc_greenwater_status global", {
     time_span_scenario = timeframe,
     time_span_reference = timeframe,
     spatial_scale = "global",
-    approach = list(greenwater = "porkka2023"),
+    approach = list(greenwater = "porkka2024"),
     time_aggregation_args = c(1),
     in_parallel = FALSE,
   ) %>% suppressMessages()
@@ -67,7 +67,7 @@ test_that("test calc_greenwater_status subglobal", {
     time_span_scenario = timeframe,
     time_span_reference = timeframe,
     spatial_scale = "subglobal",
-    approach = list(greenwater = "porkka2023"),
+    approach = list(greenwater = "porkka2024"),
     time_aggregation_args = c(1),
     in_parallel = FALSE,
   ) %>% suppressMessages()

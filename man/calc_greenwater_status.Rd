@@ -41,7 +41,7 @@ If \code{NULL} value of \code{time_span_scenario} is used}
 approach is \code{c("wang-erlandsson2022")} based on
 \href{https://doi.org/10.1038/s43017-022-00287-8}{Wang-Erlandsson et al. 2022}
 (referring only to the driest/wettest month of each year) or
-\code{porkka2023} based on
+\code{porkka2024} based on
 \href{https://eartharxiv.org/repository/view/3438/}{Porkka et al. 2023}
 (referring to each month of a year)}
 

@@ -31,7 +31,7 @@
 #' approach is `"gerten2020"` based on
 #' [Gerten et al. 2020](https://doi.org/10.1038/s41893-019-0465-1)
 #' for spatial_scale = "grid" and
-#' "wang_erlandsson2022" as well as "porkka2023" for
+#' "wang_erlandsson2022" as well as "porkka2024" for
 #' spatial_scale = "global" or "subglobal"
 #'
 #' @param time_aggregation_args list of arguments to be passed to
@@ -73,7 +73,7 @@ calc_bluewater_status <- function(files_scenario,
   # verify available methods and resolution
   approach <- match.arg(
     approach,
-    c("gerten2020", "wang-erlandsson2022", "porkka2023")
+    c("gerten2020", "wang-erlandsson2022", "porkka2024")
   )
   spatial_scale <- match.arg(spatial_scale, c("global", "subglobal", "grid"))
 
@@ -99,7 +99,7 @@ calc_bluewater_status <- function(files_scenario,
     )
 
   } else if (spatial_scale %in% c("subglobal", "global")) {
-    if (!approach %in% c("wang-erlandsson2022", "porkka2023")) {
+    if (!approach %in% c("wang-erlandsson2022", "porkka2024")) {
       stop(
         "Method \"",
         approach,
