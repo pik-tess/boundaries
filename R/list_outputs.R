@@ -10,14 +10,14 @@
 #' @param metric Character string containing name of metric to get
 #'        required outputs. Available options are `c("biome",
 #'        "nitrogen", "lsc", "bluewater", "greenwater", "biosphere")`
-#'        or just `"all"` or `"benchmark"`.
+#'        or just `"all"` or `"benchmark"`. Default is `"all"`.
 #'
 #' @param approach List of character strings containing the approach to
-#'       calculate the metric.
+#'       calculate the metric. Or `"all"` to get all approaches (default).
 #'
 #' @param spatial_scale character. Spatial resolution, available options
-#'        are `"subglobal"` (at the biome level, default), `"global"` and
-#'        `"grid"`
+#'        are `"subglobal"` (at the biome level), `"global"` and
+#'        `"grid"` or `"all"` (default).
 #'
 #' @param only_first_filename Logical. If TRUE, only the first file name will be
 #'        returned for each output. If FALSE, all file names will be returned.
@@ -36,9 +36,9 @@
 #' }
 #' @export
 list_outputs <- function(
-  metric,
-  approach,
-  spatial_scale,
+  metric = "all",
+  spatial_scale = "all",
+  approach = "all",
   only_first_filename = TRUE
 ) {
   metric <- process_metric(metric = metric)
@@ -49,7 +49,7 @@ list_outputs <- function(
     package = "boundaries"
   ) %>%
     yaml::read_yaml() %>%
-    get_outputs(metric, approach, spatial_scale, only_first_filename)
+    get_outputs(metric, spatial_scale, approach, only_first_filename)
 
 }
 
@@ -78,10 +78,6 @@ process_metric <- function(metric = "all") {
     metric <- all_metrics
   }
 
-  if ("benchmark" %in% metric) {
-    metric <- "benchmark"
-  }
-
   metric <- match.arg(
     arg = metric,
     choices = all_metrics,
@@ -94,45 +90,54 @@ process_metric <- function(metric = "all") {
 
 # for input list a, all duplicate keys are unified, taking the value with
 #     highest temporal resolution (daily>monthly>annual)
-get_outputs <- function(x, metric_name, approach, spatial_scale, # nolint:cyclocomp_linter
-                        only_first_filename) {
+get_outputs <- function( # nolint
+  x,
+  metric_name,
+  spatial_scale,
+  approach,
+  only_first_filename
+) {
   outputs <- list()
-  # Iterate over all metrics
-  i <- 0
-  for (metric in x$metric[metric_name]) {
-    i <- i + 1
-    boundary_name <- metric_name[i]
-    if (length(approach[[boundary_name]]) > 0) {
-      method_i <- approach[[boundary_name]]
-    } else {
-      method_i <- formals(
-        get(paste0("calc_", boundary_name, "_status"))
-      )$approach
-    }
-    if (length(spatial_scale) > 0) {
-      spatial_scale_i <- spatial_scale
-    } else {
-      spatial_scale_i <- formals(
-        get(paste0("calc_", boundary_name, "_status"))
-      )$spatial_scale
-    }
-    # Iterate over all unique keys
-    for (item in names(metric$spatial_scale[[spatial_scale_i]][[method_i]]$output)) { #nolint
 
-      # Check if output is already in list or if it has higher resolution
-      if (!item %in% names(outputs) ||
-          (item %in% names(outputs) &&
-             higher_res(metric$output[[item]]$resolution,
-                        outputs[[item]]$resolution))
-      ) {
-        # Assign output resolution from metric file
-        outputs[[item]]$resolution <- metric$spatial_scale[[spatial_scale_i]][[method_i]]$output[[item]]$resolution #nolint
-        outputs[[item]]$optional <- metric$spatial_scale[[spatial_scale_i]][[method_i]]$output[[item]]$optional #nolint
-        # Assign output file name from metric file
-        if (only_first_filename) {
-          outputs[[item]]$file_name <- x$file_name[[item]][1]
-        } else {
-          outputs[[item]]$file_name <- x$file_name[[item]]
+  # Iterate over all metrics
+  for (metric_string in names(x$metric[metric_name])) {
+    metric <- x$metric[[metric_string]]
+
+    # Iterate over all spatial scales
+    for (scale_string in names(metric$spatial_scale)) { #nolint
+      # Check if spatial scale is defined or all scales
+      if (spatial_scale != "all" && !scale_string %in% spatial_scale) {
+        next
+      }
+      scale <- metric$spatial_scale[[scale_string]]
+
+      # Iterate over all approaches
+      for (method_string in names(scale)) {
+        # Check if approach is in list or all approaches
+        if (approach != "all" && !is.null(approach[[metric_string]]) &&
+              method_string != approach[[metric_string]]) { # nolint
+          next
+        }
+        method <- scale[[method_string]]
+
+        # Iterate over all outputs
+        for (item in names(method$output)) {
+          # Check if output is already in list or if it has higher resolution
+          if (!item %in% names(outputs) ||
+              (item %in% names(outputs) &&
+                 higher_res(metric$output[[item]]$resolution,
+                            outputs[[item]]$resolution))
+          ) {
+            # Assign output resolution from metric file
+            outputs[[item]]$resolution <- method$output[[item]]$resolution #nolint
+            outputs[[item]]$optional <- method$output[[item]]$optional #nolint
+            # Assign output file name from metric file
+            if (only_first_filename) {
+              outputs[[item]]$file_name <- x$file_name[[item]][1]
+            } else {
+              outputs[[item]]$file_name <- x$file_name[[item]]
+            }
+          }
         }
       }
     }

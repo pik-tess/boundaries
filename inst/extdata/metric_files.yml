@@ -27,10 +27,10 @@ metric:
                         elevation:
                             resolution: "annual"
                             optional: true
-                    # Called boundaries functions
-                    fun_name: "classify_biomes"
-                    funs: &biome_fun
-                            - classify_biomes
+        # Called boundaries functions
+        fun_name: "classify_biomes"
+        funs: &biome_fun
+                - classify_biomes
 
     # Calculate bluewater boundary
     bluewater: &bluewater
@@ -406,7 +406,7 @@ metric:
         # Called boundaries functions
         fun_name: "validation_table"
         funs:
-            - validation_table                    
+            - validation_table
 
 
 # ---------------------------------------------------------------------------- #

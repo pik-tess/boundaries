@@ -95,9 +95,9 @@ calc_status <- function(boundary,
 
   # List required output files for each boundary
   output_files <- list_outputs(
-    boundary,
-    approach,
-    spatial_scale,
+    metric = boundary,
+    spatial_scale = spatial_scale,
+    approach = approach,
     only_first_filename = FALSE
   )
 
