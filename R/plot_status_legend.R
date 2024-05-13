@@ -1,4 +1,26 @@
-plot_legend <- function() {
+#' Plot the legend for the normalized colors of PB statuses
+#'
+#' Plot a legend for the colors of PB statuses, normalized based on the size of
+#' the increasing risk, for globally aggregated plots,
+#' or spatially distributed maps
+#'
+#' @param filename character string providing file name (including directory
+#' and file extension). Defaults to NULL (return
+#' plot object for further adaptation)
+#'
+#' @param fontsize numeric specifying the size of the font to be used for
+#' legend labels. Default set to 3.
+#'
+#' @examples
+#' \dontrun{
+#' plot_legend(
+#'   filename = "./mylegend.png",
+#' )
+#' }
+#'
+#' @md
+#' @export
+plot_legend <- function(filename = NULL, fontsize = 3) {
 
   # please R CMD check for use of dplyr syntax
   vals <- y <- x <- NULL
@@ -34,8 +56,8 @@ plot_legend <- function() {
     # Use inferno colour scale for colours beyond safe space
     ggplot2::scale_colour_viridis_c(
       option = "inferno",
-      begin = 0,
-      end = 1,
+      begin = 0.15,
+      end = 0.95,
       direction = -1
     ) +
     ggplot2::scale_x_continuous(
@@ -117,7 +139,7 @@ plot_legend <- function() {
       color = "black",
       lineheight = 1,
       # alpha = 0.7,  # Add transparency
-      size = 4  # Increase the size of the labels
+      size = fontsize  # Increase the size of the labels
     ) +
     ggplot2::geom_text(
       ggplot2::aes(
@@ -128,7 +150,7 @@ plot_legend <- function() {
       lineheight = 1,
       color = "black",
       # alpha = 0.7,  # Add transparency
-      size = 4  # Increase the size of the labels
+      size = fontsize  # Increase the size of the labels
     ) +
     ggplot2::geom_text(
       ggplot2::aes(
@@ -139,7 +161,7 @@ plot_legend <- function() {
       ),
       color = "black",
       # alpha = 0.7,  # Add transparency
-      size = 4  # Increase the size of the labels
+      size = fontsize  # Increase the size of the labels
     ) +
     ggplot2::geom_text(
       ggplot2::aes(
@@ -151,7 +173,7 @@ plot_legend <- function() {
       lineheight = 1,
       color = "black",
       # alpha = 0.7,  # Add transparency
-      size = 4  # Increase the size of the labels
+      size = fontsize  # Increase the size of the labels
     ) +
     ggplot2::geom_segment(
       ggplot2::aes(x = 7.25, xend = 7.59, y = 3, yend = 3),
@@ -169,7 +191,7 @@ plot_legend <- function() {
       color = darkgreen,
       fontface = "bold",
       # alpha = 0.7,  # Add transparency
-      size = 4  # Increase the size of the labels
+      size = fontsize  # Increase the size of the labels
     ) +
     ggplot2::geom_segment(
       ggplot2::aes(x = 7.27, xend = 7.575, y = 4, yend = 4),
@@ -186,11 +208,11 @@ plot_legend <- function() {
       ),
       color = orange,
       # alpha = 0.7,  # Add transparency
-      size = 4.2  # Increase the size of the labels
+      size = fontsize  # Increase the size of the labels
     )
 
   final <- ggtrace::with_ggtrace(
-    x = p + ggplot2::theme(aspect.ratio = .52),
+    x = p + ggplot2::theme(aspect.ratio = .095),
     method = ggplot2::Layout$render,
     trace_steps = 5L,
     trace_expr = quote({
@@ -198,15 +220,19 @@ plot_legend <- function() {
         panels,
         grid::editGrob,
         vp = grid::viewport(
-          yscale = c(0.45, 1),
-          xscale = c(0.45, 1)
+          yscale = c(0.46, 0.54),
+          xscale = c(0.55, 0.90)
         )
       )
     }),
     out = "g"
   )
 
-  final
+  if (is.null(filename)) {
+    return(final)
+  } else {
+    ggplot2::ggsave(filename, final, width = 10, height = 2)
+  }
 }
 
 

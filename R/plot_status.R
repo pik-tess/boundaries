@@ -52,25 +52,29 @@ plot_status <- function(
     add_legend = TRUE,
     stylized = FALSE,
     ...) {
-  if (!is.null(filename)) {
-    file_extension <- file_ext(filename)
-    if (!file_extension %in% c("pdf", "png")) {
-      stop("File extension ", dQuote(file_extension), " not supported.")
-    }
-  }
 
   if (attributes(x[[1]])$spatial_scale == "global") {
     if (stylized) {
-      plot_status_stylized(x, filename, add_legend, ...) # nolint:object_usage_linter
+      plot <- plot_status_stylized(x, filename, add_legend, ...) # nolint:object_usage_linter
+      if (is.null(filename)) {
+        return(plot)
+      }
     } else {
-      plot_status_global(x, filename, add_legend, ...) # nolint:object_usage_linter
+      plot <- plot_status_global(x, filename, ...) # nolint:object_usage_linter
+      if (add_legend == TRUE) {
+        print("Note: save legend seperately based on plot_legend function")
+      }
+      if (is.null(filename)) {
+        return(plot)
+      }
     }
   } else {
-    plot_status_maps(x, filename, add_legend, ...) # nolint:object_usage_linter
+    plot <- plot_status_maps(x, filename, ...) # nolint:object_usage_linter
+    if (add_legend == TRUE) {
+      print("Note: save legend seperately based on plot_legend function")
+    }
+    if (is.null(filename)) {
+      return(plot)
+    }
   }
-}
-
-file_ext <- function(x) {
-  pos <- regexpr("\\.([[:alnum:]]+)$", x)
-  ifelse(pos > -1L, substring(x, pos + 1L), "")
 }

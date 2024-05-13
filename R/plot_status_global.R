@@ -1,17 +1,14 @@
 #' Plot the global status of planetary boundaries
 #'
-#' Plot line plots with the PB status over time  for
-#' a scenario LPJmL run and derived planetary boundary statuses
+#' Plot line plots with the PB status over time for
+#' a scenario LPJmL run and derived planetary boundary statuses. Legend can be
+#' plotted seperately based on the plot_legend() function
 #'
 #' @param x list with global output from calc_status
 #'
 #' @param filename character string providing file name (including directory
-#' and file extension). Defaults to NULL (plotting to screen)
-#'
-#' @param add_legend logical, specify whether a legend should be plotted
-#'
-#' @param colors named vector for definition of colors for plotting of
-#'        the safe, increasingnrisk and high risk zone
+#'        and file extension). Defaults to NULL (plotting to screen and
+#'        returning plot object for further customization)
 #'
 #' @param all_in_one boolean, if TRUE, all PB stati will be normalized to 0
 #'         (holocene value) to 1 (pb) and plotted in one panel
@@ -44,17 +41,10 @@
 plot_status_global <- function(
     x,
     filename = NULL,
-    add_legend = TRUE,
-    colors = c(
-      "bluewater" = "#377eb8", #' #4d4bb2', #"#d4d4d4", #
-      "greenwater" = "#4daf4a", #' #41865c', "#b4b4b4", #
-      "lsc" = "#ff7f00", #' #b77f06', "#909090",#
-      "biosphere" = "#e41a1c", # '#b53a0d', "#636363", ##
-      "nitrogen" = "#984ea3"
-    ), #' #8a026a'), "#494848"), #
     all_in_one = FALSE,
     ncol = 2,
     normalize = "safe") {
+
   normalize <- match.arg(normalize, c("safe", "increasing risk"))
 
   if (all_in_one == TRUE) {
@@ -62,11 +52,10 @@ plot_status_global <- function(
   }
 
   # please R CMD check for use of dplyr syntax
-    
-   long_name <- numeric(length(x))
+  long_name <- numeric(length(x))
   for (i in seq_len(length(x))) {
     class(x[[i]]) <- "numeric"
-      long_name[i] <- attr(x[[i]], "long_name")
+    long_name[i] <- attr(x[[i]], "long_name")
   }
   data_tibble <- tidyr::as_tibble(x)
   data_tibble$years <- as.numeric(names(x[[1]]))
@@ -81,38 +70,6 @@ plot_status_global <- function(
                            levels = c("lsc", "biosphere", "bluewater",
                                       "greenwater", "nitrogen"))
 
-  if (length(x) == 1 || all_in_one == TRUE) {
-    n_col <- 1
-  } else {
-    n_col <- ncol
-  }
-  if (!is.null(filename)) {
-    file_extension <- file_ext(filename)
-    width <- 9 * n_col
-    if (all_in_one == FALSE) {
-      height <- 7 * ceiling(length(x) / ncol)
-    } else {
-      height <- 9 * n_col * 0.75
-    }
-    switch(file_extension,
-      `png` = {
-        grDevices::png(filename,
-          width = width,
-          height = height,
-          units = "cm",
-          res = 600,
-          pointsize = 7
-        )
-      },
-      `pdf` = {
-        grDevices::pdf(filename,
-          width = width / 2.54,
-          height = height / 2.54,
-          pointsize = 7
-        )
-      }
-    )
-  }
 
   if (all_in_one) {
     # holocene value
@@ -133,12 +90,11 @@ plot_status_global <- function(
       )
 
     # please R CMD check for use of ggplot syntax
-    values <- pb <- NULL
     if (normalize == "safe") {
       plot <- plot +
         ggplot2::scale_y_continuous(
           limits = c(holo, c(max(data_tibble$values) +
-            max(data_tibble$values) * 0.05)),
+                               max(data_tibble$values) * 0.05)),
           expand = c(0, 0), breaks = c(holo, pl_b),
           labels = c("Holocene", "PB")
         ) +
@@ -146,8 +102,8 @@ plot_status_global <- function(
           ggplot2::aes(
             xmin = -Inf, xmax = Inf,
             ymin = pl_b,
-            ymax = max(values) +
-              max(values) * 0.05
+            ymax = max(data_tibble$values) +
+              max(data_tibble$values) * 0.05
           ),
           pattern = "gradient",
           pattern_fill = yellow,
@@ -156,15 +112,8 @@ plot_status_global <- function(
           col = NA
         )
     } else if (normalize == "increasing risk") {
-      plot <- plot +
-        ggplot2::coord_cartesian(
-          # ylim = c(holo, c(max(data_tibble$values) +
-          #   max(data_tibble$values) * 0.05)),
-          xlim = c(min(data_tibble$years), max(data_tibble$years)),
-          expand = FALSE,
-          clip = "off"
-        )
 
+      # create dataframe for plotting of gradient background filling
       df_inc_risk <- tibble::tibble()
       temp <- tibble::tibble(
         vals = seq(pl_b, (h_risk + (h_risk - pl_b) * 1.5),
@@ -190,10 +139,12 @@ plot_status_global <- function(
         ggplot2::scale_colour_viridis_c(
           option = "inferno",
           direction = 1,
+          begin = 0.05,
+          end = 0.85
         ) +
         ggplot2::scale_y_continuous(
           limits = c(0, c(max(data_tibble$values) +
-            max(data_tibble$values) * 0.05)),
+                            max(data_tibble$values) * 0.05)),
           oob = scales::squish,
           expand = c(0, NA),
           breaks = c(holo, pl_b, h_risk),
@@ -232,15 +183,14 @@ plot_status_global <- function(
         size = 0.5,
         inherit.aes = FALSE
       ) +
-      ggplot2::scale_color_grey(start = 0.3,
-      end = 0.7) +
-      # ggplot2::scale_color_manual(values = colors) +
+      ggplot2::scale_color_grey(start = 0.3, end = 0.7) +
+      # add labels with the long names of the PBs
       # This will force the correct position of the link's right end
       ggrepel::geom_text_repel(
         data = data_tibble %>% dplyr::filter(years == max(years)),
         ggplot2::aes(x = years,
-         y = values,
-         label = gsub("^.*$", " ", long_name)),
+                     y = values,
+                     label = gsub("^.*$", " ", long_name)),
         segment.square = TRUE,
         segment.color = "black", # "#6b6767",
         segment.alpha = 0.8,
@@ -254,15 +204,15 @@ plot_status_global <- function(
         direction = "y",
         min.segment.length = 0.1,
         na.rm = TRUE,
-        xlim = c(max(data_tibble$years) + 3, 
-        max(data_tibble$years) + 11),
+        xlim = c(max(data_tibble$years) + 3,
+                 max(data_tibble$years) + 11),
         ylim = c(0, max(data_tibble$values))
       ) +
       ggrepel::geom_text_repel(
         data = data_tibble %>% dplyr::filter(years == max(years)),
-        ggplot2::aes(x = years, 
-        y = values, 
-        label = paste0("  ", long_name)),
+        ggplot2::aes(x = years,
+                     y = values,
+                     label = paste0("  ", long_name)),
         segment.alpha = 0, # This will 'hide' the link
         segment.square = TRUE,
         box.padding = 0.3,
@@ -294,6 +244,11 @@ plot_status_global <- function(
       ggplot2::theme(aspect.ratio = 1) +
       ggplot2::theme(
         plot.margin = ggplot2::margin(, 3.2, , , "cm")
+      ) +
+      ggplot2::coord_cartesian(
+        xlim = c(min(data_tibble$years), max(data_tibble$years)),
+        expand = FALSE,
+        clip = "off"
       )
   } else {
     # all_in_one = FALSE
@@ -373,7 +328,9 @@ plot_status_global <- function(
       ) +
       ggplot2::scale_colour_viridis_c(
         option = "inferno",
-        direction = -1
+        direction = -1,
+        begin = 0.15,
+        end = 0.95
       ) +
       ggpattern::geom_rect_pattern(
         data = df_bg,
@@ -457,6 +414,31 @@ plot_status_global <- function(
         expand = c(0, 0)
       )
   }
-  print(plot)
-  if (!is.null(filename)) grDevices::dev.off()
+
+  if (length(x) == 1 || all_in_one == TRUE) {
+    n_col <- 1
+  } else {
+    n_col <- ncol
+  }
+
+  if (is.null(filename)) {
+    print(plot)
+    return(plot)
+  } else {
+    width <- 9 * n_col
+    if (all_in_one == FALSE) {
+      height <- 7 * ceiling(length(x) / ncol)
+    } else {
+      height <- 6 * n_col * 0.75
+    }
+    ggplot2::ggsave(
+      filename,
+      plot,
+      width = width,
+      height = height,
+      dpi = 600,
+      units = "cm",
+      pointsize = 7
+    )
+  }
 }

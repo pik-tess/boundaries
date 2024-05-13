@@ -7,7 +7,8 @@
 #' @param x list with global output from calc_status
 #'
 #' @param filename character string providing file name (including directory
-#' and file extension). Defaults to NULL (plotting to screen)
+#' and file extension). Defaults to NULL (plotting to screen and returning ´
+#' plot object)
 #'
 #' @param add_legend logical, specify whether a legend should be plotted
 #'
@@ -43,41 +44,59 @@
 #' @export
 plot_status_stylized <- function(
     x,
-    filename,
+    filename = NULL,
     add_legend = TRUE,
     normalization = "increasing risk",
     high_risk = 3.5,
     background_alpha = 1) {
+
+  if (length(x) < 5) {
+    stop(paste0("x has to have 5 elements (PB statuses for lsc, bluewater, ",
+                "greenwater, biosphere, nitrogen)"))
+  }
+
   if (add_legend) {
-    ggplot2::ggsave(
-      filename,
-      cowplot::ggdraw(plot_legend()) + cowplot::draw_plot(
+    plot <- cowplot::ggdraw() +
+      cowplot::draw_plot(plot_legend(fontsize = 4),
+                         vjust = 0.4,
+                         hjust = 0,
+                         scale = 0.75) +
+      cowplot::draw_plot(
         draw_stylized(
           x,
           normalization = normalization,
           high_risk = high_risk,
           background_alpha = background_alpha
         ),
-        vjust = -0.1,
+        vjust = -0.15,
         hjust = 0.025,
-        scale = 0.85
+        scale = 1
+      ) +
+      ggplot2::theme(
+        plot.background = ggplot2::element_rect(fill = "#ffffff", color = NA)
+      )
+  } else {
+    plot <- cowplot::ggdraw() + cowplot::draw_plot(
+      draw_stylized(
+        x,
+        normalization = normalization,
+        high_risk = high_risk,
+        background_alpha = background_alpha
       ),
-      width = 16,
-      height = 9,
-      dpi = 300
-    )
+      scale = 1
+    ) +
+      ggplot2::theme(
+        plot.background = ggplot2::element_rect(fill = "#ffffff", color = NA)
+      )
+  }
+
+  if (is.null(filename)) {
+    print(plot)
+    return(plot)
   } else {
     ggplot2::ggsave(
       filename,
-      cowplot::ggdraw() + cowplot::draw_plot(
-        draw_stylized(
-          x,
-          normalization = normalization,
-          high_risk = high_risk,
-          background_alpha = background_alpha
-        ),
-        scale = 0.85
-      ),
+      plot,
       width = 16,
       height = 9,
       dpi = 300
@@ -127,6 +146,14 @@ draw_stylized <- function(
       as.integer(
         names(which(x_lvl[[x]] > attributes(x_lvl[[x]])$thresholds$pb)[1])
       )
+    }
+  )
+
+  # get long variable name
+  x_table$longname <- sapply( # nolint:undesirable_function_linter
+    x_table$name,
+    function(x) {
+      attributes(x_lvl[[x]])$long_name
     }
   )
 
@@ -285,8 +312,8 @@ draw_stylized <- function(
     # Use inferno colour scale for colours beyond safe space
     ggplot2::scale_colour_viridis_c(
       option = "inferno",
-      begin = 0,
-      end = 1,
+      begin = 0.15,
+      end = 0.95,
       direction = -1
     )
 
@@ -303,8 +330,8 @@ draw_stylized <- function(
       # Use high inferno colours for colours beyond high risk
       ggplot2::scale_colour_viridis_c(
         option = "inferno",
-        begin = 0,
-        end = 0,
+        begin = 0.15,
+        end = 0.15,
         direction = -1
       )
   } else {
@@ -535,7 +562,7 @@ draw_stylized <- function(
       ggplot2::aes(
         x = x,
         y = max_y + ifelse(max_y >= 3, 1.2, 0.8),
-        label = name
+        label = longname
       ),
       color = "black",
       size = 6 # Increase the size of the labels

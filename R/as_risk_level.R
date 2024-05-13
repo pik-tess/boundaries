@@ -63,13 +63,13 @@ as_risk_level <- function(
           )
 
       } else if (class(thresholds) == "array") {
-        risk_level <- (control_variable - thresholds[[, , "holocene"]]) /
-          (thresholds[[, , "pb"]] - thresholds[[, , "holocene"]])
+        risk_level <- (control_variable - thresholds[, , "holocene"]) /
+          (thresholds[, , "pb"] - thresholds[, , "holocene"])
         attr(risk_level, "thresholds") <-
           list(
             holocene = 0, pb = 1,
-            highrisk = (thresholds[[, , "highrisk"]] - thresholds[[, , "holocene"]]) / # nolint
-              (thresholds[[, , "pb"]] - thresholds[[, , "holocene"]])
+            highrisk = (thresholds[, , "highrisk"] - thresholds[, , "holocene"]) / # nolint
+              (thresholds[, , "pb"] - thresholds[, , "holocene"])
           )
       }
 

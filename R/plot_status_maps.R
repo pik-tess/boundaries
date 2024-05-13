@@ -1,18 +1,25 @@
 #' Plot the global status of planetary boundaries
 #'
 #' Plot global map(s) with the status of planetary boundaries for
-#' a scenario LPJmL run and derived planetary boundary statuses
+#' a scenario LPJmL run and derived planetary boundary statuses. Legend can be
+#' plotted seperately based on the plot_legend() function
 #'
 #' @param x  output object from calc_* with the status of the
 #' control variable for one point in time, incl. pb thresholds as attribute
 #'
 #' @param filename character string providing file name (including directory
-#' and file extension). Defaults to NULL (plotting to screen)
-#'
-#' @param add_legend logical, specify whether a add_legend should be plotted
+#' and file extension). Defaults to NULL (plotting to screen and returning
+#' the ggplot object)
 #'
 #' @param risk_level logical, specify whether the status should be plotted as
-#' risk level. Default set to TRUE
+#' risk level. Default set to TRUE. Normalization options can be set with
+#' `normalize`
+#'
+#' @param normalize character string to define normalization, either "safe"
+#' (normalized from holocene to pb = the safe zone) or
+#' "increasing risk" (normalized from pb to high risk level =
+#' increasing risk zone if the pb status is > pb, otherwise normalized
+#' from holocene to pb).
 #'
 #' @param projection character string defining the projection, default set to
 #' "+proj=robin"
@@ -26,7 +33,6 @@
 #'  plot_status_maps(
 #'   filename = "./my_boundary_status.png",
 #'   x = calc_output
-#'   add_legend = FALSE
 #'   grid_path = "/path/to/gridfile.bin.json"
 #' )
 #' }
@@ -37,9 +43,9 @@
 plot_status_maps <- function(
   x,
   filename = NULL,
-  add_legend = TRUE,
   risk_level = TRUE,
   projection = "+proj=robin",
+  normalize = "increasing risk",
   ncol = 2,
   grid_path = NULL
 ) {
@@ -48,52 +54,20 @@ plot_status_maps <- function(
     stop("x elements must be of class control variable")
   }
 
-  # plot settings
-  if (length(x) == 1) {
-    ncol <- 1
-  }
-  nrow <- ceiling(length(x) / ncol)
-  if (!risk_level) {
-    nrow <- nrow + 1
-  }
-  leg_adj <- ifelse(add_legend, 2, 0)
-
+  # create empty raster for plotting
   plot_nat <- to_raster(lpjml_array = array(0, length(x[[which(!is.na(x))[1]]])), # nolint
                         projection = projection,
                         grid_path = grid_path)
 
-
-  if (!is.null(filename)) {
-    file_extension <- file_ext(filename) # nolint:object_usage_linter
-    switch(file_extension,
-      `png` = {
-        grDevices::png(
-          filename,
-          width = 8 * ncol,
-          height = 4 * nrow + leg_adj,
-          units = "cm",
-          res = 600,
-          pointsize = 7
-        )
-      },
-      `pdf` = {
-        grDevices::pdf(
-          filename,
-          width = 8 * ncol / 2.54,
-          height = (4 * nrow + leg_adj) / 2.54,
-          pointsize = 7
-        )
-      }
-    )
-  }
-
-  na_col <- c("grey92")
+  # define color for cells where PB definition does not apply
+  na_col <- c("#ebebeb")
 
   # get country outlines
   world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
 
   plot_list <- list()
 
+  # define order or PBs to be plotted
   pbs_ordered <- factor(names(x),
     levels = c("lsc", "biosphere", "bluewater", "greenwater", "nitrogen")
   ) %>%
@@ -105,7 +79,7 @@ plot_status_maps <- function(
       # convert lpjml vector with continuous control variable status to risk
       # level
       plot_data <- x[[i]] %>%
-        as_risk_level(type = "continuous", normalize = "increasing risk")
+        as_risk_level(type = "continuous", normalize = normalize)
     } else {
       plot_data <- x[[i]]
       plot_data[plot_data > quantile(plot_data, 0.95, na.rm = TRUE)] <-
@@ -125,28 +99,36 @@ plot_status_maps <- function(
     if (risk_level) {
       #combine NA cells with cells in safe zone
       plot_nat[plotvar < 1] <- 1
+      levels(plot_nat) <- data.frame(id = c(0:1),
+                                     name = c("no value", "safe"))
+      terra::is.factor(plot_nat)
+
+      # define color map
+      coltb <- data.frame(value = c(0, 1), col = c(na_col, green))
+      terra::coltab(plot_nat) <- coltb
 
       # prepare plotting of values > pb threshold
+      high_risk <- 3.5 # define maximum value = end of color scale
+
       plotvar_risk <- plotvar
       plotvar_risk[plotvar_risk <= 1] <- NA
-      plotvar_risk[plotvar_risk > 3.5] <- 3.5
+      plotvar_risk[plotvar_risk > high_risk] <- high_risk
 
       # define viridis color scale end value, depending on max value
       max_value <- terra::minmax(plotvar_risk)[2]
-      end_value <- max_value / 3.5
+      end_value <- max_value / high_risk
       if (end_value > 1) {
         end_value <- 1
       }
+      end_value <- 0.85 * end_value #(0.85 = end of viridis scale)
 
       p <- ggplot2::ggplot() +
-        ggspatial::layer_spatial(data = plot_nat) +
-        ggplot2::scale_fill_continuous(na.value = NA,
-                                       low = na_col,
-                                       high = green) + #"#7ac4a7"
+        tidyterra::geom_spatraster(data = plot_nat) +
         ggnewscale::new_scale_fill() +
-        ggspatial::layer_spatial(plotvar_risk) +
+        tidyterra::geom_spatraster(data = plotvar_risk) +
         ggplot2::scale_fill_viridis_c(na.value = NA, direction = -1,
-                                      option = "A", begin = 1 - end_value) +
+                                      option = "A", begin = 1 - end_value,
+                                      end = 0.95) +
         ggplot2::theme(panel.background = ggplot2::element_rect(fill = "white"),
                        panel.grid.major = ggplot2::element_line(linewidth = 0.1,
                                                                 color = "#8d8b8b"), # nolint:line_length_linter
@@ -161,16 +143,19 @@ plot_status_maps <- function(
         ggplot2::xlab(attr(x[[i]], "long_name"))
 
     } else {
+      # plotting of continous control variable without conversion to risk level
+      levels(plot_nat) <- data.frame(id = c(0),
+                                     name = c("no value"))
+      terra::is.factor(plot_nat)
+
+      # define color map
+      coltb <- data.frame(value = c(0), col = c(na_col))
+      terra::coltab(plot_nat) <- coltb
+
       p <- ggplot2::ggplot() +
-        ggspatial::layer_spatial(data = plot_nat) +
-        ggplot2::scale_fill_continuous(
-          na.value = NA,
-          low = na_col,
-          high = na_col,
-          guide = "none"
-        ) +
+        tidyterra::geom_spatraster(data = plot_nat) +
         ggnewscale::new_scale_fill() +
-        ggspatial::layer_spatial(plotvar) +
+        tidyterra::geom_spatraster(data = plotvar) +
         ggplot2::scale_fill_viridis_c(na.value = NA, name = legend_title,
                                       option = "D", direction = -1, end = 0.9) +
         ggplot2::guides(fill = ggplot2::guide_colourbar(title.position = "top",
@@ -201,13 +186,34 @@ plot_status_maps <- function(
     plot_list[[i]] <- p
   }
 
-  if (add_legend && risk_level) {
-    plot_list["legend"] <- plot_legend() # nolint:object_usage_linter
+  # define nrows and ncols for arranging maps
+  if (length(x) == 1) {
+    ncol <- 1
+  }
+  nrow <- ceiling(length(x) / ncol)
+  if (!risk_level) {
+    nrow <- nrow + 1
   }
 
-  gridExtra::grid.arrange(grobs = plot_list, ncol = ncol)
+  # arrange maps
+  plot <- ggpubr::as_ggplot(gridExtra::arrangeGrob(grobs = plot_list,
+                                                     ncol = ncol))
 
-  if (!is.null(filename)) grDevices::dev.off()
+  if (!is.null(filename)) {
+    ggplot2::ggsave(
+      filename,
+      plot,
+      width = 8 * ncol,
+      height = 4 * nrow,
+      dpi = 600,
+      units = "cm",
+      pointsize = 7
+    )
+  } else {
+    # plot maps to screen
+    print(plot)
+    return(plot)
+  }
 }
 
 

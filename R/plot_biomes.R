@@ -14,6 +14,13 @@
 #'
 #' @examples
 #' \dontrun{
+#'
+#' biomes <- classify_biomes(
+#'  config_reference = path_reference,
+#'  time_span_reference = as.character(2008:2017),
+#'  savanna_proxy = list(vegc = 7500)
+#' )
+#'
 #' plot_biomes(
 #'   x = biomes,
 #'   filename = "/p/projects/open/Johanna/R/biomes.pfd"
@@ -68,28 +75,6 @@ plot_biomes <- function(x,
   # get country outlines
   world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
 
-  if (!is.null(filename)) {
-    file_extension <- file_ext(filename) # nolint:object_usage_linter
-    switch(file_extension,
-      `png` = {
-        grDevices::png(filename,
-          width = 21,
-          height = 12,
-          units = "cm",
-          res = 600,
-          pointsize = 7
-        )
-      },
-      `pdf` = {
-        grDevices::pdf(filename,
-          width = 21 / 2.54,
-          height = 12 / 2.54,
-          pointsize = 7
-        )
-      }
-    )
-  }
-
   p <- ggplot2::ggplot() +
     tidyterra::geom_spatraster(data = biomes_lpjml) +
     ggplot2::theme(
@@ -110,6 +95,20 @@ plot_biomes <- function(x,
     ggplot2::ylim(terra::ext(biomes_lpjml)[3], terra::ext(biomes_lpjml)[4]) +
     ggplot2::guides(fill = ggplot2::guide_legend(nrow = 5, byrow = FALSE))
 
-  print(p)
-  if (!is.null(filename)) grDevices::dev.off()
+  if (!is.null(filename)) {
+    ggplot2::ggsave(
+      filename,
+      p,
+      width = 21,
+      height = 12,
+      dpi = 600,
+      units = "cm",
+      pointsize = 7
+    )
+  } else {
+    # plot maps to screen
+    print(p)
+    return(p)
+  }
+
 }
