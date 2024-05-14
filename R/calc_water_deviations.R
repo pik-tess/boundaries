@@ -322,10 +322,11 @@ calc_water_deviations <- function(files_scenario,
     threshold_attr[, , "holocene"] <- area_holocene
 
     attr(control_variable, "thresholds") <- threshold_attr
-  }
 
   # set ice areas to NA
   control_variable[, is.na(icefree_area[, 1, 1])] <- NA
+
+  }
 
   attr(control_variable, "control_variable") <-
     "area with wet/dry departures"
@@ -404,21 +405,24 @@ calc_departures <- function(
 
     dim_remain <- names(dim(dry))[names(dim(dry)) != "cell"]
     control_variable$dry <- apply(
-      (dry * terr_area) / sum(terr_area) * 100,
+      (dry * terr_area) / sum(terr_area, na.rm = TRUE) * 100,
       dim_remain,
-      sum
+      sum,
+      na.rm = TRUE
     )
     control_variable$wet <- apply(
-      (wet * terr_area) / sum(terr_area) * 100,
+      (wet * terr_area) / sum(terr_area, na.rm = TRUE) * 100,
       dim_remain,
-      sum
+      sum,
+      na.rm = TRUE
     )
     wet_or_dry <- dry + wet
     wet_or_dry[wet_or_dry > 1] <- 1
     control_variable$wet_or_dry <- apply(
-      (wet_or_dry * terr_area) / sum(terr_area) * 100,
+      (wet_or_dry * terr_area) / sum(terr_area, na.rm = TRUE) * 100,
       dim_remain,
-      sum
+      sum,
+      na.rm = TRUE
     )
   }
 

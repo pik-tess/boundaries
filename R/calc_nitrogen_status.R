@@ -352,7 +352,6 @@ calc_nitrogen_status <- function(
 
     terr_area <- terr_area[, , 1]
 
-    browser()
     # calc n surplus
     nsurplus <- (fert_mg + bnf + dep + flux_estabn - harvest) *
       terr_area * 10^-12
