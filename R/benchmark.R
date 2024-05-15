@@ -9,24 +9,26 @@
 #'
 #' @param config_reference character string. See config_scenario. For the
 #' reference run
+# TODO this description is a bit cryptic. leave it like this?
 #'
 #' @param time_span_scenario time span to be used for the scenario run and
 #' parallel PNV run, defined as a character string,
 #' e.g. `as.character(1982:2011)`
 #'
-#' @param time_span_reference time span to be used for the scenario run, defined
+#' @param time_span_reference time span to be used for the reference run, defined
 #' as an integer vector, e.g. `1901:1930`. Can differ in offset and length from
 #' `time_span_scenario`! If `NULL` value of `time_span_scenario` is used
 #'
-#' @param path_baseline character string. character string with path to outputs
-#' for the baseline run, file names are taken from files scenario.
+#' @param path_baseline character string for path to outputs
+#' for the baseline run, file names are taken from files scenario
 #'
-#' @param table_path character string. File path to save csv file with
-#' comparison between lpjml values and literature
+#' @param table_path character string for file  path to save the output,  .csv file
+#'
+#' @param gridbased logical, set to TRUE for gridbased pft outputs
 #'
 #' @param ... arguments to be passed to [calc_status]
 #'
-#' @return  table (data frame or csv or both) with comparison between lpjml values and literature ranges
+#' @return  table with comparison between lpjml values and literature ranges
 #'
 #' @examples
 #' \dontrun{
@@ -35,7 +37,6 @@
 #'   timeframe = as.character(2010:2017)
 #' )
 #' }
-#' TODO: options in param?
 #'
 #' @md
 #' @export
@@ -43,20 +44,16 @@
 # TODO: check parameter descriptions
 
 validation_table <- function(
-  config_scenario,
-  config_reference,
-  time_span_scenario,
-  time_span_reference,
-  path_baseline,
-  table_path,
-  ...
-) {
-
+    config_scenario,
+    config_reference,
+    time_span_scenario,
+    time_span_reference,
+    path_baseline,
+    table_path,
+    gridbased = TRUE,
+    ...) {
   config_scenario <- lpjmlkit::read_config(config_scenario)
   config_reference <- lpjmlkit::read_config(config_reference)
-
-  # are pft specific outputs grid or stand scaled?
-  gridbased <- config_scenario$grid_scaled
 
   if (!all(time_span_scenario %in% get_sim_time(config_scenario))) {
     stop("Time span not available in scenario run.")
@@ -120,7 +117,8 @@ validation_table <- function(
 
   # global cropland area
   indices_crops <- grep("grass|tree", names(area_cft),
-                        ignore.case = TRUE, invert = TRUE)
+    ignore.case = TRUE, invert = TRUE
+  )
   crop_area <- sum(area_cft[indices_crops])
 
   # global pasture area
@@ -235,7 +233,7 @@ validation_table <- function(
     aggregate = list(
       year = mean
     )
-  )  %>% global_sum(area = terr_area)
+  ) %>% global_sum(area = terr_area)
 
   # For total_dep
   total_dep <- aggregate_lpjml_output(files_scenario$ndepo_agr,
@@ -322,26 +320,34 @@ validation_table <- function(
 
   # include "rainfed" and exclude "grass", "tree", and "other" in crop indices
   crop_ids_explicit_rainfed <- grep("^(?!.*(grass|tree|other)).*rainfed.*$",
-  names(area_cft), ignore.case = TRUE, perl = TRUE)
+    names(area_cft),
+    ignore.case = TRUE, perl = TRUE
+  )
   # #include "irig" and exclude "grass", "tree", and "other" in crop indices
   crop_ids_explicit_irrig <- grep("^(?!.*(grass|tree|other)).*irrig.*$",
-  names(area_cft), ignore.case = TRUE, perl = TRUE)
+    names(area_cft),
+    ignore.case = TRUE, perl = TRUE
+  )
 
   for (c in 1:length(crop_ids_explicit_rainfed)) {
     crop_fm_prod[, c] <- (harvest_dm[, crop_ids_explicit_rainfed[c]] + harvest_dm[, crop_ids_explicit_irrig[c]]) *
       dm2fm[c] / 1000 # kg FM
   }
 
-  crop_sum <- sum(crop_fm_prod) / 10^9 # in Mt, 1 Mt = 10^9 kg #TODO check if unit is correct
+  crop_sum <- sum(crop_fm_prod) / 10^9 # in Mt, 1 Mt = 10^9 kg
 
   ##### combine simulated values with literature ###############################
 
-  # lists to match literature character strings with the here computed variables 
-  var_match <- list("crop", "irrig", "pasture", "forest", "def", "withdr",
-                    "cons", "leaching", "leaching from crop",
-                    "efficiency", "surplus", "npp", "prod")
-  units_match <- list("Mha", "Mha", "Mha", "Mha", "%", "km3", "km3", "Tg N yr-1",
-                      "Tg N yr-1", "%", "Tg N yr-1", "PgC", "Gt")
+  # lists to match literature character strings with the here computed variables
+  var_match <- list(
+    "crop", "irrig", "pasture", "forest", "def", "withdr",
+    "cons", "leaching", "leaching from crop",
+    "efficiency", "surplus", "npp", "prod"
+  )
+  units_match <- list(
+    "Mha", "Mha", "Mha", "Mha", "%", "km3", "km3", "Tg N yr-1",
+    "Tg N yr-1", "%", "Tg N yr-1", "PgC", "Gt"
+  )
   calc_var <- list(
     crop_area, irrig_area, pasture_area, forest_area, deforest_share, wd, cons,
     leaching, leaching_agr, nue, nsurplus, npp_lu, crop_sum
@@ -349,7 +355,8 @@ validation_table <- function(
 
   # load literature table
   ref_table <- system.file("extdata", "global_validation_data.csv",
-                           package = "boundaries") %>%
+    package = "boundaries"
+  ) %>%
     read.csv2()
 
   # insert lpjml values in table (pb status variables later)
@@ -358,43 +365,59 @@ validation_table <- function(
 
   # calculate PB status
 
-  pb_status <- calc_status(
-    boundary = c("lsc", "greenwater", "bluewater", "nitrogen", "biosphere"),
-    config_scenario = path_scenario,
-    config_reference = path_reference,
-    time_span_scenario = time_span_scenario,
-    time_span_reference = time_span_reference,
-    spatial_scale = "global",
-    gridbased = gridbased,
-    path_baseline = path_baseline,
-    ...
-  )
+  # pb_status <- calc_status(
+  #   boundary = c("lsc", "greenwater", "bluewater", "nitrogen", "biosphere"),
+  #   config_scenario = path_scenario,
+  #   config_reference = path_reference,
+  #   time_span_scenario = time_span_scenario,
+  #   time_span_reference = time_span_reference,
+  #   spatial_scale = "global",
+  #   gridbased = gridbased,
+  #   path_baseline = path_baseline,
+  #   ...
+  # )
+  # save(pb_status, file = "/p/projects/open/Caterina/benchmarking/scripts/data/pb_status.RData")
 
   # list of pb variables to insert in the table
-  pb_list <- list("lsc", "greenwater", "bluewater", "nitrogen", "biosphere")
+  pb_list <- list(
+    "lsc", "greenwater", "bluewater", # "nitrogen",
+    "biosphere"
+  )
 
   # insert values from calc_status in the table
   ref_table <- evaluate_pb_status(ref_table, pb_list, pb_status)
 
   # add column for normalized error values
   ref_table <- ref_table %>%
-    dplyr::mutate(norm_error = signif((lpjml_value - value) / value, digits = 2))
+    dplyr::mutate(norm_error = signif((lpjml_value - as.numeric(value)) / as.numeric(value), digits = 2))
+  # dplyr::mutate(norm_error = signif((lpjml_value - value) / value, digits = 2))
 
   # create summary table
   summary_tbl <- ref_table %>%
     dplyr::group_by(variable) %>%
     dplyr::mutate(
-      range = paste(range.lower, "-", range.upper),
+      value_range = paste(range.lower, "-", range.upper),
+      time_range = ifelse(!is.na(X.lower.), paste(X.lower., "-", X.upper.), "")
+    ) %>%
+    dplyr::mutate(
+      assessment_time = ifelse(
+        !is.na(year) & year != "",
+        as.character(year),
+        as.character(time_range)
+      ),
       literature.range = paste(
         ifelse(
           !is.na(value),
           as.character(value),
-          as.character(range)
+          as.character(value_range)
         ),
-        paste("[", year, "] (", Author.s., year.of.publication, ")")
+        paste(
+          "[", as.character(assessment_time), "] (",
+          Author.s., year.of.publication, ")"
+        )
       )
     ) %>%
-    dplyr::select(boundary, variable, lpjml_value, literature.range, unit) %>%
+    dplyr::select(boundary, variable, lpjml_value, literature.range, units) %>%
     dplyr::mutate(
       literature.range = paste0(literature.range, collapse = "; ")
     ) %>%
@@ -425,11 +448,11 @@ aggregate_lpjml_output <- function(
 }
 
 
- # conversion from g/m2 to Tg
- global_sum <- function(output, area = terr_area) {
-   sum_result <- sum(output * area) * 10^-12
-   return(sum_result)
- }
+# conversion from g/m2 to Tg
+global_sum <- function(output, area = terr_area) {
+  sum_result <- sum(output * area) * 10^-12
+  return(sum_result)
+}
 
 # insert computed variables in literature table through matching by variable and unit patterns,
 # make sure structure of original .csv table is mantained
