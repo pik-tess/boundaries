@@ -352,7 +352,7 @@ plot_status_global <- function(
       ymin = holocene,
       ymax = upper_lim + 0.05 * upper_lim
     )
-    df_scales <- split(df_scales, df_scales$pb)
+    df_scales <- split(df_scales, df_scales$pb, drop = TRUE)
     scales <- lapply(df_scales, function(x) {
       ggplot2::scale_y_continuous(
         limits = c(x$ymin, x$ymax),
