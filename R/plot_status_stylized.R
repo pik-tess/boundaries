@@ -2,7 +2,8 @@
 #'
 #' Plot time series of boundaries into iconic polar boundaries plot only
 #' focussing on the terrestrial boundaries (half-circle). Wedges are
-#' scaled and normalized according to each boundary.
+#' scaled and normalized based on the "increasing risk" method according to
+#' each boundary (see [`as_risk_level()`] for details). 
 #'
 #' @param x list with global output from calc_status
 #'
@@ -12,9 +13,8 @@
 #'
 #' @param add_legend logical, specify whether a legend should be plotted
 #'
-#' @param normalization see [`as_risk_level()`]
-#'
-#' @param high_risk numeric, specify the value for high risk limit (default 3.5)
+#' @param high_risk numeric, specify the normalized PB status value for the
+#' upper end of the risk color scale (default 3.5)
 #'
 #' @param background_alpha numeric, specify the alpha value for the background
 #' (default 1 - transparent)
@@ -46,7 +46,6 @@ plot_status_stylized <- function(
     x,
     filename = NULL,
     add_legend = TRUE,
-    normalization = "increasing risk",
     high_risk = 3.5,
     background_alpha = 1) {
 
@@ -64,7 +63,6 @@ plot_status_stylized <- function(
       cowplot::draw_plot(
         draw_stylized(
           x,
-          normalization = normalization,
           high_risk = high_risk,
           background_alpha = background_alpha
         ),
@@ -79,7 +77,6 @@ plot_status_stylized <- function(
     plot <- cowplot::ggdraw() + cowplot::draw_plot(
       draw_stylized(
         x,
-        normalization = normalization,
         high_risk = high_risk,
         background_alpha = background_alpha
       ),
@@ -107,14 +104,13 @@ plot_status_stylized <- function(
 
 draw_stylized <- function(
     x,
-    normalization = "increasing risk",
     high_risk = 3.5,
     background_alpha = 1) {
   # Convert control variable to risk_level and normalize for plotting
   x_lvl <- as_risk_level(
     x,
     type = "continuous",
-    normalize = normalization
+    normalize = "increasing risk"
   )
 
   # quick fix to not allow na, negative, or values > 3

@@ -12,14 +12,11 @@
 #' the ggplot object)
 #'
 #' @param risk_level logical, specify whether the status should be plotted as
-#' risk level. Default set to TRUE. Normalization options can be set with
-#' `normalize`
+#' risk level. Default set to TRUE.
 #'
-#' @param normalize character string to define normalization, either "safe"
-#' (normalized from holocene to pb = the safe zone) or
-#' "increasing risk" (normalized from pb to high risk level =
-#' increasing risk zone if the pb status is > pb, otherwise normalized
-#' from holocene to pb).
+#' @param high_risk numeric, specify the normalized PB status value for the
+#' upper end of the risk color scale (default 3.5). Only relevant if risk_level
+#' is set to TRUE
 #'
 #' @param projection character string defining the projection, default set to
 #' "+proj=robin"
@@ -45,7 +42,7 @@ plot_status_maps <- function(
   filename = NULL,
   risk_level = TRUE,
   projection = "+proj=robin",
-  normalize = "increasing risk",
+  high_risk = 3.5,
   ncol = 2,
   grid_path = NULL
 ) {
@@ -79,7 +76,7 @@ plot_status_maps <- function(
       # convert lpjml vector with continuous control variable status to risk
       # level
       plot_data <- x[[i]] %>%
-        as_risk_level(type = "continuous", normalize = normalize)
+        as_risk_level(type = "continuous", normalize = "increasing risk")
     } else {
       plot_data <- x[[i]]
       plot_data[plot_data > quantile(plot_data, 0.95, na.rm = TRUE)] <-
@@ -108,8 +105,6 @@ plot_status_maps <- function(
       terra::coltab(plot_nat) <- coltb
 
       # prepare plotting of values > pb threshold
-      high_risk <- 3.5 # define maximum value = end of color scale
-
       plotvar_risk <- plotvar
       plotvar_risk[plotvar_risk <= 1] <- NA
       plotvar_risk[plotvar_risk > high_risk] <- high_risk
@@ -153,14 +148,15 @@ plot_status_maps <- function(
       terra::coltab(plot_nat) <- coltb
 
       p <- ggplot2::ggplot() +
-        tidyterra::geom_spatraster(data = plot_nat) +
+        tidyterra::geom_spatraster(data = plot_nat, show.legend = FALSE) +
         ggnewscale::new_scale_fill() +
         tidyterra::geom_spatraster(data = plotvar) +
         ggplot2::scale_fill_viridis_c(na.value = NA, name = legend_title,
                                       option = "D", direction = -1, end = 0.9) +
         ggplot2::guides(fill = ggplot2::guide_colourbar(title.position = "top",
                                                         title.hjust = 0.5,
-                                                        barwidth = 15)) +
+                                                        barwidth = 11,
+                                                        barheight = 0.5)) +
         ggplot2::theme(
           panel.background = ggplot2::element_rect(fill = "#ffffff"),
           panel.grid.major = ggplot2::element_line(linewidth = 0.1,
@@ -197,7 +193,10 @@ plot_status_maps <- function(
 
   # arrange maps
   plot <- ggpubr::as_ggplot(gridExtra::arrangeGrob(grobs = plot_list,
-                                                     ncol = ncol))
+                                                   ncol = ncol)) +
+    ggplot2::theme(
+      plot.background = ggplot2::element_rect(fill = "#ffffff", color = NA)
+    )
 
   if (!is.null(filename)) {
     ggplot2::ggsave(

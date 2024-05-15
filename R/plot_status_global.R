@@ -10,29 +10,25 @@
 #'        and file extension). Defaults to NULL (plotting to screen and
 #'        returning plot object for further customization)
 #'
-#' @param all_in_one boolean, if TRUE, all PB stati will be normalized to 0
-#'         (holocene value) to 1 (pb) and plotted in one panel
+#' @param all_in_one boolean, if TRUE, all PB stati will be normalized and
+#'        plotted in one panel
 #'
 #' @param ncol number of plot columns (only relevant if more than one pb is
 #'        plotted and all_in_one = FALSE)
 #'
-#' @param normalize character string to define normalization, either "safe"
-#'        (normalized from holocene to pb = the safe zone) or
-#'        "increasing risk" (normalized from pb to high risk level =
-#'        increasing risk zone if the pb status is > pb, otherwise normalized
-#'        from holocene to pb). Only used if all_on_one set to TRUE
+#' @param normalize see [`as_risk_level()`] for details. Default set to
+#'        "increasing risk". Only relevant if all_in_one = TRUE
+#'
+#' @param high_risk numeric, specify the normalized PB status value for the
+#' upper end of the risk color scale (default 3.5)
 #'
 #' @examples
 #' \dontrun{
-#' plot_status(
+#' plot_status_global(
 #'   filename = "./my_boundary_status.png",
-#'   x = list(
-#'     "land system change" = lsc_status,
-#'     "nitrogen" = nitrogen_status,
-#'     "bluewater" = water_status
-#'   ),
-#'   legend = FALSE,
-#'   bg_col = NA
+#'   x = status_output,
+#'   all_in_one = FALSE,
+#'   ncol = 2
 #' )
 #' }
 #'
@@ -43,7 +39,8 @@ plot_status_global <- function(
     filename = NULL,
     all_in_one = FALSE,
     ncol = 2,
-    normalize = "safe") {
+    normalize = "increasing risk",
+    high_risk = 3.5) {
 
   normalize <- match.arg(normalize, c("safe", "increasing risk"))
 
@@ -115,8 +112,9 @@ plot_status_global <- function(
 
       # create dataframe for plotting of gradient background filling
       df_inc_risk <- tibble::tibble()
+      factor <- high_risk - 2 # 2 = upper end of increasing risk scale
       temp <- tibble::tibble(
-        vals = seq(pl_b, (h_risk + (h_risk - pl_b) * 1.5),
+        vals = seq(pl_b, (h_risk + (h_risk - pl_b) * factor),
           length.out = 500 # adjusted to not affect color scale
         )
       ) %>%
@@ -286,11 +284,12 @@ plot_status_global <- function(
     # create dataframe for pb-specific background filling in the increasing risk
     # zone
     df_inc_risk <- tibble::tibble()
+    factor <- high_risk - 2 # 2 = upper end of increasing risk scale
     for (i in seq_len(length(x))) {
       temp <- tibble::tibble(
         vals = seq(
           (highrisk_thresh[i] +
-            (highrisk_thresh[i] - pb_thresh[i]) * 1.5), pb_thresh[i],
+            (highrisk_thresh[i] - pb_thresh[i]) * factor), pb_thresh[i],
           length.out = 500
         )
       ) %>%
@@ -337,7 +336,7 @@ plot_status_global <- function(
         ggplot2::aes(
           xmin = min_years,
           xmax = max_years,
-          ymin = highrisk_thresh + (highrisk_thresh - pb_thresh) * 1.5
+          ymin = highrisk_thresh + (highrisk_thresh - pb_thresh) * factor
         ), # nolint
         ymax = Inf,
         pattern = "gradient",
