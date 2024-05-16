@@ -324,13 +324,14 @@ metric:
                       <<: [*biome_output, *stenzel2023_biosphere_output]
                     threshold:
                       <<: *stenzel2023_biosphere_threshold
-
+                    unit: "%"
             grid:
                 stenzel2023:
                     output:
                       <<: *stenzel2023_biosphere_output
                     threshold:
                       <<: *stenzel2023_biosphere_threshold
+                    unit: "%"
 
         # Called boundaries functions
         fun_name: "calc_biosphere_status"
