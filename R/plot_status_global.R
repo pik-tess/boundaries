@@ -137,7 +137,7 @@ plot_status_global <- function(
           option = "inferno",
           direction = 1,
           begin = 0.05,
-          end = 0.85
+          end = 0.9
         ) +
         ggplot2::scale_y_continuous(
           limits = c(0, c(max(data_tibble$values) +
@@ -327,7 +327,7 @@ plot_status_global <- function(
       ggplot2::scale_colour_viridis_c(
         option = "inferno",
         direction = -1,
-        begin = 0.15,
+        begin = 0.1,
         end = 0.95
       ) +
       ggpattern::geom_rect_pattern(

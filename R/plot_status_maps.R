@@ -115,7 +115,7 @@ plot_status_maps <- function(
       if (end_value > 1) {
         end_value <- 1
       }
-      end_value <- 0.85 * end_value #(0.85 = end of viridis scale)
+      end_value <- 0.9 * end_value #(0.9 = end of viridis scale)
 
       p <- ggplot2::ggplot() +
         tidyterra::geom_spatraster(data = plot_nat) +

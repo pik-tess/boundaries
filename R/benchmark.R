@@ -365,22 +365,21 @@ validation_table <- function(
 
   # calculate PB status
 
-  # pb_status <- calc_status(
-  #   boundary = c("lsc", "greenwater", "bluewater", "nitrogen", "biosphere"),
-  #   config_scenario = path_scenario,
-  #   config_reference = path_reference,
-  #   time_span_scenario = time_span_scenario,
-  #   time_span_reference = time_span_reference,
-  #   spatial_scale = "global",
-  #   gridbased = gridbased,
-  #   path_baseline = path_baseline,
-  #   ...
-  # )
-  # save(pb_status, file = "/p/projects/open/Caterina/benchmarking/scripts/data/pb_status.RData")
+  pb_status <- calc_status(
+    boundary = c("lsc", "greenwater", "bluewater", "nitrogen", "biosphere"),
+    config_scenario = path_scenario,
+    config_reference = path_reference,
+    time_span_scenario = time_span_scenario,
+    time_span_reference = time_span_reference,
+    spatial_scale = "global",
+    gridbased = gridbased,
+    path_baseline = path_baseline,
+    ...
+  )
 
   # list of pb variables to insert in the table
   pb_list <- list(
-    "lsc", "greenwater", "bluewater", # "nitrogen",
+    "lsc", "greenwater", "bluewater", "nitrogen",
     "biosphere"
   )
 
@@ -417,7 +416,7 @@ validation_table <- function(
         )
       )
     ) %>%
-    dplyr::select(boundary, variable, lpjml_value, literature.range, units) %>%
+    dplyr::select(boundary, variable, lpjml_value, literature.range, unit) %>%
     dplyr::mutate(
       literature.range = paste0(literature.range, collapse = "; ")
     ) %>%
