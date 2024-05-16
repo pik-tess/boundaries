@@ -430,6 +430,36 @@ calc_departures <- function(
   return(control_variable)
 }
 
+# calculate the baseline quantiles
+# calc_baseline <- function(file_reference, approach) {
+# 
+#   if (approach == "wang-erlandsson2022") {
+#     q5_base <- matrixStats::rowQuantiles(
+#       apply(file_reference, c("cell", "year"), min),
+#       probs = c(0.05)
+#     )
+#     q95_base <- matrixStats::rowQuantiles(
+#       apply(file_reference, c("cell", "year"), max),
+#       probs = c(0.95)
+#     )
+#     quants <- list(q5 = q5_base, q95 = q95_base)
+# 
+#   } else if (approach == "porkka2024") {
+#     quants_array <- apply(
+#       file_reference,
+#       c("month", "year"),
+#       quantile,
+#       probs = c(0.05, 0.95)
+#     )
+#     quants <- list(
+#       q5 = abind::asub(quants_array, idx = 1, dim = 1),
+#       q95 = abind::asub(quants_array, idx = 2, dim = 1)
+#     )
+#   }
+# 
+#   return(quants)
+# }
+
 
 # quantile functions
 q5  <- function(x) stats::quantile(x, probs = 0.05, na.rm = TRUE)
@@ -456,6 +486,7 @@ calc_baseline <- function(file_reference, approach) {
 
   return(quants)
 }
+
 
 # calculate ice free area, return array with area per cell, cells with
 # ice and rock are set to NA
@@ -486,7 +517,7 @@ calc_icefree_area <- function(files_path, time_span, spatial_subset) {
   temp <- {
     lpjmlkit::read_io(
       files_path$temp,
-      subset = list(year = time_span),
+      subset = list(year = time_span[1]),
       silent = TRUE
     ) %>%
       conditional_subset(spatial_subset) %>%

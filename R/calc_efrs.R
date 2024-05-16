@@ -143,7 +143,7 @@ calc_efrs <- function(x,
 
       } else {
         stop(
-          "Method \"Q90Q50\" is not supported for time_aggregation_args ",
+          "Approach \"Q90Q50\" is not supported for time_aggregation_args ",
           "being defined"
         )
       }

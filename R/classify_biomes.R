@@ -181,7 +181,7 @@ classify_biomes <- function(config_reference = NULL, # nolint:cyclocomp_linter
   temp %<-% {
     lpjmlkit::read_io(
       files_reference$temp,
-      subset = list(year = time_span_reference),
+      subset = list(year = time_span_reference[1]),
       silent = TRUE
     ) %>%
       conditional_subset(config_args$spatial_subset) %>%
