@@ -122,7 +122,7 @@ plot_status_maps <- function(
         ggnewscale::new_scale_fill() +
         tidyterra::geom_spatraster(data = plotvar_risk) +
         ggplot2::scale_fill_viridis_c(na.value = NA, direction = -1,
-                                      option = "A", begin = 1 - end_value,
+                                      option = "inferno", begin = 1 - end_value,
                                       end = 0.95) +
         ggplot2::theme(panel.background = ggplot2::element_rect(fill = "white"),
                        panel.grid.major = ggplot2::element_line(linewidth = 0.1,
