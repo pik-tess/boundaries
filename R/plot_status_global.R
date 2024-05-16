@@ -340,8 +340,8 @@ plot_status_global <- function(
         ), # nolint
         ymax = Inf,
         pattern = "gradient",
-        pattern_fill = "#000004FF",
-        pattern_fill2 = "#000004FF",
+        pattern_fill = "#2C0B57FF",
+        pattern_fill2 = "#2C0B57FF",
         alpha = 0.8
       )
 
