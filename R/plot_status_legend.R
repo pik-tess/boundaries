@@ -56,7 +56,7 @@ plot_legend <- function(filename = NULL, fontsize = 3) {
     # Use inferno colour scale for colours beyond safe space
     ggplot2::scale_colour_viridis_c(
       option = "inferno",
-      begin = 0.15,
+      begin = 0.1,
       end = 0.95,
       direction = -1
     ) +

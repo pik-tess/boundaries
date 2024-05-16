@@ -387,6 +387,7 @@ calc_departures <- function(
 
     for (b in unique(endcell)) { # go through all basins
     #TODO needs to be made flexible --> 2 or 3 dimensions
+    #browser()
       control_variable$wet_or_dry[which(unique(endcell) == b), , ] <- (
         apply(
           (lpjmlkit::asub(dry_or_wet, cell = which(endcell == b)) *
