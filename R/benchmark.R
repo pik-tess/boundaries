@@ -396,7 +396,11 @@ validation_table <- function(
     dplyr::group_by(variable) %>%
     dplyr::mutate(
       value_range = paste(range.lower, "-", range.upper),
-      time_range = ifelse(!is.na(X.lower.), paste(X.lower., "-", X.upper.), "")
+      time_range = ifelse(!is.na(X.lower.),
+        ifelse(X.lower. == "various", "various",
+          paste(X.lower., "-", X.upper.)
+        ), ""
+      )
     ) %>%
     dplyr::mutate(
       assessment_time = ifelse(
@@ -406,7 +410,7 @@ validation_table <- function(
       ),
       literature.range = paste(
         ifelse(
-          !is.na(value),
+          !is.na(value) & value != "",
           as.character(value),
           as.character(value_range)
         ),
@@ -421,6 +425,7 @@ validation_table <- function(
       literature.range = paste0(literature.range, collapse = "; ")
     ) %>%
     dplyr::distinct()
+
 
   write.csv(summary_tbl, file = table_path, row.names = FALSE)
 
