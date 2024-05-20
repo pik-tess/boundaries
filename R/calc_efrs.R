@@ -12,10 +12,6 @@
 #' as well as `"steffen2015"`, a modified version of vmf by
 #' [Steffen et al. 2015](https://doi.org/10.1126/science.1259855)
 #'
-#' @param time_aggregation_args list of arguments to be passed to
-#' [`aggregate_time`] (see for more info). To be used for
-#' time series analysis.
-#'
 #' @return EFRs with same unit as `x` (discharge), with `dim(x)=c(ncells, 12)`
 #' or `dim(EFRs)=c(ncells, 12, dim(x)[3] / nyear_avg)` if nyear_avg is defined
 #'
@@ -31,8 +27,7 @@
 #' #  interpolate between 3 windows afterwards to return 90 years (interpolated)
 #' efrs2 <- calcEFRs(
 #'   discharge_90y = discharge,
-#'   approach="vmf",
-#'   time_aggregation_args = list(nyear_avg = 30, interpolate = TRUE)
+#'   approach="vmf"
 #' )
 #'
 #' dim(efrs2)
@@ -41,8 +36,7 @@
 #'
 #' # example for using a 1 year (no average) bin for a 100 year discharge
 #' efrs3 <- calcEFRs(discharge_100y = discharge,
-#'                   approach = "vmfmin",
-#'                   time_aggregation_args = list(nyear_avg = 1))
+#'                   approach = "vmfmin")
 #'
 #' dim(efrs3)
 #' # c(67420, 12, 100)
@@ -50,8 +44,7 @@
 #' @md
 #' @export
 calc_efrs <- function(x,
-                      approach = "vmf",
-                      time_aggregation_args = list()) {
+                      approach = "vmf") {
   # verify available methods
   approach <- match.arg(approach,
     c("vmf", "vmf_min", "vmf_max", "q90q50", "steffen2015")
@@ -63,72 +56,68 @@ calc_efrs <- function(x,
     rep(xm, 12)
   }
 
-  # if nyear_avg (years to average) is supplied
-  #   calculate mean monthly flow (mmf) and mean annual flow (maf)
-  mmf <- do.call(aggregate_time,
-                 append(list(x = x), time_aggregation_args))
+
   # get dimensions without cells to get back standard order cell, month, year
-  dim_select <- names(dim(mmf))[
-    which(!names(dim(mmf)) %in% c("cell", "month"))
+  dim_select <- names(dim(x))[
+    which(!names(dim(x)) %in% c("cell", "month"))
   ]
-  # calculate maf based on flexibly calculated mmf (with/out "conserved" years)
-  maf <- apply(mmf, c("cell", dim_select), maf_fun) %>%
+  # calculate maf based on flexibly calculated x (with/out "conserved" years)
+  maf <- apply(x, c("cell", dim_select), maf_fun) %>%
     # month dimension is "" here
     aperm(c("cell", "", dim_select))
 
   # initialize efrs array
-  efrs <- array(0, dim = dim(mmf), dimnames = dimnames(mmf))
+  efrs <- array(0, dim = dim(x), dimnames = dimnames(x))
 
   # apply defined approach
   switch(approach,
     # "vmf" - Pastor et al. 2014
     vmf = {
       # low flow months
-      efrs[mmf <= 0.4 * maf] <- 0.6 * mmf[mmf <= 0.4 * maf]
+      efrs[x <= 0.4 * maf] <- 0.6 * x[x <= 0.4 * maf]
       # intermediate flow months
-      efrs[mmf > 0.4 * maf & mmf <= 0.8 * maf] <- 0.45 * (
-        mmf[mmf > 0.4 * maf & mmf <= 0.8 * maf]
+      efrs[x > 0.4 * maf & x <= 0.8 * maf] <- 0.45 * (
+        x[x > 0.4 * maf & x <= 0.8 * maf]
       )
       # high flow months
-      efrs[mmf > 0.8 * maf] <- 0.3 * mmf[mmf > 0.8 * maf]
+      efrs[x > 0.8 * maf] <- 0.3 * x[x > 0.8 * maf]
     },
     # "vmf_min" - Pastor et al. 2014
     vmf_min = {
       # low flow months
-      efrs[mmf <= 0.4 * maf] <- 0.45 * mmf[mmf <= 0.4 * maf]
+      efrs[x <= 0.4 * maf] <- 0.45 * x[x <= 0.4 * maf]
       # intermediate flow months
-      efrs[mmf > 0.4 * maf & mmf <= 0.8 * maf] <- 0.3 * (
-        mmf[mmf > 0.4 * maf & mmf <= 0.8 * maf]
+      efrs[x > 0.4 * maf & x <= 0.8 * maf] <- 0.3 * (
+        x[x > 0.4 * maf & x <= 0.8 * maf]
       )
       # high flow months
-      efrs[mmf > 0.8 * maf] <- 0.15 * mmf[mmf > 0.8 * maf]
+      efrs[x > 0.8 * maf] <- 0.15 * x[x > 0.8 * maf]
     },
     # "vmf_max" - Pastor et al. 2014
     vmf_max = {
       # low flow months
-      efrs[mmf <= 0.4 * maf] <- 0.75 * mmf[mmf <= 0.4 * maf]
+      efrs[x <= 0.4 * maf] <- 0.75 * x[x <= 0.4 * maf]
       # intermediate flow months
-      efrs[mmf > 0.4 * maf & mmf <= 0.8 * maf] <- 0.6 * (
-        mmf[mmf > 0.4 * maf & mmf <= 0.8 * maf]
+      efrs[x > 0.4 * maf & x <= 0.8 * maf] <- 0.6 * (
+        x[x > 0.4 * maf & x <= 0.8 * maf]
       )
       # high flow months
-      efrs[mmf > 0.8 * maf] <- 0.45 * mmf[mmf > 0.8 * maf]
+      efrs[x > 0.8 * maf] <- 0.45 * x[x > 0.8 * maf]
     },
     # "steffen2015" - Steffen et al. 2015 (adjusted "vmf")
     steffen2015 = {
       # low flow months
-      efrs[mmf <= 0.4 * maf] <- 0.75 * mmf[mmf <= 0.4 * maf]
+      efrs[x <= 0.4 * maf] <- 0.75 * x[x <= 0.4 * maf]
       # intermediate flow months
-      efrs[mmf > 0.4 * maf & mmf <= 0.8 * maf] <- 0.7 * (
-        mmf[mmf > 0.4 * maf & mmf <= 0.8 * maf]
+      efrs[x > 0.4 * maf & x <= 0.8 * maf] <- 0.7 * (
+        x[x > 0.4 * maf & x <= 0.8 * maf]
       )
       # high flow months
-      efrs[mmf > 0.8 * maf] <- 0.45 * mmf[mmf > 0.8 * maf]
+      efrs[x > 0.8 * maf] <- 0.45 * x[x > 0.8 * maf]
     },
     # "q90q50" - Pastor et al. 2014
     q90q50 = {
-      if (length(time_aggregation_args) == 0) {
-
+      if (dim(x)["year"] == 1) {
         quantiles <- apply(x,
                            c("cell", "month"),
                            stats::quantile,
@@ -137,13 +126,13 @@ calc_efrs <- function(x,
         q90 <- quantiles[2, , ]
         q50 <- quantiles[1, , ]
         # low flow months
-        efrs[mmf <= maf] <- q90[mmf <= maf]
+        efrs[x <= maf] <- q90[x <= maf]
         # high flow months
-        efrs[mmf > maf] <- q50[mmf > maf]
+        efrs[x > maf] <- q50[x > maf]
 
       } else {
         stop(
-          "Approach \"Q90Q50\" is not supported for time_aggregation_args ",
+          "Approach \"Q90Q50\" is not supported for nyear_window",
           "being defined"
         )
       }
