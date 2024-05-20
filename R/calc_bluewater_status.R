@@ -81,7 +81,7 @@ calc_bluewater_status <- function(files_scenario,
   if (spatial_scale == "grid") {
     if (approach != "gerten2020") {
       stop(
-        "Method \"gerten2020\" is the only available approach for ",
+        "Approach \"gerten2020\" is the only available approach for ",
         "spatial_scale = \"grid\"."
       )
     }
@@ -101,7 +101,7 @@ calc_bluewater_status <- function(files_scenario,
   } else if (spatial_scale %in% c("subglobal", "global")) {
     if (!approach %in% c("wang-erlandsson2022", "porkka2024")) {
       stop(
-        "Method \"",
+        "Approach \"",
         approach,
         "\" is not available for spatial_scale = ",
         spatial_scale,
@@ -143,7 +143,7 @@ calc_bluewater_efrs <- function(
 ) {
 
   if (spatial_scale != "grid") {
-    stop("Method \"gerten2020\" is only applicable for spatial_scale = \"grid\"") #nolint
+    stop("Approach \"gerten2020\" is only applicable for spatial_scale = \"grid\"") #nolint
   }
 
   # please R CMD check for use of future operator

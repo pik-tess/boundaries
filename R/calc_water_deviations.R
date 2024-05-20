@@ -439,32 +439,38 @@ calc_departures <- function(
   return(control_variable)
 }
 
-
-# quantile functions
-q5  <- function(x) stats::quantile(x, probs = 0.05, na.rm = TRUE)
-q95 <- function(x) stats::quantile(x, probs = 0.95, na.rm = TRUE)
-
-
 # calculate the baseline quantiles
 calc_baseline <- function(file_reference, approach) {
 
   if (approach == "wang-erlandsson2022") {
-    dry_base_yr <- apply(file_reference, c("cell", "year"), min)
-    wet_base_yr <- apply(file_reference, c("cell", "year"), max)
+    # vectorized calculation of the 5% and 95% quantiles for each cell
+    #    only available for matrices (2 dimensions)
+    q5_base <- matrixStats::rowQuantiles(
+      apply(file_reference, c("cell", "year"), min),
+      probs = c(0.05)
+    )
+    q95_base <- matrixStats::rowQuantiles(
+      apply(file_reference, c("cell", "year"), max),
+      probs = c(0.95)
+    )
+    quants <- list(q5 = q5_base, q95 = q95_base)
 
   } else if (approach == "porkka2024") {
-    dry_base_yr <- wet_base_yr <- file_reference
+    quants_array <- apply(
+      file_reference,
+      c("cell", "month"),
+      quantile,
+      probs = c(0.05, 0.95)
+    )
+    quants <- list(
+      q5 = abind::asub(quants_array, idx = 1, dim = 1),
+      q95 = abind::asub(quants_array, idx = 2, dim = 1)
+    )
   }
-
-  # calc 5% and 95% percentile for each cell
-  # for each year over all months over baseline period
-  dim_remain <- names(dim(dry_base_yr))[names(dim(dry_base_yr)) != "year"]
-  q5_base  %<-% apply(dry_base_yr, dim_remain, q5)
-  q95_base %<-% apply(wet_base_yr, dim_remain, q95)
-  quants <- list(q5 = q5_base, q95 = q95_base)
 
   return(quants)
 }
+
 
 # calculate ice free area, return array with area per cell, cells with
 # ice and rock are set to NA

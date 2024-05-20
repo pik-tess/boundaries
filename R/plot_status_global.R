@@ -47,7 +47,6 @@ plot_status_global <- function(
   if (all_in_one == TRUE) {
     x <- as_risk_level(x, type = "continuous", normalize = normalize)
   }
-
   # please R CMD check for use of dplyr syntax
   long_name <- numeric(length(x))
   for (i in seq_len(length(x))) {
@@ -419,7 +418,6 @@ plot_status_global <- function(
   } else {
     n_col <- ncol
   }
-
   if (is.null(filename)) {
     print(plot)
     return(plot)

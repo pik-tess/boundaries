@@ -18,11 +18,12 @@
 #' options: "global", "subglobal", "grid";
 #'
 #' @param time_span_scenario time span to be used for the scenario run, defined
-#' as an integer vector, e.g. `1982:2011` (default)
+#' as an integer (or character) vector, e.g. `1982:2011` (default)
 #'
 #' @param time_span_reference time span to be used for the scenario run, defined
-#' as an integer vector, e.g. `1901:1930`. Can differ in offset and length from
-#' `time_span_scenario`! If `NULL` value of `time_span_scenario` is used
+#' as an integer (or character) vector, e.g. `1901:1930`. Can differ in offset
+#' and length from `time_span_scenario`! If `NULL` value of `time_span_scenario`
+#' is used
 #'
 #' @param time_aggregation_args list of arguments to be passed to
 #' [`aggregate_time`] (see for more info). To be used for # nolint
@@ -86,12 +87,17 @@ calc_status <- function(boundary,
   config_scenario <- lpjmlkit::read_config(config_scenario)
   config_reference <- lpjmlkit::read_config(config_reference)
 
-  if (!all(time_span_scenario %in% get_sim_time(config_scenario))) {
-    stop("Time span not available in scenario run.")
-  }
-  if (!all(time_span_reference %in% get_sim_time(config_reference))) {
-    stop("Time span not available in reference run.")
-  }
+  # check time span and convert to character if necessary
+  time_span_scenario <- check_time_span(
+    time_span = time_span_scenario,
+    config = config_scenario,
+    type = "scenario"
+  )
+  time_span_reference <- check_time_span(
+    time_span = time_span_reference,
+    config = config_reference,
+    type = "reference"
+  )
 
   # List required output files for each boundary
   output_files <- list_outputs(
@@ -234,3 +240,16 @@ get_dots <- function(fun_name, fun_args, dot_args) {
 
 # Avoid note for "."...
 utils::globalVariables(".") # nolint:undesirable_function_linter
+
+# Utility function to check time span matches simulation config and convert to
+#   character if necessary
+check_time_span <- function(time_span, config, type = "scenario") {
+
+  if (!all(time_span %in% get_sim_time(config))) {
+    stop("Time span not available in ", type, " run.")
+  }
+  if (is.numeric(time_span)) {
+    time_span <- as.character(time_span)
+  }
+  time_span
+}

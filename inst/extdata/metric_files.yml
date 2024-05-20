@@ -321,8 +321,7 @@ metric:
             subglobal:
                 stenzel2023:
                     output:
-                      <<: *biome_output
-                      <<: *stenzel2023_biosphere_output
+                      <<: [*biome_output, *stenzel2023_biosphere_output]
                     threshold:
                       <<: *stenzel2023_biosphere_threshold
                     unit: "%"
