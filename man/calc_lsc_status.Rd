@@ -11,7 +11,7 @@ calc_lsc_status(
   time_span_scenario = as.character(1982:2011),
   time_span_reference = time_span_scenario,
   approach = "steffen2015",
-  time_aggregation_args = list(),
+  nyear_window = NULL,
   config_args = list(),
   thresholds = NULL,
   eurasia = TRUE,
@@ -42,9 +42,10 @@ is used}
 \item{approach}{approach (character string) to be used , currently available
 approach is \code{"steffen2015"}}
 
-\item{time_aggregation_args}{list of arguments to be passed to
-\code{\link{aggregate_time}} (see for more info). To be used for time
-series analysis}
+\item{nyear_window}{integer. Number of years to be used for the moving
+average calculation. If \code{NULL}, all years are averaged for one status
+calculation, for \code{1} the whole time span is used to calculate a status time
+series.}
 
 \item{config_args}{list of arguments to be passed on from the model
 configuration.}

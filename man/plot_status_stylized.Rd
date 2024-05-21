@@ -6,9 +6,8 @@
 \usage{
 plot_status_stylized(
   x,
-  filename,
+  filename = NULL,
   add_legend = TRUE,
-  normalization = "increasing risk",
   high_risk = 3.5,
   background_alpha = 1
 )
@@ -17,13 +16,13 @@ plot_status_stylized(
 \item{x}{list with global output from calc_status}
 
 \item{filename}{character string providing file name (including directory
-and file extension). Defaults to NULL (plotting to screen)}
+and file extension). Defaults to NULL (plotting to screen and returning ´
+plot object)}
 
 \item{add_legend}{logical, specify whether a legend should be plotted}
 
-\item{normalization}{see \code{\link[=as_risk_level]{as_risk_level()}}}
-
-\item{high_risk}{numeric, specify the value for high risk limit (default 3.5)}
+\item{high_risk}{numeric, specify the normalized PB status value for the
+upper end of the risk color scale (default 3.5)}
 
 \item{background_alpha}{numeric, specify the alpha value for the background
 (default 1 - transparent)}
@@ -31,7 +30,8 @@ and file extension). Defaults to NULL (plotting to screen)}
 \description{
 Plot time series of boundaries into iconic polar boundaries plot only
 focussing on the terrestrial boundaries (half-circle). Wedges are
-scaled and normalized according to each boundary.
+scaled and normalized based on the "increasing risk" method according to
+each boundary (see \code{\link[=as_risk_level]{as_risk_level()}} for details).
 }
 \examples{
 \dontrun{
@@ -39,13 +39,15 @@ pb_status <- calc_status(
   boundary = c("lsc", "biosphere", "bluewater", "greenwater", "nitrogen"),
   config_scenario = "./config_lu_1500_2016.json",
   config_reference = "./config_pnv_1500_2016.json",
-  time_span_scenario =  as.character(1986:2016),
-  time_span_reference =  as.character(1986:2016),
+  time_span_scenario = as.character(1986:2016),
+  time_span_reference = as.character(1986:2016),
   spatial_scale = "global",
-  approach = list(bluewater = "porkka2024",
-                nitrogen = "schulte_uebbing2022"),
+  approach = list(
+    bluewater = "porkka2024",
+    nitrogen = "schulte_uebbing2022"
+  ),
   savanna_proxy = list(vegc = 7500),
-  time_aggregation_args = 1,
+  nyear_window = 1,
   path_baseline = "./pnv_1500_2016/",
 )
 

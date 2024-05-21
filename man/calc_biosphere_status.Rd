@@ -14,16 +14,16 @@ calc_biosphere_status(
   files_reference,
   spatial_scale = "subglobal",
   time_span_scenario = as.character(1982:2011),
-  time_span_reference = time_span_scenario,
+  time_span_reference = NULL,
   approach = "stenzel2023",
-  time_aggregation_args = list(),
+  nyear_window = NULL,
   config_args = list(),
   thresholds = NULL,
   path_baseline,
-  time_span_baseline = time_span_reference,
+  time_span_baseline = time_span_scenario,
   gridbased = TRUE,
   npp_threshold = 20,
-  biocol_option = "abs",
+  biocol_option = "only_above_zero",
   eurasia = TRUE,
   ...
 )
@@ -51,9 +51,10 @@ index years 3:32 if set to NULL (default: NULL)}
 \item{approach}{approach (character string) to be used , currently available
 approach is \code{"stenzel2023"}}
 
-\item{time_aggregation_args}{list of arguments to be passed to
-\code{\link{aggregate_time}} (see for more info).
-To be used for time series analysis}
+\item{nyear_window}{integer. Number of years to be used for the moving
+average calculation. If \code{NULL}, all years are averaged for one status
+calculation, for \code{1} the whole time span is used to calculate a status time
+series.}
 
 \item{config_args}{list of arguments to be passed on from the model
 configuration.}
@@ -78,7 +79,7 @@ according to Haberl et al. 2007). Below BioCol will be set to 0.
 (default: 20 gC/m2)}
 
 \item{biocol_option}{which biocol values to use for aggregation. options:
-netsum, only_above_zero, abs - TODO: finish}
+netsum, only_above_zero, abs}
 
 \item{eurasia}{logical. If \code{spatial_scale} = \code{"subglobal"} merge continents
 Europe and Asia to avoid arbitrary biome cut at europe/asia border.

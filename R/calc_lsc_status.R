@@ -38,9 +38,10 @@
 #'      (e.g. 50% for boreal forest with default value)
 #' highrisk = threshold between increasing risk and high risk zone
 #'
-#' @param time_aggregation_args list of arguments to be passed to
-#' [`aggregate_time`] (see for more info). To be used for time
-#' series analysis
+#' @param nyear_window integer. Number of years to be used for the moving
+#' average calculation. If `NULL`, all years are averaged for one status
+#' calculation, for `1` the whole time span is used to calculate a status time
+#' series.
 #'
 #' @param config_args list of arguments to be passed on from the model
 #' configuration.
