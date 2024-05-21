@@ -47,9 +47,10 @@
 #' (wang-erlandsson2022) or one value per year and month (porkka2024)); "grid"
 #' not yet defined
 #'
-#' @param time_aggregation_args list of arguments to be passed to
-#' [`aggregate_time`] (see for more info).
-#' To be used for time series analysis
+#' @param nyear_window integer. Number of years to be used for the moving
+#' average calculation. If `NULL`, all years are averaged for calculation,
+#' for `1` the whole time span is used to calculate a time
+#' series.
 #'
 #' @param config_args list of arguments to be passed on from the model
 #' configuration.
@@ -72,7 +73,7 @@ calc_water_deviations <- function(files_scenario,
                                   time_span_reference,
                                   approach = "porkka2024",
                                   thresholds = NULL,
-                                  time_aggregation_args = list(),
+                                  nyear_window = NULL,
                                   config_args = list(),
                                   variable = "rootmoist") {
 
@@ -189,12 +190,9 @@ calc_water_deviations <- function(files_scenario,
       na.rm = TRUE
     )
 
-    control_variable <- do.call(
-      aggregate_time,
-      append(
-        list(x = scen_depart$wet_or_dry),
-        time_aggregation_args
-      )
+    control_variable <- aggregate_time(
+      x = scen_depart$wet_or_dry,
+      nyear_window = nyear_window
     )
 
     attr(control_variable, "thresholds") <- list(
@@ -295,12 +293,9 @@ calc_water_deviations <- function(files_scenario,
       scen_departures[, y] <- scen_depart$wet_or_dry[i, ]
     }
 
-    control_variable <- do.call(
-      aggregate_time,
-      append(
-        list(x = scen_departures),
-        time_aggregation_args
-      )
+    control_variable <- aggregate_time(
+      x = scen_departures,
+      nyear_window = nyear_window
     )
 
     # create array with thresholds
@@ -323,8 +318,8 @@ calc_water_deviations <- function(files_scenario,
 
     attr(control_variable, "thresholds") <- threshold_attr
 
-  # set ice areas to NA
-  control_variable[, is.na(icefree_area[, 1, 1])] <- NA
+    # set ice areas to NA
+    control_variable[, is.na(icefree_area[, 1, 1])] <- NA
 
   }
 
@@ -386,8 +381,7 @@ calc_departures <- function(
     )
 
     for (b in unique(endcell)) { # go through all basins
-    #TODO needs to be made flexible --> 2 or 3 dimensions
-    #browser()
+    # TODO needs to be made flexible --> 2 or 3 dimensions
       control_variable$wet_or_dry[which(unique(endcell) == b), , ] <- (
         apply(
           (lpjmlkit::asub(dry_or_wet, cell = which(endcell == b)) *
@@ -511,4 +505,52 @@ calc_icefree_area <- function(files_path, time_span, spatial_subset) {
   }
   terr_area[is_rocks_and_ice, , ] <- NA
   return(terr_area)
+}
+
+
+# show the full downstream drainage route for cell ind until final drainage
+#   (ocean or inland sink)
+show_route <- function(ind, routing_table) {
+  if (routing_table[ind] < 1) {
+    # can be 0 or -8 -> endcell or nacell
+    return(ind)
+  } else {
+    return(c(ind,
+             show_route(routing_table[ind], routing_table)))
+  }
+}
+
+
+# calculate the routing information based on the drainage file
+indexing_drainage <- function(drainage_file) {
+
+  drainage <- tryCatch(
+    lpjmlkit::read_io(drainage_file)$data %>%
+      suppressWarnings() %>%
+      drop(),
+    error = function(e) {
+      lpjmlkit::read_io(
+        drainage_file,
+        datatype = 2
+      )$data %>%
+        suppressWarnings() %>%
+        drop()
+    }
+  )
+  # -------------------------------------------------------------------------- #
+
+  # add 1 since in C indexing starts at 0 but in R at 1
+  routing <- drainage[, 1] + 1
+  ncell <- length(routing)
+  cellinfo <- array(0, dim = c(ncell, 3))
+  cellinfo[, 3] <- routing
+  for (cell in 1:ncell) {
+    route <- show_route(cell, routing)
+    # (over)writing all cells from route
+    cellinfo[route, 1] <- seq(length(route), 1, -1) # rank (former cellindex)
+    cellinfo[cell, 2] <- route[length(route)] # endcell
+  }
+  dimnames(cellinfo) <- list(cell = 0:(ncell - 1),
+                             band = c("rank", "endcell", "routing"))
+  return(cellinfo)
 }

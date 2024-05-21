@@ -65,7 +65,7 @@ calc_lsc_status <- function(
   time_span_scenario = as.character(1982:2011),
   time_span_reference = time_span_scenario,
   approach = "steffen2015",
-  time_aggregation_args = list(),
+  nyear_window = NULL,
   config_args = list(),
   thresholds = NULL,
   eurasia = TRUE,
@@ -88,7 +88,7 @@ calc_lsc_status <- function(
     classify_biomes,
     append(list(files_reference = files_reference,
                 time_span_reference = time_span_reference,
-                time_aggregation_args = list(),
+                nyear_window = NULL,
                 config_args = config_args,
                 montane_arctic_proxy = NULL),
            ellipsis_filtered)
@@ -210,10 +210,10 @@ calc_lsc_status <- function(
   # please R CMD check for use of future operator
   avg_trees_scenario <- avg_trees_reference <- NULL
   # average forest over time
-  avg_trees_scenario %<-% do.call(aggregate_time,
-                                  append(list(x = all_tree_cover_scenario),
-                                         time_aggregation_args))
-
+  avg_trees_scenario %<-% aggregate_time(
+    x = all_tree_cover_scenario,
+    nyear_window = nyear_window
+  )
 
   # average forest over time
 

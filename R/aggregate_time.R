@@ -58,39 +58,10 @@ aggregate_time <- function(x,
                 " and \"year\"."))
   }
 
-  # moving average function with shrinking window size at edges
-  moving_average_fun <- function(x, n) {
-    len <- length(x)
-    half_n <- n %/% 2
-
-    # Compute the left edge with shrinking window size
-    left_edge <- sapply( # nolint:undesirable_function_linter
-      1:half_n,
-      function(i) mean(x[1 : (2 * i - 1)])
-    )
-
-    # Compute the main section with fixed window size
-    main_section <- sapply( # nolint:undesirable_function_linter
-      (half_n + 1) : (len - half_n),
-      function(i) mean(x[(i - half_n) : (i + half_n)])
-    )
-
-    # Compute the right edge with shrinking window size
-    right_edge <- sapply( # nolint:undesirable_function_linter
-      1 : half_n,
-      function(i) mean(x[(len - (2 * i - 2)) : len])
-    )
-    right_edge <- rev(right_edge)  # Reverse the right edge to correctly align
-
-    # Combine all parts into the final result
-    result <- c(left_edge, main_section, right_edge)
-
-    return(result)
-  }
-
   # if nyear_window is supplied not all years are used for averaging
   if (nyear_window == 1) {
     y <- x
+
   } else if (nyear_window > 1 & nyear_window < dim(x)["year"]) { # nolint:vector_logic_linter
     y <- aperm(apply(x,
                      c("cell", third_dim),
@@ -135,4 +106,35 @@ aggregate_time <- function(x,
   }
 
   return(y)
+}
+
+
+# moving average function with shrinking window size at edges
+moving_average_fun <- function(x, n) {
+  len <- length(x)
+  half_n <- n %/% 2
+
+  # Compute the left edge with shrinking window size
+  left_edge <- sapply( # nolint:undesirable_function_linter
+    1:half_n,
+    function(i) mean(x[1 : (2 * i - 1)])
+  )
+
+  # Compute the main section with fixed window size
+  main_section <- sapply( # nolint:undesirable_function_linter
+    (half_n + 1) : (len - half_n),
+    function(i) mean(x[(i - half_n) : (i + half_n)])
+  )
+
+  # Compute the right edge with shrinking window size
+  right_edge <- sapply( # nolint:undesirable_function_linter
+    1 : half_n,
+    function(i) mean(x[(len - (2 * i - 2)) : len])
+  )
+  right_edge <- rev(right_edge)  # Reverse the right edge to correctly align
+
+  # Combine all parts into the final result
+  result <- c(left_edge, main_section, right_edge)
+
+  return(result)
 }

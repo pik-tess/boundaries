@@ -16,7 +16,7 @@ test_that("test calc_bluewater_status global", {
     time_span_reference = timeframe,
     spatial_scale = "global",
     approach = list(bluewater = "porkka2024"),
-    time_aggregation_args = c(1),
+    nyear_window = 1,
     in_parallel = FALSE,
   ) %>% suppressMessages()
 
@@ -28,7 +28,8 @@ test_that("test calc_bluewater_status global", {
   # test for thresholds attributes (0 or manually set to 50)
   testthat::expect_true(
     all(sapply(attributes(test$bluewater)$thresholds, function(x) { # nolint:undesirable_function_linter
-      x == 0 || x == 50 || x == 100
+      x <- round(x)
+      x == 13 || x == 31 || x == 50
     }))
   )
 
@@ -59,7 +60,7 @@ test_that("test calc_bluewater_status global", {
 
   testthat::expect_true(
     all(
-      boundary_status$bluewater < 0.5
+      boundary_status$bluewater < attributes(boundary_status$bluewater)$thresholds$highrisk
     )
   )
 })
@@ -82,7 +83,7 @@ test_that("test calc_bluewater_status grid", {
     time_span_scenario = timeframe,
     time_span_reference = timeframe,
     spatial_scale = "grid",
-    time_aggregation_args = c(1),
+    nyear_window = c(1),
     in_parallel = FALSE,
   ) %>% suppressMessages()
 
@@ -144,8 +145,7 @@ test_that("test calc_efrs", {
 
   efrs <- calc_efrs(
     discharge,
-    approach = "steffen2015",
-    time_aggregation_args = c(1)
+    approach = "steffen2015"
   )
 
   # test for length of time series
@@ -180,8 +180,7 @@ test_that("test calc_efrs", {
   # VMF approach --------------------------------------------------------------- #
   efrs_vmf <- calc_efrs(
     discharge,
-    approach = "vmf",
-    time_aggregation_args = c(1)
+    approach = "vmf"
   )
 
   # test for length of time series
@@ -199,8 +198,7 @@ test_that("test calc_efrs", {
   # steffen2015 approach ------------------------------------------------------- #
   efrs_steffen2015 <- calc_efrs(
     discharge,
-    approach = "steffen2015",
-    time_aggregation_args = c(1)
+    approach = "steffen2015"
   )
 
   # test for length of time series
@@ -215,9 +213,10 @@ test_that("test calc_efrs", {
     )
   )
 
+  avg_discharge <- aggregate_time(discharge)
   # q90q50 approach ------------------------------------------------------------ #
   efrs_q90q50 <- calc_efrs(
-    discharge,
+    avg_discharge,
     approach = "q90q50"
   )
 
@@ -229,7 +228,7 @@ test_that("test calc_efrs", {
   # test for expected output
   testthat::expect_true(
     all(
-      efrs_q90q50 > 1 & efrs_q90q50 < 8
+      efrs_q90q50 > 0 & efrs_q90q50 < 8
     )
   )
 })

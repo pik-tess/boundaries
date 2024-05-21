@@ -71,7 +71,7 @@ calc_nitrogen_status <- function(
   time_span_scenario = as.character(1982:2011),
   time_span_reference = NULL,
   approach = "braun2022",
-  time_aggregation_args = list(),
+  nyear_window = NULL,
   config_args = list(),
   thresholds = NULL,
   cut_arid = 0.2,
@@ -92,7 +92,8 @@ calc_nitrogen_status <- function(
       path_data,
       time_span,
       with_groundwater_denit,
-      time_aggregation_args
+      nyear_window,
+      nyear_replicate = NULL
     ) {
 
 
@@ -120,14 +121,18 @@ calc_nitrogen_status <- function(
       # please R CMD check for use of future operator
       avg_runoff <- avg_leaching <- NULL
       # average runoff
-      avg_runoff %<-% do.call(aggregate_time,
-                              append(list(x = runoff),
-                                     time_aggregation_args))
+      avg_runoff %<-% aggregate_time(
+        x = runoff,
+        nyear_window = nyear_window,
+        nyear_replicate = nyear_replicate
+      )
 
       # average leaching
-      avg_leaching %<-% do.call(aggregate_time,
-                                append(list(x = leaching),
-                                       time_aggregation_args))
+      avg_leaching %<-% aggregate_time(
+        x = leaching,
+        nyear_window = nyear_window,
+        nyear_replicate = nyear_replicate
+      )
 
       if (with_groundwater_denit) {
         # temporary solution using shares of global losses after
@@ -158,7 +163,7 @@ calc_nitrogen_status <- function(
           path_data = files_scenario,
           time_span = time_span_scenario,
           with_groundwater_denit = with_groundwater_denit,
-          time_aggregation_args = time_aggregation_args
+          nyear_window = nyear_window
         )
       },
       braun2022_minusref = {
@@ -168,20 +173,16 @@ calc_nitrogen_status <- function(
           path_data = files_scenario,
           time_span = time_span_scenario,
           with_groundwater_denit = with_groundwater_denit,
-          time_aggregation_args = time_aggregation_args
+          nyear_window = nyear_window
         )
-
-
-        if (length(time_span_reference) < length(time_span_scenario)) {
-          time_aggregation_args["nyear_reference"] <- length(time_span_scenario)
-        }
 
         # calculate leaching concentration and loss rate for reference output
         n_conc_reference <- calc_nitrogen_leach(
           path_data = files_reference,
           time_span = time_span_reference,
           with_groundwater_denit = with_groundwater_denit,
-          time_aggregation_args = time_aggregation_args
+          nyear_window = NULL,
+          nyear_replicate = length(time_span_scenario)
         )
 
         # subtract scenario leaching concentration and loss rate from reference
@@ -213,15 +214,17 @@ calc_nitrogen_status <- function(
     # please R CMD check for use of future operator
     avg_pet <- NULL
     # average pet
-    avg_pet <- do.call(aggregate_time,
-                       append(list(x = pet),
-                              time_aggregation_args))
+    avg_pet <- aggregate_time(
+      x = pet,
+      nyear_window = nyear_window
+    )
     # please R CMD check for use of future operator
     avg_prec <- NULL
     # average precipitation
-    avg_prec <- do.call(aggregate_time,
-                        append(list(x = prec),
-                               time_aggregation_args))
+    avg_prec <- aggregate_time(
+      x = prec,
+      nyear_window = nyear_window
+    )
 
     # calculate global aridity index (AI) as an indicator for a level under
     #   which the calculation of leaching just cannot show realistic behavior,
@@ -248,12 +251,9 @@ calc_nitrogen_status <- function(
     # please R CMD check for use of future operator
     runoff_annual <- NULL
     # average runoff
-    runoff_annual %<-% do.call(
-      aggregate_time,
-      append(
-        list(x = runoff),
-        time_aggregation_args
-      )
+    runoff_annual %<-% aggregate_time(
+      x = runoff,
+      nyear_window = nyear_window
     )
 
     # to display arid cells (leaching behaviour threshold) in other color (grey)
@@ -293,9 +293,9 @@ calc_nitrogen_status <- function(
     # https://doi.org/10.1038/s41586-023-06083-8
 
     # please R CMD check for use of future operator
-    fert_mg <- NULL
+    napplied_mg <- NULL
     # read in fertilizer and manure input on managed land
-    fert_mg %<-% read_io_format(
+    napplied_mg %<-% read_io_format(
       file = files_scenario$napplied_mg,
       time_span_scenario,
       aggregate = list(month = sum, band = sum),
@@ -351,9 +351,8 @@ calc_nitrogen_status <- function(
       lpjmlkit::as_array()
 
     terr_area <- terr_area[, , 1]
-
     # calc n surplus
-    nsurplus <- (fert_mg + bnf + dep + flux_estabn - harvest) *
+    nsurplus <- (napplied_mg + bnf + dep + flux_estabn - harvest) *
       terr_area * 10^-12
 
     # N surplus on cropland (n inputs minus n harvest)
@@ -362,9 +361,10 @@ calc_nitrogen_status <- function(
     #             harvest) * cellarea * 10^-12
 
     # average over time
-    avg_nsurplus <- do.call(aggregate_time,
-                            append(list(x = nsurplus),
-                                   time_aggregation_args))
+    avg_nsurplus <- aggregate_time(
+      x = nsurplus,
+      nyear_window = nyear_window
+    )
 
     # aggregate to global value
     dim_remain <- names(dim(avg_nsurplus))[names(dim(avg_nsurplus)) != "cell"]

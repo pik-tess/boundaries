@@ -26,9 +26,9 @@
 #' is used
 #'
 #' @param nyear_window integer. Number of years to be used for the moving
-#' average calculation. If `NULL`, all years are averaged for
-#' `spatial_scale = c("grid", "subglobal")` or the whole time span is used for
-#' `spatial_scale = "global"`.
+#' average calculation. If `NULL`, all years are averaged for one status
+#' calculation, for `1` the whole time span is used to calculate a status time
+#' series.
 #'
 #' @param approach list of methods to be used for each boundary. If `NULL` the
 #' default approach is used
@@ -84,12 +84,6 @@ calc_status <- function(boundary,
     spatial_scale,
     c("global", "subglobal", "grid")
   )
-
-  if (is.null(nyear_window) && spatial_scale == "global") {
-    nyear_window <- 1
-  } else {
-    nyear_window <- NULL
-  }
 
   config_scenario <- lpjmlkit::read_config(config_scenario)
   config_reference <- lpjmlkit::read_config(config_reference)

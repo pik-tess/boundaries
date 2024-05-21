@@ -16,7 +16,7 @@ test_that("test calc_nitrogen_status global", {
     time_span_reference = timeframe,
     spatial_scale = "global",
     approach = list(nitrogen = "schulte_uebbing2022"),
-    time_aggregation_args = c(1),
+    nyear_window = c(1),
     in_parallel = FALSE,
   ) %>% suppressMessages()
 
@@ -35,7 +35,7 @@ test_that("test calc_nitrogen_status global", {
 
   # test for expected control variable and class
   testthat::expect_true(
-    attributes(test$nitrogen)$control_variable == "nitrogen surplus on agricultural land" && # nolint
+    attributes(test$nitrogen)$control_variable == "N surplus on agricultural land" && # nolint
       attributes(test$nitrogen)$class == "control_variable"
   )
 
@@ -79,7 +79,7 @@ test_that("test calc_nitrogen_status grid", {
     time_span_scenario = timeframe,
     time_span_reference = timeframe,
     spatial_scale = "grid",
-    time_aggregation_args = c(1),
+    nyear_window = c(1),
     in_parallel = FALSE,
   ) %>% suppressMessages()
 
@@ -143,7 +143,7 @@ test_that("test calc_nitrogen_status grid (minusref)", {
     time_span_reference = timeframe,
     approach = list(nitrogen = "braun2022_minusref"),
     spatial_scale = "grid",
-    time_aggregation_args = c(1),
+    nyear_window = c(1),
     in_parallel = FALSE,
   ) %>% suppressMessages()
 

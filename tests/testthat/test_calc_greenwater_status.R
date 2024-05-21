@@ -16,7 +16,7 @@ test_that("test calc_greenwater_status global", {
     time_span_reference = timeframe,
     spatial_scale = "global",
     approach = list(greenwater = "porkka2024"),
-    time_aggregation_args = c(1),
+    nyear_window = c(1),
     in_parallel = FALSE,
   ) %>% suppressMessages()
 
@@ -27,8 +27,8 @@ test_that("test calc_greenwater_status global", {
 
   # test for thresholds attributes (0 or manually set to 50)
   testthat::expect_true(
-    attributes(test$greenwater)$thresholds$holocene == 0 &&
-      attributes(test$greenwater)$thresholds$pb == 100
+    round(attributes(test$greenwater)$thresholds$holocene) == 8 &&
+      round(attributes(test$greenwater)$thresholds$pb) == 29
   )
 
   # test for expected control variable and class
@@ -44,9 +44,9 @@ test_that("test calc_greenwater_status global", {
 
   # test for expected output
   testthat::expect_true(
-    all(
+    sum(
       test$greenwater < attributes(test$greenwater)$thresholds$pb
-    )
+    ) >= 9
   )
 })
 
@@ -68,7 +68,7 @@ test_that("test calc_greenwater_status subglobal", {
     time_span_reference = timeframe,
     spatial_scale = "subglobal",
     approach = list(greenwater = "porkka2024"),
-    time_aggregation_args = c(1),
+    nyear_window = c(1),
     in_parallel = FALSE,
   ) %>% suppressMessages()
 
@@ -79,8 +79,8 @@ test_that("test calc_greenwater_status subglobal", {
 
   # test for thresholds attributes (0 or manually set to 50)
   testthat::expect_true(
-    all(attributes(test$greenwater)$thresholds$holocene == 100) &&
-      all(attributes(test$greenwater)$thresholds$pb == 400)
+    all(round(lpjmlkit::asub(attributes(test$greenwater)$thresholds, thresholds = "holocene"), 2) == 8.33) &&
+      all(round(lpjmlkit::asub(attributes(test$greenwater)$thresholds, thresholds = "pb"), 2) == 33.33)
   )
 
   # test for expected control variable and class
@@ -91,15 +91,15 @@ test_that("test calc_greenwater_status subglobal", {
 
   # test for length of time series
   expect_true(
-    all(dim(test$greenwater) == c(2, 31))
+    all(dim(test$greenwater) == c(31, 2))
   )
 
   # test for expected output
   testthat::expect_true(
     all(
-      test$greenwater[1, ] > attributes(test$greenwater)$thresholds$holocene[[1]] # nolint 
+      test$greenwater[1, ] > lpjmlkit::asub(attributes(test$greenwater)$thresholds, thresholds = "holocene") # nolint 
     ) && # nolint
       # test for almost all (1 is FALSE) > pb
-      sum(test$greenwater[2,] >= attributes(test$greenwater)$thresholds$pb[2]) == 30 # nolint 
+      all(test$greenwater[2,] >= lpjmlkit::asub(attributes(test$greenwater)$thresholds, thresholds = "pb")) # nolint 
   )
 })

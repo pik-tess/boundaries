@@ -32,7 +32,7 @@
 #'     nitrogen = "schulte_uebbing2022"
 #'   ),
 #'   savanna_proxy = list(vegc = 7500),
-#'   time_aggregation_args = 1,
+#'   nyear_window = 1,
 #'   path_baseline = "./pnv_1500_2016/",
 #' )
 #'

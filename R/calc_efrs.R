@@ -121,6 +121,7 @@ calc_efrs <- function(x,
         quantiles <- apply(x,
                            c("cell", "month"),
                            stats::quantile,
+                           drop = FALSE,
                            probs = c(0.5, 0.9),
                            na.rm = TRUE)
         q90 <- quantiles[2, , ]
@@ -133,7 +134,7 @@ calc_efrs <- function(x,
       } else {
         stop(
           "Approach \"Q90Q50\" is not supported for nyear_window",
-          "being defined"
+          " being defined"
         )
       }
     }

@@ -84,7 +84,7 @@ calc_biosphere_status <- function(
   time_span_scenario = as.character(1982:2011),
   time_span_reference = NULL,
   approach = "stenzel2023",
-  time_aggregation_args = list(),
+  nyear_window = NULL,
   config_args = list(),
   thresholds = NULL,
   path_baseline,
@@ -164,7 +164,7 @@ calc_biosphere_status <- function(
       classify_biomes,
       append(list(files_reference = files_baseline,
                time_span_reference = time_span_baseline,
-               time_aggregation_args = time_aggregation_args
+               nyear_window = NULL
              ),
              ellipsis_filtered)
     )
@@ -260,9 +260,10 @@ calc_biosphere_status <- function(
 
   rm(biocol)
   # average
-  control_variable <- do.call(aggregate_time,
-                              append(list(x = control_variable_raw * 100), #in%
-                                     time_aggregation_args))
+  control_variable <- aggregate_time(
+    x = control_variable_raw * 100,
+    nyear_window = nyear_window
+  )
   attr(control_variable, "spatial_scale") <- spatial_scale
   attr(control_variable, "thresholds") <- thresholds
   attr(control_variable, "unit") <- list_unit("biosphere", approach,

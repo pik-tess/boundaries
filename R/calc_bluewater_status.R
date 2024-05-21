@@ -35,9 +35,9 @@
 #' spatial_scale = "global" or "subglobal"
 #'
 #' @param nyear_window integer. Number of years to be used for the moving
-#' average calculation. If `NULL`, all years are averaged for
-#' `spatial_scale = c("grid", "subglobal")` or the whole time span is used for
-#' `spatial_scale = "global"`.
+#' average calculation. If `NULL`, all years are averaged for one status
+#' calculation, for `1` the whole time span is used to calculate a status time
+#' series.
 #'
 #' @param config_args list of arguments to be passed on from the model
 #' configuration.
@@ -66,7 +66,7 @@ calc_bluewater_status <- function(files_scenario,
                                   time_span_scenario = as.character(1982:2011),
                                   time_span_reference = time_span_scenario,
                                   approach = "gerten2020",
-                                  nyear_window = 1,
+                                  nyear_window = NULL,
                                   config_args = list(),
                                   thresholds = NULL,
                                   cut_min = 0.0864) {
@@ -137,7 +137,7 @@ calc_bluewater_efrs <- function(
   time_span_scenario = time_span_scenario,
   time_span_reference = NULL,
   approach = "gerten2020",
-  nyear_window = 1,
+  nyear_window = NULL,
   config_args = list(),
   thresholds = NULL,
   cut_min = 0.0864

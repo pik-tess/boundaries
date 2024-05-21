@@ -19710,10 +19710,10 @@
       }
     },
     {
-      "id": "nfert_mg",
+      "id": "napplied_mg",
       "file": {
         "fmt": "raw",
-        "name": "extdata/output/lu_1500_2016/nfert_mg.bin"
+        "name": "extdata/output/lu_1500_2016/napplied_mg.bin"
       }
     },
     {
