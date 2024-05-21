@@ -180,7 +180,7 @@ plot_status_global <- function(
         size = 0.5,
         inherit.aes = FALSE
       ) +
-      ggplot2::scale_color_grey(start = 0.3, end = 0.7) +
+      ggplot2::scale_color_grey(start = 0.2, end = 0.8) +
       # add labels with the long names of the PBs
       # This will force the correct position of the link's right end
       ggrepel::geom_text_repel(

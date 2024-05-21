@@ -379,18 +379,27 @@ calc_departures <- function(
       dim = c(basin = nbasins, dim_remain),
       dimnames = c(list(basin = unique(endcell)), dimnames_remain)
     )
-
-    for (b in unique(endcell)) { # go through all basins
-    # TODO needs to be made flexible --> 2 or 3 dimensions
-      control_variable$wet_or_dry[which(unique(endcell) == b), , ] <- (
-        apply(
-          (lpjmlkit::asub(dry_or_wet, cell = which(endcell == b)) *
-             lpjmlkit::asub(icefree_area, cell = which(endcell == b))) /
-            sum(lpjmlkit::asub(icefree_area, cell = which(endcell == b)),
-                na.rm = TRUE) * 100,
-          names(dim_remain), sum, na.rm = TRUE
+    if (approach == "porkka2024") {
+      # calculate mean per basin
+      for (b in unique(endcell)) { # go through all basins
+        control_variable$wet_or_dry[which(unique(endcell) == b), , ] <- (
+          apply(
+            (lpjmlkit::asub(dry_or_wet, cell = which(endcell == b)) *
+               lpjmlkit::asub(icefree_area, cell = which(endcell == b))) /
+              sum(lpjmlkit::asub(icefree_area, cell = which(endcell == b)),
+                  na.rm = TRUE) * 100,
+            names(dim_remain), sum, na.rm = TRUE
+          )
         )
-      )
+      }
+    } else if (approach == "wang-erlandsson2022") {
+      for (b in unique(endcell)) { # go through all basins
+        control_variable$wet_or_dry[which(unique(endcell) == b), ] <-
+          apply(lpjmlkit::asub(dry_or_wet, cell = which(endcell == b), drop = FALSE) *
+                  lpjmlkit::asub(icefree_area, cell = which(endcell == b)) /
+                  sum(lpjmlkit::asub(icefree_area, cell = which(endcell == b)),
+                      na.rm = TRUE) * 100, names(dim_remain),sum, na.rm = TRUE)
+      }
     }
 
   } else if (spatial_scale == "global") {
