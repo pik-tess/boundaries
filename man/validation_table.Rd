@@ -13,7 +13,6 @@ validation_table(
   time_span_reference,
   path_baseline,
   table_path,
-  gridbased = TRUE,
   ...
 )
 }
@@ -36,9 +35,8 @@ as an integer vector, e.g. \code{1901:1930}. Can differ in offset and length fro
 \item{path_baseline}{character string for path to outputs
 for the baseline run, file names are taken from files scenario}
 
-\item{table_path}{character string for file  path to save the output,  .csv file}
-
-\item{gridbased}{logical, set to TRUE for gridbased pft outputs}
+\item{table_path}{character string for file path to save the output,
+(.csv file)}
 
 \item{...}{arguments to be passed to \link{calc_status}}
 }
@@ -53,8 +51,12 @@ relevant to planetary boundaries
 \examples{
 \dontrun{
 validation <- validation_table(
-  table_path = "./my_path/table.csv",
-  timeframe = as.character(2010:2017)
+  config_scenario = "./my_path/config_scenario.json",
+  config_reference = "./my_path/config_reference.json",
+  time_span_scenario = as.character(2010:2017),
+  time_span_reference = as.character(1500:1699),
+  path_baseline = "./my_path/outputs_baseline/",
+  table_path = "./my_path/table.csv"
 )
 }
 
