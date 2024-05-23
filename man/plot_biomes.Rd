@@ -4,23 +4,15 @@
 \alias{plot_biomes}
 \title{Plot global distribution of lpjml simulated biomes}
 \usage{
-plot_biomes(
-  biome_data,
-  file_name = NULL,
-  to_robinson = TRUE,
-  bg_col = "white",
-  grid_path = NULL
-)
+plot_biomes(x, filename = NULL, projection = "+proj=robin", grid_path = NULL)
 }
 \arguments{
-\item{biome_data}{output (list) from classify_biomes()}
+\item{x}{output (list) from classify_biomes()}
 
-\item{file_name}{directory for saving the plot (character string)}
+\item{filename}{directory for saving the plot (character string)}
 
-\item{to_robinson}{logical to define if robinson projection should be used
-for plotting}
-
-\item{bg_col}{character, specify background possible (\code{NA} for transparent)#}
+\item{projection}{character string defining the projection, default set to
+"+proj=robin"}
 
 \item{grid_path}{character string providing the path to a grid file}
 }
@@ -30,9 +22,16 @@ on the "classify_biomes" function
 }
 \examples{
 \dontrun{
+
+biomes <- classify_biomes(
+ config_reference = path_reference,
+ time_span_reference = as.character(2008:2017),
+ savanna_proxy = list(vegc = 7500)
+)
+
 plot_biomes(
-  biome_data = biomes,
-  file_name = "/p/projects/open/Johanna/R/biomes.pfd"
+  x = biomes,
+  filename = "/p/projects/open/Johanna/R/biomes.pfd"
   grid_path = ".grid.bin.json"
 )
 }

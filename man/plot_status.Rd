@@ -32,13 +32,15 @@ pb_status <- calc_status(
   boundary = c("lsc", "biosphere", "bluewater", "greenwater", "nitrogen"),
   config_scenario = "./config_lu_1500_2016.json",
   config_reference = "./config_pnv_1500_2016.json",
-  time_span_scenario =  as.character(1986:2016),
-  time_span_reference =  as.character(1986:2016),
+  time_span_scenario = as.character(1986:2016),
+  time_span_reference = as.character(1986:2016),
   spatial_scale = "global",
-  approach = list(bluewater = "porkka2024",
-                nitrogen = "schulte_uebbing2022"),
+  approach = list(
+    bluewater = "porkka2024",
+    nitrogen = "schulte_uebbing2022"
+  ),
   savanna_proxy = list(vegc = 7500),
-  time_aggregation_args = 1,
+  nyear_window = 1,
   path_baseline = "./pnv_1500_2016/",
 )
 

@@ -4,19 +4,24 @@
 \alias{list_outputs}
 \title{List required LPJmL outputs and temporal resolution}
 \usage{
-list_outputs(metric, approach, spatial_scale, only_first_filename = TRUE)
+list_outputs(
+  metric = "all",
+  spatial_scale = "all",
+  approach = "all",
+  only_first_filename = TRUE
+)
 }
 \arguments{
 \item{metric}{Character string containing name of metric to get
 required outputs. Available options are \code{c("biome", "nitrogen", "lsc", "bluewater", "greenwater", "biosphere")}
-or just \code{"all"} or \code{"benchmark"}.}
-
-\item{approach}{List of character strings containing the approach to
-calculate the metric.}
+or just \code{"all"} or \code{"benchmark"}. Default is \code{"all"}.}
 
 \item{spatial_scale}{character. Spatial resolution, available options
-are \code{"subglobal"} (at the biome level, default), \code{"global"} and
-\code{"grid"}}
+are \code{"subglobal"} (at the biome level), \code{"global"} and
+\code{"grid"} or \code{"all"} (default).}
+
+\item{approach}{List of character strings containing the approach to
+calculate the metric. Or \code{"all"} to get all approaches (default).}
 
 \item{only_first_filename}{Logical. If TRUE, only the first file name will be
 returned for each output. If FALSE, all file names will be returned.}

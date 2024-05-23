@@ -12,7 +12,7 @@ classify_biomes(
   montane_arctic_proxy = list(elevation = 1000),
   tree_cover_thresholds = list(),
   approach = "default",
-  time_aggregation_args = list(),
+  nyear_window = NULL,
   config_args = list(),
   input_files = list(),
   diff_output_files = list()
@@ -60,9 +60,10 @@ boreal forest threshold will be classified as boreal tundra.}
 \item{approach}{character string indicating which biome classification
 approach to use. Currently only one is defined ("default").}
 
-\item{time_aggregation_args}{list of arguments to be passed to
-\code{\link{aggregate_time}} (see for more info).
-To be used for time series analysis}
+\item{nyear_window}{integer. Number of years to be used for the moving
+average calculation. If \code{NULL}, all years are averaged for one status
+calculation, for \code{1} the whole time span is used to calculate a status
+time series.}
 
 \item{config_args}{list of arguments to be passed on from the model
 configuration.}

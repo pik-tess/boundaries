@@ -16,7 +16,7 @@ test_that("test calc_lsc_status global", {
     time_span_reference = timeframe,
     spatial_scale = "global",
     savanna_proxy = list(vegc = 7500),
-    time_aggregation_args = c(1),
+    nyear_window = c(1),
     in_parallel = FALSE,
   ) %>% suppressMessages()
 
@@ -86,7 +86,7 @@ test_that("test calc_lsc_status grid", {
     time_span_scenario = timeframe,
     time_span_reference = timeframe,
     spatial_scale = "grid",
-    time_aggregation_args = c(1),
+    nyear_window = c(1),
     in_parallel = FALSE,
   ) %>% suppressMessages()
 
@@ -139,7 +139,7 @@ test_that("test classify_biomes grid", {
       package = "boundaries"
     ),
     time_span_reference = timeframe,
-    time_aggregation_args = c(1),
+    nyear_window = c(1),
     savanna_proxy = list(vegc = NULL), # savanna_proxy = list(pft_lai = 6)
     input_files = list(
       temp = system.file(

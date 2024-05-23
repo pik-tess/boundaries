@@ -4,41 +4,28 @@
 \alias{aggregate_time}
 \title{Calculate averages (mean) for defined window sizes}
 \usage{
-aggregate_time(
-  x,
-  nyear_window = NULL,
-  moving_average = FALSE,
-  interpolate = FALSE,
-  nyear_reference = NULL
-)
+aggregate_time(x, nyear_window = NULL, nyear_replicate = NULL)
 }
 \arguments{
 \item{x}{LPJmL output array with \code{dim(x)=c(cell, month, year)}}
 
-\item{nyear_window}{integer, if supplied it defines the years for each window
-to be averaged over in \code{dim(x)[3]}. If \code{nyear_window == 1} values are used
-directly (instead of calculating an average). nyear_window has to be smaller
-than \code{dim(x)[3]} and \code{dim(x)[3]} is ideally a multipe of nyear_window.
-Defaults to \code{NULL}}
+\item{nyear_window}{integer. Number of years to be used for the moving
+average calculation. If \code{NULL}, all years are averaged for
+\code{spatial_scale = c("grid", "subglobal")} or the whole time span is used for
+\code{spatial_scale = "global"}.}
 
-\item{moving_average}{logical. If \code{TRUE} moving average is computed. start
-and end are interpolated using spline interpolation.}
-
-\item{interpolate}{logical. If \code{TRUE} and nyear_window is defined (with
-\code{moving_average == FALSE} years are interpolated (spline) to return array
-with same dimensions as \code{x} (mainly\code{dim(x)[3]} -> year).}
-
-\item{nyear_reference}{integer, if supplied (default NULL), it defines a
-time_span for ideally reference runs to be used as a baseline. E.g.
-\code{nyear_reference = 30} to be used for preindustrial climate reference.}
+\item{nyear_replicate}{integer, if supplied (default NULL), it defines a
+length of years to be replicated. Only if nyear_window is not supplied.}
 }
 \value{
-array with same amount of cells and months as x. 3rd dimension is
-defined by nyear_window, basically \code{dim(x)[3]/nyear_window} or equal to
-\code{dim(x)[3]} if \code{moving_average == TRUE} or \code{interpolate == TRUE}
+array with same amount of cells and months as x if nyear_window is
+supplied. If nyear_replicate is supplied, the array has the same amount of
+cells and months as x but the amount of years is multiplied by
+nyear_replicate.
 }
 \description{
-Define window sizes (nyear_window) to be used to calculate averages (mean)
-for each window (\code{dim(x)[3] / nyear_window}). Instead of discrete windows,
-also moving averages can be computed as well as years inbetween interpolated.
+Define window sizes (nyear_window) to be used to calculate moving averages
+(mean). If nyear_window is not supplied, the function calculates the mean
+over all years. If nyear_replicate is supplied, the function replicates the
+mean values for the defined amount of years.
 }

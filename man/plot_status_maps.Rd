@@ -7,8 +7,9 @@
 plot_status_maps(
   x,
   filename = NULL,
-  add_legend = TRUE,
+  risk_level = TRUE,
   projection = "+proj=robin",
+  high_risk = 3.5,
   ncol = 2,
   grid_path = NULL
 )
@@ -18,12 +19,18 @@ plot_status_maps(
 control variable for one point in time, incl. pb thresholds as attribute}
 
 \item{filename}{character string providing file name (including directory
-and file extension). Defaults to NULL (plotting to screen)}
+and file extension). Defaults to NULL (plotting to screen and returning
+the ggplot object)}
 
-\item{add_legend}{logical, specify whether a add_legend should be plotted}
+\item{risk_level}{logical, specify whether the status should be plotted as
+risk level. Default set to TRUE.}
 
 \item{projection}{character string defining the projection, default set to
 "+proj=robin"}
+
+\item{high_risk}{numeric, specify the normalized PB status value for the
+upper end of the risk color scale (default 3.5). Only relevant if risk_level
+is set to TRUE}
 
 \item{ncol}{integer, number of columns in the plot, default set to 2}
 
@@ -31,14 +38,14 @@ and file extension). Defaults to NULL (plotting to screen)}
 }
 \description{
 Plot global map(s) with the status of planetary boundaries for
-a scenario LPJmL run and derived planetary boundary statuses
+a scenario LPJmL run and derived planetary boundary statuses. Legend can be
+plotted seperately based on the plot_legend() function
 }
 \examples{
 \dontrun{
  plot_status_maps(
   filename = "./my_boundary_status.png",
   x = calc_output
-  add_legend = FALSE
   grid_path = "/path/to/gridfile.bin.json"
 )
 }

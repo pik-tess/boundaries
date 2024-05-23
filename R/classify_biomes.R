@@ -21,9 +21,10 @@
 #' @param approach character string indicating which biome classification
 #'        approach to use. Currently only one is defined ("default").
 #'
-#' @param time_aggregation_args list of arguments to be passed to
-#'        [`aggregate_time`] (see for more info).
-#'        To be used for time series analysis
+#' @param nyear_window integer. Number of years to be used for the moving
+#'        average calculation. If `NULL`, all years are averaged for one status
+#'        calculation, for `1` the whole time span is used to calculate a status
+#'        time series.
 #'
 #' @param config_args list of arguments to be passed on from the model
 #' configuration.
@@ -81,7 +82,7 @@ classify_biomes <- function(config_reference = NULL, # nolint:cyclocomp_linter
                             montane_arctic_proxy = list(elevation = 1000),
                             tree_cover_thresholds = list(),
                             approach = "default",
-                            time_aggregation_args = list(),
+                            nyear_window = NULL,
                             config_args = list(),
                             input_files = list(),
                             diff_output_files = list()) {
@@ -220,31 +221,26 @@ classify_biomes <- function(config_reference = NULL, # nolint:cyclocomp_linter
   # please R CMD check for use of future operator
   avg_fpc <- NULL
   # average fpc
-  avg_fpc %<-% do.call(
-    aggregate_time,
-    append(list(x = fpc),
-           time_aggregation_args)
+  avg_fpc %<-% aggregate_time(
+    x = fpc,
+    nyear_window = nyear_window
   )
 
   # average vegc or pft_lai
   if (!is.na(savanna_proxy_name)) {
     # please R CMD check for use of future operator
     avg_savanna_proxy_data <- NULL
-    avg_savanna_proxy_data %<-% drop(
-      do.call(
-        aggregate_time,
-        append(list(x = savanna_proxy_data),
-               time_aggregation_args)
-      )
+    avg_savanna_proxy_data %<-% aggregate_time(
+      x = savanna_proxy_data,
+      nyear_window = nyear_window
     )
   }
   # please R CMD check for use of future operator
   avg_temp <- NULL
   # average temp
-  avg_temp %<-% do.call(
-    aggregate_time,
-    append(list(x = temp),
-           time_aggregation_args)
+  avg_temp %<-% aggregate_time(
+    x = temp,
+    nyear_window = nyear_window
   )
 
   # biome_names after biome classification in Ostberg et al. 2013

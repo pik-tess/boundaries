@@ -7,52 +7,43 @@
 plot_status_global(
   x,
   filename = NULL,
-  add_legend = TRUE,
-  colors = c(bluewater = "#377eb8", greenwater = "#4daf4a", lsc = "#ff7f00", biosphere =
-    "#e41a1c", nitrogen = "#984ea3"),
   all_in_one = FALSE,
   ncol = 2,
-  normalize = "safe"
+  normalize = "increasing risk",
+  high_risk = 3.5
 )
 }
 \arguments{
 \item{x}{list with global output from calc_status}
 
 \item{filename}{character string providing file name (including directory
-and file extension). Defaults to NULL (plotting to screen)}
+and file extension). Defaults to NULL (plotting to screen and
+returning plot object for further customization)}
 
-\item{add_legend}{logical, specify whether a legend should be plotted}
-
-\item{colors}{named vector for definition of colors for plotting of
-the safe, increasingnrisk and high risk zone}
-
-\item{all_in_one}{boolean, if TRUE, all PB stati will be normalized to 0
-(holocene value) to 1 (pb) and plotted in one panel}
+\item{all_in_one}{boolean, if TRUE, all PB stati will be normalized and
+plotted in one panel}
 
 \item{ncol}{number of plot columns (only relevant if more than one pb is
 plotted and all_in_one = FALSE)}
 
-\item{normalize}{character string to define normalization, either "safe"
-(normalized from holocene to pb = the safe zone) or
-"increasing risk" (normalized from pb to high risk level =
-increasing risk zone if the pb status is > pb, otherwise normalized
-from holocene to pb). Only used if all_on_one set to TRUE}
+\item{normalize}{see \code{\link[=as_risk_level]{as_risk_level()}} for details. Default set to
+"increasing risk". Only relevant if all_in_one = TRUE}
+
+\item{high_risk}{numeric, specify the normalized PB status value for the
+upper end of the risk color scale (default 3.5)}
 }
 \description{
-Plot line plots with the PB status over time  for
-a scenario LPJmL run and derived planetary boundary statuses
+Plot line plots with the PB status over time for
+a scenario LPJmL run and derived planetary boundary statuses. Legend can be
+plotted seperately based on the plot_legend() function
 }
 \examples{
 \dontrun{
-plot_status(
+plot_status_global(
   filename = "./my_boundary_status.png",
-  x = list(
-    "land system change" = lsc_status,
-    "nitrogen" = nitrogen_status,
-    "bluewater" = water_status
-  ),
-  legend = FALSE,
-  bg_col = NA
+  x = status_output,
+  all_in_one = FALSE,
+  ncol = 2
 )
 }
 

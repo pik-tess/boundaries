@@ -38,9 +38,10 @@
 #'      (e.g. 50% for boreal forest with default value)
 #' highrisk = threshold between increasing risk and high risk zone
 #'
-#' @param time_aggregation_args list of arguments to be passed to
-#' [`aggregate_time`] (see for more info). To be used for time
-#' series analysis
+#' @param nyear_window integer. Number of years to be used for the moving
+#' average calculation. If `NULL`, all years are averaged for one status
+#' calculation, for `1` the whole time span is used to calculate a status time
+#' series.
 #'
 #' @param config_args list of arguments to be passed on from the model
 #' configuration.
@@ -65,7 +66,7 @@ calc_lsc_status <- function(
   time_span_scenario = as.character(1982:2011),
   time_span_reference = time_span_scenario,
   approach = "steffen2015",
-  time_aggregation_args = list(),
+  nyear_window = NULL,
   config_args = list(),
   thresholds = NULL,
   eurasia = TRUE,
@@ -88,7 +89,7 @@ calc_lsc_status <- function(
     classify_biomes,
     append(list(files_reference = files_reference,
                 time_span_reference = time_span_reference,
-                time_aggregation_args = list(),
+                nyear_window = NULL,
                 config_args = config_args,
                 montane_arctic_proxy = NULL),
            ellipsis_filtered)
@@ -210,10 +211,10 @@ calc_lsc_status <- function(
   # please R CMD check for use of future operator
   avg_trees_scenario <- avg_trees_reference <- NULL
   # average forest over time
-  avg_trees_scenario %<-% do.call(aggregate_time,
-                                  append(list(x = all_tree_cover_scenario),
-                                         time_aggregation_args))
-
+  avg_trees_scenario %<-% aggregate_time(
+    x = all_tree_cover_scenario,
+    nyear_window = nyear_window
+  )
 
   # average forest over time
 

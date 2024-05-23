@@ -23,9 +23,10 @@
 #' Can differ in offset and length from `time_span_scenario`!
 #' If `NULL` value of `time_span_scenario` is used
 #'
-#' @param time_aggregation_args list of arguments to be passed to
-#' [`aggregate_time`] (see for more info).
-#' To be used for time series analysis
+#' @param nyear_window integer. Number of years to be used for the moving
+#' average calculation. If `NULL`, all years are averaged for one status
+#' calculation, for `1` the whole time span is used to calculate a status time
+#' series.
 #'
 #' @param config_args list of arguments to be passed on from the model
 #' configuration.
@@ -66,7 +67,7 @@ calc_greenwater_status <- function(
   time_span_scenario = as.character(1982:2011),
   time_span_reference = time_span_scenario,
   approach = "wang-erlandsson2022",
-  time_aggregation_args = list(),
+  nyear_window = NULL,
   config_args = list(),
   thresholds = NULL
 ) {
@@ -86,7 +87,7 @@ calc_greenwater_status <- function(
     time_span_scenario = time_span_scenario,
     time_span_reference =  time_span_reference,
     approach = approach,
-    time_aggregation_args = time_aggregation_args,
+    nyear_window = nyear_window,
     config_args = config_args,
     thresholds = thresholds,
     variable = "rootmoist"

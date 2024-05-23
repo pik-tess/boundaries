@@ -13,7 +13,7 @@ calc_water_deviations(
   time_span_reference,
   approach = "porkka2024",
   thresholds = NULL,
-  time_aggregation_args = list(),
+  nyear_window = NULL,
   config_args = list(),
   variable = "rootmoist"
 )
@@ -54,14 +54,15 @@ approach is \code{c("wang-erlandsson2022")} based on
 define the safe, increasing risk and high risk zone,
 For spatial_scale = "global" and "subglobal", this refers to the quantiles of
 the global/basin area with deviations in the reference period. The default
-is: c(holocene = 0.5, pb = 0.95, highrisk = NULL).
+is: c(holocene = 50, pb = 95, highrisk = NULL).
 If set to NULL, the  default is taken from metric_files.yml
 For highrisk, the value is currently hard-coded to 0.5
 (following Richardson et al. 2023)}
 
-\item{time_aggregation_args}{list of arguments to be passed to
-\code{\link{aggregate_time}} (see for more info).
-To be used for time series analysis}
+\item{nyear_window}{integer. Number of years to be used for the moving
+average calculation. If \code{NULL}, all years are averaged for calculation,
+for \code{1} the whole time span is used to calculate a time
+series.}
 
 \item{config_args}{list of arguments to be passed on from the model
 configuration.}

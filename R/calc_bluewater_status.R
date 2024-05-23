@@ -34,9 +34,10 @@
 #' "wang_erlandsson2022" as well as "porkka2024" for
 #' spatial_scale = "global" or "subglobal"
 #'
-#' @param time_aggregation_args list of arguments to be passed to
-#' [`aggregate_time`] (see for more info). To be used for
-#' time series analysis
+#' @param nyear_window integer. Number of years to be used for the moving
+#' average calculation. If `NULL`, all years are averaged for one status
+#' calculation, for `1` the whole time span is used to calculate a status time
+#' series.
 #'
 #' @param config_args list of arguments to be passed on from the model
 #' configuration.
@@ -65,7 +66,7 @@ calc_bluewater_status <- function(files_scenario,
                                   time_span_scenario = as.character(1982:2011),
                                   time_span_reference = time_span_scenario,
                                   approach = "gerten2020",
-                                  time_aggregation_args = list(),
+                                  nyear_window = NULL,
                                   config_args = list(),
                                   thresholds = NULL,
                                   cut_min = 0.0864) {
@@ -92,7 +93,7 @@ calc_bluewater_status <- function(files_scenario,
       time_span_scenario = time_span_scenario,
       time_span_reference =  time_span_reference,
       approach = approach,
-      time_aggregation_args = time_aggregation_args,
+      nyear_window = nyear_window,
       config_args = config_args,
       thresholds = thresholds,
       cut_min = cut_min
@@ -117,7 +118,7 @@ calc_bluewater_status <- function(files_scenario,
       time_span_scenario = time_span_scenario,
       time_span_reference =  time_span_reference,
       approach = approach,
-      time_aggregation_args = time_aggregation_args,
+      nyear_window = nyear_window,
       config_args = config_args,
       thresholds = thresholds,
       variable = "discharge"
@@ -136,7 +137,7 @@ calc_bluewater_efrs <- function(
   time_span_scenario = time_span_scenario,
   time_span_reference = NULL,
   approach = "gerten2020",
-  time_aggregation_args = list(),
+  nyear_window = NULL,
   config_args = list(),
   thresholds = NULL,
   cut_min = 0.0864
@@ -167,43 +168,34 @@ calc_bluewater_efrs <- function(
   )
 
   # ------------------------------------------------------------------------ #
-
-  # TODO understand what this does
-  if (length(time_span_reference) < length(time_span_scenario)) {
-    nyear_ref <- length(time_span_scenario)
-  } else {
-    nyear_ref <- NULL
-  }
+  # please R CMD check for use of future operator
+  avg_discharge_scenario <- NULL
+  # average discharge scenario
+  avg_discharge_scenario %<-% aggregate_time(
+    discharge_scenario,
+    nyear_window = nyear_window
+  )
 
   # please R CMD check for use of future operator
   avg_discharge_reference <- NULL
   # average discharge reference
-  avg_discharge_reference %<-% do.call(
-    aggregate_time,
-    append(list(x = discharge_reference,
-                nyear_reference = nyear_ref),
-           time_aggregation_args)
-  )
-
-  # please R CMD check for use of future operator
-  avg_discharge_scenario <- NULL
-  # average discharge scenario
-  avg_discharge_scenario %<-% do.call(
-    aggregate_time,
-    append(list(x = discharge_scenario),
-           time_aggregation_args)
+  avg_discharge_reference %<-% aggregate_time(
+    discharge_reference,
+    nyear_replicate = if (is.null(nyear_window)) NULL else dim(avg_discharge_scenario)["year"]
   )
 
   # please R CMD check for use of future operator
   efr_uncertain <- efr_safe <- NULL
   # calc efrs for vmf_min and vmf_max
-  efr_uncertain %<-% calc_efrs(discharge_reference,
-                               "vmf_min",
-                               time_aggregation_args)
-  efr_safe %<-% calc_efrs(discharge_reference,
-                          "vmf_max",
-                          time_aggregation_args)
+  efr_uncertain %<-% calc_efrs(
+    avg_discharge_reference,
+    "vmf_min"
+  )
 
+  efr_safe %<-% calc_efrs(
+    avg_discharge_reference,
+    "vmf_max"
+  )
   # calculation of EFR transgressions = EFR deficits in LU run
   efr_deficit <- efr_safe - avg_discharge_scenario
   # dismiss small EFR deficits #TODO check relevance
