@@ -57,7 +57,7 @@ get_sim_outputs <- function(config) {
   }
 
   return(
-    sapply(
+    sapply( # nolint:undesirable_function_linter
       config$output,
       function(x, with_meta) {
         y <- x$file$name
@@ -68,7 +68,7 @@ get_sim_outputs <- function(config) {
         has_suffix <- grepl("\\.(nc|bin|clm)", y)
         if (with_meta && !has_suffix) {
           y <- paste0(y, config$default_suffix, ".json")
-        } else if(with_meta && has_suffix) {
+        } else if (with_meta && has_suffix) {
           y <- paste0(y, ".json")
         }
         names(y) <- x$id
@@ -88,7 +88,7 @@ get_sim_inputs <- function(config) {
     name <- config$input[[i]]$name
     if (startsWith(name, "/p/")) {
       z[[names(config$input)[i]]] <- name
-    # Workaround to use the package data
+      # Workaround to use the package data
     } else if (startsWith(name, "extdata")) {
       z[[names(config$input)[i]]] <- system.file(name, package = "boundaries")
     } else {

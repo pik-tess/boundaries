@@ -89,22 +89,6 @@ validation_table <- function(
     output_files = output_files
   )
 
-
-  # Initialize empty numeric vectors
-  crop_area <- numeric()
-  irrig_area <- numeric()
-  pasture_area <- numeric()
-  forest_area <- numeric()
-  deforest_share <- numeric()
-  wd <- numeric()
-  cons <- numeric()
-  leaching <- numeric()
-  leaching_agr <- numeric()
-  nue <- numeric()
-  nsurplus <- numeric()
-  npp_lu <- numeric()
-  crop_sum <- numeric()
-
   # read in terrestrial area (in m2)
   terr_area <- lpjmlkit::read_io(files_scenario$terr_area)$data %>% drop()
   ncell <- length(terr_area)
@@ -337,10 +321,11 @@ validation_table <- function(
     ignore.case = TRUE, perl = TRUE
   )
 
-  for (c in 1:length(crop_ids_explicit_rainfed)) {
-    crop_fm_prod[, c] <- (harvest_dm[, crop_ids_explicit_rainfed[c]] +
-                          harvest_dm[, crop_ids_explicit_irrig[c]]) *
-      dm2fm[c] / 1000 # kg FM
+  for (cc in seq_along(crop_ids_explicit_rainfed)) {
+    crop_fm_prod[, cc] <- (
+      harvest_dm[, crop_ids_explicit_rainfed[cc]] +
+        harvest_dm[, crop_ids_explicit_irrig[cc]]
+    ) * dm2fm[c] / 1000 # kg FM
   }
 
   crop_sum <- sum(crop_fm_prod) / 10^9 # in Mt, 1 Mt = 10^9 kg

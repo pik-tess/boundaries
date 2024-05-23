@@ -116,17 +116,14 @@ test_that("test calc_lsc_status grid", {
     )
   )
 
-  # TODO: Error in thresholds[[, , "holocene"]] : subscript out of bounds
   # test for as_risk_level
-  #   boundary_status <- as_risk_level(test)
-  # 
-  #   testthat::expect_true(
-  #     all(
-  #       boundary_status$lsc > attributes(boundary_status$lsc)$thresholds$pb &
-  #         boundary_status$lsc < attributes(boundary_status$lsc)$thresholds$highrisk # nolint
-  #     )
-  #   )
+  boundary_status <- as_risk_level(test)
 
+  testthat::expect_true(
+    all(
+        boundary_status$lsc < attributes(boundary_status$lsc)$thresholds$highrisk # nolint
+    )
+  )
 })
 
 test_that("test classify_biomes grid", {
@@ -140,7 +137,7 @@ test_that("test classify_biomes grid", {
     ),
     time_span_reference = timeframe,
     nyear_window = c(1),
-    savanna_proxy = list(vegc = NULL), # savanna_proxy = list(pft_lai = 6)
+    savanna_proxy = list(vegc = NULL),
     input_files = list(
       temp = system.file(
         "extdata/input/tas_gswp3-w5e5_1901-2016.clm",

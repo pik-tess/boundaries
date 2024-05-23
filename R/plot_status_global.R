@@ -251,7 +251,6 @@ plot_status_global <- function(
         clip = "off"
       )
   } else {
-    # all_in_one = FALSE
     # create dataframe for plotting of pb specific background filling
     # (needed for safe zone and beyond the increasing risk value)
     pb_thresh <- highrisk_thresh <- holocene <- ylabel <- max_y <- long_name <-
@@ -291,7 +290,7 @@ plot_status_global <- function(
       temp <- tibble::tibble(
         vals = seq(
           (highrisk_thresh[i] +
-            (highrisk_thresh[i] - pb_thresh[i]) * factor), pb_thresh[i],
+             (highrisk_thresh[i] - pb_thresh[i]) * factor), pb_thresh[i],
           length.out = 500
         )
       ) %>%

@@ -4,8 +4,8 @@ type: software
 title: |-
   boundaries: Functions to calculate the Planetary boundary status based on LPJmL
       simulation data
-version: 0.1.1
-date-released: '2024-03-21'
+version: 0.2.0
+date-released: '2024-05-23'
 abstract: Provide calculation & visualizations functions for planetary boundaries.
 authors:
 - family-names: Breier

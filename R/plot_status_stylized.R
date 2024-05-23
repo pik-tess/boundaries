@@ -3,7 +3,7 @@
 #' Plot time series of boundaries into iconic polar boundaries plot only
 #' focussing on the terrestrial boundaries (half-circle). Wedges are
 #' scaled and normalized based on the "increasing risk" method according to
-#' each boundary (see [`as_risk_level()`] for details). 
+#' each boundary (see [`as_risk_level()`] for details).
 #'
 #' @param x list with global output from calc_status
 #'
@@ -296,7 +296,7 @@ draw_stylized <- function(
 
   # Please R CMD check for use of ggplot2 syntax
   xend <- yend <- status <- alpha <- start_year <- transgression_year <- NULL
-  end_year <- name <- longname <- NULL
+  end_year <- longname <- NULL
   # Create ggplot, first with the segments that include the colour gradient for
   #   each level of risk (safe space, uncertainty zone, high risk)
   p <- ggplot2::ggplot() +

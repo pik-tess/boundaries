@@ -398,7 +398,7 @@ calc_departures <- function(
           apply(lpjmlkit::asub(dry_or_wet, cell = which(endcell == b), drop = FALSE) *
                   lpjmlkit::asub(icefree_area, cell = which(endcell == b)) /
                   sum(lpjmlkit::asub(icefree_area, cell = which(endcell == b)),
-                      na.rm = TRUE) * 100, names(dim_remain),sum, na.rm = TRUE)
+                      na.rm = TRUE) * 100, names(dim_remain), sum, na.rm = TRUE)
       }
     }
 
