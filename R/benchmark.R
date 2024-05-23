@@ -9,7 +9,6 @@
 #'
 #' @param config_reference character string. See config_scenario. For the
 #' reference run
-# TODO this description is a bit cryptic. leave it like this?
 #'
 #' @param time_span_scenario time span to be used for the scenario run and
 #' parallel PNV run, defined as a character string,
@@ -22,9 +21,8 @@
 #' @param path_baseline character string for path to outputs
 #' for the baseline run, file names are taken from files scenario
 #'
-#' @param table_path character string for file  path to save the output,  .csv file
-#'
-#' @param gridbased logical, set to TRUE for gridbased pft outputs
+#' @param table_path character string for file path to save the output,
+#' (.csv file)
 #'
 #' @param ... arguments to be passed to [calc_status]
 #'
@@ -33,15 +31,18 @@
 #' @examples
 #' \dontrun{
 #' validation <- validation_table(
-#'   table_path = "./my_path/table.csv",
-#'   timeframe = as.character(2010:2017)
+#'   config_scenario = "./my_path/config_scenario.json",
+#'   config_reference = "./my_path/config_reference.json",
+#'   time_span_scenario = as.character(2010:2017),
+#'   time_span_reference = as.character(1500:1699),
+#'   path_baseline = "./my_path/outputs_baseline/",
+#'   table_path = "./my_path/table.csv"
 #' )
 #' }
 #'
 #' @md
 #' @export
 #'
-# TODO: check parameter descriptions
 
 validation_table <- function(
     config_scenario,
@@ -50,15 +51,18 @@ validation_table <- function(
     time_span_reference,
     path_baseline,
     table_path,
-    gridbased = TRUE,
     ...) {
-  config_scenario <- lpjmlkit::read_config(config_scenario)
-  config_reference <- lpjmlkit::read_config(config_reference)
 
-  if (!all(time_span_scenario %in% get_sim_time(config_scenario))) {
+  config_scen <- lpjmlkit::read_config(config_scenario)
+  config_ref <- lpjmlkit::read_config(config_reference)
+
+  # are pft specific outputs grid or stand scaled?
+  gridbased <- config_scen$grid_scaled
+
+  if (!all(time_span_scenario %in% get_sim_time(config_scen))) {
     stop("Time span not available in scenario run.")
   }
-  if (!all(time_span_reference %in% get_sim_time(config_reference))) {
+  if (!all(time_span_reference %in% get_sim_time(config_ref))) {
     stop("Time span not available in reference run.")
   }
 
@@ -72,11 +76,11 @@ validation_table <- function(
 
   # Get filenames for scenario and reference
   files_scenario <- get_filenames(
-    config = config_scenario,
+    config = config_scen,
     output_files = output_files
   )
   files_reference <- get_filenames(
-    config = config_reference,
+    config = config_ref,
     output_files = output_files
   )
 
@@ -191,10 +195,9 @@ validation_table <- function(
   )
   # withdrawals in km3
   wd <- global_sum((irrig + conv_loss_drain + conv_loss_evap))
-  # wd <- global_sum((irrig + conv_loss_drain + conv_loss_evap), area = terr_area)
 
   # consumption in km3
-  cons <- global_sum((irrig + conv_loss_evap - return_flow_b), area = terr_area)
+  cons <- global_sum((irrig + conv_loss_evap - return_flow_b))
 
   ####### PB Nitrogen ##########################################################
   #------------- Nitrogen balance and leaching ---------------------------------
@@ -330,7 +333,8 @@ validation_table <- function(
   )
 
   for (c in 1:length(crop_ids_explicit_rainfed)) {
-    crop_fm_prod[, c] <- (harvest_dm[, crop_ids_explicit_rainfed[c]] + harvest_dm[, crop_ids_explicit_irrig[c]]) *
+    crop_fm_prod[, c] <- (harvest_dm[, crop_ids_explicit_rainfed[c]] +
+                          harvest_dm[, crop_ids_explicit_irrig[c]]) *
       dm2fm[c] / 1000 # kg FM
   }
 
@@ -364,11 +368,10 @@ validation_table <- function(
 
 
   # calculate PB status
-
   pb_status <- calc_status(
-    boundary = c("lsc", "greenwater", "bluewater", "nitrogen", "biosphere"),
-    config_scenario = path_scenario,
-    config_reference = path_reference,
+    boundary = c("lsc", "greenwater", "bluewater", "biosphere"),
+    config_scenario = config_scenario,
+    config_reference = config_reference,
     time_span_scenario = time_span_scenario,
     time_span_reference = time_span_reference,
     spatial_scale = "global",
@@ -389,7 +392,6 @@ validation_table <- function(
   # add column for normalized error values
   ref_table <- ref_table %>%
     dplyr::mutate(norm_error = signif((lpjml_value - as.numeric(value)) / as.numeric(value), digits = 2))
-  # dplyr::mutate(norm_error = signif((lpjml_value - value) / value, digits = 2))
 
   # create summary table
   summary_tbl <- ref_table %>%

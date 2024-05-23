@@ -198,10 +198,10 @@ get_filenames <- function(config,
       stop(paste0("Not supported time resolution: ", dQuote(nstep), "."))
     )
 
-    # If input file supplied use it as first priority
     if (data_file %in% names(sim_data)) {
       file_name <- sim_data[[data_file]]
     } else {
+      message("Output file ", dQuote(data_file), " not found in config.")
       file_name <- NULL
     }
 
