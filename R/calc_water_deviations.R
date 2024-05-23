@@ -454,7 +454,7 @@ calc_baseline <- function(file_reference, approach) {
     quants_array <- apply(
       file_reference,
       c("cell", "month"),
-      quantile,
+      stats::quantile,
       probs = c(0.05, 0.95)
     )
     quants <- list(

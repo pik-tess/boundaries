@@ -296,7 +296,7 @@ draw_stylized <- function(
 
   # Please R CMD check for use of ggplot2 syntax
   xend <- yend <- status <- alpha <- start_year <- transgression_year <- NULL
-  end_year <- name <- NULL
+  end_year <- name <- longname <- NULL
   # Create ggplot, first with the segments that include the colour gradient for
   #   each level of risk (safe space, uncertainty zone, high risk)
   p <- ggplot2::ggplot() +

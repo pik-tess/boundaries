@@ -79,13 +79,17 @@ plot_status_maps <- function(
         as_risk_level(type = "continuous", normalize = "increasing risk")
     } else {
       plot_data <- x[[i]]
-      plot_data[plot_data > quantile(plot_data, 0.95, na.rm = TRUE)] <-
-        quantile(plot_data, 0.95,  na.rm = TRUE)
-      plot_data[plot_data < quantile(plot_data, 0.05, na.rm = TRUE)] <-
-        quantile(plot_data, 0.05,  na.rm = TRUE)
+      plot_data[plot_data > stats::quantile(plot_data, 0.95, na.rm = TRUE)] <-
+        stats::quantile(plot_data, 0.95,  na.rm = TRUE)
+      plot_data[plot_data < stats::quantile(plot_data, 0.05, na.rm = TRUE)] <-
+        stats::quantile(plot_data, 0.05,  na.rm = TRUE)
 
-      legend_title <- paste0(attr(x[[i]], "control_variable"),
-                          " (", attr(x[[i]], "unit"), ")")
+      legend_title <- paste0(
+        attr(x[[i]], "control_variable"),
+        " (",
+        attr(x[[i]], "unit"),
+        ")"
+      )
     }
 
     # convert lpjml vector to raster with defined projection

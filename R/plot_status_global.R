@@ -44,6 +44,9 @@ plot_status_global <- function(
 
   normalize <- match.arg(normalize, c("safe", "increasing risk"))
 
+  # please R CMD check for use of dplyr syntax
+  years <- vals <- xend <- y <- yend <- values <- pb <- NULL
+
   if (all_in_one == TRUE) {
     x <- as_risk_level(x, type = "continuous", normalize = normalize)
   }

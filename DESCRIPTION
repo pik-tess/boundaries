@@ -32,6 +32,7 @@ Imports:
     abind,
     methods,
     tidyselect,
+    matrixStats,
     biospheremetrics
 Suggests: 
     testthat (>= 3.0.0),
@@ -45,6 +46,10 @@ Suggests:
     gridExtra,
     purrr,
     rnaturalearth,
-    terra
+    terra,
+    ggpubr,
+    ggrepel,
+    scales,
+    tidyterra
 Config/testthat/edition: 3
 Date: 2024-03-21

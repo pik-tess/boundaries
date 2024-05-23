@@ -53,6 +53,11 @@ validation_table <- function(
     table_path,
     ...) {
 
+  # please R CMD check for use of dplyr syntax
+  lpjml_value <- value <- variable <- range.lower <- range.upper <- unit <- NULL
+  X.lower. <- X.upper. <- year <- time_range <- value_range <- Author.s. <- NULL # nolint
+  assessment_time <- year.of.publication <- boundary <- literature.range <- NULL # nolint
+
   config_scen <- lpjmlkit::read_config(config_scenario)
   config_ref <- lpjmlkit::read_config(config_reference)
 
@@ -101,7 +106,7 @@ validation_table <- function(
   crop_sum <- numeric()
 
   # read in terrestrial area (in m2)
-  terr_area <<- lpjmlkit::read_io(files_scenario$terr_area)$data %>% drop()
+  terr_area <- lpjmlkit::read_io(files_scenario$terr_area)$data %>% drop()
   ncell <- length(terr_area)
 
   ####### PB Land-system change ################################################
@@ -194,10 +199,10 @@ validation_table <- function(
     )
   )
   # withdrawals in km3
-  wd <- global_sum((irrig + conv_loss_drain + conv_loss_evap))
+  wd <- global_sum((irrig + conv_loss_drain + conv_loss_evap), area = terr_area)
 
   # consumption in km3
-  cons <- global_sum((irrig + conv_loss_evap - return_flow_b))
+  cons <- global_sum((irrig + conv_loss_evap - return_flow_b), area = terr_area)
 
   ####### PB Nitrogen ##########################################################
   #------------- Nitrogen balance and leaching ---------------------------------
@@ -271,7 +276,7 @@ validation_table <- function(
     aggregate = list(
       year = mean
     )
-  ) %>% global_sum()
+  ) %>% global_sum(area = terr_area)
 
   nue <- nharvest / n_inputs * 100
 
@@ -361,7 +366,7 @@ validation_table <- function(
   ref_table <- system.file("extdata", "global_validation_data.csv",
     package = "boundaries"
   ) %>%
-    read.csv2()
+    utils::read.csv2()
 
   # insert lpjml values in table (pb status variables later)
   ref_table <- insert_lpjml_value(ref_table, var_match, units_match, calc_var)
@@ -429,7 +434,7 @@ validation_table <- function(
     dplyr::distinct()
 
 
-  write.csv(summary_tbl, file = table_path, row.names = FALSE)
+  utils::write.csv(summary_tbl, file = table_path, row.names = FALSE)
 
   return(ref_table)
 }
@@ -449,13 +454,12 @@ aggregate_lpjml_output <- function(
   ) %>%
     lpjmlkit::transform(to = c("year_month_day")) %>%
     lpjmlkit::as_array(aggregate = aggregate) # %>%
-  # suppressWarnings()
   return(variable)
 }
 
 
 # conversion from g/m2 to Tg
-global_sum <- function(output, area = terr_area) {
+global_sum <- function(output, area) {
   sum_result <- sum(output * area) * 10^-12
   return(sum_result)
 }
@@ -483,6 +487,8 @@ insert_lpjml_value <- function(
 
 # insert the PB status values (calculated with calc_status) in the benchmarking table
 evaluate_pb_status <- function(ref_table, pb_list, temp2) {
+  # Please R CMD check for use of dplyr syntax
+  lpjml_value <- NULL
   for (pb in pb_list) { # add calculation of PBs
     ref_table <- ref_table %>%
       dplyr::mutate(lpjml_value = ifelse(
