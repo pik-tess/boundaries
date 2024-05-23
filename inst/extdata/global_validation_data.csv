@@ -5,7 +5,6 @@ land system change;pasture area;Mha;2023;FAO;3181;;;2015;;;
 land system change;pasture area;Mha;2017;Klein Goldewijk et al.;3241;;;2015;;;
 land system change;potential natural forest extent ;Mha;2020;Grantham et al.;5737;;;2019;;;
 land system change;deforested area;% of pot. extent;2020;Grantham et al.;25;;;2019;;;
-land system change;deforested area;% of pot. extent;2015;Steffen et al. ;38;;;;;;
 land system change;PB status (lsc);% of pot. extent;2023;Richardson et al. ;40;;;2020;;;
 biosphere integrity;PB status (biosphere);% HANPP;2024;Stenzel et al. ;;20;25;;2007;2016;with respect to preindustrial potential NPP
 biosphere integrity;PB status (biosphere);% HANPP;2022;Kastner el al.;20,7;;;2010;;;with respect to current potential NPP
@@ -13,12 +12,11 @@ biosphere integrity;PB status (biosphere);% HANPP;2023;Richardson et al. ;30;;;2
 biosphere integrity;crop production for all explicitly modelled crop types;Gt yr-1 fresh matter;2023;FAO ;6546;;;2015;;;
 biogeochemical flows (N);N use efficiency on cropland;%;2021;Zhang et al. ;46;40;53;2010;;;
 biogeochemical flows (N);N surplus on cropland;Tg N yr-1;2021;Zhang et al. ;86;68;97;2010;;;
-biogeochemical flows (N);N surplus on cropland;Tg N yr-1;2024;Schulte-Uebbing et al.;119;;;2010;;;
 biogeochemical flows (N);N surplus on cropland;Tg N yr-1;2013;L. Bouwman et al.;93;;;2000;;;
 biogeochemical flows (N);N leaching (total);Tg N yr-1;2013;L. Bouwman et al.;93;;;2000;;;
 biogeochemical flows (N);N leaching (total);Tg N yr-1;;INA;72,1;;;2010;;;
 biogeochemical flows (N);N leaching from cropland;Tg N yr-1;;INA;;32;49;2010;;;
-biogeochemical flows (N);PB status (nitrogen);Tg N yr-1;2023;Richardson et al. ;190;;;2020;;;
+biogeochemical flows (N);PB status (nitrogen);Tg N yr-1;2024;Schulte-Uebbing et al.;119;;;2010;;;
 freshwater change;Irrigation area extent ;Mha;2013;Siebert et al.;255;;;2005;;;
 freshwater change;Irrigation area extent ;Mha;2015;Salmon et al.;314;;;2005;;;
 freshwater change;Irrigation area extent ;Mha;2023;McDermid et al.;367;;;2020;;;
