@@ -13,9 +13,6 @@
 #'
 #' @param add_legend logical, specify whether a legend should be plotted
 #'
-#' @param high_risk numeric, specify the normalized PB status value for the
-#' upper end of the risk color scale (default 3.5)
-#'
 #' @param background_alpha numeric, specify the alpha value for the background
 #' (default 1 - transparent)
 #'
@@ -46,13 +43,15 @@ plot_status_stylized <- function(
     x,
     filename = NULL,
     add_legend = TRUE,
-    high_risk = 3.5,
     background_alpha = 1) {
 
   if (length(x) < 5) {
     stop(paste0("x has to have 5 elements (PB statuses for lsc, bluewater, ",
                 "greenwater, biosphere, nitrogen)"))
   }
+
+  # define normalized value for upper end of risk color scale
+  high_risk <- 3.5
 
   if (add_legend) {
     plot <- cowplot::ggdraw() +
