@@ -11,5 +11,5 @@ and returns the status of each underlying control variable.
 
 
 ### &#127912; Status Visualization
-`plot_status()` visualize the &#127777;status of the &#127758; boundaries based the calculated control variables either as a &#128506; map or a &#128200; time series plot.
+`plot_status()` visualize the &#127777; status of the &#127758; boundaries based on the calculated control variables either as a &#128506; map or a &#128200; time series plot.
 
