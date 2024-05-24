@@ -12,7 +12,7 @@ classify_biomes(
   montane_arctic_proxy = list(elevation = 1000),
   tree_cover_thresholds = list(),
   approach = "default",
-  nyear_window = NULL,
+  time_resolution = NULL,
   config_args = list(),
   input_files = list(),
   diff_output_files = list()
@@ -26,9 +26,9 @@ directory}
 
 \item{files_reference}{list with variable names and corresponding file paths
 (character string) of the reference LPJmL run. All needed files are
-provided as key value pairs, e.g.:
-list(leaching = "/temp/leaching.bin.json"). If path_reference is
-supplied with all needed files, files reference can be set to NULL.}
+provided as key value pairs, e.g. \verb{list(vegc = "/temp/vegc.bin.json}.
+If \code{config_reference} is supplied with all needed files, files
+reference can be set to \code{NULL}.}
 
 \item{time_span_reference}{time span to be used for the classification of
 biomes, defined as character string, e.g. \code{as.character(1901:1930)}.}
@@ -60,7 +60,7 @@ boreal forest threshold will be classified as boreal tundra.}
 \item{approach}{character string indicating which biome classification
 approach to use. Currently only one is defined ("default").}
 
-\item{nyear_window}{integer. Number of years to be used for the moving
+\item{time_resolution}{integer. Number of years to be used for the moving
 average calculation. If \code{NULL}, all years are averaged for one status
 calculation, for \code{1} the whole time span is used to calculate a status
 time series.}
@@ -86,12 +86,14 @@ list object containing biome_id (main biome per grid
 Classify biomes based on foliage protected cover (FPC) and temperature
 LPJmL output plus either vegetation carbon or pft_lai depending on
 the savanna_proxy option and elevation if montane_arctic_proxy requires this
+information.
 }
 \examples{
 \dontrun{
 classify_biomes(
-  path_reference = "./outputs/"
-  time_span_reference = c(1982:2011))
+  config_reference = "./outputs/config.json",
+  time_span_reference = 1982:2011
+)
 }
 
 }

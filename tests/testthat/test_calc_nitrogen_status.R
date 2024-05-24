@@ -1,4 +1,4 @@
-test_that("test calc_nitrogen_status global", {
+test_that("test nitrogen_status global", {
 
   timeframe <- as.character(1986:2016)
 
@@ -16,7 +16,7 @@ test_that("test calc_nitrogen_status global", {
     time_span_reference = timeframe,
     spatial_scale = "global",
     approach = list(nitrogen = "schulte_uebbing2022"),
-    nyear_window = c(1),
+    time_resolution = c(1),
     in_parallel = FALSE,
   ) %>% suppressMessages()
 
@@ -62,7 +62,7 @@ test_that("test calc_nitrogen_status global", {
 })
 
 
-test_that("test calc_nitrogen_status grid", {
+test_that("test nitrogen_status grid", {
 
   timeframe <- as.character(1986:2016)
 
@@ -79,7 +79,7 @@ test_that("test calc_nitrogen_status grid", {
     time_span_scenario = timeframe,
     time_span_reference = timeframe,
     spatial_scale = "grid",
-    nyear_window = c(1),
+    time_resolution = c(1),
     in_parallel = FALSE,
   ) %>% suppressMessages()
 
@@ -125,7 +125,7 @@ test_that("test calc_nitrogen_status grid", {
 
 
 
-test_that("test calc_nitrogen_status grid (minusref)", {
+test_that("test nitrogen_status grid (minusref)", {
 
   timeframe <- as.character(1986:2016)
 
@@ -143,7 +143,7 @@ test_that("test calc_nitrogen_status grid (minusref)", {
     time_span_reference = timeframe,
     approach = list(nitrogen = "braun2022_minusref"),
     spatial_scale = "grid",
-    nyear_window = c(1),
+    time_resolution = c(1),
     in_parallel = FALSE,
   ) %>% suppressMessages()
 

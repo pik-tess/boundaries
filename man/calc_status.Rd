@@ -9,9 +9,9 @@ calc_status(
   config_scenario,
   config_reference,
   spatial_scale,
-  time_span_scenario = as.character(1982:2011),
+  time_span_scenario = 1982:2011,
   time_span_reference = time_span_scenario,
-  nyear_window = NULL,
+  time_resolution = NULL,
   approach = list(),
   thresholds = list(),
   in_parallel = TRUE,
@@ -20,8 +20,7 @@ calc_status(
 }
 \arguments{
 \item{boundary}{character vector, boundary for which status is calculated.
-Available terrestrial boundaries are c("bluewater", "greenwater", "lsc",
-"nitrogen")}
+Available terrestrial boundaries are \code{c("bluewater", "greenwater", "lsc", "nitrogen", "biosphere")}.}
 
 \item{config_scenario}{character string. File path to the LPjmL configuration
 file (json) of the scenario run. The configuration file contains the
@@ -41,7 +40,7 @@ as an integer (or character) vector, e.g. \code{1901:1930}. Can differ in offset
 and length from \code{time_span_scenario}! If \code{NULL} value of \code{time_span_scenario}
 is used}
 
-\item{nyear_window}{integer. Number of years to be used for the moving
+\item{time_resolution}{integer. Number of years to be used for the moving
 average calculation. If \code{NULL}, all years are averaged for one status
 calculation, for \code{1} the whole time span is used to calculate a status time
 series.}
@@ -59,18 +58,27 @@ no parallelization is used}
 \item{...}{further arguments to be passed to each calc_* function}
 }
 \value{
-list with data array for each \code{boundary}
+list with objects of class \code{control_variable}. To directly get the
+\code{boundary_status} use \code{\link[=as_risk_level]{as_risk_level()}}.
 }
 \description{
 Calculate the PB status for a defined planetary boundary based
-on a scenario LPJmL run and a reference LPJmL run.
+on a scenario LPJmL run and a reference LPJmL run. For boundary function
+specific arguments to be passed (via \code{...}) see the respective function
+documentation of \code{\link[=biosphere_status]{biosphere_status()}}, \code{\link[=nitrogen_status]{nitrogen_status()}},
+\code{\link[=greenwater_status]{greenwater_status()}}, \code{\link[=bluewater_status]{bluewater_status()}} or \code{\link[=lsc_status]{lsc_status()}}
 }
 \examples{
 
 \dontrun{
- boundary_status <- calc_status(
-   boundary = "nitrogen"
-   path_scenario = "./my_scenario/output")
+boundary_status <- calc_status(
+  boundary = c("biosphere","nitrogen", "greenwater", "bluewater", "lsc")
+  config_scenario = "path/to/config_scenario.json",
+  config_reference = "path/to/config_reference.json",
+  spatial_scale = "global",
+  time_span_scenario = 1901:2019,
+  time_span_reference = 1901:1930
+)
 }
 
 }

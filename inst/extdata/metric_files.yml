@@ -18,9 +18,9 @@ metric:
                         vegc:
                             resolution: "annual"
                             optional: true
-                        #pft_lai:
-                        #    resolution: "annual"
-                        #    optional: true
+                        pft_lai:
+                            resolution: "annual"
+                            optional: true
                         temp:
                             resolution: "annual"
                             optional: false
@@ -99,10 +99,10 @@ metric:
                         pb: 5
                         highrisk: 75
                     unit: "%"
-        fun_name: "calc_bluewater_status"
+        fun_name: "bluewater_status"
         # Called boundaries functions
         funs:
-            - calc_bluewater_status
+            - bluewater_status
 
     # Calculate greenwater boundary
     greenwater: &greenwater
@@ -162,9 +162,9 @@ metric:
                 porkka2024:
                     <<: *wang-erlandsson2022_gw
         # Called boundaries functions#
-        fun_name: "calc_greenwater_status"
+        fun_name: "greenwater_status"
         funs:
-            - calc_greenwater_status
+            - greenwater_status
 
     # Calculate nitrogen boundary
     nitrogen: &nitrogen
@@ -223,9 +223,9 @@ metric:
                         highrisk: 84
                     unit: "Tg N yr-1"
         # Called boundaries functions
-        fun_name: "calc_nitrogen_status"
+        fun_name: "nitrogen_status"
         funs: &nitrogen_fun
-            - calc_nitrogen_status
+            - nitrogen_status
 
     # Calculate lsc boundary
     lsc: &lsc
@@ -269,10 +269,10 @@ metric:
             grid:
                 steffen2015:
                    <<: *steffen2015_lsc
-        fun_name: "calc_lsc_status"
+        fun_name: "lsc_status"
         funs:
             - *biome_fun
-            - calc_lsc_status
+            - lsc_status
 
 
     # Calculate biosphere status based on biocol
@@ -334,10 +334,10 @@ metric:
                     unit: "%"
 
         # Called boundaries functions
-        fun_name: "calc_biosphere_status"
+        fun_name: "biosphere_status"
         funs:
             - *biome_fun
-            - calc_biosphere_status
+            - biosphere_status
 
     # Calculate validation table
     benchmark:
@@ -418,31 +418,13 @@ file_name:
     discharge: ["discharge", "mdischarge"]
     irrig: ["irrig", "mirrig"]
     rootmoist:  ["rootmoist", "mrootmoist"]
-    swc: ["swc", "mswc"]
     fpc: ["fpc"]
-    fpc_bft: ["fpc_bft"]
     cftfrac: ["cftfrac"]
     firec: ["firec", "mfirec"]
     npp: ["npp", "mnpp"]
     runoff: ["runoff", "mrunoff"]
-    transp: ["transp", "mtransp"]
     vegc: ["vegc"]
-    firef: ["firef", "mfiref"]
-    rh: ["rh"]
-    harvestc: ["harvestc"]
-    evap: ["evap", "mevap"]
-    interc: ["interc", "minterc"]
-    soilc: ["soilc"]
-    litc: ["litc"]
-    vegn: ["vegn"]
-    soilnh4: ["soilnh4"]
-    soilno3: ["soilno3"]
     leaching: ["leaching", "mleaching"]
-    n2o_denit: ["n2o_denit", "mn2o_denit"]
-    n2o_nit: ["n2o_nit", "mn2o_nit"]
-    n2_emis: ["n2_emis", "mn2_emis"]
-    bnf: ["bnf", "mbnf"]
-    n_volatilization: ["n_volatilization", "mn_volatilization"]
     pft_npp: ["pft_npp"]
     pft_harvestc: ["pft_harvestc", "pft_harvest.pft"]
     pft_rharvestc: ["pft_rharvestc", "pft_rharvest.pft"]

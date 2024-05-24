@@ -1,3 +1,4 @@
+# Get the simulation time based on the information in the configuration file.
 get_sim_time <- function(config) {
   if (is.character(config)) {
     config <- lpjmlkit::read_config(config)
@@ -5,6 +6,8 @@ get_sim_time <- function(config) {
   return(as.character(config$outputyear:config$lastyear))
 }
 
+
+# Get the simulation cells based on the information in the configuration file.
 get_sim_cells <- function(config, all_as_null = TRUE) {
   if (is.character(config)) {
     config <- lpjmlkit::read_config(config)
@@ -20,6 +23,8 @@ get_sim_cells <- function(config, all_as_null = TRUE) {
 }
 
 
+# Estimate the spatial subset of the scenario and reference run if simulations
+# are not run globally.
 get_spatial_subset <- function(config_one, config_two) {
 
   spatial_subset_scenario <- get_sim_cells(
@@ -44,6 +49,8 @@ get_spatial_subset <- function(config_one, config_two) {
   spatial_subset
 }
 
+
+# convenience function to perform spatial_subsets
 conditional_subset <- function(x, spatial_subset) {
   if (is.null(spatial_subset)) {
     return(x)
@@ -51,6 +58,8 @@ conditional_subset <- function(x, spatial_subset) {
   return(x$subset(cell = spatial_subset))
 }
 
+
+# Get the simulation outputs based on the information in the configuration file.
 get_sim_outputs <- function(config) {
   if (is.character(config)) {
     config <- lpjmlkit::read_config(config)
@@ -79,6 +88,8 @@ get_sim_outputs <- function(config) {
   )
 }
 
+
+# Get the simulation inputs based on the information in the configuration file.
 get_sim_inputs <- function(config) {
   if (is.character(config)) {
     config <- lpjmlkit::read_config(config)
@@ -98,6 +109,8 @@ get_sim_inputs <- function(config) {
   z
 }
 
+# Get both, the simulation inputs and outputs based on the information in the
+# configuration file.
 get_sim_data <- function(config) {
   if (is.character(config)) {
     config <- lpjmlkit::read_config(config)

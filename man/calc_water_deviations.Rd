@@ -13,7 +13,7 @@ calc_water_deviations(
   time_span_reference,
   approach = "porkka2024",
   thresholds = NULL,
-  nyear_window = NULL,
+  time_resolution = NULL,
   config_args = list(),
   variable = "rootmoist"
 )
@@ -59,7 +59,7 @@ If set to NULL, the  default is taken from metric_files.yml
 For highrisk, the value is currently hard-coded to 0.5
 (following Richardson et al. 2023)}
 
-\item{nyear_window}{integer. Number of years to be used for the moving
+\item{time_resolution}{integer. Number of years to be used for the moving
 average calculation. If \code{NULL}, all years are averaged for calculation,
 for \code{1} the whole time span is used to calculate a time
 series.}
@@ -76,11 +76,4 @@ run as compared to a reference LPJmL run, either referring to global area
 share with deviations (spatial_scale: global), or to number of months or
 years with deviations (spatial resolution: cell). From this, calculate a
 global or gridded PB status
-}
-\examples{
-\dontrun{
- calc_water_deviations(file_scenario, file_reference, terr_area_path,
-                time_span_reference, spatial_scale)
-}
-
 }

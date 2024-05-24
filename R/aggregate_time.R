@@ -1,31 +1,29 @@
 #' Calculate averages (mean) for defined window sizes
 #'
-#' Define window sizes (nyear_window) to be used to calculate moving averages
-#' (mean). If nyear_window is not supplied, the function calculates the mean
-#' over all years. If nyear_replicate is supplied, the function replicates the
+#' Define window sizes (time_resolution) to be used to calculate moving averages
+#' (mean). If time_resolution is not supplied, the function calculates the mean
+#' over all years. If time_repeat is supplied, the function replicates the
 #' mean values for the defined amount of years.
 #'
 #' @param x LPJmL output array with `dim(x)=c(cell, month, year)`
 #'
-#' @param nyear_window integer. Number of years to be used for the moving
+#' @param time_resolution integer. Number of years to be used for the moving
 #' average calculation. If `NULL`, all years are averaged for
 #' `spatial_scale = c("grid", "subglobal")` or the whole time span is used for
 #' `spatial_scale = "global"`.
 #'
-#' @param nyear_replicate integer, if supplied (default NULL), it defines a
-#' length of years to be replicated. Only if nyear_window is not supplied.
+#' @param time_repeat integer, if supplied (default NULL), it defines a
+#' length of years to be replicated. Only if time_resolution is not supplied.
 #'
-#' @return array with same amount of cells and months as x if nyear_window is
-#' supplied. If nyear_replicate is supplied, the array has the same amount of
+#' @return array with same amount of cells and months as x if time_resolution is
+#' supplied. If time_repeat is supplied, the array has the same amount of
 #' cells and months as x but the amount of years is multiplied by
-#' nyear_replicate.
+#' time_repeat.
 #'
 #' @md
-#' @importFrom magrittr %>%
-#' @export
 aggregate_time <- function(x,
-                           nyear_window = NULL,
-                           nyear_replicate = NULL) {
+                           time_resolution = NULL,
+                           time_repeat = NULL) {
 
   if (!is.array(x)) {
     x <- array(
@@ -35,8 +33,8 @@ aggregate_time <- function(x,
     )
   }
 
-  if (is.null(nyear_window)) {
-    nyear_window <- dim(x)["year"]
+  if (is.null(time_resolution)) {
+    time_resolution <- dim(x)["year"]
   }
 
   third_dim <- names(dim(x))[
@@ -58,20 +56,20 @@ aggregate_time <- function(x,
                 " and \"year\"."))
   }
 
-  # if nyear_window is supplied not all years are used for averaging
-  if (nyear_window == 1) {
+  # if time_resolution is supplied not all years are used for averaging
+  if (time_resolution == 1) {
     y <- x
 
-  } else if (nyear_window > 1 & nyear_window < dim(x)["year"]) { # nolint:vector_logic_linter
+  } else if (time_resolution > 1 & time_resolution < dim(x)["year"]) { # nolint:vector_logic_linter
     y <- aperm(apply(x,
                      c("cell", third_dim),
                      moving_average_fun,
-                     nyear_window),
+                     time_resolution),
                c("cell", third_dim, ""))
     dim(y) <- dim(x)
     dimnames(y) <- dimnames(x)
 
-  } else if (nyear_window == dim(x)["year"]) {
+  } else if (time_resolution == dim(x)["year"]) {
 
     y <- apply(x, c("cell", third_dim), mean)
     y_dim <- dim(x)
@@ -87,10 +85,10 @@ aggregate_time <- function(x,
       dimnames = y_dimnames
     )
 
-    if (!is.null(nyear_replicate)) {
-      y_dimnames[["year"]] <- rep(y_dimnames[["year"]], nyear_replicate)
+    if (!is.null(time_repeat)) {
+      y_dimnames[["year"]] <- rep(y_dimnames[["year"]], time_repeat)
       y <- abind::abind(
-        mget(rep("y", nyear_replicate)),
+        mget(rep("y", time_repeat)),
         use.dnns = TRUE
       )
       dim(y) <- sapply(y_dimnames, length) # nolint:undersirable_function_linter
@@ -98,7 +96,7 @@ aggregate_time <- function(x,
     }
 
   } else {
-    stop(paste0("Amount of nyear_window (", nyear_window, ") not supported."))
+    stop(paste0("Amount of time_resolution (", time_resolution, ") not supported."))
   }
 
   if (all(dimnames(x)[["cell"]] == "global")) {

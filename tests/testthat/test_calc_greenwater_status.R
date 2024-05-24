@@ -1,4 +1,4 @@
-test_that("test calc_greenwater_status global", {
+test_that("test greenwater_status global", {
 
   timeframe <- as.character(1986:2016)
 
@@ -16,7 +16,7 @@ test_that("test calc_greenwater_status global", {
     time_span_reference = timeframe,
     spatial_scale = "global",
     approach = list(greenwater = "porkka2024"),
-    nyear_window = c(1),
+    time_resolution = c(1),
     in_parallel = FALSE,
   ) %>% suppressMessages()
 
@@ -50,7 +50,7 @@ test_that("test calc_greenwater_status global", {
   )
 })
 
-test_that("test calc_greenwater_status subglobal", {
+test_that("test greenwater_status subglobal", {
 
   timeframe <- as.character(1986:2016)
 
@@ -68,7 +68,7 @@ test_that("test calc_greenwater_status subglobal", {
     time_span_reference = timeframe,
     spatial_scale = "subglobal",
     approach = list(greenwater = "porkka2024"),
-    nyear_window = c(1),
+    time_resolution = c(1),
     in_parallel = FALSE,
   ) %>% suppressMessages()
 

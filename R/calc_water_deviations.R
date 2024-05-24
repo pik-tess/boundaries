@@ -47,7 +47,7 @@
 #' (wang-erlandsson2022) or one value per year and month (porkka2024)); "grid"
 #' not yet defined
 #'
-#' @param nyear_window integer. Number of years to be used for the moving
+#' @param time_resolution integer. Number of years to be used for the moving
 #' average calculation. If `NULL`, all years are averaged for calculation,
 #' for `1` the whole time span is used to calculate a time
 #' series.
@@ -58,14 +58,7 @@
 #' @param variable character string with the name of the variable to be used
 #' for the calculation of the water deviations. Default is "rootmoist"
 #'
-#' @examples
-#' \dontrun{
-#'  calc_water_deviations(file_scenario, file_reference, terr_area_path,
-#'                 time_span_reference, spatial_scale)
-#' }
-#'
 #' @md
-#' @export
 calc_water_deviations <- function(files_scenario,
                                   files_reference,
                                   spatial_scale = "subglobal",
@@ -73,7 +66,7 @@ calc_water_deviations <- function(files_scenario,
                                   time_span_reference,
                                   approach = "porkka2024",
                                   thresholds = NULL,
-                                  nyear_window = NULL,
+                                  time_resolution = NULL,
                                   config_args = list(),
                                   variable = "rootmoist") {
 
@@ -192,7 +185,7 @@ calc_water_deviations <- function(files_scenario,
 
     control_variable <- aggregate_time(
       x = scen_depart$wet_or_dry,
-      nyear_window = nyear_window
+      time_resolution = time_resolution
     )
 
     attr(control_variable, "thresholds") <- list(
@@ -295,7 +288,7 @@ calc_water_deviations <- function(files_scenario,
 
     control_variable <- aggregate_time(
       x = scen_departures,
-      nyear_window = nyear_window
+      time_resolution = time_resolution
     )
 
     # create array with thresholds

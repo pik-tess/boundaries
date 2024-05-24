@@ -3,77 +3,80 @@
 #' Classify biomes based on foliage protected cover (FPC) and temperature
 #' LPJmL output plus either vegetation carbon or pft_lai depending on
 #' the savanna_proxy option and elevation if montane_arctic_proxy requires this
+#' information.
 #'
 #' @param config_reference character string. File path to the LPjmL
-#'        configuration file (json) of the reference run. The configuration file
-#'        contains the information about the LPJmL run, e.g. the output
-#'        directory
+#' configuration file (json) of the reference run. The configuration file
+#' contains the information about the LPJmL run, e.g. the output
+#' directory
 #'
 #' @param files_reference list with variable names and corresponding file paths
-#'        (character string) of the reference LPJmL run. All needed files are
-#'        provided as key value pairs, e.g.:
-#'        list(leaching = "/temp/leaching.bin.json"). If path_reference is
-#'        supplied with all needed files, files reference can be set to NULL.
+#' (character string) of the reference LPJmL run. All needed files are
+#' provided as key value pairs, e.g. `list(vegc = "/temp/vegc.bin.json`.
+#' If `config_reference` is supplied with all needed files, files
+#' reference can be set to `NULL`.
 #'
 #' @param time_span_reference time span to be used for the classification of
-#'        biomes, defined as character string, e.g. `as.character(1901:1930)`.
+#' biomes, defined as character string, e.g. `as.character(1901:1930)`.
 #'
 #' @param approach character string indicating which biome classification
-#'        approach to use. Currently only one is defined ("default").
+#' approach to use. Currently only one is defined ("default").
 #'
-#' @param nyear_window integer. Number of years to be used for the moving
-#'        average calculation. If `NULL`, all years are averaged for one status
-#'        calculation, for `1` the whole time span is used to calculate a status
-#'        time series.
+#' @param time_resolution integer. Number of years to be used for the moving
+#' average calculation. If `NULL`, all years are averaged for one status
+#' calculation, for `1` the whole time span is used to calculate a status
+#' time series.
 #'
 #' @param config_args list of arguments to be passed on from the model
 #' configuration.
 #'
 #' @param savanna_proxy `list` with either pft_lai or vegc as
-#'        key and value in m2/m2 for pft_lai (default: 6) and gC/m2 for
-#'        vegc (current default: 7500); set to `NULL` if no proxy should be
-#'        used.
+#' key and value in m2/m2 for pft_lai (default: 6) and gC/m2 for
+#' vegc (current default: 7500); set to `NULL` if no proxy should be
+#' used.
 #'
 #' @param montane_arctic_proxy `list` with either "elevation" or "latitude" as
-#'        name/key and value in m for elevation (default: 1000) and degree for
-#'        latitude (default: 55); set to `NULL` if no proxy is used.
+#' name/key and value in m for elevation (default: 1000) and degree for
+#' latitude (default: 55); set to `NULL` if no proxy is used.
 #'
 #' @param tree_cover_thresholds list with minimum tree cover thresholds for
-#'        definition of forest, woodland, savanna and grassland. Only changes to
-#'        the default have to be included in the list, for the rest the default
-#'        is used.
-#'        Default values, based on the IGBP land cover classification system:
-#'        "boreal forest" = 0.6
-#'        "temperate forest" = 0.6
-#'        "temperate woodland" = 0.3
-#'        "temperate savanna" = 0.1
-#'        "tropical forest" = 0.6
-#'        "tropical woodland" = 0.3
-#'        "tropical savanna" = 0.1
-#'        In the boreal zone, there is no woodland, everything below the
-#'        boreal forest threshold will be classified as boreal tundra.
+#' definition of forest, woodland, savanna and grassland. Only changes to
+#' the default have to be included in the list, for the rest the default
+#' is used.
+#' Default values, based on the IGBP land cover classification system:
+#' "boreal forest" = 0.6
+#' "temperate forest" = 0.6
+#' "temperate woodland" = 0.3
+#' "temperate savanna" = 0.1
+#' "tropical forest" = 0.6
+#' "tropical woodland" = 0.3
+#' "tropical savanna" = 0.1
+#' In the boreal zone, there is no woodland, everything below the
+#' boreal forest threshold will be classified as boreal tundra.
 #'
 #'
 #' @param input_files list of required file(s) using ID (e.g. `temp`,
-#'        `elevation`) and an absolute file path to the corresponding input file
-#'        if files_reference are not provided and if temp and elevation are
-#'        needed and not among the output files under path_reference
+#' `elevation`) and an absolute file path to the corresponding input file
+#' if files_reference are not provided and if temp and elevation are
+#' needed and not among the output files under path_reference
 #'
 #' @param diff_output_files list of required file(s) using ID
-#'        (e.g. prec, runoff) and the alternative writing (e.g. `"my_runoff"`).
-#'        Only required if files_reference are not provided
+#' (e.g. prec, runoff) and the alternative writing (e.g. `"my_runoff"`).
+#' Only required if files_reference are not provided
 #'
 #' @return list object containing biome_id (main biome per grid
-#'         `cell[dim=c(ncells)]`), and list of respective
-#'         `biome_names[dim=c(nbiomes)]`
+#'  `cell[dim=c(ncells)]`), and list of respective
+#'  `biome_names[dim=c(nbiomes)]`
 #'
 #' @examples
 #' \dontrun{
 #' classify_biomes(
-#'   path_reference = "./outputs/"
-#'   time_span_reference = c(1982:2011))
+#'   config_reference = "./outputs/config.json",
+#'   time_span_reference = 1982:2011
+#' )
 #' }
 #'
+#' @md
 #' @export
 classify_biomes <- function(config_reference = NULL, # nolint:cyclocomp_linter
                             files_reference = NULL,
@@ -82,7 +85,7 @@ classify_biomes <- function(config_reference = NULL, # nolint:cyclocomp_linter
                             montane_arctic_proxy = list(elevation = 1000),
                             tree_cover_thresholds = list(),
                             approach = "default",
-                            nyear_window = NULL,
+                            time_resolution = NULL,
                             config_args = list(),
                             input_files = list(),
                             diff_output_files = list()) {
@@ -223,7 +226,7 @@ classify_biomes <- function(config_reference = NULL, # nolint:cyclocomp_linter
   # average fpc
   avg_fpc %<-% aggregate_time(
     x = fpc,
-    nyear_window = nyear_window
+    time_resolution = time_resolution
   )
 
   # average vegc or pft_lai
@@ -232,7 +235,7 @@ classify_biomes <- function(config_reference = NULL, # nolint:cyclocomp_linter
     avg_savanna_proxy_data <- NULL
     avg_savanna_proxy_data %<-% aggregate_time(
       x = savanna_proxy_data,
-      nyear_window = nyear_window
+      time_resolution = time_resolution
     )
   }
   # please R CMD check for use of future operator
@@ -240,7 +243,7 @@ classify_biomes <- function(config_reference = NULL, # nolint:cyclocomp_linter
   # average temp
   avg_temp %<-% aggregate_time(
     x = temp,
-    nyear_window = nyear_window
+    time_resolution = time_resolution
   )
 
   # biome_names after biome classification in Ostberg et al. 2013
