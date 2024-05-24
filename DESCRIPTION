@@ -2,9 +2,9 @@ Package: boundaries
 Title: Planetary Boundary Status with LPJmL simulations
 Version: 0.2.1
 Authors@R: c(
+    person("Johanna", "Braun", , "braun@pik-potsdam.de", role = c("aut"), comment = c(ORCID = "0000-0002-8809-1044")),
     person("Jannes", "Breier", , "jannesbr@pik-potsdam.de", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-9055-6904")),
-    person("Fabian", "Stenzel", , "stenzel@pik-potsdam.de", role = c("aut"), comment = c(ORCID = "0000-0002-5109-0048")),
-    person("Johanna", "Braun", , "braun@pik-potsdam.de", role = c("aut"), comment = c(ORCID = "0000-0002-0000-0000"))
+    person("Fabian", "Stenzel", , "stenzel@pik-potsdam.de", role = c("aut"), comment = c(ORCID = "0000-0002-5109-0048"))
   )
 Description: A systematic approach to quantify the status of the terrestrial
     planetary boundaries based on the Dynamic Global Vegetation Model (DGVM)

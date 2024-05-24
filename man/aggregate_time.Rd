@@ -4,28 +4,28 @@
 \alias{aggregate_time}
 \title{Calculate averages (mean) for defined window sizes}
 \usage{
-aggregate_time(x, time_resolution = NULL, time_repeat = NULL)
+aggregate_time(x, time_series_avg = NULL, time_repeat = NULL)
 }
 \arguments{
 \item{x}{LPJmL output array with \code{dim(x)=c(cell, month, year)}}
 
-\item{time_resolution}{integer. Number of years to be used for the moving
-average calculation. If \code{NULL}, all years are averaged for
-\code{spatial_scale = c("grid", "subglobal")} or the whole time span is used for
-\code{spatial_scale = "global"}.}
+\item{time_series_avg}{integer. Number of years to be used for the moving
+average calculation. If \code{NULL}, all years are averaged for one status
+calculation, for \code{1} the whole time span is used to calculate a status time
+series.}
 
 \item{time_repeat}{integer, if supplied (default NULL), it defines a
-length of years to be replicated. Only if time_resolution is not supplied.}
+length of years to be replicated. Only if time_series_avg is not supplied.}
 }
 \value{
-array with same amount of cells and months as x if time_resolution is
+array with same amount of cells and months as x if time_series_avg is
 supplied. If time_repeat is supplied, the array has the same amount of
 cells and months as x but the amount of years is multiplied by
 time_repeat.
 }
 \description{
-Define window sizes (time_resolution) to be used to calculate moving averages
-(mean). If time_resolution is not supplied, the function calculates the mean
+Define window sizes (time_series_avg) to be used to calculate moving averages
+(mean). If time_series_avg is not supplied, the function calculates the mean
 over all years. If time_repeat is supplied, the function replicates the
 mean values for the defined amount of years.
 }

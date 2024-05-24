@@ -2,7 +2,7 @@
 #'
 #' Plot global map(s) with the status of planetary boundaries for
 #' a scenario LPJmL run and derived planetary boundary statuses. Legend can be
-#' plotted seperately based on the plot_legend() function
+#' plotted seperately based on the status_legend() function
 #'
 #' @param x  output object from calc_* with the status of the
 #' control variable for one point in time, incl. pb thresholds as attribute
@@ -27,7 +27,7 @@
 #'
 #' @examples
 #' \dontrun{
-#'  plot_status_maps(
+#'  status_map(
 #'   filename = "./my_boundary_status.png",
 #'   x = calc_output
 #'   grid_path = "/path/to/gridfile.bin.json"
@@ -37,7 +37,7 @@
 #' @md
 #' @export
 
-plot_status_maps <- function(
+status_map <- function(
   x,
   filename = NULL,
   risk_level = TRUE,

@@ -11,7 +11,7 @@ calc_status(
   spatial_scale,
   time_span_scenario = 1982:2011,
   time_span_reference = time_span_scenario,
-  time_resolution = NULL,
+  time_series_avg = NULL,
   approach = list(),
   thresholds = list(),
   in_parallel = TRUE,
@@ -40,7 +40,7 @@ as an integer (or character) vector, e.g. \code{1901:1930}. Can differ in offset
 and length from \code{time_span_scenario}! If \code{NULL} value of \code{time_span_scenario}
 is used}
 
-\item{time_resolution}{integer. Number of years to be used for the moving
+\item{time_series_avg}{integer. Number of years to be used for the moving
 average calculation. If \code{NULL}, all years are averaged for one status
 calculation, for \code{1} the whole time span is used to calculate a status time
 series.}

@@ -2,7 +2,7 @@
 #'
 #' Plot line plots with the PB status over time for
 #' a scenario LPJmL run and derived planetary boundary statuses. Legend can be
-#' plotted seperately based on the plot_legend() function
+#' plotted seperately based on the status_legend() function
 #'
 #' @param x list with global output from calc_status
 #'
@@ -24,7 +24,7 @@
 #'
 #' @examples
 #' \dontrun{
-#' plot_status_global(
+#' status_global(
 #'   filename = "./my_boundary_status.png",
 #'   x = status_output,
 #'   all_in_one = FALSE,
@@ -34,7 +34,7 @@
 #'
 #' @md
 #' @export
-plot_status_global <- function(
+status_global <- function(
     x,
     filename = NULL,
     all_in_one = FALSE,

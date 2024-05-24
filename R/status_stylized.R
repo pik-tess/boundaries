@@ -33,21 +33,22 @@
 #'     nitrogen = "schulte_uebbing2022"
 #'   ),
 #'   savanna_proxy = list(vegc = 7500),
-#'   time_resolution = 1,
+#'   time_series_avg = 1,
 #'   path_baseline = "./pnv_1500_2016/",
 #' )
 #'
-#' plot_status_stylized(pb_status, "status_stylized.png")
+#' status_stylized(pb_status, "status_stylized.png")
 #' }
 #'
 #' @md
 #' @export
-plot_status_stylized <- function(
-    x,
-    filename = NULL,
-    add_legend = TRUE,
-    high_risk = 3.5,
-    background_alpha = 1) {
+status_stylized <- function(
+  x,
+  filename = NULL,
+  add_legend = TRUE,
+  high_risk = 3.5,
+  background_alpha = 1
+) {
 
   if (length(x) < 5) {
     stop(paste0("x has to have 5 elements (PB statuses for lsc, bluewater, ",
@@ -56,7 +57,7 @@ plot_status_stylized <- function(
 
   if (add_legend) {
     plot <- cowplot::ggdraw() +
-      cowplot::draw_plot(plot_legend(fontsize = 4),
+      cowplot::draw_plot(status_legend(fontsize = 4),
                          vjust = 0.4,
                          hjust = 0,
                          scale = 0.75) +

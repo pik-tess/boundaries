@@ -11,7 +11,7 @@ nitrogen_status(
   time_span_scenario = 1982:2011,
   time_span_reference = time_span_scenario,
   approach = "braun2022",
-  time_resolution = NULL,
+  time_series_avg = NULL,
   config_args = list(),
   thresholds = NULL,
   cut_arid = 0.2,
@@ -42,7 +42,7 @@ approach is \code{"braun2022"} based on unpublished suggestion by Johanna Braun.
 Second approach option is \code{"braun2022_minusref"} to subtract reference run
 output}
 
-\item{time_resolution}{integer. Number of years to be used for the moving
+\item{time_series_avg}{integer. Number of years to be used for the moving
 average calculation. If \code{NULL}, all years are averaged for one status
 calculation, for \code{1} the whole time span is used to calculate a status time
 series.}

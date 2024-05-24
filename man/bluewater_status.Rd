@@ -11,7 +11,7 @@ bluewater_status(
   time_span_scenario = as.character(1982:2011),
   time_span_reference = time_span_scenario,
   approach = "gerten2020",
-  time_resolution = NULL,
+  time_series_avg = NULL,
   config_args = list(),
   thresholds = NULL,
   cut_min = 0.0864
@@ -45,7 +45,7 @@ for spatial_scale = "grid" and
 "wang_erlandsson2022" as well as "porkka2024" for
 spatial_scale = "global" or "subglobal"}
 
-\item{time_resolution}{integer. Number of years to be used for the moving
+\item{time_series_avg}{integer. Number of years to be used for the moving
 average calculation. If \code{NULL}, all years are averaged for one status
 calculation, for \code{1} the whole time span is used to calculate a status time
 series.}

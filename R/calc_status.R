@@ -28,7 +28,7 @@
 #' and length from `time_span_scenario`! If `NULL` value of `time_span_scenario`
 #' is used
 #'
-#' @param time_resolution integer. Number of years to be used for the moving
+#' @param time_series_avg integer. Number of years to be used for the moving
 #' average calculation. If `NULL`, all years are averaged for one status
 #' calculation, for `1` the whole time span is used to calculate a status time
 #' series.
@@ -70,7 +70,7 @@ calc_status <- function(
   spatial_scale,
   time_span_scenario = 1982:2011,
   time_span_reference = time_span_scenario,
-  time_resolution = NULL,
+  time_series_avg = NULL,
   approach = list(),
   thresholds = list(),
   in_parallel = TRUE,
@@ -155,7 +155,7 @@ calc_status <- function(
       time_span_scenario = time_span_scenario,
       time_span_reference = time_span_reference,
       spatial_scale = spatial_scale,
-      time_resolution = time_resolution,
+      time_series_avg = time_series_avg,
       config_args = config_args
     )
 

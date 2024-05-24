@@ -13,8 +13,8 @@ A systematic approach to quantify the status of the terrestrial planetary bounda
 
 Authors:
 \itemize{
+  \item Johanna Braun \email{braun@pik-potsdam.de} (\href{https://orcid.org/0000-0002-8809-1044}{ORCID})
   \item Fabian Stenzel \email{stenzel@pik-potsdam.de} (\href{https://orcid.org/0000-0002-5109-0048}{ORCID})
-  \item Johanna Braun \email{braun@pik-potsdam.de} (\href{https://orcid.org/0000-0002-0000-0000}{ORCID})
 }
 
 }

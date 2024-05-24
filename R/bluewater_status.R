@@ -30,7 +30,7 @@
 #' "wang_erlandsson2022" as well as "porkka2024" for
 #' spatial_scale = "global" or "subglobal"
 #'
-#' @param time_resolution integer. Number of years to be used for the moving
+#' @param time_series_avg integer. Number of years to be used for the moving
 #' average calculation. If `NULL`, all years are averaged for one status
 #' calculation, for `1` the whole time span is used to calculate a status time
 #' series.
@@ -72,7 +72,7 @@ bluewater_status <- function(
   time_span_scenario = as.character(1982:2011),
   time_span_reference = time_span_scenario,
   approach = "gerten2020",
-  time_resolution = NULL,
+  time_series_avg = NULL,
   config_args = list(),
   thresholds = NULL,
   cut_min = 0.0864
@@ -100,7 +100,7 @@ bluewater_status <- function(
       time_span_scenario = time_span_scenario,
       time_span_reference =  time_span_reference,
       approach = approach,
-      time_resolution = time_resolution,
+      time_series_avg = time_series_avg,
       config_args = config_args,
       thresholds = thresholds,
       cut_min = cut_min
@@ -125,7 +125,7 @@ bluewater_status <- function(
       time_span_scenario = time_span_scenario,
       time_span_reference =  time_span_reference,
       approach = approach,
-      time_resolution = time_resolution,
+      time_series_avg = time_series_avg,
       config_args = config_args,
       thresholds = thresholds,
       variable = "discharge"
@@ -144,7 +144,7 @@ calc_bluewater_efrs <- function(
   time_span_scenario = time_span_scenario,
   time_span_reference = NULL,
   approach = "gerten2020",
-  time_resolution = NULL,
+  time_series_avg = NULL,
   config_args = list(),
   thresholds = NULL,
   cut_min = 0.0864
@@ -180,7 +180,7 @@ calc_bluewater_efrs <- function(
   # average discharge scenario
   avg_discharge_scenario %<-% aggregate_time(
     discharge_scenario,
-    time_resolution = time_resolution
+    time_series_avg = time_series_avg
   )
 
   # please R CMD check for use of future operator
@@ -188,7 +188,7 @@ calc_bluewater_efrs <- function(
   # average discharge reference
   avg_discharge_reference %<-% aggregate_time(
     discharge_reference,
-    time_repeat = if (is.null(time_resolution)) NULL else dim(avg_discharge_scenario)["year"]
+    time_repeat = if (is.null(time_series_avg)) NULL else dim(avg_discharge_scenario)["year"]
   )
 
   # please R CMD check for use of future operator

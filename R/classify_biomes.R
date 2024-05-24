@@ -22,7 +22,7 @@
 #' @param approach character string indicating which biome classification
 #' approach to use. Currently only one is defined ("default").
 #'
-#' @param time_resolution integer. Number of years to be used for the moving
+#' @param time_series_avg integer. Number of years to be used for the moving
 #' average calculation. If `NULL`, all years are averaged for one status
 #' calculation, for `1` the whole time span is used to calculate a status
 #' time series.
@@ -85,7 +85,7 @@ classify_biomes <- function(config_reference = NULL, # nolint:cyclocomp_linter
                             montane_arctic_proxy = list(elevation = 1000),
                             tree_cover_thresholds = list(),
                             approach = "default",
-                            time_resolution = NULL,
+                            time_series_avg = NULL,
                             config_args = list(),
                             input_files = list(),
                             diff_output_files = list()) {
@@ -226,7 +226,7 @@ classify_biomes <- function(config_reference = NULL, # nolint:cyclocomp_linter
   # average fpc
   avg_fpc %<-% aggregate_time(
     x = fpc,
-    time_resolution = time_resolution
+    time_series_avg = time_series_avg
   )
 
   # average vegc or pft_lai
@@ -235,7 +235,7 @@ classify_biomes <- function(config_reference = NULL, # nolint:cyclocomp_linter
     avg_savanna_proxy_data <- NULL
     avg_savanna_proxy_data %<-% aggregate_time(
       x = savanna_proxy_data,
-      time_resolution = time_resolution
+      time_series_avg = time_series_avg
     )
   }
   # please R CMD check for use of future operator
@@ -243,7 +243,7 @@ classify_biomes <- function(config_reference = NULL, # nolint:cyclocomp_linter
   # average temp
   avg_temp %<-% aggregate_time(
     x = temp,
-    time_resolution = time_resolution
+    time_series_avg = time_series_avg
   )
 
   # biome_names after biome classification in Ostberg et al. 2013

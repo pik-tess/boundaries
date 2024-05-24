@@ -57,14 +57,14 @@ In case of questions / problems please contact Jannes Breier <jannesbr@pik-potsd
 
 To cite package **boundaries** in publications use:
 
-Breier J, Stenzel F, Braun J (2024). _boundaries: Planetary Boundary Status with LPJmL simulations_. R package version 0.2.1.
+Braun J, Breier J, Stenzel F (2024). _boundaries: Planetary Boundary Status with LPJmL simulations_. R package version 0.2.1.
 
 A BibTeX entry for LaTeX users is
 
  ```latex
 @Manual{,
   title = {boundaries: Planetary Boundary Status with LPJmL simulations},
-  author = {Jannes Breier and Fabian Stenzel and Johanna Braun},
+  author = {Johanna Braun and Jannes Breier and Fabian Stenzel},
   year = {2024},
   note = {R package version 0.2.1},
 }

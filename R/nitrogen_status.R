@@ -26,7 +26,7 @@
 #' Second approach option is `"braun2022_minusref"` to subtract reference run
 #' output
 #'
-#' @param time_resolution integer. Number of years to be used for the moving
+#' @param time_series_avg integer. Number of years to be used for the moving
 #' average calculation. If `NULL`, all years are averaged for one status
 #' calculation, for `1` the whole time span is used to calculate a status time
 #' series.
@@ -80,7 +80,7 @@ nitrogen_status <- function(
   time_span_scenario = 1982:2011,
   time_span_reference = time_span_scenario,
   approach = "braun2022",
-  time_resolution = NULL,
+  time_series_avg = NULL,
   config_args = list(),
   thresholds = NULL,
   cut_arid = 0.2,
@@ -101,7 +101,7 @@ nitrogen_status <- function(
       path_data,
       time_span,
       with_groundwater_denit,
-      time_resolution,
+      time_series_avg,
       time_repeat = NULL
     ) {
 
@@ -132,14 +132,14 @@ nitrogen_status <- function(
       # average runoff
       avg_runoff %<-% aggregate_time(
         x = runoff,
-        time_resolution = time_resolution,
+        time_series_avg = time_series_avg,
         time_repeat = time_repeat
       )
 
       # average leaching
       avg_leaching %<-% aggregate_time(
         x = leaching,
-        time_resolution = time_resolution,
+        time_series_avg = time_series_avg,
         time_repeat = time_repeat
       )
 
@@ -172,7 +172,7 @@ nitrogen_status <- function(
           path_data = files_scenario,
           time_span = time_span_scenario,
           with_groundwater_denit = with_groundwater_denit,
-          time_resolution = time_resolution
+          time_series_avg = time_series_avg
         )
       },
       braun2022_minusref = {
@@ -182,7 +182,7 @@ nitrogen_status <- function(
           path_data = files_scenario,
           time_span = time_span_scenario,
           with_groundwater_denit = with_groundwater_denit,
-          time_resolution = time_resolution
+          time_series_avg = time_series_avg
         )
 
         # calculate leaching concentration and loss rate for reference output
@@ -190,7 +190,7 @@ nitrogen_status <- function(
           path_data = files_reference,
           time_span = time_span_reference,
           with_groundwater_denit = with_groundwater_denit,
-          time_resolution = NULL,
+          time_series_avg = NULL,
           time_repeat = length(time_span_scenario)
         )
 
@@ -225,14 +225,14 @@ nitrogen_status <- function(
     # average pet
     avg_pet <- aggregate_time(
       x = pet,
-      time_resolution = time_resolution
+      time_series_avg = time_series_avg
     )
     # please R CMD check for use of future operator
     avg_prec <- NULL
     # average precipitation
     avg_prec <- aggregate_time(
       x = prec,
-      time_resolution = time_resolution
+      time_series_avg = time_series_avg
     )
 
     # calculate global aridity index (AI) as an indicator for a level under
@@ -262,7 +262,7 @@ nitrogen_status <- function(
     # average runoff
     runoff_annual %<-% aggregate_time(
       x = runoff,
-      time_resolution = time_resolution
+      time_series_avg = time_series_avg
     )
 
     # to display arid cells (leaching behaviour threshold) in other color (grey)
@@ -372,7 +372,7 @@ nitrogen_status <- function(
     # average over time
     avg_nsurplus <- aggregate_time(
       x = nsurplus,
-      time_resolution = time_resolution
+      time_series_avg = time_series_avg
     )
 
     # aggregate to global value

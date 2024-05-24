@@ -15,7 +15,7 @@ test_that("test aggregate_time", {
   # interpolate -------------------------------------------------------------- #
   aggr_test <- aggregate_time(
     test,
-    time_resolution = 10,
+    time_series_avg = 10,
   )
 
   # check dimnames
@@ -31,7 +31,7 @@ test_that("test aggregate_time", {
   # with time window of 5 years ---------------------------------------------- #
   aggr_test <- aggregate_time(
     test,
-    time_resolution = 5
+    time_series_avg = 5
   )
 
   # check dimnames
