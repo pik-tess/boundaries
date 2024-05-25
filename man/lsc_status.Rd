@@ -24,7 +24,7 @@ lsc_status(
 \code{\link[=calc_status]{calc_status()}}.}
 
 \item{files_reference}{list with variable names and corresponding file paths
-(character string) of the files_reference LPJmL run. Handled automatically via
+(character string) of the reference LPJmL run. Handled automatically via
 \code{\link[=calc_status]{calc_status()}}.}
 
 \item{spatial_scale}{character. Spatial resolution, available options

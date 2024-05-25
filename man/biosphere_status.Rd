@@ -16,7 +16,6 @@ biosphere_status(
   thresholds = NULL,
   path_baseline,
   time_span_baseline = time_span_scenario,
-  gridbased = TRUE,
   npp_threshold = 20,
   biocol_option = "only_above_zero",
   eurasia = TRUE,
@@ -66,8 +65,6 @@ as a character vector, e.g. \code{as.character(1901:1930)}. Can differ in offset
 and length from \code{time_span_scenario}! If \code{NULL} value of \code{time_span_scenario}
 is used}
 
-\item{gridbased}{logical; are pft outputs from LPJmL gridbased or pft-based?}
-
 \item{npp_threshold}{lower threshold for npp (to mask out non-lu areas
 according to Haberl et al. 2007). Below BioCol will be set to 0.
 (default: 20 gC/m2)}
@@ -86,8 +83,9 @@ Object of class \code{control_variable} with the boundary status of the
 biosphere integrity boundary.
 }
 \description{
-Biosphere status calculation based on BioCol (HANPP) from a PNV run
-(reference) and LU run (scenario) of LPJmL, both using time_span_scenario.
+Biosphere status calculation based on BioCol (HANPP) from a baseline run
+(with potential natural vegetation) and a scenario run (actual land use)
+of LPJmL, both within the \code{time_span_scenario}.
 Additionally a separate reference NPP file (e.g. from a Holocene run) can be
 supplied as reference_npp_file, which will use time_span_reference, or file
 index years 3:32 if time_span_reference is not supplied.

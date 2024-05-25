@@ -9,8 +9,7 @@ status_global(
   filename = NULL,
   all_in_one = FALSE,
   ncol = 2,
-  normalize = "increasing risk",
-  high_risk = 3.5
+  normalize = "increasing risk"
 )
 }
 \arguments{
@@ -28,9 +27,6 @@ plotted and all_in_one = FALSE)}
 
 \item{normalize}{see \code{\link[=as_risk_level]{as_risk_level()}} for details. Default set to
 "increasing risk". Only relevant if all_in_one = TRUE}
-
-\item{high_risk}{numeric, specify the normalized PB status value for the
-upper end of the risk color scale (default 3.5)}
 }
 \description{
 Plot line plots with the PB status over time for

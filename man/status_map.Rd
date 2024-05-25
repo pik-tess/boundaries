@@ -9,7 +9,6 @@ status_map(
   filename = NULL,
   risk_level = TRUE,
   projection = "+proj=robin",
-  high_risk = 3.5,
   ncol = 2,
   grid_path = NULL
 )
@@ -27,10 +26,6 @@ risk level. Default set to TRUE.}
 
 \item{projection}{character string defining the projection, default set to
 "+proj=robin"}
-
-\item{high_risk}{numeric, specify the normalized PB status value for the
-upper end of the risk color scale (default 3.5). Only relevant if risk_level
-is set to TRUE}
 
 \item{ncol}{integer, number of columns in the plot, default set to 2}
 

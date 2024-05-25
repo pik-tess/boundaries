@@ -23,8 +23,8 @@ bluewater_status(
 \code{\link[=calc_status]{calc_status()}}.}
 
 \item{files_reference}{list with variable names and corresponding file paths
-(character string) of the files_reference LPJmL run. Handled automatically via
-\code{\link[=calc_status]{calc_status()}}.}
+(character string) of the files_reference LPJmL run. Handled automatically
+via \code{\link[=calc_status]{calc_status()}}.}
 
 \item{spatial_scale}{character string indicating spatial resolution
 options: "global", "subglobal", "grid";
@@ -67,8 +67,9 @@ Object of class \code{control_variable} with the boundary status of the
 bluewater boundary.
 }
 \description{
-Planetary Boundary status calculation of the bluewater (former freshwater)
-boundary based on a scenario LPJmL run and a reference LPJmL run.
+Planetary Boundary status calculation of the bluewater boundary (as part of
+the freshwater boundary) based on a scenario LPJmL run and a reference LPJmL
+run.
 }
 \examples{
 \dontrun{

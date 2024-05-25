@@ -19,9 +19,6 @@
 #' @param normalize see [`as_risk_level()`] for details. Default set to
 #'        "increasing risk". Only relevant if all_in_one = TRUE
 #'
-#' @param high_risk numeric, specify the normalized PB status value for the
-#' upper end of the risk color scale (default 3.5)
-#'
 #' @examples
 #' \dontrun{
 #' status_global(
@@ -39,10 +36,12 @@ status_global <- function(
     filename = NULL,
     all_in_one = FALSE,
     ncol = 2,
-    normalize = "increasing risk",
-    high_risk = 3.5) {
+    normalize = "increasing risk") {
 
   normalize <- match.arg(normalize, c("safe", "increasing risk"))
+
+  # define normalized value for upper end of risk color scale
+  high_risk <- 3.5
 
   # please R CMD check for use of dplyr syntax
   years <- vals <- xend <- y <- yend <- values <- pb <- NULL

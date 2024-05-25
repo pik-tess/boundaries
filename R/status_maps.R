@@ -14,10 +14,6 @@
 #' @param risk_level logical, specify whether the status should be plotted as
 #' risk level. Default set to TRUE.
 #'
-#' @param high_risk numeric, specify the normalized PB status value for the
-#' upper end of the risk color scale (default 3.5). Only relevant if risk_level
-#' is set to TRUE
-#'
 #' @param projection character string defining the projection, default set to
 #' "+proj=robin"
 #'
@@ -42,7 +38,6 @@ status_map <- function(
   filename = NULL,
   risk_level = TRUE,
   projection = "+proj=robin",
-  high_risk = 3.5,
   ncol = 2,
   grid_path = NULL
 ) {
@@ -109,6 +104,8 @@ status_map <- function(
       terra::coltab(plot_nat) <- coltb
 
       # prepare plotting of values > pb threshold
+      # define normalized value for upper end of risk color scale
+      high_risk <- 3.5
       plotvar_risk <- plotvar
       plotvar_risk[plotvar_risk <= 1] <- NA
       plotvar_risk[plotvar_risk > high_risk] <- high_risk
