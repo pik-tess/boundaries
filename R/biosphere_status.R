@@ -1,7 +1,8 @@
 #' Status calculation of the biosphere integrity boundary.
 #'
-#' Biosphere status calculation based on BioCol (HANPP) from a PNV run
-#' (reference) and LU run (scenario) of LPJmL, both using time_span_scenario.
+#' Biosphere status calculation based on BioCol (HANPP) from a baseline run 
+#' (with potential natural vegetation) and a scenario run (actual land use) 
+#' of LPJmL, both within the `time_span_scenario`.
 #' Additionally a separate reference NPP file (e.g. from a Holocene run) can be
 #' supplied as reference_npp_file, which will use time_span_reference, or file
 #' index years 3:32 if time_span_reference is not supplied.

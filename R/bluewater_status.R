@@ -1,15 +1,16 @@
 #' Status calculation of the bluewater boundary
 #'
-#' Planetary Boundary status calculation of the bluewater (former freshwater)
-#' boundary based on a scenario LPJmL run and a reference LPJmL run.
+#' Planetary Boundary status calculation of the bluewater boundary (as part of
+#' the freshwater boundary) based on a scenario LPJmL run and a reference LPJmL
+#' run.
 #'
 #' @param files_scenario list with variable names and corresponding file paths
 #' (character string) of the scenario LPJmL run. Handled automatically via
 #' [`calc_status()`].
 #'
 #' @param files_reference list with variable names and corresponding file paths
-#' (character string) of the files_reference LPJmL run. Handled automatically via
-#' [`calc_status()`].
+#' (character string) of the files_reference LPJmL run. Handled automatically
+#' via [`calc_status()`].
 #'
 #' @param spatial_scale character string indicating spatial resolution
 #' options: "global", "subglobal", "grid";

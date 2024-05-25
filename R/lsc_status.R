@@ -8,7 +8,7 @@
 #' [`calc_status()`].
 #'
 #' @param files_reference list with variable names and corresponding file paths
-#' (character string) of the files_reference LPJmL run. Handled automatically via
+#' (character string) of the reference LPJmL run. Handled automatically via
 #' [`calc_status()`].
 #'
 #' @param spatial_scale character. Spatial resolution, available options
