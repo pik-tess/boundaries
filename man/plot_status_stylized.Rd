@@ -8,7 +8,6 @@ plot_status_stylized(
   x,
   filename = NULL,
   add_legend = TRUE,
-  high_risk = 3.5,
   background_alpha = 1
 )
 }
@@ -20,9 +19,6 @@ and file extension). Defaults to NULL (plotting to screen and returning ´
 plot object)}
 
 \item{add_legend}{logical, specify whether a legend should be plotted}
-
-\item{high_risk}{numeric, specify the normalized PB status value for the
-upper end of the risk color scale (default 3.5)}
 
 \item{background_alpha}{numeric, specify the alpha value for the background
 (default 1 - transparent)}

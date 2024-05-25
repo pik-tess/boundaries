@@ -21,7 +21,6 @@ calc_biosphere_status(
   thresholds = NULL,
   path_baseline,
   time_span_baseline = time_span_scenario,
-  gridbased = TRUE,
   npp_threshold = 20,
   biocol_option = "only_above_zero",
   eurasia = TRUE,
@@ -71,8 +70,6 @@ run, file names are taken from files scenario.}
 as a character vector, e.g. \code{as.character(1901:1930)}. Can differ in offset
 and length from \code{time_span_scenario}! If \code{NULL} value of \code{time_span_scenario}
 is used}
-
-\item{gridbased}{logical; are pft outputs from LPJmL gridbased or pft-based?}
 
 \item{npp_threshold}{lower threshold for npp (to mask out non-lu areas
 according to Haberl et al. 2007). Below BioCol will be set to 0.
