@@ -81,7 +81,6 @@ as_risk_level <- function(
       # between increasing risk and high risk zone
       # if control variable is < pb:
       # normalized to 0 (holocene) to 1 (pb)
-      #TODO not working if pb > increasing risk
       if (class(thresholds) == "list") {
         risk_level <- control_variable
         risk_level[control_variable >= thresholds[["pb"]] &

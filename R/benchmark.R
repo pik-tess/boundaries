@@ -53,6 +53,19 @@ validation_table <- function(
     table_path,
     ...) {
 
+  # use future package for asynchronous parallelization
+
+  rlang::local_options(
+    future.globals.maxSize = 3000 * 1024^2
+  )
+  if (.Platform$OS.type == "windows") {
+    future_plan <- future::plan("multisession")
+  } else {
+    future_plan <- future::plan("multicore")
+  }
+  on.exit(future::plan(future_plan)) # nolint:undesirable_function_linter
+
+
   # please R CMD check for use of dplyr syntax
   lpjml_value <- value <- variable <- range.lower <- range.upper <- unit <- NULL
   X.lower. <- X.upper. <- year <- time_range <- value_range <- Author.s. <- NULL # nolint
@@ -95,15 +108,14 @@ validation_table <- function(
 
   ####### PB Land-system change ################################################
 
-  cftfrac <- aggregate_lpjml_output(
-    files_scenario$cftfrac,
+  # read in cftfrac based on lpjml input to include areas with failed harvest
+  cftfrac %<-% aggregate_lpjml_output(
+    files_scenario$landuse,
     time_span_scenario,
     aggregate = list(year = mean)
   )
 
   #-------------- total agricultural area --------------------------------------
-  # TODO: JB: better based on input than on output
-  # (to include areas with failed harvest)?
 
   # calculate global area for each band, conversion from m2 to mio ha
   area_cft <- apply(cftfrac * terr_area * 10^-10, "band", sum)
@@ -123,31 +135,30 @@ validation_table <- function(
   irrig_area <- sum(area_cft[indices_irrig])
 
   #------------- potential forest extent ---------------------------------------
-  fpc <- aggregate_lpjml_output(
-    files_reference$fpc,
-    time_span_reference,
-    aggregate = list(year = mean)
+  biome_classes <- classify_biomes(
+    config_reference = config_reference,
+    time_span_reference = time_span_reference
   )
-  # ids for tree plant funtional types
-  tree_ids <- grep("tree", dimnames(fpc)[[2]], ignore.case = TRUE)
-  fpc_tree_total <- apply(fpc[, tree_ids], "cell", sum)
 
-  # TODO: JB: take out savannas in the tropics?
-  is_forest <- fpc_tree_total >= 0.6
+  # read in biome mapping
+  biome_mapping <- read_biome_mapping(
+    system.file("extdata", "biomes.csv", package = "boundaries")
+  )
+
+  is_forest <- rep(FALSE, ncell)
+  is_forest[
+    biome_classes$biome_id %in% dplyr::filter(
+      biome_mapping, `category` == "forest"
+    )$id
+  ] <- TRUE  # ids for tree plant funtional types
+
   forest_area <- sum(terr_area[is_forest]) * 10^-10
-
-  #------------- deforestation share -------------------------------------------
-
-  forest <- rep(0, ncell)
-  forest[is_forest] <- 1
-  deforest_area <- sum(apply(cftfrac, "cell", sum) * terr_area * forest) * 10^-10
-  deforest_share <- deforest_area / forest_area * 100
 
   ####### PB freshwater change #################################################
 
   #------------- Irrigation withdrawals and consumption ------------------------
 
-  irrig <- aggregate_lpjml_output(
+  irrig %<-% aggregate_lpjml_output(
     files_scenario$irrig,
     time_span_scenario,
     aggregate = list(
@@ -156,7 +167,7 @@ validation_table <- function(
     )
   )
 
-  conv_loss_evap <- aggregate_lpjml_output(
+  conv_loss_evap %<-% aggregate_lpjml_output(
     files_scenario$conv_loss_evap,
     time_span_scenario,
     aggregate = list(
@@ -165,7 +176,7 @@ validation_table <- function(
     )
   )
 
-  conv_loss_drain <- aggregate_lpjml_output(
+  conv_loss_drain %<-% aggregate_lpjml_output(
     files_scenario$conv_loss_drain,
     time_span_scenario,
     aggregate = list(
@@ -174,7 +185,7 @@ validation_table <- function(
     )
   )
 
-  return_flow_b <- aggregate_lpjml_output(
+  return_flow_b %<-% aggregate_lpjml_output(
     files_scenario$return_flow_b,
     time_span_scenario,
     aggregate = list(
@@ -192,7 +203,7 @@ validation_table <- function(
   #------------- Nitrogen balance and leaching ---------------------------------
 
   # # N leaching (total) in Tg
-  leaching <- aggregate_lpjml_output(
+  leaching %<-% aggregate_lpjml_output(
     files_scenario$leaching,
     time_span_scenario,
     aggregate = list(
@@ -201,7 +212,7 @@ validation_table <- function(
   ) %>% global_sum(area = terr_area)
 
   # N leaching from cropland
-  leaching_agr <- aggregate_lpjml_output(
+  leaching_agr %<-% aggregate_lpjml_output(
     files_scenario$nleaching_agr,
     time_span_scenario,
     aggregate = list(
@@ -211,7 +222,7 @@ validation_table <- function(
 
   # N use efficiency on cropland
   # inputs
-  total_fert <- aggregate_lpjml_output(
+  total_fert %<-% aggregate_lpjml_output(
     files_scenario$nfert_agr,
     time_span_scenario,
     aggregate = list(
@@ -219,7 +230,7 @@ validation_table <- function(
     )
   ) %>% global_sum(area = terr_area)
 
-  total_man <- aggregate_lpjml_output(
+  total_man %<-% aggregate_lpjml_output(
     files_scenario$nmanure_agr,
     time_span_scenario,
     aggregate = list(
@@ -228,7 +239,7 @@ validation_table <- function(
   ) %>% global_sum(area = terr_area)
 
   # For total_dep
-  total_dep <- aggregate_lpjml_output(files_scenario$ndepo_agr,
+  total_dep %<-% aggregate_lpjml_output(files_scenario$ndepo_agr,
     time_span_scenario,
     aggregate = list(
       year = mean
@@ -237,14 +248,14 @@ validation_table <- function(
 
 
   # For total_bnf
-  total_bnf <- aggregate_lpjml_output(files_scenario$bnf_agr,
+  total_bnf %<-% aggregate_lpjml_output(files_scenario$bnf_agr,
     time_span_scenario,
     aggregate = list(
       year = mean
     )
   ) %>% global_sum(area = terr_area)
 
-  total_seed <- aggregate_lpjml_output(files_scenario$seedn_agr,
+  total_seed %<-% aggregate_lpjml_output(files_scenario$seedn_agr,
     time_span_scenario,
     aggregate = list(
       year = mean
@@ -254,13 +265,31 @@ validation_table <- function(
 
   n_inputs <- total_fert + total_man + total_dep + total_bnf + total_seed
 
-  nharvest <- aggregate_lpjml_output(
+
+  nharvest %<-% aggregate_lpjml_output(
     files_scenario$pft_harvestn,
     time_span_scenario,
     aggregate = list(
       year = mean
     )
-  ) %>% global_sum(area = terr_area)
+  )
+  if (gridbased == FALSE) {
+    # based on lpjml output
+    cftfrac %<-% aggregate_lpjml_output(
+      files_scenario$cftfrac,
+        time_span_scenario,
+        aggregate = list(year = mean)
+    )
+    nharvest <- nharvest * cftfrac
+  }
+
+  # only refer to cropland
+  indices_crops <- grep("grass|tree", names(nharvest),
+    ignore.case = TRUE, invert = TRUE
+  )
+  nharvest_crop <- nharvest[, indices_crops]
+
+  nharvest <- nharvest_crop %>% global_sum(area = terr_area)
 
   nue <- nharvest / n_inputs * 100
 
@@ -270,7 +299,7 @@ validation_table <- function(
   ####### PB biosphere integrity ###############################################
   #------------- NPP -------------------------------------------
 
-  npp_lu <- aggregate_lpjml_output(files_scenario$npp,
+  npp_lu %<-% aggregate_lpjml_output(files_scenario$npp,
     time_span_scenario,
     aggregate = list(
       year = mean
@@ -294,7 +323,7 @@ validation_table <- function(
 
   #------------- simulated lpjml harvest ---------------------------------------
 
-  yield <- aggregate_lpjml_output(
+  yield %<-% aggregate_lpjml_output(
     files_scenario$pft_harvestc,
     time_span_scenario,
     aggregate = list(year = mean)
@@ -302,6 +331,7 @@ validation_table <- function(
 
   # dry matter harvest g
   if (gridbased == FALSE) {
+    # based on lpjml output
     harvest_dm <- cftfrac * yield * terr_area * (1 / dm_factor)
   } else {
     harvest_dm <- yield * terr_area * (1 / dm_factor)
@@ -334,16 +364,16 @@ validation_table <- function(
 
   # lists to match literature character strings with the here computed variables
   var_match <- list(
-    "crop", "irrig", "pasture", "forest", "def", "withdr",
+    "crop", "irrig", "pasture", "forest", "withdr",
     "cons", "leaching", "leaching from crop",
     "efficiency", "surplus", "npp", "prod"
   )
   units_match <- list(
-    "Mha", "Mha", "Mha", "Mha", "%", "km3", "km3", "Tg N yr-1",
-    "Tg N yr-1", "%", "Tg N yr-1", "PgC", "Gt"
+    "Mha", "Mha", "Mha", "Mha", "km3", "km3", "Tg N yr-1",
+    "Tg N yr-1", "%", "Tg N yr-1", "PgC", "Mt"
   )
   calc_var <- list(
-    crop_area, irrig_area, pasture_area, forest_area, deforest_share, wd, cons,
+    crop_area, irrig_area, pasture_area, forest_area, wd, cons,
     leaching, leaching_agr, nue, nsurplus, npp_lu, crop_sum
   )
 
@@ -381,7 +411,8 @@ validation_table <- function(
 
   # add column for normalized error values
   ref_table <- ref_table %>%
-    dplyr::mutate(norm_error = signif((lpjml_value - as.numeric(value)) / as.numeric(value), digits = 2))
+    dplyr::mutate(norm_error = signif((lpjml_value - as.numeric(value)) /
+                                        as.numeric(value), digits = 2))
 
   # create summary table
   summary_tbl <- ref_table %>%

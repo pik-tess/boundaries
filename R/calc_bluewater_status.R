@@ -110,7 +110,6 @@ calc_bluewater_status <- function(files_scenario,
       )
     }
 
-    #TODO also account for cut_min?
     control_variable <- calc_water_deviations(
       files_scenario = files_scenario,
       files_reference = files_reference,
@@ -198,7 +197,7 @@ calc_bluewater_efrs <- function(
   )
   # calculation of EFR transgressions = EFR deficits in LU run
   efr_deficit <- efr_safe - avg_discharge_scenario
-  # dismiss small EFR deficits #TODO check relevance
+  # dismiss small EFR deficits
   efr_deficit[efr_deficit < cut_min] <- 0
   # calculation of uncertainty zone
   uncertainty_zone <- efr_safe - efr_uncertain
@@ -229,15 +228,6 @@ calc_bluewater_efrs <- function(
   # set cells with NA (all months safe) to 0
   control_variable[is.na(control_variable)] <- 0
 
-  # check if vector was returned (loss of dimnames) -> reconvert to array
-  #TODO check if necessary
-  if (is.null(dim(control_variable))) {
-    control_variable <- array(
-      control_variable,
-      dim = c(cell = dim(status_frac_monthly)[["cell"]], 1),
-      dimnames = list(cell = dimnames(status_frac_monthly)[["cell"]], 1)
-    )
-  }
   # omit boundary status calculation if PNV discharge is < cut_min
   # (marginal discharge)
   cells_marginal_discharge <- array(FALSE,

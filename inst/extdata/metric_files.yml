@@ -130,7 +130,7 @@ metric:
                        highrisk: NULL
                     unit: "%"
                 porkka2024: 
-                    <<: *wang-erlandsson2022_gw #TODO correct?
+                    <<: *wang-erlandsson2022_gw
             subglobal:
                 wang-erlandsson2022: &wang-erlandsson2022_gw_sub
                     output:
@@ -361,6 +361,9 @@ metric:
                         pft_harvestc:
                             resolution: "annual"
                             optional: false
+                        landuse:
+                            resolution: "annual"
+                            optional: false
                         cftfrac:
                             resolution: "annual"
                             optional: false
@@ -402,7 +405,16 @@ metric:
                             optional: false   
                         pft_harvestn:
                             resolution: "annual"
-                            optional: false   
+                            optional: false
+                        vegc:
+                            resolution: "annual"
+                            optional: true
+                        temp:
+                            resolution: "annual"
+                            optional: false
+                        elevation:
+                            resolution: "annual"
+                            optional: true 
         # Called boundaries functions
         fun_name: "validation_table"
         funs:
