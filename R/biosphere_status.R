@@ -4,8 +4,9 @@
 #' (with potential natural vegetation) and a scenario run (actual land use)
 #' of LPJmL, both within the `time_span_scenario`.
 #' Additionally a separate reference NPP file (e.g. from a Holocene run) can be
-#' supplied as reference_npp_file, which will use time_span_reference, or file
-#' index years 3:32 if time_span_reference is not supplied.
+#' supplied with `files_reference` = list(npp = "path/to/npp.bin.json"),
+#' which will use time_span_reference, or file index years 3:32 if
+#' time_span_reference is not supplied.
 #'
 #' @param files_scenario list with variable names and corresponding file paths
 #' (character string) of the scenario LPJmL run. All needed files need to be
