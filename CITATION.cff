@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: If you use this software, please cite it using the metadata from this file.
 type: software
-title: 'boundaries: Planetary Boundary Status with LPJmL simulations'
+title: 'boundaries: Planetary Boundary Status based on LPJmL simulations'
 version: 0.2.1
 date-released: '2024-06-04'
 abstract: A systematic approach to quantify the status of the terrestrial planetary
@@ -22,5 +22,8 @@ authors:
   given-names: Fabian
   email: stenzel@pik-potsdam.de
   orcid: 0000-0002-5109-0048
+- family-names: Vanelli
+  given-names: Caterina
+  email: caterina@pik-potsdam.de
 license: AGPL-3.0
 

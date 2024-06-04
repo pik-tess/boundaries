@@ -1,4 +1,4 @@
-# Planetary Boundary Status with LPJmL simulations <a href=''><img src='inst/img/logo.png' align='right' height='139' /></a>
+# Planetary Boundary Status based on LPJmL simulations <a href=''><img src='inst/img/logo.png' align='right' height='139' /></a>
 
 R package **boundaries**, version **0.2.1**
 
@@ -27,6 +27,14 @@ and returns the status of each underlying control variable.
 ### &#127912; Status Visualization
 `plot_status()` visualize the &#127777; status of the &#127758; boundaries based on the calculated control variables either as a &#128506; map or a &#128200; time series plot.
 
+## Package requirements
+Package *biospheremetrics* is required for calculation of the biosphere integrity boundary, *ggtrace* for stylzed boundary plotting. Both packages have to be installed via github.
+
+```r
+remotes::install_github("stenzelf/biospheremetrics")
+
+remotes::install_github("yjunechoe/ggtrace")
+```
 
 ## Installation
 
@@ -57,14 +65,14 @@ In case of questions / problems please contact Jannes Breier <jannesbr@pik-potsd
 
 To cite package **boundaries** in publications use:
 
-Braun J, Breier J, Stenzel F (2024). _boundaries: Planetary Boundary Status with LPJmL simulations_. R package version 0.2.1.
+Braun J, Breier J, Stenzel F, Vanelli C (2024). _boundaries: Planetary Boundary Status based on LPJmL simulations_. R package version 0.2.1.
 
 A BibTeX entry for LaTeX users is
 
  ```latex
 @Manual{,
-  title = {boundaries: Planetary Boundary Status with LPJmL simulations},
-  author = {Johanna Braun and Jannes Breier and Fabian Stenzel},
+  title = {boundaries: Planetary Boundary Status based on LPJmL simulations},
+  author = {Johanna Braun and Jannes Breier and Fabian Stenzel and Caterina Vanelli},
   year = {2024},
   note = {R package version 0.2.1},
 }
