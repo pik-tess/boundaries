@@ -4,28 +4,28 @@
 \alias{aggregate_time}
 \title{Calculate averages (mean) for defined window sizes}
 \usage{
-aggregate_time(x, nyear_window = NULL, nyear_replicate = NULL)
+aggregate_time(x, time_series_avg = NULL, time_repeat = NULL)
 }
 \arguments{
 \item{x}{LPJmL output array with \code{dim(x)=c(cell, month, year)}}
 
-\item{nyear_window}{integer. Number of years to be used for the moving
-average calculation. If \code{NULL}, all years are averaged for
-\code{spatial_scale = c("grid", "subglobal")} or the whole time span is used for
-\code{spatial_scale = "global"}.}
+\item{time_series_avg}{integer. Number of years to be used for the moving
+average calculation. If \code{NULL}, all years are averaged for one status
+calculation, for \code{1} the whole time span is used to calculate a status time
+series.}
 
-\item{nyear_replicate}{integer, if supplied (default NULL), it defines a
-length of years to be replicated. Only if nyear_window is not supplied.}
+\item{time_repeat}{integer, if supplied (default NULL), it defines a
+length of years to be replicated. Only if time_series_avg is not supplied.}
 }
 \value{
-array with same amount of cells and months as x if nyear_window is
-supplied. If nyear_replicate is supplied, the array has the same amount of
+array with same amount of cells and months as x if time_series_avg is
+supplied. If time_repeat is supplied, the array has the same amount of
 cells and months as x but the amount of years is multiplied by
-nyear_replicate.
+time_repeat.
 }
 \description{
-Define window sizes (nyear_window) to be used to calculate moving averages
-(mean). If nyear_window is not supplied, the function calculates the mean
-over all years. If nyear_replicate is supplied, the function replicates the
+Define window sizes (time_series_avg) to be used to calculate moving averages
+(mean). If time_series_avg is not supplied, the function calculates the mean
+over all years. If time_repeat is supplied, the function replicates the
 mean values for the defined amount of years.
 }

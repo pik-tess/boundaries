@@ -30,7 +30,6 @@
 #'
 #' @md
 #' @export
-
 plot_biomes <- function(x,
                         filename = NULL,
                         projection = "+proj=robin",

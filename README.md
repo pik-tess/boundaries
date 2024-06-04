@@ -1,13 +1,31 @@
-# Functions to calculate the Planetary boundary status based on LPJmL
-    simulation data
+# Planetary Boundary Status with LPJmL simulations <a href=''><img src='inst/img/logo.png' align='right' height='139' /></a>
 
-R package **boundaries**, version **0.2.0**
+R package **boundaries**, version **0.2.1**
 
 [![CRAN status](https://www.r-pkg.org/badges/version/boundaries)](https://cran.r-project.org/package=boundaries)  [![R build status](https://gitlab.pik-potsdam.de/tess/boundaries/workflows/check/badge.svg)](https://gitlab.pik-potsdam.de/tess/boundaries/actions) [![codecov](https://codecov.io/gh/tess/boundaries/branch/master/graph/badge.svg)](https://app.codecov.io/gh/tess/boundaries) 
 
 ## Purpose and Functionality
 
-Provide calculation & visualizations functions for planetary boundaries.
+A systematic approach to quantify the status of the terrestrial
+    planetary boundaries based on the Dynamic Global Vegetation Model (DGVM)
+    Lund-Potsdam-Jena managed Land (LPJmL) hosted at the Potsdam Institute for
+    Climate Impact Research (PIK). The supported planetary boundaries are
+    "biosphere integrity", "land-system change", "bluewater", "greenwater" and
+    "nitrogen flows".
+##  Overview
+
+### &#127758;&#127777;  Terrestrial Planetary Boundary Status
+`calc_status()` calculate the status of the boundaries based on &#127793; **LPJmL Simulations** depending on ...
+1. &#127899; Scenario configuration
+2. &#127760; Spatial scale: global, sub-global, grid
+3. &#128346; Time span and resolution
+4. &#128209; Methodological approach
+
+and returns the status of each underlying control variable.
+
+
+### &#127912; Status Visualization
+`plot_status()` visualize the &#127777; status of the &#127758; boundaries based on the calculated control variables either as a &#128506; map or a &#128200; time series plot.
 
 
 ## Installation
@@ -39,16 +57,15 @@ In case of questions / problems please contact Jannes Breier <jannesbr@pik-potsd
 
 To cite package **boundaries** in publications use:
 
-Breier J, Stenzel F, Braun J (2024). _boundaries: Functions to calculate the Planetary boundary status based on LPJmL simulation data_. R package version 0.2.0.
+Braun J, Breier J, Stenzel F (2024). _boundaries: Planetary Boundary Status with LPJmL simulations_. R package version 0.2.1.
 
 A BibTeX entry for LaTeX users is
 
  ```latex
 @Manual{,
-  title = {boundaries: Functions to calculate the Planetary boundary status based on LPJmL
-simulation data},
-  author = {Jannes Breier and Fabian Stenzel and Johanna Braun},
+  title = {boundaries: Planetary Boundary Status with LPJmL simulations},
+  author = {Johanna Braun and Jannes Breier and Fabian Stenzel},
   year = {2024},
-  note = {R package version 0.2.0},
+  note = {R package version 0.2.1},
 }
 ```

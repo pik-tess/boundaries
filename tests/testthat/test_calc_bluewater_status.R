@@ -1,4 +1,4 @@
-test_that("test calc_bluewater_status global", {
+test_that("test bluewater_status global", {
 
   timeframe <- as.character(1986:2016)
 
@@ -16,7 +16,7 @@ test_that("test calc_bluewater_status global", {
     time_span_reference = timeframe,
     spatial_scale = "global",
     approach = list(bluewater = "porkka2024"),
-    nyear_window = 1,
+    time_series_avg = 1,
     in_parallel = FALSE,
   ) %>% suppressMessages()
 
@@ -66,7 +66,7 @@ test_that("test calc_bluewater_status global", {
 })
 
 
-test_that("test calc_bluewater_status grid", {
+test_that("test bluewater_status grid", {
 
   timeframe <- as.character(1986:2016)
 
@@ -83,7 +83,7 @@ test_that("test calc_bluewater_status grid", {
     time_span_scenario = timeframe,
     time_span_reference = timeframe,
     spatial_scale = "grid",
-    nyear_window = c(1),
+    time_series_avg = c(1),
     in_parallel = FALSE,
   ) %>% suppressMessages()
 

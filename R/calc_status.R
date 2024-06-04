@@ -1,11 +1,14 @@
 #' Calculate the planetary boundary status
 #'
 #' Calculate the PB status for a defined planetary boundary based
-#' on a scenario LPJmL run and a reference LPJmL run.
+#' on a scenario LPJmL run and a reference LPJmL run. For boundary function
+#' specific arguments to be passed (via `...`) see the respective function
+#' documentation of [`biosphere_status()`], [`nitrogen_status()`],
+#' [`greenwater_status()`], [`bluewater_status()`] or [`lsc_status()`]
 #'
 #' @param boundary character vector, boundary for which status is calculated.
-#' Available terrestrial boundaries are c("bluewater", "greenwater", "lsc",
-#' "nitrogen")
+#' Available terrestrial boundaries are `c("bluewater", "greenwater", "lsc",
+#' "nitrogen", "biosphere")`.
 #'
 #' @param config_scenario character string. File path to the LPjmL configuration
 #' file (json) of the scenario run. The configuration file contains the
@@ -25,7 +28,7 @@
 #' and length from `time_span_scenario`! If `NULL` value of `time_span_scenario`
 #' is used
 #'
-#' @param nyear_window integer. Number of years to be used for the moving
+#' @param time_series_avg integer. Number of years to be used for the moving
 #' average calculation. If `NULL`, all years are averaged for one status
 #' calculation, for `1` the whole time span is used to calculate a status time
 #' series.
@@ -42,29 +45,37 @@
 #'
 #' @param ... further arguments to be passed to each calc_* function
 #'
-#' @return list with data array for each `boundary`
+#' @return list with objects of class `control_variable`. To directly get the
+#' `boundary_status` use [`as_risk_level()`].
 #'
 #' @examples
 #'
 #' \dontrun{
-#'  boundary_status <- calc_status(
-#'    boundary = "nitrogen"
-#'    path_scenario = "./my_scenario/output")
+#' boundary_status <- calc_status(
+#'   boundary = c("biosphere","nitrogen", "greenwater", "bluewater", "lsc")
+#'   config_scenario = "path/to/config_scenario.json",
+#'   config_reference = "path/to/config_reference.json",
+#'   spatial_scale = "global",
+#'   time_span_scenario = 1901:2019,
+#'   time_span_reference = 1901:1930
+#' )
 #' }
 #'
 #' @md
 #' @export
-calc_status <- function(boundary,
-                        config_scenario,
-                        config_reference,
-                        spatial_scale,
-                        time_span_scenario = as.character(1982:2011),
-                        time_span_reference = time_span_scenario,
-                        nyear_window = NULL,
-                        approach = list(),
-                        thresholds = list(),
-                        in_parallel = TRUE,
-                        ...) {
+calc_status <- function(
+  boundary,
+  config_scenario,
+  config_reference,
+  spatial_scale,
+  time_span_scenario = 1982:2011,
+  time_span_reference = time_span_scenario,
+  time_series_avg = NULL,
+  approach = list(),
+  thresholds = list(),
+  in_parallel = TRUE,
+  ...
+) {
 
   # If in_parallel use future package for asynchronous parallelization
   if (in_parallel) {
@@ -134,7 +145,7 @@ calc_status <- function(boundary,
 
   # Loop over boundaries and calculate status
   for (bound in boundary) {
-    fun_name <- paste0("calc_", bound, "_status")
+    fun_name <- paste0(bound, "_status")
 
     # Get arguments for each boundary function
     sub_dots <- get_dots(fun_name, fun_args, dot_args)
@@ -146,7 +157,7 @@ calc_status <- function(boundary,
       time_span_scenario = time_span_scenario,
       time_span_reference = time_span_reference,
       spatial_scale = spatial_scale,
-      nyear_window = nyear_window,
+      time_series_avg = time_series_avg,
       config_args = config_args
     )
 

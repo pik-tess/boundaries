@@ -4,13 +4,13 @@
 #' (safe, increasing risk, high risk), based on the output from calc_*
 #'
 #' @param control_variable output array from calc_* with the status of the
-#'        control variable, incl. pb thresholds as attribute
+#' control variable, incl. pb thresholds as attribute
 #'
 #' @param type character string to define whether to return risk level as
-#'             continuous (normalized so that 0 = holocene state and
-#'             1 = planetary boundary; >1 = transgressed) or discrete variable
-#'             (0 = no PB status assessed, 1 = safe, 2 = increasing risk,
-#'             3 = high risk)
+#' continuous (normalized so that 0 = holocene state and
+#' 1 = planetary boundary; >1 = transgressed) or discrete variable
+#' (0 = no PB status assessed, 1 = safe, 2 = increasing risk,
+#' 3 = high risk)
 #'
 #' @param normalize character string to define normalization, either "safe"
 #'        (normalized from holocene to pb = the safe zone) or
@@ -28,7 +28,6 @@
 #'
 #' @md
 #' @export
-
 as_risk_level <- function(
     control_variable,
     type = "continuous",

@@ -1,4 +1,4 @@
-test_that("test calc_biosphere_status global", {
+test_that("test biosphere_status global", {
 
   timeframe <- as.character(1986:2016)
 
@@ -15,7 +15,7 @@ test_that("test calc_biosphere_status global", {
     time_span_scenario = timeframe,
     time_span_reference = timeframe,
     spatial_scale = "global",
-    nyear_window = c(1),
+    time_series_avg = c(1),
     in_parallel = FALSE,
     savanna_proxy = list(vegc = 7500),
     path_baseline = system.file(
@@ -73,7 +73,7 @@ test_that("test calc_biosphere_status global", {
 })
 
 
-test_that("test calc_biosphere_status grid", {
+test_that("test biosphere_status grid", {
 
   timeframe <- as.character(1986:2016)
 
@@ -90,7 +90,7 @@ test_that("test calc_biosphere_status grid", {
     time_span_scenario = timeframe,
     time_span_reference = timeframe,
     spatial_scale = "grid",
-    nyear_window = 1,
+    time_series_avg = 1,
     in_parallel = FALSE,
     savanna_proxy = list(vegc = 7500),
     path_baseline = system.file(
@@ -141,7 +141,7 @@ test_that("test calc_biosphere_status grid", {
 
 
 
-test_that("test calc_biosphere_status subglobal", {
+test_that("test biosphere_status subglobal", {
 
   timeframe <- as.character(1986:2016)
 
@@ -158,7 +158,7 @@ test_that("test calc_biosphere_status subglobal", {
     time_span_scenario = timeframe,
     time_span_reference = timeframe,
     spatial_scale = "subglobal",
-    nyear_window = 1,
+    time_series_avg = 1,
     in_parallel = FALSE,
     savanna_proxy = list(vegc = 7500),
     path_baseline = system.file(

@@ -16,7 +16,7 @@
 #'  plot the status of the planetary boundaries using a stylized plot.
 #'
 #' @param ... additional arguments passed to the plotting functions, see also
-#' [`plot_status_global`], [`plot_status_maps`] and [`plot_status_stylized`]
+#' [`status_global`], [`status_map`] and [`status_stylized`]
 #'
 #' @examples
 #' \dontrun{
@@ -32,7 +32,7 @@
 #'     nitrogen = "schulte_uebbing2022"
 #'   ),
 #'   savanna_proxy = list(vegc = 7500),
-#'   nyear_window = 1,
+#'   time_series_avg = 1,
 #'   path_baseline = "./pnv_1500_2016/",
 #' )
 #'
@@ -55,23 +55,23 @@ plot_status <- function(
 
   if (attributes(x[[1]])$spatial_scale == "global") {
     if (stylized) {
-      plot <- plot_status_stylized(x, filename, add_legend, ...) # nolint:object_usage_linter
+      plot <- status_stylized(x, filename, add_legend, ...) # nolint:object_usage_linter
       if (is.null(filename)) {
         return(plot)
       }
     } else {
-      plot <- plot_status_global(x, filename, ...) # nolint:object_usage_linter
+      plot <- status_global(x, filename, ...) # nolint:object_usage_linter
       if (add_legend == TRUE) {
-        print("Note: save legend seperately based on plot_legend function")
+        print("Note: save legend seperately based on status_legend function")
       }
       if (is.null(filename)) {
         return(plot)
       }
     }
   } else {
-    plot <- plot_status_maps(x, filename, ...) # nolint:object_usage_linter
+    plot <- status_map(x, filename, ...) # nolint:object_usage_linter
     if (add_legend == TRUE) {
-      print("Note: save legend seperately based on plot_legend function")
+      print("Note: save legend seperately based on status_legend function")
     }
     if (is.null(filename)) {
       return(plot)

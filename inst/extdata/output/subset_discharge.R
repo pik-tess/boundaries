@@ -1,10 +1,10 @@
-library(lpjmlkit)
-library(tibble)
+library(lpjmlkit) # nolint
+library(tibble) # nolint
 
-output_path <- "." # "/p/projects/open/Jannes/repos/boundaries/inst/extdata/output" # nolint
+output_path <- "."
 
-base_path_lu <- "." # "/p/projects/open/Johanna/boundaries/lpjml/output/lu_1500_2017_mg" # nolint
-base_path_pnv <- "." # "/p/projects/open/Johanna/boundaries/lpjml/output/pnv_1500_2017_mg/" # nolint
+base_path_lu <- "."
+base_path_pnv <- "."
 
 
 input_files <- c(

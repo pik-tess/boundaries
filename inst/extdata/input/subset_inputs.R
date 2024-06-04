@@ -1,8 +1,8 @@
-library(lpjmlkit)
-library(tibble)
+library(lpjmlkit) # nolint
+library(tibble) # nolint
 
-output_path <- "." # "/p/projects/open/Jannes/repos/boundaries/inst/extdata/input" # nolint
-base_path <- "." # "/p/projects/lpjml/input/historical" # nolint
+output_path <- "."
+base_path <- "."
 
 input_files <- c(
   # temperature

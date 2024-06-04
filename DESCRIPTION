@@ -1,18 +1,24 @@
 Package: boundaries
-Title: Functions to calculate the Planetary boundary status based on LPJmL
-    simulation data
-Version: 0.2.0
+Title: Planetary Boundary Status with LPJmL simulations
+Version: 0.2.1
 Authors@R: c(
+    person("Johanna", "Braun", , "braun@pik-potsdam.de", role = c("aut"), comment = c(ORCID = "0000-0002-8809-1044")),
     person("Jannes", "Breier", , "jannesbr@pik-potsdam.de", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-9055-6904")),
-    person("Fabian", "Stenzel", , "stenzel@pik-potsdam.de", role = c("aut"), comment = c(ORCID = "0000-0002-5109-0048")),
-    person("Johanna", "Braun", , "braun@pik-potsdam.de", role = c("aut"), comment = c(ORCID = "0000-0002-0000-0000"))
+    person("Fabian", "Stenzel", , "stenzel@pik-potsdam.de", role = c("aut"), comment = c(ORCID = "0000-0002-5109-0048"))
   )
-Description: Provide calculation & visualizations functions for planetary boundaries.
+Description: A systematic approach to quantify the status of the terrestrial
+    planetary boundaries based on the Dynamic Global Vegetation Model (DGVM)
+    Lund-Potsdam-Jena managed Land (LPJmL) hosted at the Potsdam Institute for
+    Climate Impact Research (PIK). The supported planetary boundaries are
+    "biosphere integrity", "land-system change", "bluewater", "greenwater" and
+    "nitrogen flows".
 License: AGPL-3
 LazyData: true
 RoxygenNote: 7.3.1
 Roxygen: list(markdown = TRUE)
 Encoding: UTF-8
+Depends:
+    R (>= 3.5.0)
 Imports:
     magrittr,
     tibble,
@@ -52,4 +58,4 @@ Suggests:
     scales,
     tidyterra
 Config/testthat/edition: 3
-Date: 2024-05-23
+Date: 2024-05-25

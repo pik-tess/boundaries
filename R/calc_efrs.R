@@ -42,7 +42,6 @@
 #' # c(67420, 12, 100)
 #' }
 #' @md
-#' @export
 calc_efrs <- function(x,
                       approach = "vmf") {
   # verify available methods
@@ -133,7 +132,7 @@ calc_efrs <- function(x,
 
       } else {
         stop(
-          "Approach \"Q90Q50\" is not supported for nyear_window",
+          "Approach \"Q90Q50\" is not supported for time_series_avg",
           " being defined"
         )
       }
