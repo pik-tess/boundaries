@@ -48,8 +48,6 @@
 #' and length from `time_span_scenario`! If `NULL` value of `time_span_scenario`
 #' is used
 #'
-#' @param gridbased logical; are pft outputs from LPJmL gridbased or pft-based?
-#'
 #' @param npp_threshold lower threshold for npp (to mask out non-lu areas
 #' according to Haberl et al. 2007). Below BioCol will be set to 0.
 #' (default: 20 gC/m2)
@@ -92,8 +90,6 @@ biosphere_status <- function(
   thresholds = NULL,
   path_baseline,
   time_span_baseline = time_span_scenario,
-  # TODO gridbased can be retrieved from config!
-  gridbased = TRUE,
   npp_threshold = 20,
   biocol_option = "only_above_zero",
   eurasia = TRUE,
@@ -125,6 +121,8 @@ biosphere_status <- function(
     files_baseline,
     SIMPLIFY = FALSE
   )
+
+  gridbased <- config_args$gridbased
 
   biocol <- biospheremetrics::read_calc_biocol(
     files_scenario = files_scenario,

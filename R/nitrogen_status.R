@@ -352,7 +352,6 @@ nitrogen_status <- function(
     )
 
     # calc terrestrial area
-    # TODO better asub?
     terr_area <- lpjmlkit::read_io(
       files_scenario$terr_area
     ) %>%

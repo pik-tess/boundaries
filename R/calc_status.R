@@ -135,6 +135,8 @@ calc_status <- function(
     config_reference
   )
 
+  config_args$gridbased <- config_scenario$grid_scaled
+
   # Get arguments for each boundary function
   fun_args <- list_function_args(boundary)
 

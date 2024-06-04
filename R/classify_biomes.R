@@ -54,16 +54,6 @@
 #' In the boreal zone, there is no woodland, everything below the
 #' boreal forest threshold will be classified as boreal tundra.
 #'
-#'
-#' @param input_files list of required file(s) using ID (e.g. `temp`,
-#' `elevation`) and an absolute file path to the corresponding input file
-#' if files_reference are not provided and if temp and elevation are
-#' needed and not among the output files under path_reference
-#'
-#' @param diff_output_files list of required file(s) using ID
-#' (e.g. prec, runoff) and the alternative writing (e.g. `"my_runoff"`).
-#' Only required if files_reference are not provided
-#'
 #' @return list object containing biome_id (main biome per grid
 #'  `cell[dim=c(ncells)]`), and list of respective
 #'  `biome_names[dim=c(nbiomes)]`
@@ -86,9 +76,7 @@ classify_biomes <- function(config_reference = NULL, # nolint:cyclocomp_linter
                             tree_cover_thresholds = list(),
                             approach = "default",
                             time_resolution = NULL,
-                            config_args = list(),
-                            input_files = list(),
-                            diff_output_files = list()) {
+                            config_args = list()) {
 
   if (is.null(files_reference) && is.null(config_reference)) {
     stop("files_reference or path_reference must be provided")

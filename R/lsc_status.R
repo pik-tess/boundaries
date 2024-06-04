@@ -177,12 +177,14 @@ lsc_status <- function(
 
   tree_share_scenario <- lpjmlkit::asub(
     fpc_scenario,
-    band = fpc_trees
+    band = fpc_trees,
+    drop = FALSE
   )
 
   tree_share_reference <- lpjmlkit::asub(
     fpc_reference,
-    band = fpc_trees
+    band = fpc_trees,
+    drop = FALSE
   )
 
   # calculate actual tree cover area
@@ -205,7 +207,7 @@ lsc_status <- function(
   # sum tree pfts for forest cover
   all_tree_cover_scenario %<-% apply(
     tree_cover_scenario,
-    c("cell", "year"), #TODO not working for 1 year
+    c("cell", "year"),
     sum,
     na.rm = TRUE
   )
