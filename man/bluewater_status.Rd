@@ -11,7 +11,7 @@ bluewater_status(
   time_span_scenario = as.character(1982:2011),
   time_span_reference = time_span_scenario,
   approach = "gerten2020",
-  time_resolution = NULL,
+  time_series_avg = NULL,
   config_args = list(),
   thresholds = NULL,
   cut_min = 0.0864
@@ -23,8 +23,8 @@ bluewater_status(
 \code{\link[=calc_status]{calc_status()}}.}
 
 \item{files_reference}{list with variable names and corresponding file paths
-(character string) of the files_reference LPJmL run. Handled automatically via
-\code{\link[=calc_status]{calc_status()}}.}
+(character string) of the files_reference LPJmL run. Handled automatically
+via \code{\link[=calc_status]{calc_status()}}.}
 
 \item{spatial_scale}{character string indicating spatial resolution
 options: "global", "subglobal", "grid";
@@ -45,7 +45,7 @@ for spatial_scale = "grid" and
 "wang_erlandsson2022" as well as "porkka2024" for
 spatial_scale = "global" or "subglobal"}
 
-\item{time_resolution}{integer. Number of years to be used for the moving
+\item{time_series_avg}{integer. Number of years to be used for the moving
 average calculation. If \code{NULL}, all years are averaged for one status
 calculation, for \code{1} the whole time span is used to calculate a status time
 series.}
@@ -67,8 +67,9 @@ Object of class \code{control_variable} with the boundary status of the
 bluewater boundary.
 }
 \description{
-Planetary Boundary status calculation of the bluewater (former freshwater)
-boundary based on a scenario LPJmL run and a reference LPJmL run.
+Planetary Boundary status calculation of the bluewater boundary (as part of
+the freshwater boundary) based on a scenario LPJmL run and a reference LPJmL
+run.
 }
 \examples{
 \dontrun{

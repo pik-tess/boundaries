@@ -1,28 +1,28 @@
 #' Calculate averages (mean) for defined window sizes
 #'
-#' Define window sizes (time_resolution) to be used to calculate moving averages
-#' (mean). If time_resolution is not supplied, the function calculates the mean
+#' Define window sizes (time_series_avg) to be used to calculate moving averages
+#' (mean). If time_series_avg is not supplied, the function calculates the mean
 #' over all years. If time_repeat is supplied, the function replicates the
 #' mean values for the defined amount of years.
 #'
 #' @param x LPJmL output array with `dim(x)=c(cell, month, year)`
 #'
-#' @param time_resolution integer. Number of years to be used for the moving
-#' average calculation. If `NULL`, all years are averaged for
-#' `spatial_scale = c("grid", "subglobal")` or the whole time span is used for
-#' `spatial_scale = "global"`.
+#' @param time_series_avg integer. Number of years to be used for the moving
+#' average calculation. If `NULL`, all years are averaged for one status
+#' calculation, for `1` the whole time span is used to calculate a status time
+#' series.
 #'
 #' @param time_repeat integer, if supplied (default NULL), it defines a
-#' length of years to be replicated. Only if time_resolution is not supplied.
+#' length of years to be replicated. Only if time_series_avg is not supplied.
 #'
-#' @return array with same amount of cells and months as x if time_resolution is
+#' @return array with same amount of cells and months as x if time_series_avg is
 #' supplied. If time_repeat is supplied, the array has the same amount of
 #' cells and months as x but the amount of years is multiplied by
 #' time_repeat.
 #'
 #' @md
 aggregate_time <- function(x,
-                           time_resolution = NULL,
+                           time_series_avg = NULL,
                            time_repeat = NULL) {
 
   if (!is.array(x)) {
@@ -33,8 +33,8 @@ aggregate_time <- function(x,
     )
   }
 
-  if (is.null(time_resolution)) {
-    time_resolution <- dim(x)["year"]
+  if (is.null(time_series_avg)) {
+    time_series_avg <- dim(x)["year"]
   }
 
   third_dim <- names(dim(x))[
@@ -56,20 +56,20 @@ aggregate_time <- function(x,
                 " and \"year\"."))
   }
 
-  # if time_resolution is supplied not all years are used for averaging
-  if (time_resolution == 1) {
+  # if time_series_avg is supplied not all years are used for averaging
+  if (time_series_avg == 1) {
     y <- x
 
-  } else if (time_resolution > 1 & time_resolution < dim(x)["year"]) { # nolint:vector_logic_linter
+  } else if (time_series_avg > 1 & time_series_avg < dim(x)["year"]) { # nolint:vector_logic_linter
     y <- aperm(apply(x,
                      c("cell", third_dim),
                      moving_average_fun,
-                     time_resolution),
+                     time_series_avg),
                c("cell", third_dim, ""))
     dim(y) <- dim(x)
     dimnames(y) <- dimnames(x)
 
-  } else if (time_resolution == dim(x)["year"]) {
+  } else if (time_series_avg == dim(x)["year"]) {
 
     y <- apply(x, c("cell", third_dim), mean)
     y_dim <- dim(x)
@@ -96,7 +96,7 @@ aggregate_time <- function(x,
     }
 
   } else {
-    stop(paste0("Amount of time_resolution (", time_resolution, ") not supported."))
+    stop(paste0("Amount of time_series_avg (", time_series_avg, ") not supported."))
   }
 
   if (all(dimnames(x)[["cell"]] == "global")) {

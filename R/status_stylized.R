@@ -30,16 +30,15 @@
 #'     nitrogen = "schulte_uebbing2022"
 #'   ),
 #'   savanna_proxy = list(vegc = 7500),
-#'   time_resolution = 1,
+#'   time_series_avg = 1,
 #'   path_baseline = "./pnv_1500_2016/",
 #' )
 #'
-#' plot_status_stylized(pb_status, "status_stylized.png")
+#' status_stylized(pb_status, "status_stylized.png")
 #' }
 #'
 #' @md
-#' @export
-plot_status_stylized <- function(
+status_stylized <- function(
     x,
     filename = NULL,
     add_legend = TRUE,
@@ -55,7 +54,7 @@ plot_status_stylized <- function(
 
   if (add_legend) {
     plot <- cowplot::ggdraw() +
-      cowplot::draw_plot(plot_legend(fontsize = 4),
+      cowplot::draw_plot(status_legend(fontsize = 4),
                          vjust = 0.4,
                          hjust = 0,
                          scale = 0.75) +

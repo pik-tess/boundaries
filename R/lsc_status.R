@@ -8,7 +8,7 @@
 #' [`calc_status()`].
 #'
 #' @param files_reference list with variable names and corresponding file paths
-#' (character string) of the files_reference LPJmL run. Handled automatically via
+#' (character string) of the reference LPJmL run. Handled automatically via
 #' [`calc_status()`].
 #'
 #' @param spatial_scale character. Spatial resolution, available options
@@ -35,7 +35,7 @@
 #'      (e.g. 50% for boreal forest with default value)
 #' highrisk = threshold between increasing risk and high risk zone
 #'
-#' @param time_resolution integer. Number of years to be used for the moving
+#' @param time_series_avg integer. Number of years to be used for the moving
 #' average calculation. If `NULL`, all years are averaged for one status
 #' calculation, for `1` the whole time span is used to calculate a status time
 #' series.
@@ -73,7 +73,7 @@ lsc_status <- function(
   time_span_scenario = as.character(1982:2011),
   time_span_reference = time_span_scenario,
   approach = "steffen2015",
-  time_resolution = NULL,
+  time_series_avg = NULL,
   config_args = list(),
   thresholds = NULL,
   eurasia = TRUE,
@@ -96,7 +96,7 @@ lsc_status <- function(
     classify_biomes,
     append(list(files_reference = files_reference,
                 time_span_reference = time_span_reference,
-                time_resolution = NULL,
+                time_series_avg = NULL,
                 config_args = config_args,
                 montane_arctic_proxy = NULL),
            ellipsis_filtered)
@@ -224,7 +224,7 @@ lsc_status <- function(
   # average forest over time
   avg_trees_scenario %<-% aggregate_time(
     x = all_tree_cover_scenario,
-    time_resolution = time_resolution
+    time_series_avg = time_series_avg
   )
 
   # average forest over time

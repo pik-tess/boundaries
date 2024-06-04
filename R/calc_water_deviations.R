@@ -47,7 +47,7 @@
 #' (wang-erlandsson2022) or one value per year and month (porkka2024)); "grid"
 #' not yet defined
 #'
-#' @param time_resolution integer. Number of years to be used for the moving
+#' @param time_series_avg integer. Number of years to be used for the moving
 #' average calculation. If `NULL`, all years are averaged for calculation,
 #' for `1` the whole time span is used to calculate a time
 #' series.
@@ -66,7 +66,7 @@ calc_water_deviations <- function(files_scenario,
                                   time_span_reference,
                                   approach = "porkka2024",
                                   thresholds = NULL,
-                                  time_resolution = NULL,
+                                  time_series_avg = NULL,
                                   config_args = list(),
                                   variable = "rootmoist") {
 
@@ -185,7 +185,7 @@ calc_water_deviations <- function(files_scenario,
 
     control_variable <- aggregate_time(
       x = scen_depart$wet_or_dry,
-      time_resolution = time_resolution
+      time_series_avg = time_series_avg
     )
 
     attr(control_variable, "thresholds") <- list(
@@ -288,7 +288,7 @@ calc_water_deviations <- function(files_scenario,
 
     control_variable <- aggregate_time(
       x = scen_departures,
-      time_resolution = time_resolution
+      time_series_avg = time_series_avg
     )
 
     # create array with thresholds

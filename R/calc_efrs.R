@@ -132,7 +132,7 @@ calc_efrs <- function(x,
 
       } else {
         stop(
-          "Approach \"Q90Q50\" is not supported for time_resolution",
+          "Approach \"Q90Q50\" is not supported for time_series_avg",
           " being defined"
         )
       }

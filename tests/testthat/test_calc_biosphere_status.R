@@ -15,7 +15,7 @@ test_that("test biosphere_status global", {
     time_span_scenario = timeframe,
     time_span_reference = timeframe,
     spatial_scale = "global",
-    time_resolution = c(1),
+    time_series_avg = c(1),
     in_parallel = FALSE,
     savanna_proxy = list(vegc = 7500),
     path_baseline = system.file(
@@ -90,7 +90,7 @@ test_that("test biosphere_status grid", {
     time_span_scenario = timeframe,
     time_span_reference = timeframe,
     spatial_scale = "grid",
-    time_resolution = 1,
+    time_series_avg = 1,
     in_parallel = FALSE,
     savanna_proxy = list(vegc = 7500),
     path_baseline = system.file(
@@ -158,7 +158,7 @@ test_that("test biosphere_status subglobal", {
     time_span_scenario = timeframe,
     time_span_reference = timeframe,
     spatial_scale = "subglobal",
-    time_resolution = 1,
+    time_series_avg = 1,
     in_parallel = FALSE,
     savanna_proxy = list(vegc = 7500),
     path_baseline = system.file(

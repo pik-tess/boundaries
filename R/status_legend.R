@@ -13,14 +13,14 @@
 #'
 #' @examples
 #' \dontrun{
-#' plot_legend(
+#' status_legend(
 #'   filename = "./mylegend.png",
 #' )
 #' }
 #'
 #' @md
 #' @export
-plot_legend <- function(filename = NULL, fontsize = 3) {
+status_legend <- function(filename = NULL, fontsize = 3) {
 
   # please R CMD check for use of dplyr syntax
   vals <- y <- x <- NULL

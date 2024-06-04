@@ -11,7 +11,7 @@ greenwater_status(
   time_span_scenario = as.character(1982:2011),
   time_span_reference = time_span_scenario,
   approach = "wang-erlandsson2022",
-  time_resolution = NULL,
+  time_series_avg = NULL,
   config_args = list(),
   thresholds = NULL
 )
@@ -43,7 +43,7 @@ approach is \code{c("wang-erlandsson2022")} based on
 \href{https://eartharxiv.org/repository/view/3438/}{Porkka et al. 2023}
 (referring to each month of a year)}
 
-\item{time_resolution}{integer. Number of years to be used for the moving
+\item{time_series_avg}{integer. Number of years to be used for the moving
 average calculation. If \code{NULL}, all years are averaged for one status
 calculation, for \code{1} the whole time span is used to calculate a status time
 series.}

@@ -19,7 +19,7 @@ and file extension). Defaults to NULL (plotting to screen)}
 plot the status of the planetary boundaries using a stylized plot.}
 
 \item{...}{additional arguments passed to the plotting functions, see also
-\code{\link{plot_status_global}}, \code{\link{plot_status_maps}} and \code{\link{plot_status_stylized}}}
+\code{\link{status_global}}, \code{\link{status_map}} and \code{\link{status_stylized}}}
 }
 \description{
 Plot the status of planetary boundaries. The function takes the output from
@@ -40,7 +40,7 @@ pb_status <- calc_status(
     nitrogen = "schulte_uebbing2022"
   ),
   savanna_proxy = list(vegc = 7500),
-  time_resolution = 1,
+  time_series_avg = 1,
   path_baseline = "./pnv_1500_2016/",
 )
 

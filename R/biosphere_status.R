@@ -1,7 +1,8 @@
 #' Status calculation of the biosphere integrity boundary.
 #'
-#' Biosphere status calculation based on BioCol (HANPP) from a PNV run
-#' (reference) and LU run (scenario) of LPJmL, both using time_span_scenario.
+#' Biosphere status calculation based on BioCol (HANPP) from a baseline run
+#' (with potential natural vegetation) and a scenario run (actual land use)
+#' of LPJmL, both within the `time_span_scenario`.
 #' Additionally a separate reference NPP file (e.g. from a Holocene run) can be
 #' supplied as reference_npp_file, which will use time_span_reference, or file
 #' index years 3:32 if time_span_reference is not supplied.
@@ -27,7 +28,7 @@
 #' @param approach approach (character string) to be used , currently available
 #' approach is `"stenzel2023"`
 #'
-#' @param time_resolution integer. Number of years to be used for the moving
+#' @param time_series_avg integer. Number of years to be used for the moving
 #' average calculation. If `NULL`, all years are averaged for one status
 #' calculation, for `1` the whole time span is used to calculate a status time
 #' series.
@@ -85,7 +86,7 @@ biosphere_status <- function(
   time_span_scenario = as.character(1982:2011),
   time_span_reference = NULL,
   approach = "stenzel2023",
-  time_resolution = NULL,
+  time_series_avg = NULL,
   config_args = list(),
   thresholds = NULL,
   path_baseline,
@@ -165,7 +166,7 @@ biosphere_status <- function(
       classify_biomes,
       append(list(files_reference = files_baseline,
                time_span_reference = time_span_baseline,
-               time_resolution = NULL
+               time_series_avg = NULL
              ),
              ellipsis_filtered)
     )
@@ -265,7 +266,7 @@ biosphere_status <- function(
   # average
   control_variable <- aggregate_time(
     x = control_variable_raw * 100,
-    time_resolution = time_resolution
+    time_series_avg = time_series_avg
   )
   attr(control_variable, "spatial_scale") <- spatial_scale
   attr(control_variable, "thresholds") <- thresholds
