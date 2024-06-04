@@ -70,6 +70,10 @@ validate_simulation <- function(
   lpjml_value <- value <- variable <- range.lower <- range.upper <- unit <- NULL
   X.lower. <- X.upper. <- year <- time_range <- value_range <- Author.s. <- NULL # nolint
   assessment_time <- year.of.publication <- boundary <- literature.range <- NULL # nolint
+  category <- NULL
+
+  cftfrac <- irrig <- conv_loss_evap <- conv_loss_drain <- return_flow_b <-
+    yield <- NULL
 
   config_scen <- lpjmlkit::read_config(config_scenario)
   config_ref <- lpjmlkit::read_config(config_reference)
@@ -97,7 +101,7 @@ validate_simulation <- function(
     config = config_scen,
     output_files = output_files
   )
-  files_reference <- get_filenames(
+  files_reference <- get_filenames( # nolint: object_usage_linter.
     config = config_ref,
     output_files = output_files
   )
@@ -105,6 +109,8 @@ validate_simulation <- function(
   # read in terrestrial area (in m2)
   terr_area <- lpjmlkit::read_io(files_scenario$terr_area)$data %>% drop()
   ncell <- length(terr_area)
+  cell_area <- lpjmlkit::read_io(files_scenario$grid) %>%
+    lpjmlkit::calc_cellarea()
 
   ####### PB Land-system change ################################################
 
@@ -118,26 +124,26 @@ validate_simulation <- function(
   #-------------- total agricultural area --------------------------------------
 
   # calculate global area for each band, conversion from m2 to mio ha
-  area_cft <- apply(cftfrac * terr_area * 10^-10, "band", sum)
+  area_cft <- apply(cftfrac * cell_area * 10^-10, "band", sum)
 
   # global cropland area
-  indices_crops <- grep("grass|tree", names(area_cft),
-    ignore.case = TRUE, invert = TRUE
-  )
-  crop_area <- sum(area_cft[indices_crops])
+  # indices for crop plant functional types (no dimnames)
+  crop_ind <- c(1:13, 16 + 1:13, 16 * 2 + 1:13, 16 * 3 + 1:13)
+  crop_area <- sum(area_cft[crop_ind])
 
   # global pasture area
-  indices_pastures <- grep("grassland", names(area_cft), ignore.case = TRUE)
+  indices_pastures <- c(14, 16 + 14, 16 * 2 + 14, 16 * 3 + 14)
   pasture_area <- sum(area_cft[indices_pastures])
 
   # global irrigated area
-  indices_irrig <- grep("irrig", names(area_cft), ignore.case = TRUE)
+  indices_irrig <- c(17:64)
   irrig_area <- sum(area_cft[indices_irrig])
 
   #------------- potential forest extent ---------------------------------------
   biome_classes <- classify_biomes(
     config_reference = config_reference,
-    time_span_reference = time_span_reference
+    time_span_reference = time_span_reference,
+    time_series_avg = NULL
   )
 
   # read in biome mapping
@@ -148,7 +154,7 @@ validate_simulation <- function(
   is_forest <- rep(FALSE, ncell)
   is_forest[
     biome_classes$biome_id %in% dplyr::filter(
-      biome_mapping, `category` == "forest"
+      biome_mapping, `category` == "forest" # nolint: object_usage_linter.
     )$id
   ] <- TRUE  # ids for tree plant funtional types
 
@@ -203,16 +209,17 @@ validate_simulation <- function(
   #------------- Nitrogen balance and leaching ---------------------------------
 
   # # N leaching (total) in Tg
-  leaching %<-% aggregate_lpjml_output(
+  leaching <- aggregate_lpjml_output(
     files_scenario$leaching,
     time_span_scenario,
     aggregate = list(
-      year = mean
+      year = mean,
+      month = sum
     )
   ) %>% global_sum(area = terr_area)
 
   # N leaching from cropland
-  leaching_agr %<-% aggregate_lpjml_output(
+  leaching_agr <- aggregate_lpjml_output(
     files_scenario$nleaching_agr,
     time_span_scenario,
     aggregate = list(
@@ -222,7 +229,7 @@ validate_simulation <- function(
 
   # N use efficiency on cropland
   # inputs
-  total_fert %<-% aggregate_lpjml_output(
+  total_fert <- aggregate_lpjml_output(
     files_scenario$nfert_agr,
     time_span_scenario,
     aggregate = list(
@@ -230,7 +237,7 @@ validate_simulation <- function(
     )
   ) %>% global_sum(area = terr_area)
 
-  total_man %<-% aggregate_lpjml_output(
+  total_man <- aggregate_lpjml_output(
     files_scenario$nmanure_agr,
     time_span_scenario,
     aggregate = list(
@@ -239,7 +246,7 @@ validate_simulation <- function(
   ) %>% global_sum(area = terr_area)
 
   # For total_dep
-  total_dep %<-% aggregate_lpjml_output(files_scenario$ndepo_agr,
+  total_dep <- aggregate_lpjml_output(files_scenario$ndepo_agr,
     time_span_scenario,
     aggregate = list(
       year = mean
@@ -248,14 +255,14 @@ validate_simulation <- function(
 
 
   # For total_bnf
-  total_bnf %<-% aggregate_lpjml_output(files_scenario$bnf_agr,
+  total_bnf <- aggregate_lpjml_output(files_scenario$bnf_agr,
     time_span_scenario,
     aggregate = list(
       year = mean
     )
   ) %>% global_sum(area = terr_area)
 
-  total_seed %<-% aggregate_lpjml_output(files_scenario$seedn_agr,
+  total_seed <- aggregate_lpjml_output(files_scenario$seedn_agr,
     time_span_scenario,
     aggregate = list(
       year = mean
@@ -264,7 +271,6 @@ validate_simulation <- function(
 
 
   n_inputs <- total_fert + total_man + total_dep + total_bnf + total_seed
-
 
   nharvest %<-% aggregate_lpjml_output(
     files_scenario$pft_harvestn,
@@ -277,14 +283,14 @@ validate_simulation <- function(
     # based on lpjml output
     cftfrac %<-% aggregate_lpjml_output(
       files_scenario$cftfrac,
-        time_span_scenario,
-        aggregate = list(year = mean)
+      time_span_scenario,
+      aggregate = list(year = mean)
     )
     nharvest <- nharvest * cftfrac
   }
 
   # only refer to cropland
-  indices_crops <- grep("grass|tree", names(nharvest),
+  indices_crops <- grep("grass|tree", dimnames(nharvest)$band,
     ignore.case = TRUE, invert = TRUE
   )
   nharvest_crop <- nharvest[, indices_crops]
@@ -299,7 +305,7 @@ validate_simulation <- function(
   ####### PB biosphere integrity ###############################################
   #------------- NPP -------------------------------------------
 
-  npp_lu %<-% aggregate_lpjml_output(files_scenario$npp,
+  npp_lu <- aggregate_lpjml_output(files_scenario$npp,
     time_span_scenario,
     aggregate = list(
       year = mean
@@ -389,13 +395,12 @@ validate_simulation <- function(
 
   # calculate PB status
   pb_status <- calc_status(
-    boundary = c("lsc", "greenwater", "bluewater", "biosphere"),
+    boundary = c("nitrogen", "lsc", "greenwater", "bluewater", "biosphere"),
     config_scenario = config_scenario,
     config_reference = config_reference,
     time_span_scenario = time_span_scenario,
     time_span_reference = time_span_reference,
     spatial_scale = "global",
-    gridbased = gridbased,
     path_baseline = path_baseline,
     ...
   )
@@ -510,7 +515,7 @@ evaluate_pb_status <- function(ref_table, pb_list, temp2) {
       dplyr::mutate(lpjml_value = ifelse(
         grepl(pb, ref_table$variable, ignore.case = TRUE) &
           grepl("PB status", ref_table$variable, ignore.case = TRUE),
-        round(temp2[[pb]][1], digits = 2),
+        round(as.numeric(temp2[[pb]][1]), digits = 2),
         lpjml_value
       ))
   }

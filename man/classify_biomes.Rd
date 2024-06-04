@@ -13,9 +13,7 @@ classify_biomes(
   tree_cover_thresholds = list(),
   approach = "default",
   time_series_avg = NULL,
-  config_args = list(),
-  input_files = list(),
-  diff_output_files = list()
+  config_args = list()
 )
 }
 \arguments{
@@ -67,15 +65,6 @@ time series.}
 
 \item{config_args}{list of arguments to be passed on from the model
 configuration.}
-
-\item{input_files}{list of required file(s) using ID (e.g. \code{temp},
-\code{elevation}) and an absolute file path to the corresponding input file
-if files_reference are not provided and if temp and elevation are
-needed and not among the output files under path_reference}
-
-\item{diff_output_files}{list of required file(s) using ID
-(e.g. prec, runoff) and the alternative writing (e.g. \code{"my_runoff"}).
-Only required if files_reference are not provided}
 }
 \value{
 list object containing biome_id (main biome per grid

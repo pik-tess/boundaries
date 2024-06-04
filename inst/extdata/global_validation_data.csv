@@ -4,7 +4,7 @@ land system change;cropland area;Mha;2017;Klein Goldewijk et al.;;1572;1604;2015
 land system change;pasture area;Mha;2023;FAO;3181;;;2015;;;
 land system change;pasture area;Mha;2017;Klein Goldewijk et al.;3241;;;2015;;;
 land system change;potential natural forest extent ;Mha;2020;Grantham et al.;5737;;;2019;;;
-land system change;deforested area;% of pot. extent;2020;Grantham et al.;25;;;2019;;;
+land system change;PB status (lsc);% of pot. extent;2020;Grantham et al.;25;;;2019;;;
 land system change;PB status (lsc);% of pot. extent;2023;Richardson et al. ;40;;;2020;;;
 biosphere integrity;PB status (biosphere);% HANPP;2024;Stenzel et al. ;;20;25;;2007;2016;with respect to preindustrial potential NPP
 biosphere integrity;PB status (biosphere);% HANPP;2022;Kastner el al.;20,7;;;2010;;;with respect to current potential NPP

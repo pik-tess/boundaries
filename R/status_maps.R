@@ -46,6 +46,10 @@ status_map <- function(
     stop("x elements must be of class control variable")
   }
 
+  if (dim(x[[1]])["year"] > 1) {
+    stop("Time series not yet supported")
+  }
+
   # create empty raster for plotting
   plot_nat <- to_raster(lpjml_array = array(0, length(x[[which(!is.na(x))[1]]])), # nolint
                         projection = projection,

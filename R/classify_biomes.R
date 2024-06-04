@@ -75,7 +75,7 @@ classify_biomes <- function(config_reference = NULL, # nolint:cyclocomp_linter
                             montane_arctic_proxy = list(elevation = 1000),
                             tree_cover_thresholds = list(),
                             approach = "default",
-                            time_resolution = NULL,
+                            time_series_avg = NULL,
                             config_args = list()) {
 
   if (is.null(files_reference) && is.null(config_reference)) {

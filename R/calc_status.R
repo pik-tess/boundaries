@@ -224,8 +224,8 @@ get_filenames <- function(config,
       # Check if data could be read in
       meta <- lpjmlkit::read_meta(file_name)
 
-      # Then check if temporal resultion of file matches required nstep
-      if (nstep < meta$nstep && nstep < meta$nbands) {
+      # Then check if temporal resolution of file matches required nstep
+      if (nstep > meta$nstep && nstep > meta$nbands) {
         stop(
           paste0(
             "Required temporal resolution (nstep = ", nstep, ") ",

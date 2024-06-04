@@ -137,17 +137,7 @@ test_that("test classify_biomes grid", {
     ),
     time_span_reference = timeframe,
     time_series_avg = c(1),
-    savanna_proxy = list(vegc = NULL),
-    input_files = list(
-      temp = system.file(
-        "extdata/input/tas_gswp3-w5e5_1901-2016.clm",
-        package = "boundaries"
-      ),
-      elevation = system.file(
-        "extdata/input/elevation.bin",
-        package = "boundaries"
-      )
-    )
+    savanna_proxy = list(vegc = NULL)
   ) %>% suppressMessages()
 
   # test if lsc is the only attribute
