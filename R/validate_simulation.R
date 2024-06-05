@@ -348,12 +348,12 @@ validate_simulation <- function(
 
   # include "rainfed" and exclude "grass", "tree", and "other" in crop indices
   crop_ids_explicit_rainfed <- grep("^(?!.*(grass|tree|other)).*rainfed.*$",
-    names(area_cft),
+    dimnames(harvest_dm)$band,
     ignore.case = TRUE, perl = TRUE
   )
   # #include "irig" and exclude "grass", "tree", and "other" in crop indices
   crop_ids_explicit_irrig <- grep("^(?!.*(grass|tree|other)).*irrig.*$",
-    names(area_cft),
+    dimnames(harvest_dm)$band,
     ignore.case = TRUE, perl = TRUE
   )
 
@@ -361,7 +361,7 @@ validate_simulation <- function(
     crop_fm_prod[, cc] <- (
       harvest_dm[, crop_ids_explicit_rainfed[cc]] +
         harvest_dm[, crop_ids_explicit_irrig[cc]]
-    ) * dm2fm[c] / 1000 # kg FM
+    ) * dm2fm[cc] / 1000 # kg FM
   }
 
   crop_sum <- sum(crop_fm_prod) / 10^9 # in Mt, 1 Mt = 10^9 kg

@@ -14,6 +14,7 @@ biogeochemical flows (N);N use efficiency on cropland;%;2021;Zhang et al. ;46;40
 biogeochemical flows (N);N surplus on cropland;Tg N yr-1;2021;Zhang et al. ;86;68;97;2010;;;
 biogeochemical flows (N);N surplus on cropland;Tg N yr-1;2013;L. Bouwman et al.;93;;;2000;;;
 biogeochemical flows (N);N leaching (total);Tg N yr-1;2013;L. Bouwman et al.;93;;;2000;;;
+biogeochemical flows (N);N leaching (total);Tg N yr-1;2010;Zaehle et al.;86;;;1990;;;
 biogeochemical flows (N);N leaching (total);Tg N yr-1;;INA;72,1;;;2010;;;
 biogeochemical flows (N);N leaching from cropland;Tg N yr-1;;INA;;32;49;2010;;;
 biogeochemical flows (N);PB status (nitrogen);Tg N yr-1;2024;Schulte-Uebbing et al.;119;;;2010;;;
@@ -25,5 +26,6 @@ freshwater change;Irrigation water withdrawals;km3 yr-1;2019;Chen et al.;1867;;;
 freshwater change;Irrigation water withdrawals;km3 yr-1;2023;McDermid et al.;;2148;3232;;various;various;
 freshwater change;Irrigation water withdrawals;km3 yr-1;2020;Droppers et al.;;2158;3185;;various;various;
 freshwater change;Irrigation water consumption;km3 yr-1;2019;Chen et al.;874;;;2005;;;
+freshwater change;Irrigation water consumption;km3 yr-1;2023;McDermid et al.;;1035;1368;;various;various;
 freshwater change;PB status (bluewater);%;2024;Porkka et al.;18,2;;;;1996;2005;
 freshwater change;PB status (greenwater);%;2024;Porkka et al.;15,8;;;;1996;2005;
