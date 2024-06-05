@@ -7,8 +7,10 @@
 #' @param x discharge array with `dim(x)=c(cell, month, year)`
 #'
 #' @param approach EFR approach to be used , available methods are `c("vmf",
-#' "vmf_min", "vmf_max", "q90q50")` based on
-#' [Pastor et al. 2014](https://doi.org/10.5194/hess-18-5041-2014)
+#' "q90q50")` based on
+#' [Pastor et al. 2014](https://doi.org/10.5194/hess-18-5041-2014) 
+#' and c(vmf_min", "vmf_max") as modified by 
+#' [Gerten et al. 2020](https://doi.org/10.1038/s41893-019-0465-1)
 #' as well as `"steffen2015"`, a modified version of vmf by
 #' [Steffen et al. 2015](https://doi.org/10.1126/science.1259855)
 #'
@@ -81,7 +83,7 @@ calc_efrs <- function(x,
       # high flow months
       efrs[x > 0.8 * maf] <- 0.3 * x[x > 0.8 * maf]
     },
-    # "vmf_min" - Pastor et al. 2014
+    # "vmf_min" - Gerten et al. 2020
     vmf_min = {
       # low flow months
       efrs[x <= 0.4 * maf] <- 0.45 * x[x <= 0.4 * maf]
@@ -92,7 +94,7 @@ calc_efrs <- function(x,
       # high flow months
       efrs[x > 0.8 * maf] <- 0.15 * x[x > 0.8 * maf]
     },
-    # "vmf_max" - Pastor et al. 2014
+    # "vmf_max" - Gerten et al. 2020
     vmf_max = {
       # low flow months
       efrs[x <= 0.4 * maf] <- 0.75 * x[x <= 0.4 * maf]
