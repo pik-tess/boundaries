@@ -13,3 +13,13 @@ and returns the status of each underlying control variable.
 ### &#127912; Status Visualization
 `plot_status()` visualize the &#127777; status of the &#127758; boundaries based on the calculated control variables either as a &#128506; map or a &#128200; time series plot.
 
+## Package requirements
+Package *biospheremetrics* is required for the calculation of the biosphere
+integrity boundary, *ggtrace* for stylzed boundary plotting. Both packages can
+be installed via github.
+
+```r
+remotes::install_github("stenzelf/biospheremetrics")
+
+remotes::install_github("yjunechoe/ggtrace")
+```
