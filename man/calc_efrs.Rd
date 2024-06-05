@@ -4,19 +4,15 @@
 \alias{calc_efrs}
 \title{Calculate environmental flow requirements (EFRs)}
 \usage{
-calc_efrs(x, method = "vmf", avg_nyear_args = list())
+calc_efrs(x, approach = "vmf")
 }
 \arguments{
 \item{x}{discharge array with \code{dim(x)=c(cell, month, year)}}
 
-\item{method}{EFR method to be used , available methods are \code{c("vmf", "vmf_min", "vmf_max", "q90q50")} based on
+\item{approach}{EFR approach to be used , available methods are \code{c("vmf", "vmf_min", "vmf_max", "q90q50")} based on
 \href{https://doi.org/10.5194/hess-18-5041-2014}{Pastor et al. 2014}
 as well as \code{"steffen2015"}, a modified version of vmf by
 \href{https://doi.org/10.1126/science.1259855}{Steffen et al. 2015}}
-
-\item{avg_nyear_args}{list of arguments to be passed to
-\link[pbfunctions]{average_nyear_window} (see for more info). To be used for
-time series analysis.}
 }
 \value{
 EFRs with same unit as \code{x} (discharge), with \code{dim(x)=c(ncells, 12)}
@@ -30,16 +26,17 @@ of \code{dim(x)[3]} or specify a nyear_avg calculate the EFRs for each bin in
 \examples{
 \dontrun{
 # basic example
-efrs1 <- calcEFRs(discharge_30y = discharge, method = "vmf")
+efrs1 <- calcEFRs(discharge_30y = discharge, approach = "vmf")
 
 dim(efrs1)
 # c(67420, 12)
 
 # example for using a 30 year average bin for a 90 year discharge and
 #  interpolate between 3 windows afterwards to return 90 years (interpolated)
-efrs2 <- calcEFRs(discharge_90y = discharge,
-                  method="vmf",
-                  avg_nyear_args = list(nyear_avg = 30, interpolate = TRUE))
+efrs2 <- calcEFRs(
+  discharge_90y = discharge,
+  approach="vmf"
+)
 
 dim(efrs2)
 # c(67420, 12, 90)
@@ -47,8 +44,7 @@ dim(efrs2)
 
 # example for using a 1 year (no average) bin for a 100 year discharge
 efrs3 <- calcEFRs(discharge_100y = discharge,
-                  method = "vmfmin",
-                  avg_nyear_args = list(nyear_avg = 1))
+                  approach = "vmfmin")
 
 dim(efrs3)
 # c(67420, 12, 100)

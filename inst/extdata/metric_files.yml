@@ -1,0 +1,421 @@
+# ---------------------------------------------------------------------------- #
+# Metrics required LPJmL outputs and boundaries functions
+# ---------------------------------------------------------------------------- #
+metric:
+    # Biome classification
+    biome:
+        spatial_scale:
+            subglobal:
+                default:
+                    # LPJmL output IDs with required resolution
+                    output: &biome_output
+                        grid:
+                            resolution: "annual"
+                            optional: false
+                        fpc:
+                            resolution: "annual"
+                            optional: false
+                        vegc:
+                            resolution: "annual"
+                            optional: true
+                        pft_lai:
+                            resolution: "annual"
+                            optional: true
+                        temp:
+                            resolution: "annual"
+                            optional: false
+                        elevation:
+                            resolution: "annual"
+                            optional: true
+        # Called boundaries functions
+        fun_name: "classify_biomes"
+        funs: &biome_fun
+                - classify_biomes
+
+    # Calculate bluewater boundary
+    bluewater: &bluewater
+        long_name: "Bluewater change"
+        spatial_scale:
+            global:
+                wang-erlandsson2022: &wang-erlandsson2022_bw
+                   # LPJmL output IDs with required resolution
+                    output:
+                        terr_area:
+                            resolution: "annual"
+                            optional: false
+                        fpc:
+                           resolution: "annual"
+                           optional: false
+                        temp: 
+                            resolution: "annual"
+                            optional: false
+                        discharge:
+                            resolution: "monthly"
+                            optional: false
+                    threshold:
+                        holocene: 50
+                        pb: 95
+                        highrisk: NULL
+                    unit: "%"
+                porkka2024: 
+                    <<: *wang-erlandsson2022_bw
+            subglobal:
+                wang-erlandsson2022: &wang-erlandsson2022_bw_sub
+                    output:
+                        terr_area:
+                            resolution: "annual"
+                            optional: false
+                        discharge:
+                            resolution: "monthly"
+                            optional: false
+                        fpc:
+                            resolution: "annual"
+                            optional: false
+                        temp: 
+                            resolution: "annual"
+                            optional: false
+                        drainage:
+                            resolution: "annual"
+                            optional: false
+                    threshold:
+                        holocene: 50
+                        pb: 95
+                        highrisk: NULL
+                    unit: "%"
+                porkka2024:
+                    <<: *wang-erlandsson2022_bw_sub
+            grid:
+                wang-erlandsson2022:
+                    <<: *wang-erlandsson2022_bw
+                porkka2024:
+                    <<: *wang-erlandsson2022_bw
+                gerten2020:
+                    output:
+                        discharge:
+                            resolution: "monthly"
+                            optional: false
+                    threshold:
+                        holocene: 0
+                        pb: 5
+                        highrisk: 75
+                    unit: "%"
+        fun_name: "bluewater_status"
+        # Called boundaries functions
+        funs:
+            - bluewater_status
+
+    # Calculate greenwater boundary
+    greenwater: &greenwater
+        long_name: "Greenwater change"
+        spatial_scale:
+            global:
+                wang-erlandsson2022: &wang-erlandsson2022_gw
+                   # LPJmL output IDs with required resolution
+                    output:
+                        terr_area:
+                            resolution: "annual"
+                            optional: false
+                        rootmoist:
+                            resolution: "monthly"
+                            optional: false
+                        fpc:
+                            resolution: "annual"
+                            optional: false
+                        temp: 
+                            resolution: "annual"
+                            optional: false
+                    threshold:
+                       holocene: 50
+                       pb: 95
+                       highrisk: NULL
+                    unit: "%"
+                porkka2024: 
+                    <<: *wang-erlandsson2022_gw
+            subglobal:
+                wang-erlandsson2022: &wang-erlandsson2022_gw_sub
+                    output:
+                        terr_area:
+                            resolution: "annual"
+                            optional: false
+                        rootmoist:
+                            resolution: "monthly"
+                            optional: false
+                        fpc:
+                            resolution: "annual"
+                            optional: false
+                        temp: 
+                            resolution: "annual"
+                            optional: false
+                        drainage:
+                            resolution: "annual"
+                            optional: false
+                    threshold:
+                        holocene: 50
+                        pb: 95
+                        highrisk: NULL
+                    unit: "%"
+                porkka2024:
+                    <<: *wang-erlandsson2022_gw_sub
+            grid:
+                wang-erlandsson2022: 
+                    <<: *wang-erlandsson2022_gw
+                porkka2024:
+                    <<: *wang-erlandsson2022_gw
+        # Called boundaries functions#
+        fun_name: "greenwater_status"
+        funs:
+            - greenwater_status
+
+    # Calculate nitrogen boundary
+    nitrogen: &nitrogen
+        long_name: "Nitrogen flows"
+        spatial_scale:
+            grid:
+                braun2022: &braun2022_n
+                    # LPJmL output IDs with required resolution
+                    output:
+                        grid:
+                            resolution: "annual"
+                            optional: false
+                        runoff:
+                            resolution: "monthly"
+                            optional: false
+                        leaching:
+                            resolution: "monthly"
+                            optional: false
+                        pet:
+                            resolution: "monthly"
+                            optional: false
+                        prec:
+                            resolution: "monthly"
+                            optional: true
+                    threshold:
+                        holocene: 0
+                        pb: 2
+                        highrisk: 5
+                    unit: "mg N l-1"
+                braun2022_minusref:
+                    <<: *braun2022_n
+            global:
+                schulte_uebbing2022:
+                    output:    
+                        terr_area: 
+                            resolution: "annual"
+                            optional: false
+                        napplied_mg:
+                            resolution: "annual"
+                            optional: false
+                        bnf_mg:
+                            resolution: "annual"
+                            optional: false
+                        flux_estabn_mg:
+                            resolution: "annual"
+                            optional: false
+                        harvestn:
+                            resolution: "annual"
+                            optional: false
+                        ndepo_mg:
+                            resolution: "annual"
+                            optional: false
+                    threshold:
+                        holocene: 0
+                        pb: 35
+                        highrisk: 84
+                    unit: "Tg N yr-1"
+        # Called boundaries functions
+        fun_name: "nitrogen_status"
+        funs: &nitrogen_fun
+            - nitrogen_status
+
+    # Calculate lsc boundary
+    lsc: &lsc
+        long_name: "Land system change"
+        spatial_scale:
+            global:
+                steffen2015:
+                    # LPJmL output IDs with required resolution
+                    output:
+                        <<: *biome_output
+                        terr_area:
+                            resolution: "annual"
+                            optional: false
+                    threshold:
+                        holocene: 0
+                        pb: 25
+                        highrisk: 46
+                    unit: "%"
+            subglobal:
+                steffen2015: &steffen2015_lsc
+                    # LPJmL output IDs with required resolution
+                    output:
+                        <<: *biome_output
+                        terr_area:
+                            resolution: "annual"
+                            optional: false
+                    threshold:
+                        holocene:
+                            boreal: 0
+                            temperate: 0
+                            tropical: 0
+                        pb:
+                            boreal: 15
+                            temperate: 50
+                            tropical: 15
+                        highrisk:
+                            boreal: 40
+                            temperate: 70
+                            tropical: 40
+                    unit: "%"
+            grid:
+                steffen2015:
+                   <<: *steffen2015_lsc
+        fun_name: "lsc_status"
+        funs:
+            - *biome_fun
+            - lsc_status
+
+
+    # Calculate biosphere status based on biocol
+    biosphere:
+        long_name: "Biosphere integrity"
+        spatial_scale:
+            global:
+                stenzel2023:
+                    # LPJmL output IDs with required resolution
+                    output: &stenzel2023_biosphere_output
+                        grid:
+                            resolution: "annual"
+                            optional: false
+                        terr_area:
+                            resolution: "annual"
+                            optional: false
+                        npp:
+                            resolution: "annual"
+                            optional: false
+                        pft_npp:
+                            resolution: "annual"
+                            optional: false
+                        pft_harvestc:
+                            resolution: "annual"
+                            optional: false
+                        pft_rharvestc:
+                            resolution: "annual"
+                            optional: false
+                        firec:
+                            resolution: "annual"
+                            optional: false
+                        timber_harvestc:
+                            resolution: "annual"
+                            optional: false
+                        cftfrac:
+                            resolution: "annual"
+                            optional: false
+                        fpc:
+                            resolution: "annual"
+                            optional: false
+                    threshold: &stenzel2023_biosphere_threshold
+                        holocene: 0
+                        pb: 10
+                        highrisk: 20
+                    unit: "%"
+            subglobal:
+                stenzel2023:
+                    output:
+                      <<: [*biome_output, *stenzel2023_biosphere_output]
+                    threshold:
+                      <<: *stenzel2023_biosphere_threshold
+                    unit: "%"
+            grid:
+                stenzel2023:
+                    output:
+                      <<: *stenzel2023_biosphere_output
+                    threshold:
+                      <<: *stenzel2023_biosphere_threshold
+                    unit: "%"
+
+        # Called boundaries functions
+        fun_name: "biosphere_status"
+        funs:
+            - *biome_fun
+            - biosphere_status
+
+    # Calculate validation table
+    benchmark:
+        spatial_scale:
+            global:
+                benchmark:
+                    # LPJmL output IDs with required resolution
+                    output:
+                        grid:
+                            resolution: "annual"
+                            optional: false
+                        terr_area:
+                            resolution: "annual"
+                            optional: false
+                        npp:
+                            resolution: "annual"
+                            optional: false
+                        pft_npp:
+                            resolution: "annual"
+                            optional: false
+                        pft_harvestc:
+                            resolution: "annual"
+                            optional: false
+                        landuse:
+                            resolution: "annual"
+                            optional: false
+                        cftfrac:
+                            resolution: "annual"
+                            optional: false
+                        fpc:
+                            resolution: "annual"
+                            optional: false
+                        irrig:
+                            resolution: "monthly"
+                            optional: false
+                        conv_loss_evap:
+                            resolution: "monthly"
+                            optional: false
+                        conv_loss_drain:
+                            resolution: "monthly"
+                            optional: false
+                        return_flow_b:
+                            resolution: "monthly"
+                            optional: false
+                        leaching:
+                            resolution: "annual"
+                            optional: false
+                        nleaching_agr:
+                            resolution: "annual"
+                            optional: false
+                        nfert_agr:
+                            resolution: "annual"
+                            optional: false
+                        nmanure_agr:
+                            resolution: "annual"
+                            optional: false   
+                        ndepo_agr:
+                            resolution: "annual"
+                            optional: false 
+                        bnf_agr:
+                            resolution: "annual"
+                            optional: false                    
+                        seedn_agr:
+                            resolution: "annual"
+                            optional: false   
+                        pft_harvestn:
+                            resolution: "annual"
+                            optional: false
+                        vegc:
+                            resolution: "annual"
+                            optional: true
+                        temp:
+                            resolution: "annual"
+                            optional: false
+                        elevation:
+                            resolution: "annual"
+                            optional: true 
+        # Called boundaries functions
+        fun_name: "validation_table"
+        funs:
+            - validation_table

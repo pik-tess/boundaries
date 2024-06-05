@@ -2,50 +2,54 @@
 % Please edit documentation in R/plot_status.R
 \name{plot_status}
 \alias{plot_status}
-\title{Plot the global status of planetary boundaries}
+\title{Plot the status of planetary boundaries}
 \usage{
-plot_status(
-  file_name = NULL,
-  status_data = list(biosphere = NA, lsc = NA, bluewater = NA, nitrogen = NA),
-  colors = c(`safe zone` = "#74bca9e1", `increasing risk` = "#f6ee0f", `high risk` =
-    "#e23a50"),
-  bg_col = NA,
-  to_robinson = TRUE,
-  legend = TRUE
-)
+plot_status(x, filename = NULL, add_legend = TRUE, stylized = FALSE, ...)
 }
 \arguments{
-\item{file_name}{character string providing file name (including directory
+\item{x}{output object from calc_* with the status of the
+control variable for one point in time, incl. pb thresholds as attribute}
+
+\item{filename}{character string providing file name (including directory
 and file extension). Defaults to NULL (plotting to screen)}
 
-\item{status_data}{list with one to four LPJmL vectors (length: ncells) with
-the outputs from the calc_* functions for one point in time.
-Given element names within the list will be displayed underneath the
-respective map. Order in the list determines the plotting order (by row).}
+\item{add_legend}{logical, specify whether a legend should be plotted}
 
-\item{colors}{definition of colors for plotting of the safe, increasing
-risk and high risk zone (3 elements, do not change the order). Colors used
-for previous plots: "#008B0099" (green), "#FFEB00", "brown3"}
+\item{stylized}{Logical. If \code{spatial_scale == "global"}, the function will
+plot the status of the planetary boundaries using a stylized plot.}
 
-\item{bg_col}{character, specify background possible (\code{NA} for transparent)}
-
-\item{to_robinson}{logical to define if robinson projection should be used
-for plotting}
-
-\item{legend}{logical, specify whether a legend should be plotted}
+\item{...}{additional arguments passed to the plotting functions, see also
+\code{\link{status_global}}, \code{\link{status_map}} and \code{\link{status_stylized}}}
 }
 \description{
-Plot global map(s) with the status of 1-4 planetary boundaries for
-a scenario LPJmL run and derived planetary boundary statuses
+Plot the status of planetary boundaries. The function takes the output from
+calc_status and plots the status of the planetary boundaries depending on
+the spatial scale applying different forms of plotting.
 }
 \examples{
 \dontrun{
- plot_status(file_name = "./my_boundary_status.png",
-                status_data = list("land system change" = lsc_status,
-                                   "nitrogen" = nitrogen_status,
-                                   "bluewater" = water_status),
- legend = FALSE
- bg_col = NA)
+pb_status <- calc_status(
+  boundary = c("lsc", "biosphere", "bluewater", "greenwater", "nitrogen"),
+  config_scenario = "./config_lu_1500_2016.json",
+  config_reference = "./config_pnv_1500_2016.json",
+  time_span_scenario = as.character(1986:2016),
+  time_span_reference = as.character(1986:2016),
+  spatial_scale = "global",
+  approach = list(
+    bluewater = "porkka2024",
+    nitrogen = "schulte_uebbing2022"
+  ),
+  savanna_proxy = list(vegc = 7500),
+  time_series_avg = 1,
+  path_baseline = "./pnv_1500_2016/",
+)
+
+plot_status(
+  x = pb_status,
+  filename = "status.png",
+  add_legend = TRUE,
+  stylized = TRUE
+)
 }
 
 }
