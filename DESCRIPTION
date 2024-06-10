@@ -1,9 +1,9 @@
 Package: boundaries
 Title: Planetary Boundary Status based on LPJmL simulations
-Version: 0.2.3
+Version: 0.2.4
 Authors@R: c(
-    person("Johanna", "Braun", , "braun@pik-potsdam.de", role = c("aut"), comment = c(ORCID = "0000-0002-8809-1044")),
-    person("Jannes", "Breier", , "jannesbr@pik-potsdam.de", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-9055-6904")),
+    person("Johanna", "Braun", , "braun@pik-potsdam.de", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-8809-1044")),
+    person("Jannes", "Breier", , "jannesbr@pik-potsdam.de", role = c("aut"), comment = c(ORCID = "0000-0002-9055-6904")),
     person("Fabian", "Stenzel", , "stenzel@pik-potsdam.de", role = c("aut"), comment = c(ORCID = "0000-0002-5109-0048")),
     person("Caterina", "Vanelli", , "caterina@pik-potsdam.de", role = c("aut"), comment = c(ORCID = "0000-0001-6552-0320"))
   )
@@ -20,6 +20,8 @@ Roxygen: list(markdown = TRUE)
 Encoding: UTF-8
 Depends:
     R (>= 3.5.0)
+URL: https://github.com/PIK-tess/boundaries
+BugReports: https://github.com/PIK-tessLPJmL/boundaries/issues
 Imports:
     magrittr,
     tibble,

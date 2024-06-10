@@ -8,12 +8,20 @@
 \description{
 A systematic approach to quantify the status of the terrestrial planetary boundaries based on the Dynamic Global Vegetation Model (DGVM) Lund-Potsdam-Jena managed Land (LPJmL) hosted at the Potsdam Institute for Climate Impact Research (PIK). The supported planetary boundaries are "biosphere integrity", "land-system change", "bluewater", "greenwater" and "nitrogen flows".
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/PIK-tess/boundaries}
+  \item Report bugs at \url{https://github.com/PIK-tessLPJmL/boundaries/issues}
+}
+
+}
 \author{
-\strong{Maintainer}: Jannes Breier \email{jannesbr@pik-potsdam.de} (\href{https://orcid.org/0000-0002-9055-6904}{ORCID})
+\strong{Maintainer}: Johanna Braun \email{braun@pik-potsdam.de} (\href{https://orcid.org/0000-0002-8809-1044}{ORCID})
 
 Authors:
 \itemize{
-  \item Johanna Braun \email{braun@pik-potsdam.de} (\href{https://orcid.org/0000-0002-8809-1044}{ORCID})
+  \item Jannes Breier \email{jannesbr@pik-potsdam.de} (\href{https://orcid.org/0000-0002-9055-6904}{ORCID})
   \item Fabian Stenzel \email{stenzel@pik-potsdam.de} (\href{https://orcid.org/0000-0002-5109-0048}{ORCID})
   \item Caterina Vanelli \email{caterina@pik-potsdam.de} (\href{https://orcid.org/0000-0001-6552-0320}{ORCID})
 }
