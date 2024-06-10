@@ -15,7 +15,7 @@ Authors:
 \itemize{
   \item Johanna Braun \email{braun@pik-potsdam.de} (\href{https://orcid.org/0000-0002-8809-1044}{ORCID})
   \item Fabian Stenzel \email{stenzel@pik-potsdam.de} (\href{https://orcid.org/0000-0002-5109-0048}{ORCID})
-  \item Caterina Vanelli \email{caterina@pik-potsdam.de}
+  \item Caterina Vanelli \email{caterina@pik-potsdam.de} (\href{https://orcid.org/0000-0001-6552-0320}{ORCID})
 }
 
 }
