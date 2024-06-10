@@ -1,6 +1,6 @@
 # Planetary Boundary Status based on LPJmL simulations <a href=''><img src='inst/img/logo.png' align='right' height='139' /></a>
 
-R package **boundaries**, version **0.2.2**
+R package **boundaries**, version **0.2.3**
 
 [![CRAN status](https://www.r-pkg.org/badges/version/boundaries)](https://cran.r-project.org/package=boundaries)  [![R build status](https://gitlab.pik-potsdam.de/tess/boundaries/workflows/check/badge.svg)](https://gitlab.pik-potsdam.de/tess/boundaries/actions) [![codecov](https://codecov.io/gh/tess/boundaries/branch/master/graph/badge.svg)](https://app.codecov.io/gh/tess/boundaries) 
 
@@ -26,17 +26,6 @@ and returns the status of each underlying control variable.
 
 ### &#127912; Status Visualization
 `plot_status()` visualize the &#127777; status of the &#127758; boundaries based on the calculated control variables either as a &#128506; map or a &#128200; time series plot.
-
-## Package requirements
-Package *biospheremetrics* is required for the calculation of the biosphere
-integrity boundary, *ggtrace* for stylzed boundary plotting. Both packages can
-be installed via github.
-
-```r
-remotes::install_github("stenzelf/biospheremetrics")
-
-remotes::install_github("yjunechoe/ggtrace")
-```
 
 ## Installation
 
@@ -67,7 +56,7 @@ In case of questions / problems please contact Jannes Breier <jannesbr@pik-potsd
 
 To cite package **boundaries** in publications use:
 
-Braun J, Breier J, Stenzel F, Vanelli C (2024). _boundaries: Planetary Boundary Status based on LPJmL simulations_. R package version 0.2.2.
+Braun J, Breier J, Stenzel F, Vanelli C (2024). _boundaries: Planetary Boundary Status based on LPJmL simulations_. R package version 0.2.3.
 
 A BibTeX entry for LaTeX users is
 
@@ -76,6 +65,6 @@ A BibTeX entry for LaTeX users is
   title = {boundaries: Planetary Boundary Status based on LPJmL simulations},
   author = {Johanna Braun and Jannes Breier and Fabian Stenzel and Caterina Vanelli},
   year = {2024},
-  note = {R package version 0.2.2},
+  note = {R package version 0.2.3},
 }
 ```

@@ -33,7 +33,7 @@ as_risk_level <- function(
     type = "continuous",
     normalize = "safe") {
 
-  if (class(control_variable) == "list") {
+  if (methods::is(control_variable, "list")) {
     return(
       lapply(control_variable, as_risk_level,
         type = type, normalize = normalize
@@ -51,7 +51,7 @@ as_risk_level <- function(
       # control variable status normalized to 0-1, 1 is the
       # threshold between safe and increasing risk, >1 is transgressed
 
-      if (class(thresholds) == "list") {
+      if (methods::is(thresholds, "list")) {
         risk_level <- (control_variable - thresholds[["holocene"]]) /
           (thresholds[["pb"]] - thresholds[["holocene"]])
         attr(risk_level, "thresholds") <-
@@ -61,7 +61,7 @@ as_risk_level <- function(
               (thresholds[["pb"]] - thresholds[["holocene"]])
           )
 
-      } else if (class(thresholds) == "array") {
+      } else if (methods::is(thresholds, "array")) {
         risk_level <- (control_variable - thresholds[, , "holocene"]) /
           (thresholds[, , "pb"] - thresholds[, , "holocene"])
         attr(risk_level, "thresholds") <-
@@ -80,7 +80,7 @@ as_risk_level <- function(
       # between increasing risk and high risk zone
       # if control variable is < pb:
       # normalized to 0 (holocene) to 1 (pb)
-      if (class(thresholds) == "list") {
+      if (methods::is(thresholds, "list")) {
         risk_level <- control_variable
         risk_level[control_variable >= thresholds[["pb"]] &
                      is.na(control_variable) == FALSE] <-
@@ -104,7 +104,7 @@ as_risk_level <- function(
         #                  (thresholds[["highrisk"]] -
         #                   thresholds[["pb"]])
 
-      } else if (class(thresholds) == "array") {
+      } else if (methods::is(thresholds, "array")) {
         risk_level <- control_variable
         thresh_holocene <- thresholds[, , "holocene"]
         thresh_pb <- thresholds[, , "pb"]
@@ -136,7 +136,7 @@ as_risk_level <- function(
   } else if (type == "discrete") {
     # init array based on control_variable
     risk_level <- control_variable
-    if (class(thresholds) == "list") {
+    if (methods::is(thresholds, "list")) {
       # high risk
       risk_level[control_variable >= thresholds[["highrisk"]]] <- 3
       # increasing risk
@@ -145,7 +145,7 @@ as_risk_level <- function(
       # safe zone
       risk_level[control_variable < thresholds[["pb"]]] <- 1
 
-    } else if (class(thresholds) == "array") {
+    } else if (methods::is(thresholds, "array")) {
       # high risk
       risk_level[control_variable >= thresholds[, , "highrisk"]] <- 3
       # increasing risk

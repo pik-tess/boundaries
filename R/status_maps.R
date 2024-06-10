@@ -42,7 +42,7 @@ status_map <- function(
   grid_path = NULL
 ) {
 
-  if (class(x[[1]]) != "control_variable") {
+  if (!methods::is(x[[1]], "control_variable")) {
     stop("x elements must be of class control variable")
   }
 
