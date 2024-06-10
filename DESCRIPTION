@@ -27,11 +27,9 @@ Imports:
     future,
     zoo,
     sf,
+    terra,
     reshape2,
     lpjmlkit,
-    sp,
-    rgdal,
-    raster,
     readr,
     tidyr,
     rlang,
@@ -53,10 +51,12 @@ Suggests:
     gridExtra,
     purrr,
     rnaturalearth,
-    terra,
     ggpubr,
     ggrepel,
     scales,
     tidyterra
+Remotes:
+    github::stenzelf/biospheremetrics,
+    github::yjunechoe/ggtrace
 Config/testthat/edition: 3
 Date: 2024-06-10
