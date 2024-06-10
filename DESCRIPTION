@@ -1,6 +1,6 @@
 Package: boundaries
 Title: Planetary Boundary Status based on LPJmL simulations
-Version: 0.2.4
+Version: 1.0.0
 Authors@R: c(
     person("Johanna", "Braun", , "braun@pik-potsdam.de", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-8809-1044")),
     person("Jannes", "Breier", , "jannesbr@pik-potsdam.de", role = c("aut"), comment = c(ORCID = "0000-0002-9055-6904")),
