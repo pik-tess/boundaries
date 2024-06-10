@@ -1,6 +1,6 @@
 Package: boundaries
 Title: Planetary Boundary Status based on LPJmL simulations
-Version: 0.2.2
+Version: 0.2.3
 Authors@R: c(
     person("Johanna", "Braun", , "braun@pik-potsdam.de", role = c("aut"), comment = c(ORCID = "0000-0002-8809-1044")),
     person("Jannes", "Breier", , "jannesbr@pik-potsdam.de", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-9055-6904")),
@@ -25,13 +25,10 @@ Imports:
     tibble,
     dplyr,
     future,
-    zoo,
     sf,
+    terra,
     reshape2,
     lpjmlkit,
-    sp,
-    rgdal,
-    raster,
     readr,
     tidyr,
     rlang,
@@ -53,10 +50,12 @@ Suggests:
     gridExtra,
     purrr,
     rnaturalearth,
-    terra,
     ggpubr,
     ggrepel,
     scales,
     tidyterra
+Remotes:
+    github::stenzelf/biospheremetrics,
+    github::yjunechoe/ggtrace
 Config/testthat/edition: 3
 Date: 2024-06-10
