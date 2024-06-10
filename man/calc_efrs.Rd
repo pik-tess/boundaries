@@ -9,8 +9,10 @@ calc_efrs(x, approach = "vmf")
 \arguments{
 \item{x}{discharge array with \code{dim(x)=c(cell, month, year)}}
 
-\item{approach}{EFR approach to be used , available methods are \code{c("vmf", "vmf_min", "vmf_max", "q90q50")} based on
+\item{approach}{EFR approach to be used , available methods are \code{c("vmf", "q90q50")} based on
 \href{https://doi.org/10.5194/hess-18-5041-2014}{Pastor et al. 2014}
+and c(vmf_min", "vmf_max") as modified by
+\href{https://doi.org/10.1038/s41893-019-0465-1}{Gerten et al. 2020}
 as well as \code{"steffen2015"}, a modified version of vmf by
 \href{https://doi.org/10.1126/science.1259855}{Steffen et al. 2015}}
 }
