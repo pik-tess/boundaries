@@ -1,6 +1,6 @@
 Package: boundaries
 Title: Planetary Boundary Status based on LPJmL simulations
-Version: 1.0.0
+Version: 1.0.1
 Authors@R: c(
     person("Johanna", "Braun", , "braun@pik-potsdam.de", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-8809-1044")),
     person("Jannes", "Breier", , "jannesbr@pik-potsdam.de", role = c("aut"), comment = c(ORCID = "0000-0002-9055-6904")),
@@ -20,7 +20,8 @@ Roxygen: list(markdown = TRUE)
 Encoding: UTF-8
 Depends:
     R (>= 3.5.0)
-URL: https://github.com/PIK-tess/boundaries
+URL: https://github.com/PIK-tess/boundaries,
+    https://doi.org/10.5281/zenodo.11550559
 BugReports: https://github.com/PIK-tessLPJmL/boundaries/issues
 Imports:
     magrittr,
@@ -60,4 +61,4 @@ Remotes:
     github::stenzelf/biospheremetrics,
     github::yjunechoe/ggtrace
 Config/testthat/edition: 3
-Date: 2024-06-10
+Date: 2024-06-11

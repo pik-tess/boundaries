@@ -12,6 +12,7 @@ A systematic approach to quantify the status of the terrestrial planetary bounda
 Useful links:
 \itemize{
   \item \url{https://github.com/PIK-tess/boundaries}
+  \item \doi{10.5281/zenodo.11550559}
   \item Report bugs at \url{https://github.com/PIK-tessLPJmL/boundaries/issues}
 }
 
