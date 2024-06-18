@@ -80,7 +80,8 @@ calc_status <- function(
   # If in_parallel use future package for asynchronous parallelization
   if (in_parallel) {
     rlang::local_options(
-      future.globals.maxSize = 3000 * 1024^2
+      future.globals.maxSize = 8000 * 1024^2,
+      future.rng.onMisuse = "ignore"
     )
     if (.Platform$OS.type == "windows") {
       future_plan <- future::plan("multisession")
@@ -257,9 +258,9 @@ utils::globalVariables(".") # nolint:undesirable_function_linter
 
 # Utility function to check time span matches simulation config and convert to
 #   character if necessary
-check_time_span <- function(time_span, config, type = "scenario") {
+check_time_span <- function(time_span, config = NULL, type = "scenario") {
 
-  if (!all(time_span %in% get_sim_time(config))) {
+  if (!is.null(config) && !all(time_span %in% get_sim_time(config))) {
     stop("Time span not available in ", type, " run.")
   }
   if (is.numeric(time_span)) {

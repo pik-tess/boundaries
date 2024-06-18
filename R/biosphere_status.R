@@ -101,6 +101,10 @@ biosphere_status <- function(
   biocol_option <- match.arg(biocol_option,
                              c("only_above_zero", "netsum", "abs"))
 
+  # check if time_span_baseline is numeric else convert to character to use
+  #   years as labels explicitly
+  time_span_baseline <- check_time_span(time_span_baseline)
+
   files_baseline <- lapply(
     files_scenario,
     function(x) {
