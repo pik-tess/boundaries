@@ -101,10 +101,6 @@ biosphere_status <- function(
   biocol_option <- match.arg(biocol_option,
                              c("only_above_zero", "netsum", "abs"))
 
-  # check if time_span_baseline is numeric else convert to character to use
-  #   years as labels explicitly
-  time_span_baseline <- check_time_span(time_span_baseline)
-
   files_baseline <- lapply(
     files_scenario,
     function(x) {
@@ -208,7 +204,12 @@ biosphere_status <- function(
     ]
     for (idx in seq_len(nrow(comb))) {
       subset_biocol <- control_variable_raw
-      subset_npp <- biocol$npp_ref
+      di <- dim(biocol$npp_ref)
+      dn <- dimnames(biocol$npp_ref)
+      di_biocol <- dim(subset_biocol)
+      subset_npp <- rep(rowMeans(biocol$npp_ref),times = di_biocol["year"])
+      dim(subset_npp) <- dim(subset_biocol)
+      dimnames(subset_npp) <- dimnames(subset_biocol)
 
       # replace for every combination a subset of cells with mean of each
       sub_cells <- {
@@ -241,7 +242,7 @@ biosphere_status <- function(
           # weighted by cell area
           return(rep(sum(x, na.rm = TRUE), length(x)))
         }
-      )
+      ) # todo: looses the cell dimension name here
       subset_npp[!sub_cells] <- NA
       summed_npp <- apply(
         subset_npp,
@@ -253,7 +254,7 @@ biosphere_status <- function(
         }
       )
       control_variable_raw[sub_cells] <- summed_biocol[sub_cells] /
-        summed_npp[sub_cells]
+        summed_npp[sub_cells] # todo: these arrays have more than one dim
     }
 
   } else if (spatial_scale == "global") {
