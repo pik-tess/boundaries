@@ -242,7 +242,7 @@ biosphere_status <- function(
           # weighted by cell area
           return(rep(sum(x, na.rm = TRUE), length(x)))
         }
-      ) # todo: looses the cell dimension name here
+      )
       subset_npp[!sub_cells] <- NA
       summed_npp <- apply(
         subset_npp,
@@ -254,7 +254,7 @@ biosphere_status <- function(
         }
       )
       control_variable_raw[sub_cells] <- summed_biocol[sub_cells] /
-        summed_npp[sub_cells] # todo: these arrays have more than one dim
+        summed_npp[sub_cells]
     }
 
   } else if (spatial_scale == "global") {
