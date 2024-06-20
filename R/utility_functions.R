@@ -111,7 +111,7 @@ get_outputs <- function( # nolint
       # Iterate over all approaches
       for (method_string in names(scale)) {
         # Check if approach is in list or all approaches
-        if (approach != "all" && !is.null(approach[[metric_string]]) &&
+        if (all(approach != "all") && !is.null(approach[[metric_string]]) &&
               method_string != approach[[metric_string]]) { # nolint
           next
         }

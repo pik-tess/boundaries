@@ -204,7 +204,10 @@ biosphere_status <- function(
     ]
     for (idx in seq_len(nrow(comb))) {
       subset_biocol <- control_variable_raw
-      subset_npp <- biocol$npp_ref
+      di_biocol <- dim(subset_biocol)
+      subset_npp <- rep(rowMeans(biocol$npp_ref), times = di_biocol["year"])
+      dim(subset_npp) <- dim(subset_biocol)
+      dimnames(subset_npp) <- dimnames(subset_biocol)
 
       # replace for every combination a subset of cells with mean of each
       sub_cells <- {

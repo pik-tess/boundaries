@@ -53,18 +53,17 @@ validate_simulation <- function(
     filename,
     ...) {
 
-  # use future package for asynchronous parallelization
-
-  rlang::local_options(
-    future.globals.maxSize = 3000 * 1024^2
+  # check time span and convert to character if necessary
+  time_span_scenario <- check_time_span(
+    time_span = time_span_scenario,
+    config = config_scenario,
+    type = "scenario"
   )
-  if (.Platform$OS.type == "windows") {
-    future_plan <- future::plan("multisession")
-  } else {
-    future_plan <- future::plan("multicore")
-  }
-  on.exit(future::plan(future_plan)) # nolint:undesirable_function_linter
-
+  time_span_reference <- check_time_span(
+    time_span = time_span_reference,
+    config = config_reference,
+    type = "reference"
+  )
 
   # please R CMD check for use of dplyr syntax
   lpjml_value <- value <- variable <- range.lower <- range.upper <- unit <- NULL
@@ -115,7 +114,7 @@ validate_simulation <- function(
   ####### PB Land-system change ################################################
 
   # read in cftfrac based on lpjml input to include areas with failed harvest
-  cftfrac %<-% aggregate_lpjml_output(
+  cftfrac <- aggregate_lpjml_output(
     files_scenario$landuse,
     time_span_scenario,
     aggregate = list(year = mean)
@@ -164,7 +163,7 @@ validate_simulation <- function(
 
   #------------- Irrigation withdrawals and consumption ------------------------
 
-  irrig %<-% aggregate_lpjml_output(
+  irrig <- aggregate_lpjml_output(
     files_scenario$irrig,
     time_span_scenario,
     aggregate = list(
@@ -173,7 +172,7 @@ validate_simulation <- function(
     )
   )
 
-  conv_loss_evap %<-% aggregate_lpjml_output(
+  conv_loss_evap <- aggregate_lpjml_output(
     files_scenario$conv_loss_evap,
     time_span_scenario,
     aggregate = list(
@@ -182,7 +181,7 @@ validate_simulation <- function(
     )
   )
 
-  conv_loss_drain %<-% aggregate_lpjml_output(
+  conv_loss_drain <- aggregate_lpjml_output(
     files_scenario$conv_loss_drain,
     time_span_scenario,
     aggregate = list(
@@ -191,7 +190,7 @@ validate_simulation <- function(
     )
   )
 
-  return_flow_b %<-% aggregate_lpjml_output(
+  return_flow_b <- aggregate_lpjml_output(
     files_scenario$return_flow_b,
     time_span_scenario,
     aggregate = list(
@@ -272,7 +271,7 @@ validate_simulation <- function(
 
   n_inputs <- total_fert + total_man + total_dep + total_bnf + total_seed
 
-  nharvest %<-% aggregate_lpjml_output(
+  nharvest <- aggregate_lpjml_output(
     files_scenario$pft_harvestn,
     time_span_scenario,
     aggregate = list(
@@ -281,7 +280,7 @@ validate_simulation <- function(
   )
   if (gridbased == FALSE) {
     # based on lpjml output
-    cftfrac %<-% aggregate_lpjml_output(
+    cftfrac <- aggregate_lpjml_output(
       files_scenario$cftfrac,
       time_span_scenario,
       aggregate = list(year = mean)
@@ -329,7 +328,7 @@ validate_simulation <- function(
 
   #------------- simulated lpjml harvest ---------------------------------------
 
-  yield %<-% aggregate_lpjml_output(
+  yield <- aggregate_lpjml_output(
     files_scenario$pft_harvestc,
     time_span_scenario,
     aggregate = list(year = mean)

@@ -9,6 +9,5 @@
 ^tests/.lintr$
 ^.*CITATION.cff$
 ^\.github$
-^inst/extdata$
 ^codecov\.yml$
 ^CONTRIBUTING\.md$
