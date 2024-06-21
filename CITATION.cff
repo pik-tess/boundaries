@@ -2,8 +2,8 @@ cff-version: 1.2.0
 message: If you use this software, please cite it using the metadata from this file.
 type: software
 title: 'boundaries: Planetary Boundary Status based on LPJmL simulations'
-version: 1.0.2
-date-released: '2024-06-20'
+version: 1.0.3
+date-released: '2024-06-21'
 abstract: A systematic approach to quantify the status of the terrestrial planetary
   boundaries based on the Dynamic Global Vegetation Model (DGVM) Lund-Potsdam-Jena
   managed Land (LPJmL) hosted at the Potsdam Institute for Climate Impact Research
