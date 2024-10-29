@@ -59,6 +59,28 @@ metric:
                     unit: "%"
                 porkka2024: 
                     <<: *wang-erlandsson2022_bw
+                rockstroem2009:
+                    output: 
+                        irrig:
+                            resolution: "annual"
+                            optional: false
+                        conv_loss_evap:
+                            resolution: "annual"
+                            optional: false
+                        return_flow_b:
+                            resolution: "annual"
+                            optional: false
+                        wateruse_hil:
+                            resolution: "annual"
+                            optional: false
+                        terr_area:
+                            resolution: "annual"
+                            optional: false
+                    threshold:
+                        holocene: 0
+                        pb: 4000
+                        highrisk: 6000
+                    unit: "km3/yr"
             subglobal:
                 wang-erlandsson2022: &wang-erlandsson2022_bw_sub
                     output:

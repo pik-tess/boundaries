@@ -82,7 +82,7 @@ bluewater_status <- function(
   # verify available methods and resolution
   approach <- match.arg(
     approach,
-    c("gerten2020", "wang-erlandsson2022", "porkka2024")
+    c("gerten2020", "wang-erlandsson2022", "porkka2024", "rockstroem2009")
   )
   spatial_scale <- match.arg(spatial_scale, c("global", "subglobal", "grid"))
 
@@ -108,7 +108,80 @@ bluewater_status <- function(
     )
 
   } else if (spatial_scale %in% c("subglobal", "global")) {
-    if (!approach %in% c("wang-erlandsson2022", "porkka2024")) {
+    if (approach %in% c("wang-erlandsson2022", "porkka2024")) {
+      control_variable <- calc_water_deviations(
+        files_scenario = files_scenario,
+        files_reference = files_reference,
+        spatial_scale = spatial_scale,
+        time_span_scenario = time_span_scenario,
+        time_span_reference =  time_span_reference,
+        approach = approach,
+        time_series_avg = time_series_avg,
+        config_args = config_args,
+        thresholds = thresholds,
+        variable = "discharge"
+      )
+    } else if (approach == "rockstroem2009") {
+      # calculater bluewater consumption
+      # irrigation
+      irrig <- NULL
+      irrig %<-% read_io_format(
+        files_scenario$irrig,
+        time_span_scenario,
+        aggregate = list(band = sum, month = sum),
+        spatial_subset = config_args$spatial_subset
+      )
+      # evaporative conveyance losses
+      conv_loss_evap <- NULL
+      conv_loss_evap %<-% read_io_format(
+        files_scenario$conv_loss_evap,
+        time_span_scenario,
+        aggregate = list(band = sum, month = sum),
+        spatial_subset = config_args$spatial_subset
+      )
+      # bluewater return flow (from irrigation)
+      return_flow_b <- NULL
+      return_flow_b %<-% read_io_format(
+        files_scenario$return_flow_b,
+        time_span_scenario,
+        aggregate = list(band = sum, month = sum),
+        spatial_subset = config_args$spatial_subset
+      )
+      # calculate terrestrial area
+      terr_area <- lpjmlkit::read_io(
+        files_scenario$terr_area
+      ) %>%
+        conditional_subset(config_args$spatial_subset) %>%
+        lpjmlkit::as_array()
+
+      terr_area <- terr_area[, , 1]
+
+      # calculate bluewater consumption for irrigation
+      consumption_irrig <- (irrig + conv_loss_evap - return_flow_b)
+
+      # read in water consumption for HIL (houshoulds, industry, livestock)
+      consumption_hil <- NULL
+      consumption_hil %<-% read_io_format(
+        files_scenario$wateruse_hil,
+        time_span_scenario,
+        aggregate = list(band = sum, month = sum),
+        spatial_subset = config_args$spatial_subset
+      )
+
+      # calculate global consumption (conversion to km3/yr)
+      control_variable <- apply(consumption_irrig * terr_area + consumption_hil,
+                                c("year"), sum, na.rm = TRUE) * 10^-12
+
+      attr(control_variable, "thresholds") <- thresholds
+      attr(control_variable, "control_variable") <- (
+        "Bluewater consumption for irrigation"
+      )
+      attr(control_variable, "spatial_scale") <- spatial_scale
+      attr(control_variable, "unit") <- list_unit("bluewater", approach,
+                                                  spatial_scale)
+      class(control_variable) <- c("control_variable")
+
+    } else {
       stop(
         "Approach \"",
         approach,
@@ -117,19 +190,6 @@ bluewater_status <- function(
         "."
       )
     }
-
-    control_variable <- calc_water_deviations(
-      files_scenario = files_scenario,
-      files_reference = files_reference,
-      spatial_scale = spatial_scale,
-      time_span_scenario = time_span_scenario,
-      time_span_reference =  time_span_reference,
-      approach = approach,
-      time_series_avg = time_series_avg,
-      config_args = config_args,
-      thresholds = thresholds,
-      variable = "discharge"
-    )
   }
   attr(control_variable, "long_name") <- list_long_name("bluewater")
 
