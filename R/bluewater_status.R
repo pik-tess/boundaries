@@ -168,9 +168,21 @@ bluewater_status <- function(
         spatial_subset = config_args$spatial_subset
       )
 
-      # calculate global consumption (conversion to km3/yr)
-      control_variable <- apply(consumption_irrig * terr_area + consumption_hil,
-                                c("year"), sum, na.rm = TRUE) * 10^-12
+      # calculate total bluewater consumption in l/yr
+      total_consumption <- consumption_irrig * terr_area + consumption_hil
+
+      # average over time
+      avg_total_consumption <- aggregate_time(
+        x = total_consumption,
+        time_series_avg = time_series_avg
+      )
+
+      # aggregate to global value (conversion to km3/yr)
+      dim_remain <- names(dim(avg_total_consumption))[
+        names(dim(avg_total_consumption)) != "cell"
+      ]
+      control_variable <- apply(avg_total_consumption,
+                                dim_remain, sum, na.rm = TRUE) * 10^-12
 
       attr(control_variable, "thresholds") <- thresholds
       attr(control_variable, "control_variable") <- (
