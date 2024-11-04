@@ -114,21 +114,25 @@ status_map <- function(
       plotvar_risk[plotvar_risk <= 1] <- NA
       plotvar_risk[plotvar_risk > high_risk] <- high_risk
 
-      # define viridis color scale end value, depending on max value
-      max_value <- terra::minmax(plotvar_risk)[2]
-      end_value <- max_value / high_risk
-      if (end_value > 1) {
-        end_value <- 1
-      }
-      end_value <- 0.9 * end_value #(0.9 = end of viridis scale)
+      # color scale for increasing/high risk zone:
+      # The 'inferno' color scale is being reversed (using 'direction = -1'),
+      # and only a section of the color scale is selected.
+
+      # define cut off values for selecting the color scale section:
+      # lower boundary of the color scale (beginning of reversed scale)
+      col_scale_low <- 0.95
+      # upper boundary of the color scale (end of reversed scale)
+      col_scale_high <- 0.1
 
       p <- ggplot2::ggplot() +
         tidyterra::geom_spatraster(data = plot_nat) +
         ggnewscale::new_scale_fill() +
         tidyterra::geom_spatraster(data = plotvar_risk) +
         ggplot2::scale_fill_viridis_c(na.value = NA, direction = -1,
-                                      option = "inferno", begin = 1 - end_value,
-                                      end = 0.95) +
+                                      option = "inferno",
+                                      begin = col_scale_high,
+                                      end = col_scale_low,
+                                      limits = c(1, high_risk)) +
         ggplot2::theme(panel.background = ggplot2::element_rect(fill = "white"),
                        panel.grid.major = ggplot2::element_line(linewidth = 0.1,
                                                                 color = "#8d8b8b"), # nolint:line_length_linter

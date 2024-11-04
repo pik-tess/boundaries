@@ -2,8 +2,8 @@ cff-version: 1.2.0
 message: If you use this software, please cite it using the metadata from this file.
 type: software
 title: 'boundaries: Planetary Boundary Status based on LPJmL simulations'
-version: 1.0.3
-date-released: '2024-06-21'
+version: 1.0.4
+date-released: '2024-10-28'
 abstract: A systematic approach to quantify the status of the terrestrial planetary
   boundaries based on the Dynamic Global Vegetation Model (DGVM) Lund-Potsdam-Jena
   managed Land (LPJmL) hosted at the Potsdam Institute for Climate Impact Research
@@ -13,19 +13,19 @@ authors:
 - family-names: Braun
   given-names: Johanna
   email: braun@pik-potsdam.de
-  orcid: 0000-0002-8809-1044
+  orcid: https://orcid.org/0000-0002-8809-1044
 - family-names: Breier
   given-names: Jannes
   email: jannesbr@pik-potsdam.de
-  orcid: 0000-0002-9055-6904
+  orcid: https://orcid.org/0000-0002-9055-6904
 - family-names: Stenzel
   given-names: Fabian
   email: stenzel@pik-potsdam.de
-  orcid: 0000-0002-5109-0048
+  orcid: https://orcid.org/0000-0002-5109-0048
 - family-names: Vanelli
   given-names: Caterina
   email: caterina@pik-potsdam.de
-  orcid: 0000-0001-6552-0320
+  orcid: https://orcid.org/0000-0001-6552-0320
 license: AGPL-3.0
 repository-code: https://github.com/PIK-tess/boundaries
 doi: 10.5281/zenodo.11550559

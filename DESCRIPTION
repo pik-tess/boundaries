@@ -1,6 +1,6 @@
 Package: boundaries
 Title: Planetary Boundary Status based on LPJmL simulations
-Version: 1.0.3
+Version: 1.0.4
 Authors@R: c(
     person("Johanna", "Braun", , "braun@pik-potsdam.de", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-8809-1044")),
     person("Jannes", "Breier", , "jannesbr@pik-potsdam.de", role = c("aut"), comment = c(ORCID = "0000-0002-9055-6904")),
@@ -15,7 +15,7 @@ Description: A systematic approach to quantify the status of the terrestrial
     "nitrogen flows".
 License: AGPL-3
 LazyData: true
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 Roxygen: list(markdown = TRUE)
 Encoding: UTF-8
 Depends:
@@ -61,4 +61,4 @@ Remotes:
     github::stenzelf/biospheremetrics,
     github::yjunechoe/ggtrace
 Config/testthat/edition: 3
-Date: 2024-06-21
+Date: 2024-10-28
