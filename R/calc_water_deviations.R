@@ -316,13 +316,6 @@ calc_water_deviations <- function(files_scenario,
 
   }
 
-  attr(control_variable, "control_variable") <-
-    "area with wet/dry departures"
-  attr(control_variable, "spatial_scale") <- spatial_scale
-  attr(control_variable, "unit") <- list_unit("bluewater", approach,
-                                              spatial_scale)
-
-  class(control_variable) <- c("control_variable")
   return(control_variable)
 }
 
@@ -423,7 +416,6 @@ calc_departures <- function(
     )
   }
 
-  class(control_variable) <- c("control_variable")
   return(control_variable)
 }
 

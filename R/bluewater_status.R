@@ -123,75 +123,23 @@ bluewater_status <- function(
       )
     } else if (approach == "rockstroem2009") {
       # calculater bluewater consumption
-      # irrigation
-      irrig <- NULL
-      irrig %<-% read_io_format(
-        files_scenario$irrig,
-        time_span_scenario,
-        aggregate = list(band = sum, month = sum),
-        spatial_subset = config_args$spatial_subset
-      )
-      # evaporative conveyance losses
-      conv_loss_evap <- NULL
-      conv_loss_evap %<-% read_io_format(
-        files_scenario$conv_loss_evap,
-        time_span_scenario,
-        aggregate = list(band = sum, month = sum),
-        spatial_subset = config_args$spatial_subset
-      )
-      # bluewater return flow (from irrigation)
-      return_flow_b <- NULL
-      return_flow_b %<-% read_io_format(
-        files_scenario$return_flow_b,
-        time_span_scenario,
-        aggregate = list(band = sum, month = sum),
-        spatial_subset = config_args$spatial_subset
-      )
-      # calculate terrestrial area
-      terr_area <- lpjmlkit::read_io(
-        files_scenario$terr_area
-      ) %>%
-        conditional_subset(config_args$spatial_subset) %>%
-        lpjmlkit::as_array()
-
-      terr_area <- terr_area[, , 1]
-
-      # calculate bluewater consumption for irrigation
-      consumption_irrig <- (irrig + conv_loss_evap - return_flow_b)
-
-      # read in water consumption for HIL (houshoulds, industry, livestock)
-      consumption_hil <- NULL
-      consumption_hil %<-% read_io_format(
-        files_scenario$wateruse_hil,
-        time_span_scenario,
-        aggregate = list(band = sum, month = sum),
-        spatial_subset = config_args$spatial_subset
-      )
-
-      # calculate total bluewater consumption in l/yr
-      total_consumption <- consumption_irrig * terr_area + consumption_hil
-
-      # average over time
-      avg_total_consumption <- aggregate_time(
-        x = total_consumption,
-        time_series_avg = time_series_avg
+      bw_consumption <- NULL
+      bw_consumption <- calc_bw_consumption(
+        files_scenario = files_scenario,
+        files_reference = files_reference,
+        time_span_scenario = time_span_scenario,
+        time_series_avg = time_series_avg,
+        config_args = config_args
       )
 
       # aggregate to global value (conversion to km3/yr)
-      dim_remain <- names(dim(avg_total_consumption))[
-        names(dim(avg_total_consumption)) != "cell"
+      dim_remain <- names(dim(bw_consumption))[
+        names(dim(bw_consumption)) != "cell"
       ]
-      control_variable <- apply(avg_total_consumption,
+      # conversion from l/yr to km3/yr
+      control_variable <- apply(bw_consumption,
                                 dim_remain, sum, na.rm = TRUE) * 10^-12
 
-      attr(control_variable, "thresholds") <- thresholds
-      attr(control_variable, "control_variable") <- (
-        "Bluewater consumption for irrigation"
-      )
-      attr(control_variable, "spatial_scale") <- spatial_scale
-      attr(control_variable, "unit") <- list_unit("bluewater", approach,
-                                                  spatial_scale)
-      class(control_variable) <- c("control_variable")
 
     } else {
       stop(
@@ -203,7 +151,14 @@ bluewater_status <- function(
       )
     }
   }
-  attr(control_variable, "long_name") <- list_long_name("bluewater")
+
+  control_variable <- define_attributes(
+    control_variable,
+    approach,
+    spatial_scale,
+    "bluewater",
+    thresholds
+  )
 
   return(control_variable)
 }
@@ -326,14 +281,85 @@ calc_bluewater_efrs <- function(
   # if ratio is above >75% transgression (red)
   # define PB thresholds as attributes
 
-  attr(control_variable, "control_variable") <-
-    "EFR transgression to uncertainty ratio"
-  attr(control_variable, "thresholds") <- thresholds
-  attr(control_variable, "spatial_scale") <- spatial_scale
-  attr(control_variable, "unit") <- list_unit("bluewater", approach,
-                                              spatial_scale)
-  attr(control_variable, "long_name") <- list_long_name("bluewater")
-
-  class(control_variable) <- c("control_variable")
   return(control_variable)
+}
+
+calc_irrig_consumption <- function(
+  files_scenario,
+  files_reference,
+  time_span_scenario = time_span_scenario,
+  config_args = list()
+) {
+
+  # irrigation
+  irrig <- NULL
+  irrig %<-% read_io_format(
+    files_scenario$irrig,
+    time_span_scenario,
+    aggregate = list(band = sum, month = sum),
+    spatial_subset = config_args$spatial_subset
+  )
+  # evaporative conveyance losses
+  conv_loss_evap <- NULL
+  conv_loss_evap %<-% read_io_format(
+    files_scenario$conv_loss_evap,
+    time_span_scenario,
+    aggregate = list(band = sum, month = sum),
+    spatial_subset = config_args$spatial_subset
+  )
+  # bluewater return flow (from irrigation)
+  return_flow_b <- NULL
+  return_flow_b %<-% read_io_format(
+    files_scenario$return_flow_b,
+    time_span_scenario,
+    aggregate = list(band = sum, month = sum),
+    spatial_subset = config_args$spatial_subset
+  )
+  # calculate terrestrial area
+  terr_area <- lpjmlkit::read_io(
+    files_scenario$terr_area
+  ) %>%
+    conditional_subset(config_args$spatial_subset) %>%
+    lpjmlkit::as_array()
+
+  terr_area <- terr_area[, , 1]
+
+  # calculate bluewater consumption for irrigation, in l/yr
+  consumption_irrig <- (irrig + conv_loss_evap - return_flow_b) * terr_area
+
+  return(consumption_irrig)
+}
+
+calc_bw_consumption <- function(
+  files_scenario,
+  files_reference,
+  time_span_scenario = time_span_scenario,
+  time_series_avg = NULL,
+  config_args = list()
+) {
+  irrig_consumption <- NULL
+  irrig_consumption <- calc_irrig_consumption(
+    files_scenario = files_scenario,
+    files_reference = files_reference,
+    time_span_scenario = time_span_scenario,
+    config_args = config_args
+  )
+  # read in water consumption for HIL (houshoulds, industry, livestock)
+  consumption_hil <- NULL
+  consumption_hil %<-% read_io_format(
+    files_scenario$wateruse_hil,
+    time_span_scenario,
+    aggregate = list(band = sum, month = sum),
+    spatial_subset = config_args$spatial_subset
+  )
+
+  # calculate total bluewater consumption in l/yr
+  total_consumption <- irrig_consumption + consumption_hil
+
+  # average over time
+  avg_total_consumption <- aggregate_time(
+    x = total_consumption,
+    time_series_avg = time_series_avg
+  )
+  return(avg_total_consumption)
 }

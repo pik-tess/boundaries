@@ -190,7 +190,14 @@ list_thresholds <- function(metric, approach, spatial_scale) {
 
 }
 
-list_unit <- function(metric, approach, spatial_scale) {
+define_attributes <- function(
+  control_variable,
+  approach,
+  spatial_scale,
+  metric,
+  thresholds
+) {
+
   metric <- process_metric(metric = metric)
 
   yaml_data <- system.file(
@@ -200,20 +207,25 @@ list_unit <- function(metric, approach, spatial_scale) {
   ) %>%
     yaml::read_yaml()
 
-  return(yaml_data$metric[[metric]]$spatial_scale[[spatial_scale]][[approach]]$unit) # nolint:line_length_linter
+  relevant_data <- yaml_data$metric[[metric]]$spatial_scale[[spatial_scale]][[approach]] # nolint:line_length_linter
 
-}
+  # define the name of the control variable
+  attr(control_variable, "control_variable") <- relevant_data$control_variable
 
-list_long_name <- function(metric) {
-  metric <- process_metric(metric = metric)
+  # define the unit of the control variable
+  attr(control_variable, "unit") <- relevant_data$unit
 
-  yaml_data <- system.file(
-    "extdata",
-    "metric_files.yml",
-    package = "boundaries"
-  ) %>%
-    yaml::read_yaml()
+  # define long name of the boundary
+  attr(control_variable, "long_name") <- yaml_data$metric[[metric]]$long_name
 
-  return(yaml_data$metric[[metric]]$long_name)
+  # define the thresholds of the control variable
+  if (is.null(attr(control_variable, "thresholds"))) {
+    attr(control_variable, "thresholds") <- thresholds
+  }
 
+  # define the spatial scale of the control variable
+  attr(control_variable, "spatial_scale") <- spatial_scale
+
+  class(control_variable) <- c("control_variable")
+  return(control_variable)
 }

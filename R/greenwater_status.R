@@ -88,7 +88,7 @@ greenwater_status <- function(
 
   # -------------------------------------------------------------------------- #
   # calc deviations for rootmoisture
-  deviations_rootmoisture <- calc_water_deviations(
+  control_variable <- calc_water_deviations(
     files_scenario = files_scenario,
     files_reference = files_reference,
     spatial_scale = spatial_scale,
@@ -100,6 +100,13 @@ greenwater_status <- function(
     thresholds = thresholds,
     variable = "rootmoist"
   )
-  attr(deviations_rootmoisture, "long_name") <- list_long_name("greenwater")
-  return(deviations_rootmoisture)
+
+  control_variable <- define_attributes(
+    control_variable,
+    approach,
+    spatial_scale,
+    "greenwater",
+    thresholds
+  )
+  return(control_variable)
 }
