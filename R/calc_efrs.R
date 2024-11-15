@@ -8,8 +8,8 @@
 #'
 #' @param approach EFR approach to be used , available methods are `c("vmf",
 #' "q90q50")` based on
-#' [Pastor et al. 2014](https://doi.org/10.5194/hess-18-5041-2014) 
-#' and c(vmf_min", "vmf_max") as modified by 
+#' [Pastor et al. 2014](https://doi.org/10.5194/hess-18-5041-2014)
+#' and c(vmf_min", "vmf_max") as modified by
 #' [Gerten et al. 2020](https://doi.org/10.1038/s41893-019-0465-1)
 #' as well as `"steffen2015"`, a modified version of vmf by
 #' [Steffen et al. 2015](https://doi.org/10.1126/science.1259855)
@@ -39,7 +39,8 @@ calc_efrs <- function(x,
   mmf <- dimnames_year <- NULL
   if (!is.na(dim(x)["year"])) {
     if (dim(x)["year"] > 1) {
-      dimnames_year <- mean(as.numeric(dimnames(x)$year))
+      # average year is not clearly defined for an even amount, we round it down
+      dimnames_year <- round(mean(as.numeric(dimnames(x)$year)))
       mmf <- apply(x, c("cell", "month"), mean) %>%
         array(dim = c(dim(x)[1:2], year = 1),
               dimnames = list(cell = dimnames(x)$cell,
@@ -142,11 +143,16 @@ calc_efrs <- function(x,
         q90 <- quantiles[2, , ]
         q50 <- quantiles[1, , ]
 
-        # repeat quantiles for each year of x so that dimensions match
-        q90 <- rep(q90, dim(x)["year"]) %>%
-          array(dim = dim(x), dimnames = dimnames(x))
-        q50 <- rep(q50, dim(x)["year"]) %>%
-          array(dim = dim(x), dimnames = dimnames(x))
+        # FS: I dont think this is necessary - removed
+        ## repeat quantiles for each year of x so that dimensions match
+        #q90 <- rep(q90, dim(x)["year"]) %>%
+        #  array(dim = dim(x), dimnames = dimnames(x))
+        #q50 <- rep(q50, dim(x)["year"]) %>%
+        #  array(dim = dim(x), dimnames = dimnames(x))
+        dim(q90) <- dim(efrs)
+        dimnames(q90) <- dimnames(efrs)
+        dim(q50) <- dim(efrs)
+        dimnames(q50) <- dimnames(efrs)
 
         # low flow months
         efrs[mmf <= maf] <- q90[mmf <= maf]
