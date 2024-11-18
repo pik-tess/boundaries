@@ -195,29 +195,40 @@ calc_bluewater_efrs <- function(
   efr_uncertain <- efr_safe <- NULL
   # calc efrs for vmf_min and vmf_max
   efr_uncertain %<-% calc_efrs(
-    avg_discharge_reference,
+    discharge_reference,
     "vmf_min"
   )
 
   efr_safe %<-% calc_efrs(
-    avg_discharge_reference,
+    discharge_reference,
     "vmf_max"
   )
+
+  # make dimensions of efr_safe and efr_uncertain equal to avg_discharge_scenario
+  efr_safe <- array(
+    rep(efr_safe, length(dimnames(avg_discharge_scenario)$year)),
+    dim = dim(avg_discharge_scenario),
+    dimnames = dimnames(avg_discharge_scenario)
+  )
+
+  efr_uncertain <- array(
+    rep(efr_uncertain, length(dimnames(avg_discharge_scenario)$year)),
+    dim = dim(avg_discharge_scenario),
+    dimnames = dimnames(avg_discharge_scenario)
+  )
+
   # calculation of EFR transgressions = EFR deficits in LU run
-  efr_deficit <- rep(efr_safe, length(dimnames(avg_discharge_scenario)$year)) - avg_discharge_scenario
+  efr_deficit <- efr_safe - avg_discharge_scenario
   # dismiss small EFR deficits
   efr_deficit[efr_deficit < cut_min] <- 0
   # calculation of uncertainty zone
   uncertainty_zone <- efr_safe - efr_uncertain
-  uncertainty_zone <- rep(uncertainty_zone, length(dimnames(avg_discharge_scenario)$year))
 
   # calculate boundary status based on transgression to uncertainty ratio
   # (as in Steffen 2015; degree to which EFRs are undermined)
   status_frac_monthly <- ifelse(uncertainty_zone > 0,
                                 efr_deficit / uncertainty_zone * 100,
                                 0)
-  status_frac_monthly <- array(status_frac_monthly, dim = dim(efr_deficit),
-                               dimnames = dimnames(efr_deficit))
 
   third_dim <- names(dim(status_frac_monthly))[
     !names(dim(status_frac_monthly)) %in% c("cell", "month")

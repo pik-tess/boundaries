@@ -51,9 +51,9 @@ calc_efrs <- function(x,
   } else {
     dimnames_year <- 1
     mmf <- array(x, dim = c(dim(x)[1:2], year = 1),
-                dimnames = list(cell = dimnames(x)$cell,
-                                month = dimnames(x)$month,
-                                year = dimnames_year))
+                 dimnames = list(cell = dimnames(x)$cell,
+                                 month = dimnames(x)$month,
+                                 year = dimnames_year))
   }
 
   # function to repeat maf mean for dimension length within apply
@@ -146,9 +146,9 @@ calc_efrs <- function(x,
 
         # set dim and create dimnames
         q10 <- array(q10, dim = dim(efrs),
-                      dimnames = dimnames(efrs))
+                     dimnames = dimnames(efrs))
         q50 <- array(q50, dim = dim(efrs),
-                      dimnames = dimnames(efrs))
+                     dimnames = dimnames(efrs))
 
         # low flow months
         efrs[mmf <= maf] <- q10[mmf <= maf]
