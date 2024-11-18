@@ -7,7 +7,7 @@
 #' dimension is present, the function assumes a single year.
 #'
 #' @param approach EFR approach to be used , available methods are `c("vmf",
-#' "q90q50")` based on
+#' "q10q50")` based on a modified version of
 #' [Pastor et al. 2014](https://doi.org/10.5194/hess-18-5041-2014)
 #' and c(vmf_min", "vmf_max") as modified by
 #' [Gerten et al. 2020](https://doi.org/10.1038/s41893-019-0465-1)
@@ -32,7 +32,7 @@ calc_efrs <- function(x,
                       approach = "vmf") {
   # verify available methods
   approach <- match.arg(approach,
-    c("vmf", "vmf_min", "vmf_max", "q90q50", "steffen2015")
+    c("vmf", "vmf_min", "vmf_max", "q10q50", "steffen2015")
   )
 
   # calculate mean monthly flow (mmf)
@@ -119,43 +119,39 @@ calc_efrs <- function(x,
       # high flow months
       efrs[mmf > 0.8 * maf] <- 0.45 * mmf[mmf > 0.8 * maf]
     },
-    # "q90q50" - Pastor et al. 2014
-    q90q50 = {
+    # "q10q50" - Pastor et al. 2014
+    q10q50 = {
       if (dim(x)["year"] == 1) {
         stop(
-          "Approach \"Q90Q50\" is not supported for a single year",
+          "Approach \"Q10Q50\" is not supported for a single year",
           " as quantiles cannot be calculated"
         )
       } else {
         if (dim(x)["year"] < 30) {
           warning(paste0(
-            "Quantile calculation for approach \"Q90Q50\" may not be ",
+            "Quantile calculation for approach \"Q10Q50\" may not be ",
             "meaningful, as the number of years (", dim(x)["year"],
             ") is less than 30."
           ))
         }
         quantiles <- apply(x,
-                           c("cell", "month"),
+                           c("cell"),
                            stats::quantile,
                            drop = FALSE,
-                           probs = c(0.5, 0.9),
+                           probs = c(0.5, 0.1),
                            na.rm = TRUE)
-        q90 <- quantiles[2, , ]
-        q50 <- quantiles[1, , ]
 
-        # FS: I dont think this is necessary - removed
-        ## repeat quantiles for each year of x so that dimensions match
-        #q90 <- rep(q90, dim(x)["year"]) %>%
-        #  array(dim = dim(x), dimnames = dimnames(x))
-        #q50 <- rep(q50, dim(x)["year"]) %>%
-        #  array(dim = dim(x), dimnames = dimnames(x))
-        dim(q90) <- dim(efrs)
-        dimnames(q90) <- dimnames(efrs)
-        dim(q50) <- dim(efrs)
-        dimnames(q50) <- dimnames(efrs)
+        q10 <- rep(quantiles["10%", ], times = length(dimnames(efrs)$month))
+        q50 <- rep(quantiles["50%", ], times = length(dimnames(efrs)$month))
+
+        # set dim and create dimnames
+        q10 <- array(q10, dim = dim(efrs),
+                      dimnames = dimnames(efrs))
+        q50 <- array(q50, dim = dim(efrs),
+                      dimnames = dimnames(efrs))
 
         # low flow months
-        efrs[mmf <= maf] <- q90[mmf <= maf]
+        efrs[mmf <= maf] <- q10[mmf <= maf]
         # high flow months
         efrs[mmf > maf] <- q50[mmf > maf]
 
