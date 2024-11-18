@@ -150,7 +150,7 @@ test_that("test calc_efrs", {
 
   # test for length of time series
   expect_true(
-    all(dim(efrs) == c(2, 12, 31))
+    all(dim(efrs) == c(2, 12, 1))
   )
 
   # test for expected output
@@ -185,7 +185,7 @@ test_that("test calc_efrs", {
 
   # test for length of time series
   expect_true(
-    all(dim(efrs_vmf) == c(2, 12, 31))
+    all(dim(efrs_vmf) == c(2, 12, 1))
   )
 
   # test for expected output
@@ -203,7 +203,7 @@ test_that("test calc_efrs", {
 
   # test for length of time series
   expect_true(
-    all(dim(efrs_steffen2015) == c(2, 12, 31))
+    all(dim(efrs_steffen2015) == c(2, 12, 1))
   )
 
   # test for expected output
@@ -213,22 +213,22 @@ test_that("test calc_efrs", {
     )
   )
 
-  avg_discharge <- aggregate_time(discharge)
-  # q90q50 approach ------------------------------------------------------------ #
-  efrs_q90q50 <- calc_efrs(
-    avg_discharge,
-    approach = "q90q50"
+  #avg_discharge <- aggregate_time(discharge)
+  # q10q50 approach ------------------------------------------------------------ #
+  efrs_q10q50 <- calc_efrs(
+    discharge,
+    approach = "q10q50"
   )
 
   # test for length of time series
   expect_true(
-    all(dim(efrs_q90q50) == c(2, 12, 1))
+    all(dim(efrs_q10q50) == c(2, 12, 1))
   )
 
   # test for expected output
   testthat::expect_true(
     all(
-      efrs_q90q50 > 0 & efrs_q90q50 < 8
+      efrs_q10q50 > 0 & efrs_q10q50 < 8
     )
   )
 })
