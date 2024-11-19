@@ -12,7 +12,7 @@
 #' [`calc_status()`].
 #'
 #' @param spatial_scale character string indicating spatial resolution
-#' either "grid", "subglobal" or "global" for calculation of the share (%)
+#' either "grid", "regional" or "global" for calculation of the share (%)
 #' of total global area with deviations
 #'
 #' @param time_span_scenario time span to use output from the scenario run,
@@ -84,7 +84,7 @@ greenwater_status <- function(
   approach <- match.arg(approach, c("wang-erlandsson2022", "porkka2024"))
 
   # verify available spatial resolution
-  spatial_scale <- match.arg(spatial_scale, c("global", "subglobal"))
+  spatial_scale <- match.arg(spatial_scale, c("global", "regional"))
 
   # -------------------------------------------------------------------------- #
   # calc deviations for rootmoisture

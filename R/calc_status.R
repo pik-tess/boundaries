@@ -18,7 +18,7 @@
 #' reference run
 #'
 #' @param spatial_scale character string indicating spatial resolution
-#' options: "global", "subglobal", "grid";
+#' options: "global", "regional", "grid";
 #'
 #' @param time_span_scenario time span to be used for the scenario run, defined
 #' as an integer (or character) vector, e.g. `1982:2011` (default)
@@ -34,10 +34,11 @@
 #' series.
 #'
 #' @param approach list of methods to be used for each boundary. If `NULL` the
-#' default approach is used
+#' default approach is used, e.g. list(bluewater = "rockstroem2009")
 #'
 #' @param thresholds list of thresholds to be used for each boundary. If `NULL`
-#' the default thresholds are used
+#' the default thresholds are used,
+#' e.g. list(bluewater = list("pb" = 2700, "highrisk" = 4000, "holocene" = 0))
 #'
 #' @param in_parallel logical, if `TRUE` the function uses parallelization
 #' (default) based on the `future` package (asynchronous execution). If `FALSE`
@@ -94,7 +95,7 @@ calc_status <- function(
   # verify available spatial resolution
   spatial_scale <- match.arg(
     spatial_scale,
-    c("global", "subglobal", "grid")
+    c("global", "regional", "grid")
   )
 
   config_scenario <- lpjmlkit::read_config(config_scenario)

@@ -18,7 +18,7 @@
 #' In this case only NPP is required. list(npp = "/temp/npp.bin.json").
 #'
 #' @param spatial_scale character string indicating spatial resolution
-#' either "grid", "subglobal" or "global"
+#' either "grid", "regional" or "global"
 #'
 #' @param time_span_scenario time span to be used for the scenario run, defined
 #' as character string
@@ -57,7 +57,7 @@
 #' @param biocol_option which biocol values to use for aggregation. options:
 #' netsum, only_above_zero, abs
 #'
-#' @param eurasia logical. If `spatial_scale` = `"subglobal"` merge continents
+#' @param eurasia logical. If `spatial_scale` = `"regional"` merge continents
 #' Europe and Asia to avoid arbitrary biome cut at europe/asia border.
 #' Defaults to `TRUE`
 #'
@@ -83,7 +83,7 @@
 biosphere_status <- function(
   files_scenario,
   files_reference,
-  spatial_scale = "subglobal",
+  spatial_scale = "regional",
   time_span_scenario = as.character(1982:2011),
   time_span_reference = NULL,
   approach = "stenzel2023",
@@ -152,7 +152,7 @@ biosphere_status <- function(
   if (spatial_scale == "grid") {
     control_variable_raw <- abs(biocol$biocol_frac_piref)
 
-  } else if (spatial_scale == "subglobal") {
+  } else if (spatial_scale == "regional") {
 
     # classify biomes
     # Filter out approach and thresholds arguments from ellipsis (thresholds

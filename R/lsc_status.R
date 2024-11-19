@@ -12,7 +12,7 @@
 #' [`calc_status()`].
 #'
 #' @param spatial_scale character. Spatial resolution, available options
-#' are `"subglobal"` (at the biome level, default), `"global"` and `"grid"`
+#' are `"regional"` (at the biome level, default), `"global"` and `"grid"`
 #'
 #' @param time_span_scenario time span to use output from the scenario run,
 #' e.g. `1982:2011`.
@@ -43,7 +43,7 @@
 #' @param config_args list of arguments to be passed on from the model
 #' configuration.
 #'
-#' @param eurasia logical. If `spatial_scale` = `"subglobal"` merge continents
+#' @param eurasia logical. If `spatial_scale` = `"regional"` merge continents
 #' Europe and Asia to avoid arbitrary biome cut at europe/asia border.
 #' Defaults to `TRUE`
 #'
@@ -69,7 +69,7 @@
 lsc_status <- function(
   files_scenario,
   files_reference,
-  spatial_scale = "subglobal",
+  spatial_scale = "regional",
   time_span_scenario = as.character(1982:2011),
   time_span_reference = time_span_scenario,
   approach = "steffen2015",
@@ -102,7 +102,7 @@ lsc_status <- function(
            ellipsis_filtered)
   )
 
-  if (spatial_scale == "subglobal") {
+  if (spatial_scale == "regional") {
     # please R CMD check for use of future operator
     continent_grid <- NULL
     # get continents mask - pass arg of whether to merge europe and asia
@@ -289,7 +289,7 @@ lsc_status <- function(
   deforestation[!is_forest] <- NA
   deforestation <- deforestation * 100 # in percent
 
-  if (spatial_scale == "subglobal") {
+  if (spatial_scale == "regional") {
 
     # create space of combinations to loop over (even though not all make sense)
     comb <- expand.grid(
@@ -334,7 +334,7 @@ lsc_status <- function(
     }
   }
 
-  if (spatial_scale %in% c("grid", "subglobal")) {
+  if (spatial_scale %in% c("grid", "regional")) {
     # init threshold array with NA = no data and initial dimensions + threshold
     # dimension
 

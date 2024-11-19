@@ -50,7 +50,7 @@ update.packages()
 
 ## Questions / Problems
 
-In case of questions / problems please contact Johanna Braun <braun@pik-potsdam.de>.
+In case of questions / problems please contact Johanna Braun <johanna.braun@pik-potsdam.de>.
 
 ## Citation
 

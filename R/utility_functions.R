@@ -13,7 +13,7 @@
 #'       calculate the metric. Or `"all"` to get all approaches (default).
 #'
 #' @param spatial_scale character. Spatial resolution, available options
-#'        are `"subglobal"` (at the biome level), `"global"` and
+#'        are `"regional"` (at the biome level), `"global"` and
 #'        `"grid"` or `"all"` (default).
 #'
 #' @param only_first_filename Logical. If TRUE, only the first file name will be
@@ -27,7 +27,7 @@
 #' list_outputs(
 #'   "biome",
 #'   approach = list("biome" = approach),
-#'   spatial_scale = "subglobal",
+#'   spatial_scale = "regional",
 #'   only_first_filename = FALSE
 #' )
 #' }
