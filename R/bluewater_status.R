@@ -121,7 +121,7 @@ bluewater_status <- function(
         thresholds = thresholds,
         variable = "discharge"
       )
-    } else if (approach == "rockstroem2009") {
+    } else if (approach == "rockstroem2009" && spatial_scale == "global") {
       # calculater bluewater consumption
       bw_consumption <- NULL
       bw_consumption <- calc_bw_consumption(
