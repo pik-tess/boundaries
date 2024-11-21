@@ -9,10 +9,9 @@
 #' @param approach EFR approach to be used , available methods are `c("vmf",
 #' "q10q50")` based on a modified version of
 #' [Pastor et al. 2014](https://doi.org/10.5194/hess-18-5041-2014)
-#' and c(vmf_min", "vmf_max") as modified by
+#' and c(vmf_min", "vmf_max") as suggested by
 #' [Gerten et al. 2020](https://doi.org/10.1038/s41893-019-0465-1)
-#' as well as `"steffen2015"`, a modified version of vmf by
-#' [Steffen et al. 2015](https://doi.org/10.1126/science.1259855)
+#' and [Steffen et al. 2015](https://doi.org/10.1126/science.1259855)
 #'
 #' @return EFRs with same unit as `x` (discharge). Cell and month dimensions are
 #' preserved, and the year dimension is set to 1 (as EFRs are calculated
@@ -32,7 +31,7 @@ calc_efrs <- function(x,
                       approach = "vmf") {
   # verify available methods
   approach <- match.arg(approach,
-    c("vmf", "vmf_min", "vmf_max", "q10q50", "steffen2015")
+    c("vmf", "vmf_min", "vmf_max", "q10q50")
   )
 
   # calculate mean monthly flow (mmf)
@@ -86,7 +85,7 @@ calc_efrs <- function(x,
       # high flow months
       efrs[mmf > 0.8 * maf] <- 0.3 * mmf[mmf > 0.8 * maf]
     },
-    # "vmf_min" - Gerten et al. 2020
+    # "vmf_min" - Gerten et al. 2020 (vmf minus 15%)
     vmf_min = {
       # low flow months
       efrs[mmf <= 0.4 * maf] <- 0.45 * mmf[mmf <= 0.4 * maf]
@@ -97,23 +96,12 @@ calc_efrs <- function(x,
       # high flow months
       efrs[mmf > 0.8 * maf] <- 0.15 * mmf[mmf > 0.8 * maf]
     },
-    # "vmf_max" - Gerten et al. 2020
+    # "vmf_max" - Gerten et al. 2020 (vmf plus 15%)
     vmf_max = {
       # low flow months
       efrs[mmf <= 0.4 * maf] <- 0.75 * mmf[mmf <= 0.4 * maf]
       # intermediate flow months
       efrs[mmf > 0.4 * maf & mmf <= 0.8 * maf] <- 0.6 * (
-        mmf[mmf > 0.4 * maf & mmf <= 0.8 * maf]
-      )
-      # high flow months
-      efrs[mmf > 0.8 * maf] <- 0.45 * mmf[mmf > 0.8 * maf]
-    },
-    # "steffen2015" - Steffen et al. 2015 (adjusted "vmf")
-    steffen2015 = {
-      # low flow months
-      efrs[mmf <= 0.4 * maf] <- 0.75 * mmf[mmf <= 0.4 * maf]
-      # intermediate flow months
-      efrs[mmf > 0.4 * maf & mmf <= 0.8 * maf] <- 0.7 * (
         mmf[mmf > 0.4 * maf & mmf <= 0.8 * maf]
       )
       # high flow months

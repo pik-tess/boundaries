@@ -143,39 +143,6 @@ test_that("test calc_efrs", {
   ) %>%
     drop()
 
-  efrs <- calc_efrs(
-    discharge,
-    approach = "steffen2015"
-  )
-
-  # test for length of time series
-  expect_true(
-    all(dim(efrs) == c(2, 12, 1))
-  )
-
-  # test for expected output
-  testthat::expect_true(
-    all(
-      efrs > 0 & efrs < 8
-    )
-  )
-
-})
-
-
-test_that("test calc_efrs", {
-
-  timeframe <- as.character(1986:2016)
-
-  discharge <- read_io_format(
-    system.file(
-      "extdata/output/lu_1500_2016/discharge.bin.json",
-      package = "boundaries"
-    ),
-    timespan = timeframe
-  ) %>%
-    drop()
-
 
   # VMF approach --------------------------------------------------------------- #
   efrs_vmf <- calc_efrs(
@@ -195,25 +162,7 @@ test_that("test calc_efrs", {
     )
   )
 
-  # steffen2015 approach ------------------------------------------------------- #
-  efrs_steffen2015 <- calc_efrs(
-    discharge,
-    approach = "steffen2015"
-  )
 
-  # test for length of time series
-  expect_true(
-    all(dim(efrs_steffen2015) == c(2, 12, 1))
-  )
-
-  # test for expected output
-  testthat::expect_true(
-    all(
-      efrs_vmf > 0 & efrs_vmf < 8
-    )
-  )
-
-  #avg_discharge <- aggregate_time(discharge)
   # q10q50 approach ------------------------------------------------------------ #
   efrs_q10q50 <- calc_efrs(
     discharge,
