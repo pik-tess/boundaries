@@ -1,4 +1,5 @@
 # <a href=''><img src='inst/img/logo.png' align='right' alt='logo' height=139 /></a> Planetary Boundary Status based on LPJmL simulations
+# <a href=''><img src='inst/img/logo.png' align='right' alt='logo' height=139 /></a> Planetary Boundary Status based on LPJmL simulations
 
 R package **boundaries**, version **1.1.0**
 

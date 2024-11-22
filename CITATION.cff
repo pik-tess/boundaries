@@ -14,17 +14,21 @@ authors:
   given-names: Johanna
   email: braun@pik-potsdam.de
   orcid: https://orcid.org/0000-0002-8809-1044
+  orcid: https://orcid.org/0000-0002-8809-1044
 - family-names: Breier
   given-names: Jannes
   email: jannesbr@pik-potsdam.de
+  orcid: https://orcid.org/0000-0002-9055-6904
   orcid: https://orcid.org/0000-0002-9055-6904
 - family-names: Stenzel
   given-names: Fabian
   email: stenzel@pik-potsdam.de
   orcid: https://orcid.org/0000-0002-5109-0048
+  orcid: https://orcid.org/0000-0002-5109-0048
 - family-names: Vanelli
   given-names: Caterina
   email: caterina@pik-potsdam.de
+  orcid: https://orcid.org/0000-0001-6552-0320
   orcid: https://orcid.org/0000-0001-6552-0320
 license: AGPL-3.0
 repository-code: https://github.com/PIK-tess/boundaries
