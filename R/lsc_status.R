@@ -375,11 +375,11 @@ lsc_status <- function(
 
   }
 
-  control_variable <- define_attributes(
+  control_variable <- set_attributes(
     control_variable,
     approach,
-    spatial_scale,
     "lsc",
+    spatial_scale,
     threshold_attr
   )
   return(control_variable)

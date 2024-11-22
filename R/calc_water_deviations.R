@@ -188,10 +188,13 @@ calc_water_deviations <- function(files_scenario,
       time_series_avg = time_series_avg
     )
 
-    attr(control_variable, "thresholds") <- list(
-      holocene = area_holocene,
-      pb = area_pb,
-      highrisk = area_high_risk
+    control_variable <- set_attributes(
+      control_variable,
+      thresholds = list(
+        holocene = area_holocene,
+        pb = area_pb,
+        highrisk = area_high_risk
+      )
     )
 
   } else if (spatial_scale == "subglobal") {
@@ -309,7 +312,10 @@ calc_water_deviations <- function(files_scenario,
     threshold_attr[, , "highrisk"] <- area_high_risk
     threshold_attr[, , "holocene"] <- area_holocene
 
-    attr(control_variable, "thresholds") <- threshold_attr
+    control_variable <- set_attributes(
+      control_variable,
+      thresholds = threshold_attr
+    )
 
     # set ice areas to NA
     control_variable[, is.na(icefree_area[, 1, 1])] <- NA

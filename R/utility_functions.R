@@ -190,41 +190,81 @@ list_thresholds <- function(metric, approach, spatial_scale) {
 
 }
 
-define_attributes <- function(
-  control_variable,
-  approach,
-  spatial_scale,
-  metric,
-  thresholds
+set_attributes <- function(
+  data_controlvariable,
+  approach = NULL,
+  metric = NULL, # "bluewater", "greenwater", "biosphere", "lsc", or "nitrogen"
+  spatial_scale = NULL, # "global", "regional", or "grid"
+  thresholds = NULL,
+  overwrite = FALSE
 ) {
+  if (all(!is.null(c(approach, metric, spatial_scale)))) {
+    yaml_data <- system.file(
+      "extdata",
+      "metric_files.yml",
+      package = "boundaries"
+    ) %>%
+      yaml::read_yaml()
 
-  metric <- process_metric(metric = metric)
+    relevant_data <- yaml_data$metric[[metric]]$spatial_scale[[spatial_scale]][[approach]] # nolint:line_length_linter
 
-  yaml_data <- system.file(
-    "extdata",
-    "metric_files.yml",
-    package = "boundaries"
-  ) %>%
-    yaml::read_yaml()
+    # define the name of the control variable
+    attr(data_controlvariable, "control_variable") <- relevant_data$control_variable
 
-  relevant_data <- yaml_data$metric[[metric]]$spatial_scale[[spatial_scale]][[approach]] # nolint:line_length_linter
+    # define the unit of the control variable
+    attr(data_controlvariable, "unit") <- relevant_data$unit
 
-  # define the name of the control variable
-  attr(control_variable, "control_variable") <- relevant_data$control_variable
-
-  # define the unit of the control variable
-  attr(control_variable, "unit") <- relevant_data$unit
-
-  # define long name of the boundary
-  attr(control_variable, "long_name") <- yaml_data$metric[[metric]]$long_name
-
-  # define the thresholds of the control variable
-  if (is.null(attr(control_variable, "thresholds"))) {
-    attr(control_variable, "thresholds") <- thresholds
+    # define long name of the boundary
+    attr(data_controlvariable, "long_name") <- yaml_data$metric[[metric]]$long_name
   }
 
-  # define the spatial scale of the control variable
-  attr(control_variable, "spatial_scale") <- spatial_scale
+  if (!is.null(spatial_scale)) {
+    # define the spatial scale of the control variable
+    attr(data_controlvariable, "spatial_scale") <- spatial_scale
+  }
+
+  if (!is.null(thresholds)) {
+    # define the thresholds of the control variable
+    if (is.null(attr(data_controlvariable, "thresholds")) ||
+          overwrite == TRUE) {
+      attr(data_controlvariable, "thresholds") <- thresholds
+    }
+  }
+
+  class(data_controlvariable) <- c("control_variable")
+  return(data_controlvariable)
+}
+
+
+set_attributes_ext <- function(
+  data_controlvariable,
+  spatial_scale = NULL,
+  thresholds = NULL,
+  long_name = NULL,
+  control_variable = NULL,
+  unit = NULL
+) {
+
+  if (!is.null(control_variable)) {
+    # define the name of the control variable
+    attr(control_variable, "control_variable") <- control_variable
+  }
+  if (!is.null(unit)) {
+    # define the unit of the control variable
+    attr(control_variable, "unit") <- unit
+  }
+  if (!is.null(long_name)) {
+    # define long name of the boundary
+    attr(control_variable, "long_name") <- long_name
+  }
+  if (!is.null(spatial_scale)) {
+    # define the spatial scale of the control variable
+    attr(control_variable, "spatial_scale") <- spatial_scale
+  }
+  if (!is.null(thresholds)) {
+    # define the thresholds of the control variable
+    attr(control_variable, "thresholds") <- thresholds
+  }
 
   class(control_variable) <- c("control_variable")
   return(control_variable)

@@ -376,11 +376,11 @@ nitrogen_status <- function(
 
   }
 
-  control_variable <- define_attributes(
+  control_variable <- set_attributes(
     control_variable,
     approach,
-    spatial_scale,
     "nitrogen",
+    spatial_scale,
     thresholds
   )
 

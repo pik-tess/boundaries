@@ -273,11 +273,11 @@ biosphere_status <- function(
     time_series_avg = time_series_avg
   )
 
-  control_variable <- define_attributes(
+  control_variable <- set_attributes(
     control_variable,
     approach,
-    spatial_scale,
     "biosphere",
+    spatial_scale,
     thresholds
   )
 

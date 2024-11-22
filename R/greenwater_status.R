@@ -101,11 +101,11 @@ greenwater_status <- function(
     variable = "rootmoist"
   )
 
-  control_variable <- define_attributes(
+  control_variable <- set_attributes(
     control_variable,
     approach,
-    spatial_scale,
     "greenwater",
+    spatial_scale,
     thresholds
   )
   return(control_variable)

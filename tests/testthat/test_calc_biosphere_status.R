@@ -29,7 +29,7 @@ test_that("test biosphere_status global", {
     all(attributes(test)$names == "biosphere")
   )
 
-  thresholds <- list_thresholds("biosphere", "stenzel2023", "grid")
+  thresholds <- list_thresholds("biosphere", "stenzel2023", "global")
 
   # test for thresholds attributes in biosphere
   testthat::expect_identical(
