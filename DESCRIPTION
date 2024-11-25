@@ -16,7 +16,6 @@ Description: A systematic approach to quantify the status of the terrestrial
 License: AGPL-3
 LazyData: true
 RoxygenNote: 7.3.2
-RoxygenNote: 7.3.2
 Roxygen: list(markdown = TRUE)
 Encoding: UTF-8
 Depends:

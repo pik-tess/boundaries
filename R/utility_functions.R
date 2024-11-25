@@ -190,8 +190,12 @@ list_thresholds <- function(metric, approach, spatial_scale) {
 
 }
 
+# set attributes for a control variable based on metric_files.yml and
+#     user-defined thresholds. If thresholds is not defined, and x does not have
+#     a thresholds attribute yet or overwrite is TRUE, the thresholds attribute
+#     is set to the user-defined thresholds.
 set_attributes <- function(
-  data_controlvariable,
+  x,
   approach = NULL,
   metric = NULL, # "bluewater", "greenwater", "biosphere", "lsc", or "nitrogen"
   spatial_scale = NULL, # "global", "regional", or "grid"
@@ -209,35 +213,37 @@ set_attributes <- function(
     relevant_data <- yaml_data$metric[[metric]]$spatial_scale[[spatial_scale]][[approach]] # nolint:line_length_linter
 
     # define the name of the control variable
-    attr(data_controlvariable, "control_variable") <- relevant_data$control_variable
+    attr(x, "control_variable") <- relevant_data$control_variable
 
     # define the unit of the control variable
-    attr(data_controlvariable, "unit") <- relevant_data$unit
+    attr(x, "unit") <- relevant_data$unit
 
     # define long name of the boundary
-    attr(data_controlvariable, "long_name") <- yaml_data$metric[[metric]]$long_name
+    attr(x, "long_name") <- yaml_data$metric[[metric]]$long_name
   }
 
   if (!is.null(spatial_scale)) {
     # define the spatial scale of the control variable
-    attr(data_controlvariable, "spatial_scale") <- spatial_scale
+    attr(x, "spatial_scale") <- spatial_scale
   }
 
   if (!is.null(thresholds)) {
     # define the thresholds of the control variable
-    if (is.null(attr(data_controlvariable, "thresholds")) ||
+    if (is.null(attr(x, "thresholds")) ||
           overwrite == TRUE) {
-      attr(data_controlvariable, "thresholds") <- thresholds
+      attr(x, "thresholds") <- thresholds
     }
   }
 
-  class(data_controlvariable) <- c("control_variable")
-  return(data_controlvariable)
+  class(x) <- c("control_variable")
+  return(x)
 }
 
-
+# set user-defined attributes for a control variable, that was not computed with
+#     the boundaries package (to make external data compatible with the
+#     control_variable class needed for applying the plotting functions)
 set_attributes_ext <- function(
-  data_controlvariable,
+  x,
   spatial_scale = NULL,
   thresholds = NULL,
   long_name = NULL,
