@@ -27,6 +27,7 @@
 #'
 #'
 #' @md
+#' @export
 calc_efrs <- function(x,
                       approach = "vmf") {
   # verify available methods
