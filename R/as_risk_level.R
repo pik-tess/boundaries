@@ -54,22 +54,30 @@ as_risk_level <- function(
       if (methods::is(thresholds, "list")) {
         risk_level <- (control_variable - thresholds[["holocene"]]) /
           (thresholds[["pb"]] - thresholds[["holocene"]])
-        attr(risk_level, "thresholds") <-
-          list(
-            holocene = 0, pb = 1,
-            highrisk = (thresholds[["highrisk"]] - thresholds[["holocene"]]) /
-              (thresholds[["pb"]] - thresholds[["holocene"]])
-          )
+        risk_level <- set_attributes(
+          risk_level,
+          thresholds =
+            list(
+              holocene = 0, pb = 1,
+              highrisk = (thresholds[["highrisk"]] - thresholds[["holocene"]]) /
+                (thresholds[["pb"]] - thresholds[["holocene"]])
+            ),
+          overwrite = TRUE
+        )
 
       } else if (methods::is(thresholds, "array")) {
         risk_level <- (control_variable - thresholds[, , "holocene"]) /
           (thresholds[, , "pb"] - thresholds[, , "holocene"])
-        attr(risk_level, "thresholds") <-
-          list(
-            holocene = 0, pb = 1,
-            highrisk = (thresholds[, , "highrisk"] - thresholds[, , "holocene"]) / # nolint
-              (thresholds[, , "pb"] - thresholds[, , "holocene"])
-          )
+        risk_level <- set_attributes(
+          risk_level,
+          thresholds =
+            list(
+              holocene = 0, pb = 1,
+              highrisk = (thresholds[, , "highrisk"] - thresholds[, , "holocene"]) / # nolint
+                (thresholds[, , "pb"] - thresholds[, , "holocene"])
+            ),
+          overwrite = TRUE
+        )
       }
 
     } else if (normalize == "increasing risk") {
@@ -93,11 +101,14 @@ as_risk_level <- function(
           1 - (control_variable[control_variable < thresholds[["pb"]] &
                      is.na(control_variable) == FALSE] - thresholds[["pb"]]) / # nolint
           (thresholds[["holocene"]] - thresholds[["pb"]])
-        attr(risk_level, "thresholds") <-
-          list(
-            holocene = 0,
-            pb = 1, highrisk = 2
-          )
+        risk_level <- set_attributes(
+          risk_level,
+          thresholds =
+            list(
+              holocene = 0, pb = 1, highrisk = 2
+            ),
+          overwrite = TRUE
+        )
         # alternative, if no additional normalization from holocene to pb:
         # holocene = (thresholds[["holocene"]] -
         #                   thresholds[["pb"]]) /
@@ -122,11 +133,14 @@ as_risk_level <- function(
           1 - (control_variable[subset_safe] -
                thresh_pb[subset_safe]) /
           (thresh_holocene[subset_safe] - thresh_pb[subset_safe])
-        attr(risk_level, "thresholds") <-
-          list(
-            holocene = 0,
-            pb = 1, highrisk = 2
-          )
+        risk_level <- set_attributes(
+          risk_level,
+          thresholds =
+            list(
+              holocene = 0, pb = 1, highrisk = 2
+            ),
+          overwrite = TRUE
+        )
 
       } else {
         stop("thresholds must be a list or array")

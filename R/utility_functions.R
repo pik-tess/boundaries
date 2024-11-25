@@ -190,30 +190,88 @@ list_thresholds <- function(metric, approach, spatial_scale) {
 
 }
 
-list_unit <- function(metric, approach, spatial_scale) {
-  metric <- process_metric(metric = metric)
+# set attributes for a control variable based on metric_files.yml and
+#     user-defined thresholds. If thresholds is not defined, and x does not have
+#     a thresholds attribute yet or overwrite is TRUE, the thresholds attribute
+#     is set to the user-defined thresholds.
+set_attributes <- function(
+  x,
+  approach = NULL,
+  metric = NULL, # "bluewater", "greenwater", "biosphere", "lsc", or "nitrogen"
+  spatial_scale = NULL, # "global", "regional", or "grid"
+  thresholds = NULL,
+  overwrite = FALSE
+) {
+  if (all(!is.null(c(approach, metric, spatial_scale)))) {
+    yaml_data <- system.file(
+      "extdata",
+      "metric_files.yml",
+      package = "boundaries"
+    ) %>%
+      yaml::read_yaml()
 
-  yaml_data <- system.file(
-    "extdata",
-    "metric_files.yml",
-    package = "boundaries"
-  ) %>%
-    yaml::read_yaml()
+    relevant_data <- yaml_data$metric[[metric]]$spatial_scale[[spatial_scale]][[approach]] # nolint:line_length_linter
 
-  return(yaml_data$metric[[metric]]$spatial_scale[[spatial_scale]][[approach]]$unit) # nolint:line_length_linter
+    # define the name of the control variable
+    attr(x, "control_variable") <- relevant_data$control_variable
 
+    # define the unit of the control variable
+    attr(x, "unit") <- relevant_data$unit
+
+    # define long name of the boundary
+    attr(x, "long_name") <- yaml_data$metric[[metric]]$long_name
+  }
+
+  if (!is.null(spatial_scale)) {
+    # define the spatial scale of the control variable
+    attr(x, "spatial_scale") <- spatial_scale
+  }
+
+  if (!is.null(thresholds)) {
+    # define the thresholds of the control variable
+    if (is.null(attr(x, "thresholds")) ||
+          overwrite == TRUE) {
+      attr(x, "thresholds") <- thresholds
+    }
+  }
+
+  class(x) <- c("control_variable")
+  return(x)
 }
 
-list_long_name <- function(metric) {
-  metric <- process_metric(metric = metric)
+# set user-defined attributes for a control variable, that was not computed with
+#     the boundaries package (to make external data compatible with the
+#     control_variable class needed for applying the plotting functions)
+set_attributes_ext <- function(
+  x,
+  spatial_scale = NULL,
+  thresholds = NULL,
+  long_name = NULL,
+  control_variable = NULL,
+  unit = NULL
+) {
 
-  yaml_data <- system.file(
-    "extdata",
-    "metric_files.yml",
-    package = "boundaries"
-  ) %>%
-    yaml::read_yaml()
+  if (!is.null(control_variable)) {
+    # define the name of the control variable
+    attr(control_variable, "control_variable") <- control_variable
+  }
+  if (!is.null(unit)) {
+    # define the unit of the control variable
+    attr(control_variable, "unit") <- unit
+  }
+  if (!is.null(long_name)) {
+    # define long name of the boundary
+    attr(control_variable, "long_name") <- long_name
+  }
+  if (!is.null(spatial_scale)) {
+    # define the spatial scale of the control variable
+    attr(control_variable, "spatial_scale") <- spatial_scale
+  }
+  if (!is.null(thresholds)) {
+    # define the thresholds of the control variable
+    attr(control_variable, "thresholds") <- thresholds
+  }
 
-  return(yaml_data$metric[[metric]]$long_name)
-
+  class(control_variable) <- c("control_variable")
+  return(control_variable)
 }
