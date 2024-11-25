@@ -20,12 +20,12 @@
 #' @examples
 #' \dontrun{
 #' # basic example
-#' efrs <- calcEFRs(discharge_30y = discharge, approach = "vmf")
+#' efrs <- calc_efrs(x = discharge, approach = "vmf")
 #'
 #' dim(efrs)
 #' # c(67420, 12, 1)
 #'
-#'
+#'}
 #' @md
 #' @export
 calc_efrs <- function(x,
@@ -43,9 +43,9 @@ calc_efrs <- function(x,
       dimnames_year <- round(mean(as.numeric(dimnames(x)$year)))
       mmf <- apply(x, c("cell", "month"), mean) %>%
         array(dim = c(dim(x)[1:2], year = 1),
-              dimnames = list(cell = dimnames(x)$cell,
-                              month = dimnames(x)$month,
-                              year = dimnames_year)
+          dimnames = list(cell = dimnames(x)$cell,
+                          month = dimnames(x)$month,
+                          year = dimnames_year)
         )
     }
   } else {
