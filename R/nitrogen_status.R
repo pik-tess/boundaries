@@ -287,10 +287,6 @@ nitrogen_status <- function(
       control_variable <- n_conc
     }
 
-    attr(control_variable, "thresholds") <- thresholds
-    attr(control_variable, "control_variable") <- (
-      "N leaching in runoff to surface water"
-    )
     # non applicable cells
     control_variable[cells_arid] <- NA
     control_variable[cells_low_runoff] <- NA
@@ -378,16 +374,16 @@ nitrogen_status <- function(
     dim_remain <- names(dim(avg_nsurplus))[names(dim(avg_nsurplus)) != "cell"]
     control_variable <- apply(avg_nsurplus, dim_remain, sum, na.rm = TRUE)
 
-    attr(control_variable, "thresholds") <- thresholds
-    attr(control_variable, "control_variable") <- (
-      "N surplus on agricultural land"
-    )
   }
-  attr(control_variable, "spatial_scale") <- spatial_scale
-  attr(control_variable, "unit") <- list_unit("nitrogen", approach,
-                                              spatial_scale)
-  attr(control_variable, "long_name") <- list_long_name("nitrogen")
-  class(control_variable) <- c("control_variable")
+
+  control_variable <- set_attributes(
+    control_variable,
+    approach,
+    "nitrogen",
+    spatial_scale,
+    thresholds
+  )
+
   return(control_variable)
 }
 

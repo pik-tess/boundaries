@@ -366,21 +366,22 @@ lsc_status <- function(
     threshold_attr[, , "holocene"] <- holocene_thresholds
 
     control_variable <- deforestation
-    attr(control_variable, "thresholds") <- threshold_attr
 
   } else if (spatial_scale == "global") {
     dim_remain <- names(dim(deforestation))[names(dim(deforestation)) != "cell"]
     deforestation[as.vector(is_forest == 0), ] <- NA
     control_variable <- apply(deforestation, dim_remain, mean, na.rm = TRUE)
-    attr(control_variable, "thresholds") <- thresholds
+    threshold_attr <- thresholds
 
   }
 
-  attr(control_variable, "control_variable") <- "deforestation"
-  attr(control_variable, "spatial_scale") <- spatial_scale
-  attr(control_variable, "unit") <- list_unit("lsc", approach, spatial_scale)
-  attr(control_variable, "long_name") <- list_long_name("lsc")
-  class(control_variable) <- c("control_variable")
+  control_variable <- set_attributes(
+    control_variable,
+    approach,
+    "lsc",
+    spatial_scale,
+    threshold_attr
+  )
   return(control_variable)
 }
 
