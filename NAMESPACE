@@ -3,6 +3,7 @@
 export(as_risk_level)
 export(biosphere_status)
 export(bluewater_status)
+export(calc_efrs)
 export(calc_status)
 export(classify_biomes)
 export(greenwater_status)
