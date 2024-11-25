@@ -56,9 +56,33 @@ metric:
                         holocene: 50
                         pb: 95
                         highrisk: NULL
+                    control_variable: "area with wet/dry departures"
                     unit: "%"
                 porkka2024: 
                     <<: *wang-erlandsson2022_bw
+                rockstroem2009:
+                    output: 
+                        irrig:
+                            resolution: "annual"
+                            optional: false
+                        conv_loss_evap:
+                            resolution: "annual"
+                            optional: false
+                        return_flow_b:
+                            resolution: "annual"
+                            optional: false
+                        wateruse_hil:
+                            resolution: "annual"
+                            optional: false
+                        terr_area:
+                            resolution: "annual"
+                            optional: false
+                    threshold:
+                        holocene: 0
+                        pb: 4000
+                        highrisk: 6000
+                    control_variable: "bluewater consumption"
+                    unit: "km3/yr"
             subglobal:
                 wang-erlandsson2022: &wang-erlandsson2022_bw_sub
                     output:
@@ -81,6 +105,7 @@ metric:
                         holocene: 50
                         pb: 95
                         highrisk: NULL
+                    control_variable: "area with wet/dry departures"
                     unit: "%"
                 porkka2024:
                     <<: *wang-erlandsson2022_bw_sub
@@ -98,6 +123,7 @@ metric:
                         holocene: 0
                         pb: 5
                         highrisk: 75
+                    control_variable: "EFR transgression to uncertainty ratio"
                     unit: "%"
         fun_name: "bluewater_status"
         # Called boundaries functions
@@ -128,6 +154,7 @@ metric:
                        holocene: 50
                        pb: 95
                        highrisk: NULL
+                    control_variable: "area with wet/dry departures"
                     unit: "%"
                 porkka2024: 
                     <<: *wang-erlandsson2022_gw
@@ -153,6 +180,7 @@ metric:
                         holocene: 50
                         pb: 95
                         highrisk: NULL
+                    control_variable: "area with wet/dry departures"
                     unit: "%"
                 porkka2024:
                     <<: *wang-erlandsson2022_gw_sub
@@ -193,6 +221,7 @@ metric:
                         holocene: 0
                         pb: 2
                         highrisk: 5
+                    control_variable: "N leaching in runoff to surface water"
                     unit: "mg N l-1"
                 braun2022_minusref:
                     <<: *braun2022_n
@@ -221,6 +250,7 @@ metric:
                         holocene: 0
                         pb: 35
                         highrisk: 84
+                    control_variable: "N surplus on agricultural land"
                     unit: "Tg N yr-1"
         # Called boundaries functions
         fun_name: "nitrogen_status"
@@ -243,6 +273,7 @@ metric:
                         holocene: 0
                         pb: 25
                         highrisk: 46
+                    control_variable: "deforestation"
                     unit: "%"
             subglobal:
                 steffen2015: &steffen2015_lsc
@@ -265,6 +296,7 @@ metric:
                             boreal: 40
                             temperate: 70
                             tropical: 40
+                    control_variable: "deforestation"
                     unit: "%"
             grid:
                 steffen2015:
@@ -317,6 +349,7 @@ metric:
                         holocene: 0
                         pb: 10
                         highrisk: 20
+                    control_variable: "BioCol"
                     unit: "%"
             subglobal:
                 stenzel2023:
@@ -324,6 +357,7 @@ metric:
                       <<: [*biome_output, *stenzel2023_biosphere_output]
                     threshold:
                       <<: *stenzel2023_biosphere_threshold
+                    control_variable: "BioCol"
                     unit: "%"
             grid:
                 stenzel2023:
@@ -331,6 +365,7 @@ metric:
                       <<: *stenzel2023_biosphere_output
                     threshold:
                       <<: *stenzel2023_biosphere_threshold
+                    control_variable: "BioCol"
                     unit: "%"
 
         # Called boundaries functions

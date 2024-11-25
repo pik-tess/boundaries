@@ -272,14 +272,15 @@ biosphere_status <- function(
     x = control_variable_raw * 100,
     time_series_avg = time_series_avg
   )
-  attr(control_variable, "spatial_scale") <- spatial_scale
-  attr(control_variable, "thresholds") <- thresholds
-  attr(control_variable, "unit") <- list_unit("biosphere", approach,
-                                              spatial_scale)
-  attr(control_variable, "control_variable") <- "BioCol"
-  attr(control_variable, "long_name") <- list_long_name("biosphere")
 
-  class(control_variable) <- c("control_variable")
+  control_variable <- set_attributes(
+    control_variable,
+    approach,
+    "biosphere",
+    spatial_scale,
+    thresholds
+  )
+
   return(control_variable)
 
 } # end of biosphere_status

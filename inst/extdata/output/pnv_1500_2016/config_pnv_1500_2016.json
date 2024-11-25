@@ -16099,7 +16099,7 @@
     },
     {
       "id": 34,
-      "name": "return_flow_b",
+      "name": "mreturn_flow_b",
       "timestep": "monthly",
       "var": "return_flow_b",
       "descr": "blue water return flow of runoff",
@@ -19636,7 +19636,7 @@
       "id": "return_flow_b",
       "file": {
         "fmt": "raw",
-        "name": "extdata/output/pnv_1500_2016/return_flow_b.bin"
+        "name": "extdata/output/pnv_1500_2016/mreturn_flow_b.bin"
       }
     },
     {
@@ -19678,7 +19678,7 @@
       "id": "conv_loss_evap",
       "file": {
         "fmt": "raw",
-        "name": "extdata/output/pnv_1500_2016/aconv_loss_evap.bin"
+        "name": "extdata/output/pnv_1500_2016/conv_loss_evap.bin"
       }
     },
     {
@@ -19868,6 +19868,13 @@
       "file": {
         "fmt": "raw",
         "name": "extdata/output/pnv_1500_2016/uptakec_mgrass.bin"
+      }
+    },
+    {
+      "id": "wateruse_hil",
+      "file": {
+        "fmt": "raw",
+        "name": "extdata/output/lu_1500_2016/wateruse_hil.bin"
       }
     }
   ],
