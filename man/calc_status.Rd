@@ -30,7 +30,7 @@ information about the LPJmL run, e.g. the output directory}
 reference run}
 
 \item{spatial_scale}{character string indicating spatial resolution
-options: "global", "subglobal", "grid";}
+options: "global", "regional", "grid";}
 
 \item{time_span_scenario}{time span to be used for the scenario run, defined
 as an integer (or character) vector, e.g. \code{1982:2011} (default)}
@@ -46,10 +46,11 @@ calculation, for \code{1} the whole time span is used to calculate a status time
 series.}
 
 \item{approach}{list of methods to be used for each boundary. If \code{NULL} the
-default approach is used}
+default approach is used, e.g. list(bluewater = "rockstroem2009")}
 
 \item{thresholds}{list of thresholds to be used for each boundary. If \code{NULL}
-the default thresholds are used}
+the default thresholds are used,
+e.g. list(bluewater = list("pb" = 2700, "highrisk" = 4000, "holocene" = 0))}
 
 \item{in_parallel}{logical, if \code{TRUE} the function uses parallelization
 (default) based on the \code{future} package (asynchronous execution). If \code{FALSE}

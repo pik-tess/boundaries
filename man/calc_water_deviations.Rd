@@ -8,7 +8,7 @@ from a corresponding monthly reference variable}
 calc_water_deviations(
   files_scenario,
   files_reference,
-  spatial_scale = "subglobal",
+  spatial_scale = "regional",
   time_span_scenario = NULL,
   time_span_reference,
   approach = "porkka2024",
@@ -29,7 +29,7 @@ provided in XXX. E.g.: list(leaching = "/temp/leaching.bin.json"). If not
 needed for the applied approach, set to NULL.}
 
 \item{spatial_scale}{character string indicating spatial scale;
-"global" or "subglobal" for calculation of the share (\%) of total
+"global" or "regional" for calculation of the share (\%) of total
 global/basin area with deviations (either one value per year
 (wang-erlandsson2022) or one value per year and month (porkka2024)); "grid"
 not yet defined}
@@ -52,7 +52,7 @@ approach is \code{c("wang-erlandsson2022")} based on
 
 \item{thresholds}{list with thresholds to be used to
 define the safe, increasing risk and high risk zone,
-For spatial_scale = "global" and "subglobal", this refers to the quantiles of
+For spatial_scale = "global" and "regional", this refers to the quantiles of
 the global/basin area with deviations in the reference period. The default
 is: c(holocene = 50, pb = 95, highrisk = NULL).
 If set to NULL, the  default is taken from metric_files.yml

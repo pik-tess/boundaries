@@ -26,7 +26,7 @@ greenwater_status(
 \code{\link[=calc_status]{calc_status()}}.}
 
 \item{spatial_scale}{character string indicating spatial resolution
-either "grid", "subglobal" or "global" for calculation of the share (\%)
+either "grid", "regional" or "global" for calculation of the share (\%)
 of total global area with deviations}
 
 \item{time_span_scenario}{time span to use output from the scenario run,

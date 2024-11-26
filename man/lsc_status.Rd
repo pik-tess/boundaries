@@ -7,7 +7,7 @@
 lsc_status(
   files_scenario,
   files_reference,
-  spatial_scale = "subglobal",
+  spatial_scale = "regional",
   time_span_scenario = as.character(1982:2011),
   time_span_reference = time_span_scenario,
   approach = "steffen2015",
@@ -28,7 +28,7 @@ lsc_status(
 \code{\link[=calc_status]{calc_status()}}.}
 
 \item{spatial_scale}{character. Spatial resolution, available options
-are \code{"subglobal"} (at the biome level, default), \code{"global"} and \code{"grid"}}
+are \code{"regional"} (at the biome level, default), \code{"global"} and \code{"grid"}}
 
 \item{time_span_scenario}{time span to use output from the scenario run,
 e.g. \code{1982:2011}.}
@@ -59,7 +59,7 @@ pb = threshold between safe zone and increasing risk zone
 (e.g. 50\% for boreal forest with default value)
 highrisk = threshold between increasing risk and high risk zone}
 
-\item{eurasia}{logical. If \code{spatial_scale} = \code{"subglobal"} merge continents
+\item{eurasia}{logical. If \code{spatial_scale} = \code{"regional"} merge continents
 Europe and Asia to avoid arbitrary biome cut at europe/asia border.
 Defaults to \code{TRUE}}
 

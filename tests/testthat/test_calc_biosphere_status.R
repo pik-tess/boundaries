@@ -141,7 +141,7 @@ test_that("test biosphere_status grid", {
 
 
 
-test_that("test biosphere_status subglobal", {
+test_that("test biosphere_status regional", {
 
   timeframe <- as.character(1986:2016)
 
@@ -157,7 +157,7 @@ test_that("test biosphere_status subglobal", {
     ),
     time_span_scenario = timeframe,
     time_span_reference = timeframe,
-    spatial_scale = "subglobal",
+    spatial_scale = "regional",
     time_series_avg = 1,
     in_parallel = FALSE,
     savanna_proxy = list(vegc = 7500),

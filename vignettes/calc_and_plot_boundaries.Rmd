@@ -166,13 +166,14 @@ simulated key variables with global literature estimates (3).
 ## Usage
 
 ```{r setup, echo = TRUE, eval = FALSE, highlight = TRUE}
-library(boundaries)
+library(boundaries) # nolint:undesirable_function_linter
 
 # set paths to lpjml configuration files and outputs
 path_configurations <- "./lpjml/configurations/"
 config_path_scenario <- paste0(path_configurations, "config_scenario.json")
 config_path_reference <- paste0(path_configurations, "config_reference.json")
 path_outputs <- "./lpjml/output/"
+path_outputs_pnv <- paste0(path_outputs, "pnv/")
 
 plotpath <- paste0("./R/plots/")
 
@@ -334,7 +335,7 @@ time_span_scenario <- as.character(2008:2017)
 time_span_reference <- as.character(1500:1699)
 # if the land use effect is to be isolated, the time span for the reference
 # period can be set to the same as the scenario period:
-# time_span_reference <- as.character(2008:2017)
+# time_span_reference <- as.character(2008:2017) #nolint
 # This way, climate change induced changes are excluded.
 
 # calc status at the gridded level
@@ -365,7 +366,7 @@ gridded_status <- calc_status(
 plot_status(
   x = gridded_status,
   filename = "./gridded_status_control_variable.png",
-  grid_path = paste0(path_outputs, "/pnv/grid.bin.json"),
+  grid_path = paste0(path_outputs_pnv, "grid.bin.json"),
   risk_level = FALSE
 )
 
@@ -373,7 +374,7 @@ plot_status(
 plot_status(
   x = gridded_status,
   filename = "./gridded_status_risk_level.png",
-  grid_path = paste0(path_outputs, "/pnv/grid.bin.json"),
+  grid_path = paste0(path_outputs_pnv, "grid.bin.json"),
   risk_level = TRUE
 )
 
@@ -386,7 +387,7 @@ plot_status(
 
 \newpage
 ### Regional status\
-For the regional status, the calculation is performed on a aggregated subglobal
+For the regional status, the calculation is performed on a aggregated regional
 level that makes sense for the respective boundary. For example, for the land
 system change boundary, the regional status is calculated at the level of forest
 biomes, for biosphere integrity at the level of biomes, and for bluewater at
@@ -409,7 +410,7 @@ regional_status <- calc_status(
   config_reference = config_path_scenario,
   time_span_scenario = time_span_scenario,
   time_span_reference = time_span_reference,
-  spatial_scale = "subglobal",
+  spatial_scale = "regional",
   approach = list("bluewater" = "porkka2024",
                   "greenwater" = "porkka2024"),
   path_baseline = paste0(path_outputs, "/pnv/"), # for biosphere integrity
@@ -426,10 +427,9 @@ regional_status <- calc_status(
 plot_status(
   x = regional_status,
   filename = "./regional_status_risk_level.png",
-  grid_path = paste0(path_outputs, "/pnv/grid.bin.json"),
+  grid_path = paste0(path_outputs_pnv, "grid.bin.json"),
   risk_level = TRUE
 )
-
 ```
 
 &nbsp;

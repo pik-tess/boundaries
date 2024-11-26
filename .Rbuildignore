@@ -11,3 +11,4 @@
 ^\.github$
 ^codecov\.yml$
 ^CONTRIBUTING\.md$
+^vignettes/.lintr$

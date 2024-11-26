@@ -7,7 +7,7 @@
 biosphere_status(
   files_scenario,
   files_reference,
-  spatial_scale = "subglobal",
+  spatial_scale = "regional",
   time_span_scenario = as.character(1982:2011),
   time_span_reference = NULL,
   approach = "stenzel2023",
@@ -33,7 +33,7 @@ npp = "/temp/npp.bin.json"). Handled via \code{\link{calc_status}}.}
 In this case only NPP is required. list(npp = "/temp/npp.bin.json").}
 
 \item{spatial_scale}{character string indicating spatial resolution
-either "grid", "subglobal" or "global"}
+either "grid", "regional" or "global"}
 
 \item{time_span_scenario}{time span to be used for the scenario run, defined
 as character string}
@@ -72,7 +72,7 @@ according to Haberl et al. 2007). Below BioCol will be set to 0.
 \item{biocol_option}{which biocol values to use for aggregation. options:
 netsum, only_above_zero, abs}
 
-\item{eurasia}{logical. If \code{spatial_scale} = \code{"subglobal"} merge continents
+\item{eurasia}{logical. If \code{spatial_scale} = \code{"regional"} merge continents
 Europe and Asia to avoid arbitrary biome cut at europe/asia border.
 Defaults to \code{TRUE}}
 
