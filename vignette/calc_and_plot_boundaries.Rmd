@@ -23,13 +23,12 @@ knitr::opts_chunk$set(
 )
 ```
 
-**Calculate and plot boundaries** `r if (!knitr::is_latex_output()) {"&#127939;"}`
+**Calculate and plot boundaries** `r if (!knitr::is_latex_output()) {"&#9998;&#128202;"}`
 describes the calculation and plotting of planetary boundary statuses at
 different spatial scales based on LPJmL. It aims to simplify the post-processing
 of LPJmL output data and to make the calculations and visualizations transparent
 and flexible.
 
-\newline
 
 ## Overview
 
@@ -48,7 +47,7 @@ Calculate the boundaries (1) and plot them (2).
 In a seperate step, a global validation table can be created to compare the
 simulated key variables with global literature estimates (3). 
 
-#### **1. `r if (!knitr::is_latex_output()) {"&#128203;"}` Calculate boundaries**\
+#### **1. `r if (!knitr::is_latex_output()) {"&#9999;"}` Calculate boundaries**\
   \
   Define in `calc_status` which boundaries should be calculated, at which
   spatial scale and for which timeframe, as well as additional parameters such
@@ -78,12 +77,12 @@ simulated key variables with global literature estimates (3).
     approach = list("bluewater" = "porkka2024",
                     "greenwater" = "porkka2024",
                     "nitrogen" = "schulte_uebbing2022")
-  )  
+  )
   ```
 
 \newpage
 
-#### **2. `r if (!knitr::is_latex_output()) {"&#9997;"}` Plot boundary status(es)**\
+#### **2. `r if (!knitr::is_latex_output()) {"&#128202;"}` Plot boundary status(es)**\
   \
   The status of the control variable(s) can now be visualized using the
   `plot_status` function, by transferring the output of the `calc_status`
@@ -102,7 +101,7 @@ simulated key variables with global literature estimates (3).
   status_legend(filename = "./legend.png")
   ```
 
-#### **3. `r if (!knitr::is_latex_output()) {"&#128269;"}` Create global validation table**\
+#### **3. `r if (!knitr::is_latex_output()) {"&#128203;"}` Create global validation table**\
   \
   The function `validate_simulation` compares relevant key variables that impact
   the control variable status, such as (i) inputs to the LPJmL model (e.g.
@@ -131,7 +130,7 @@ simulated key variables with global literature estimates (3).
   ```
 
 
-#### **miscellaneous** \
+#### **Miscellaneous** \
   \
   More helpful functions that come with the package are:
 
@@ -168,12 +167,6 @@ simulated key variables with global literature estimates (3).
 
 ```{r setup, echo = TRUE, eval = FALSE, highlight = TRUE}
 library(boundaries)
-# Why tibble? -> https://r4ds.had.co.nz/tibbles.html
-# Tibbles also provide a better overview of the data and directly show the type
-# of each column, which is very important for integer/floating point values.
-# TODO any other packages needed? biospheremetrics, tidyr, lpjmlkit?)
-
-library(tibble)
 
 # set paths to lpjml configuration files and outputs
 path_configurations <- "./lpjml/configurations/"
@@ -182,18 +175,6 @@ config_path_reference <- paste0(path_configurations, "config_reference.json")
 path_outputs <- "./lpjml/output/"
 
 plotpath <- paste0("./R/plots/")
-
-  validation_table <- validate_simulation(
-    config_scenario = config_path_scenario,
-    config_reference = config_path_reference,
-    path_baseline = output_path_baseline,
-    time_span_scenario = as.character(2005:2014),
-    time_span_reference = as.character(1500:1699),
-    filename = "./validation_table.csv",
-    approach = list("bluewater" = "porkka2024",
-                    "greenwater" = "porkka2024",
-                    "nitrogen" = "schulte_uebbing2022")
-  )
 
 ```
 
