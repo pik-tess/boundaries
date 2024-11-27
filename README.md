@@ -64,7 +64,7 @@ In case of questions / problems please contact Johanna Braun <braun@pik-potsdam.
 
 To cite package **boundaries** in publications use:
 
-Braun J, Breier J, Stenzel F, Vanelli C (2024). _boundaries: Planetary Boundary Status based on LPJmL simulations_. doi: 10.5281/zenodo.11550559 (URL: https://doi.org/10.5281/zenodo.11550559), R package version 1.2.0, <URL: https://github.com/PIK-tess/boundaries>.
+Braun J, Breier J, Stenzel F, Vanelli C (2024). _boundaries: Planetary Boundary Status based on LPJmL simulations_. doi:10.5281/zenodo.11550559 <https://doi.org/10.5281/zenodo.11550559>, R package version 1.2.0, <https://github.com/PIK-tess/boundaries>.
 
 A BibTeX entry for LaTeX users is
 
@@ -74,7 +74,7 @@ A BibTeX entry for LaTeX users is
   author = {Johanna Braun and Jannes Breier and Fabian Stenzel and Caterina Vanelli},
   year = {2024},
   note = {R package version 1.2.0},
-  doi = {10.5281/zenodo.11550559},
   url = {https://github.com/PIK-tess/boundaries},
+  doi = {10.5281/zenodo.11550559},
 }
 ```
