@@ -49,18 +49,19 @@ simulated key variables with global literature estimates (3).
 
 #### **1. `r if (!knitr::is_latex_output()) {"&#9999;"}` Calculate boundaries**\
   \
-  Define in `calc_status` which boundaries should be calculated, at which
-  spatial scale and for which timeframe, as well as additional parameters such
-  as the calculation approach to use or the boundary and high risk values
-  (see `?calc_status` *for more information*). This is the core wrapper function
-  that calls the functions to calculate the individual boundaries.
-  To change parameters that are specific to individual boundaries (e.g. the
-  minimum tree cover to define forest biomes for the land system change
-  boundary, `tree_cover_thresholds`), please refer to the documentation of the
-  individual boundary status functions (see `?[boundary_name]_status`). 
-  
-  The function returns a list with the status of the contol variable(s) with
-  attributes, such as the boundary and high risk values, the unit, and
+  Use `calc_status()` to calculate the boundary status. Define which boundaries
+  should be calculated, at which `spatial_scale` and for which `time_span`,
+  as well as additional arguments such as the calculation `approach` to use
+  (see `?calc_status` *for more information*).  
+  Each boundary calculation
+  `boundary = c("bluewater", "greenwater", "lsc", "nitrogen", "biosphere")` has
+  its own underlying calculation function, for which additional arguments can be
+  passed to `calc_status()`, e.g. the minimum tree cover `tree_cover_thresholds`
+  to define forest biomes in `lsc_status()`.  
+  See e.g. `?lsc_status` (boundary + "_status") for more information.  
+  The function returns a list with objects of class control_variable,
+  referring to the status of the contol variable(s) with attributes, such as the
+  boundary and high risk values, the unit, and
   the spatial resolution.
 
   ```{r, echo = TRUE, eval = FALSE, highlight = TRUE}
@@ -84,17 +85,17 @@ simulated key variables with global literature estimates (3).
 
 #### **2. `r if (!knitr::is_latex_output()) {"&#128202;"}` Plot boundary status(es)**\
   \
-  The status of the control variable(s) can now be visualized using the
-  `plot_status` function, by transferring the output of the `calc_status`
+  The status of the control variable(s) can be visualized using the
+  `plot_status()` function, by transferring the output of the `calc_status()`
   function. Depending on the spatial scale, the function applies different
   plotting functions (maps for `grid` and `regional` scale; timeseries plots for
-  `global` scale). See `?plot_status` *for more information*, as well as the
-  individual plotting functions called by `plot_status` for the different
-  spatial scales (`status_map` for `grid` and `regional` scale;
-  `status_stylized` (radial plot) or `status_global` (Cartesian coordinate
+  `global` scale). See `?plot_status()` *for more information*, as well as the
+  individual plotting functions called by `plot_status()` for the different
+  spatial scales (`status_map()` for `grid` and `regional` scale;
+  `status_stylized()` (radial plot) or `status_global` (Cartesian coordinate
   system) for `global` scale).
   For some plots, the legend is not automatically plotted, but can be plotted
-  separately using the `status_legend` function.
+  separately using the `status_legend()` function.
 
   ```{r, echo = TRUE, eval = FALSE, highlight = TRUE}
   plot_status(global_status, filename = "./global_status.png")
@@ -103,17 +104,17 @@ simulated key variables with global literature estimates (3).
 
 #### **3. `r if (!knitr::is_latex_output()) {"&#128203;"}` Create global validation table**\
   \
-  The function `validate_simulation` compares relevant key variables that impact
+  The function `validate_simulation()` compares relevant key variables that impact
   the control variable status, such as (i) inputs to the LPJmL model (e.g.
   nitrogen fertilization) and (ii) processed LPJmL outputs (e.g. irrigation
   water consumption), as well as (iii) the control variable status values
   themselves with global literature estimates. The parameter settings should
-  match those chosen for application of the `calc_status` function at the global
+  match those chosen for application of the `calc_status()` function at the global
   level, except for `time_span_scenario`, which should match the timespans/years
-  of the literature estimates (see `./inst/extdata/global_validation_data.csv`
+  of the literature estimates (see `./extdata/global_validation_data.csv`
   for an overview of included literature data). The computed results will
   be averaged over this timespan. 
-  See `?validate_simulation` *for more information*.
+  See `?validate_simulation` for more information.
 
   ```{r, echo = TRUE, eval = FALSE, highlight = TRUE}
   validation_table <- validate_simulation(
@@ -134,21 +135,21 @@ simulated key variables with global literature estimates (3).
   \
   More helpful functions that come with the package are:
 
-  * `classify_biomes` to determine spatially-explicit biome extents based on the
+  * `classify_biomes()` to determine spatially-explicit biome extents based on the
     foliar projected cover of different plant functional types simulated in 
     LPJmL, the annual mean temperature and elevation (inputs to LPJmL). This
     function is used, amongst others, to calculate the land system change
     boundary status but can also be used independently.
 
-  * `plot_biomes` to visualize the spatially-explicit biome extents calculated
+  * `plot_biomes()` to visualize the spatially-explicit biome extents calculated
     with `classify_biomes`.
 
-  * `calc_efrs` to calculate environmental flow requirements based on different
+  * `calc_efrs()` to calculate environmental flow requirements based on different
     defined approaches based on LPJmL discharge output data. This is used for 
     the blue water boundary status at the gridded level but can be relevant also
     for other applications.
   
-  * `as_risk_level` to convert the status of a control variable to a risk level
+  * `as_risk_level()` to convert the status of a control variable to a risk level
     based on the boundary and high risk values. If the risk level is not to be
     plotted but needed for further analysis, this function can be directly
     applied to the output of `calc_status`.

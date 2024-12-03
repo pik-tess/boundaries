@@ -3,7 +3,7 @@ message: If you use this software, please cite it using the metadata from this f
 type: software
 title: 'boundaries: Planetary Boundary Status based on LPJmL simulations'
 version: 1.2.0
-date-released: '2024-11-27'
+date-released: '2024-12-03'
 abstract: A systematic approach to quantify the status of the terrestrial planetary
   boundaries based on the Dynamic Global Vegetation Model (DGVM) Lund-Potsdam-Jena
   managed Land (LPJmL) hosted at the Potsdam Institute for Climate Impact Research

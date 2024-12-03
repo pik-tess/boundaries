@@ -11,7 +11,7 @@
 
 <meta name="author" content="Johanna Braun" />
 
-<meta name="date" content="2024-11-27" />
+<meta name="date" content="2024-12-03" />
 
 <title>Calculate and plot boundaries</title>
 
@@ -352,7 +352,7 @@ display: none;
 
 <h1 class="title toc-ignore">Calculate and plot boundaries</h1>
 <h4 class="author">Johanna Braun</h4>
-<h4 class="date">2024-11-27</h4>
+<h4 class="date">2024-12-03</h4>
 
 </div>
 
@@ -382,20 +382,23 @@ with global literature estimates (3).</p>
 <h4><strong>1. ✏ Calculate boundaries</strong><br />
 </h4>
 <p><br />
-Define in <code>calc_status</code> which boundaries should be
-calculated, at which spatial scale and for which timeframe, as well as
-additional parameters such as the calculation approach to use or the
-boundary and high risk values (see <code>?calc_status</code> <em>for
-more information</em>). This is the core wrapper function that calls the
-functions to calculate the individual boundaries. To change parameters
-that are specific to individual boundaries (e.g. the minimum tree cover
-to define forest biomes for the land system change boundary,
-<code>tree_cover_thresholds</code>), please refer to the documentation
-of the individual boundary status functions (see
-<code>?[boundary_name]_status</code>).</p>
-<p>The function returns a list with the status of the contol variable(s)
-with attributes, such as the boundary and high risk values, the unit,
-and the spatial resolution.</p>
+Use <code>calc_status()</code> to calculate the boundary status. Define
+which boundaries should be calculated, at which
+<code>spatial_scale</code> and for which <code>time_span</code>, as well
+as additional arguments such as the calculation <code>approach</code> to
+use (see <code>?calc_status</code> <em>for more information</em>).<br />
+Each boundary calculation
+<code>boundary = c(&quot;bluewater&quot;, &quot;greenwater&quot;, &quot;lsc&quot;, &quot;nitrogen&quot;, &quot;biosphere&quot;)</code>
+has its own underlying calculation function, for which additional
+arguments can be passed to <code>calc_status()</code>, e.g. the minimum
+tree cover <code>tree_cover_thresholds</code> to define forest biomes in
+<code>lsc_status()</code>.<br />
+See e.g. <code>?lsc_status</code> (boundary + “_status”) for more
+information.<br />
+The function returns a list with objects of class control_variable,
+referring to the status of the contol variable(s) with attributes, such
+as the boundary and high risk values, the unit, and the spatial
+resolution.</p>
 <pre class="r"><code>global_status &lt;- calc_status(
   boundary = c(&quot;bluewater&quot;, &quot;greenwater&quot;, &quot;lsc&quot;, &quot;nitrogen&quot;, &quot;biosphere&quot;),
   config_scenario = config_path_scenario,
@@ -416,20 +419,20 @@ and the spatial resolution.</p>
 <h4><strong>2. 📊 Plot boundary status(es)</strong><br />
 </h4>
 <p><br />
-The status of the control variable(s) can now be visualized using the
-<code>plot_status</code> function, by transferring the output of the
-<code>calc_status</code> function. Depending on the spatial scale, the
+The status of the control variable(s) can be visualized using the
+<code>plot_status()</code> function, by transferring the output of the
+<code>calc_status()</code> function. Depending on the spatial scale, the
 function applies different plotting functions (maps for
 <code>grid</code> and <code>regional</code> scale; timeseries plots for
-<code>global</code> scale). See <code>?plot_status</code> <em>for more
+<code>global</code> scale). See <code>?plot_status()</code> <em>for more
 information</em>, as well as the individual plotting functions called by
-<code>plot_status</code> for the different spatial scales
-(<code>status_map</code> for <code>grid</code> and <code>regional</code>
-scale; <code>status_stylized</code> (radial plot) or
-<code>status_global</code> (Cartesian coordinate system) for
+<code>plot_status()</code> for the different spatial scales
+(<code>status_map()</code> for <code>grid</code> and
+<code>regional</code> scale; <code>status_stylized()</code> (radial
+plot) or <code>status_global</code> (Cartesian coordinate system) for
 <code>global</code> scale). For some plots, the legend is not
 automatically plotted, but can be plotted separately using the
-<code>status_legend</code> function.</p>
+<code>status_legend()</code> function.</p>
 <pre class="r"><code>plot_status(global_status, filename = &quot;./global_status.png&quot;)
 status_legend(filename = &quot;./legend.png&quot;)</code></pre>
 </div>
@@ -437,19 +440,19 @@ status_legend(filename = &quot;./legend.png&quot;)</code></pre>
 <h4><strong>3. 📋 Create global validation table</strong><br />
 </h4>
 <p><br />
-The function <code>validate_simulation</code> compares relevant key
+The function <code>validate_simulation()</code> compares relevant key
 variables that impact the control variable status, such as (i) inputs to
 the LPJmL model (e.g. nitrogen fertilization) and (ii) processed LPJmL
 outputs (e.g. irrigation water consumption), as well as (iii) the
 control variable status values themselves with global literature
 estimates. The parameter settings should match those chosen for
-application of the <code>calc_status</code> function at the global
+application of the <code>calc_status()</code> function at the global
 level, except for <code>time_span_scenario</code>, which should match
 the timespans/years of the literature estimates (see
-<code>./inst/extdata/global_validation_data.csv</code> for an overview
-of included literature data). The computed results will be averaged over
-this timespan. See <code>?validate_simulation</code> <em>for more
-information</em>.</p>
+<code>./extdata/global_validation_data.csv</code> for an overview of
+included literature data). The computed results will be averaged over
+this timespan. See <code>?validate_simulation</code> for more
+information.</p>
 <pre class="r"><code>validation_table &lt;- validate_simulation(
   config_scenario = config_path_scenario,
   config_reference = config_path_reference,
@@ -468,20 +471,20 @@ information</em>.</p>
 <p><br />
 More helpful functions that come with the package are:</p>
 <ul>
-<li><p><code>classify_biomes</code> to determine spatially-explicit
+<li><p><code>classify_biomes()</code> to determine spatially-explicit
 biome extents based on the foliar projected cover of different plant
 functional types simulated in LPJmL, the annual mean temperature and
 elevation (inputs to LPJmL). This function is used, amongst others, to
 calculate the land system change boundary status but can also be used
 independently.</p></li>
-<li><p><code>plot_biomes</code> to visualize the spatially-explicit
+<li><p><code>plot_biomes()</code> to visualize the spatially-explicit
 biome extents calculated with <code>classify_biomes</code>.</p></li>
-<li><p><code>calc_efrs</code> to calculate environmental flow
+<li><p><code>calc_efrs()</code> to calculate environmental flow
 requirements based on different defined approaches based on LPJmL
 discharge output data. This is used for the blue water boundary status
 at the gridded level but can be relevant also for other
 applications.</p></li>
-<li><p><code>as_risk_level</code> to convert the status of a control
+<li><p><code>as_risk_level()</code> to convert the status of a control
 variable to a risk level based on the boundary and high risk values. If
 the risk level is not to be plotted but needed for further analysis,
 this function can be directly applied to the output of
