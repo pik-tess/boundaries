@@ -50,7 +50,7 @@ test_that("test greenwater_status global", {
   )
 })
 
-test_that("test greenwater_status subglobal", {
+test_that("test greenwater_status regional", {
 
   timeframe <- as.character(1986:2016)
 
@@ -66,7 +66,7 @@ test_that("test greenwater_status subglobal", {
     ),
     time_span_scenario = timeframe,
     time_span_reference = timeframe,
-    spatial_scale = "subglobal",
+    spatial_scale = "regional",
     approach = list(greenwater = "porkka2024"),
     time_series_avg = c(1),
     in_parallel = FALSE,

@@ -34,7 +34,7 @@
 #'
 #' @param thresholds list with thresholds to be used to
 #' define the safe, increasing risk and high risk zone,
-#' For spatial_scale = "global" and "subglobal", this refers to the quantiles of
+#' For spatial_scale = "global" and "regional", this refers to the quantiles of
 #' the global/basin area with deviations in the reference period. The default
 #' is: c(holocene = 50, pb = 95, highrisk = NULL).
 #' If set to NULL, the  default is taken from metric_files.yml
@@ -42,7 +42,7 @@
 #' (following Richardson et al. 2023)
 #'
 #' @param spatial_scale character string indicating spatial scale;
-#' "global" or "subglobal" for calculation of the share (%) of total
+#' "global" or "regional" for calculation of the share (%) of total
 #' global/basin area with deviations (either one value per year
 #' (wang-erlandsson2022) or one value per year and month (porkka2024)); "grid"
 #' not yet defined
@@ -61,7 +61,7 @@
 #' @md
 calc_water_deviations <- function(files_scenario,
                                   files_reference,
-                                  spatial_scale = "subglobal",
+                                  spatial_scale = "regional",
                                   time_span_scenario = NULL,
                                   time_span_reference,
                                   approach = "porkka2024",
@@ -97,10 +97,10 @@ calc_water_deviations <- function(files_scenario,
                           approach = approach)
 
   # -------------------------------------------------------------------------- #
-  # calculate the area with dry/wet departures (subglobal and global resolution)
+  # calculate the area with dry/wet departures (regional and global resolution)
 
-  # get basin information for subglobal resolution
-  if (spatial_scale == "subglobal") {
+  # get basin information for regional resolution
+  if (spatial_scale == "regional") {
     cellinfo <- indexing_drainage(drainage_file = files_scenario$drainage)
     if (!is.null(config_args$spatial_subset)) {
       cellinfo <- lpjmlkit::asub(cellinfo, cell = config_args$spatial_subset)
@@ -197,7 +197,7 @@ calc_water_deviations <- function(files_scenario,
       )
     )
 
-  } else if (spatial_scale == "subglobal") {
+  } else if (spatial_scale == "regional") {
 
     if (approach == "porkka2024") {
       # calculate mean yearly area with transgression for each basin
@@ -360,7 +360,7 @@ calc_departures <- function(
   dry_or_wet <- ifelse((dry == 1 | wet == 1), 1, 0)
 
   control_variable <- list()
-  if (spatial_scale == "subglobal") {
+  if (spatial_scale == "regional") {
     # calculate for each basin and year/month: area with wet/dry departures
     dim_remain <- dim(dry)[names(dim(dry)) != "cell"]
     dimnames_remain <- dimnames(dry)[names(dim(dry)) != "cell"]

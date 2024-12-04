@@ -1,6 +1,6 @@
 # <a href=''><img src='inst/img/logo.png' align='right' alt='logo' height=139 /></a> Planetary Boundary Status based on LPJmL simulations
 
-R package **boundaries**, version **1.1.1**
+R package **boundaries**, version **1.2.0**
 
 [![CRAN status](https://www.r-pkg.org/badges/version/boundaries)](https://cran.r-project.org/package=boundaries) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.11550559.svg)](https://doi.org/10.5281/zenodo.11550559) [![R build status](https://github.com/PIK-tess/boundaries/workflows/check/badge.svg)](https://github.com/PIK-tess/boundaries/actions) [![codecov](https://codecov.io/gh/PIK-tess/boundaries/branch/master/graph/badge.svg)](https://app.codecov.io/gh/PIK-tess/boundaries) [![r-universe](https://pik-piam.r-universe.dev/badges/boundaries)](https://pik-piam.r-universe.dev/builds)
 
@@ -48,6 +48,14 @@ Package updates can be installed using `update.packages` (make sure that the add
 update.packages()
 ```
 
+## Tutorial
+
+The package comes with a vignette describing the basic functionality of the package and how to use it. You can load it with the following command (the package needs to be installed):
+
+```r
+vignette("calc_and_plot_boundaries") # Calculate and plot boundaries
+```
+
 ## Questions / Problems
 
 In case of questions / problems please contact Johanna Braun <braun@pik-potsdam.de>.
@@ -56,7 +64,7 @@ In case of questions / problems please contact Johanna Braun <braun@pik-potsdam.
 
 To cite package **boundaries** in publications use:
 
-Braun J, Breier J, Stenzel F, Vanelli C (2024). _boundaries: Planetary Boundary Status based on LPJmL simulations_. doi: 10.5281/zenodo.11550559 (URL: https://doi.org/10.5281/zenodo.11550559), R package version 1.1.1, <URL: https://github.com/PIK-tess/boundaries>.
+Braun J, Breier J, Stenzel F, Vanelli C (2024). _boundaries: Planetary Boundary Status based on LPJmL simulations_. doi:10.5281/zenodo.11550559 <https://doi.org/10.5281/zenodo.11550559>, R package version 1.2.0, <https://github.com/PIK-tess/boundaries>.
 
 A BibTeX entry for LaTeX users is
 
@@ -65,8 +73,8 @@ A BibTeX entry for LaTeX users is
   title = {boundaries: Planetary Boundary Status based on LPJmL simulations},
   author = {Johanna Braun and Jannes Breier and Fabian Stenzel and Caterina Vanelli},
   year = {2024},
-  note = {R package version 1.1.1},
-  doi = {10.5281/zenodo.11550559},
+  note = {R package version 1.2.0},
   url = {https://github.com/PIK-tess/boundaries},
+  doi = {10.5281/zenodo.11550559},
 }
 ```

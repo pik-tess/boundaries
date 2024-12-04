@@ -13,9 +13,9 @@
 #' via [`calc_status()`].
 #'
 #' @param spatial_scale character string indicating spatial resolution
-#' options: "global", "subglobal", "grid";
+#' options: "global", "regional", "grid";
 #' for "grid" the approach "gerten2020" is applicable based on EFR calculations;
-#' for "global"/"subglobal" the share (%) of total global/basin area with
+#' for "global"/"regional" the share (%) of total global/basin area with
 #' deviations is calculated
 #'
 #' @param time_span_scenario time span to use output from the scenario run,
@@ -29,7 +29,7 @@
 #' [Gerten et al. 2020](https://doi.org/10.1038/s41893-019-0465-1)
 #' for spatial_scale = "grid" and
 #' "wang_erlandsson2022" as well as "porkka2024" for
-#' spatial_scale = "global" or "subglobal"
+#' spatial_scale = "global" or "regional"
 #'
 #' @param time_series_avg integer. Number of years to be used for the moving
 #' average calculation. If `NULL`, all years are averaged for one status
@@ -84,7 +84,7 @@ bluewater_status <- function(
     approach,
     c("gerten2020", "wang-erlandsson2022", "porkka2024", "rockstroem2009")
   )
-  spatial_scale <- match.arg(spatial_scale, c("global", "subglobal", "grid"))
+  spatial_scale <- match.arg(spatial_scale, c("global", "regional", "grid"))
 
   # apply defined approach
   if (spatial_scale == "grid") {
@@ -107,7 +107,7 @@ bluewater_status <- function(
       cut_min = cut_min
     )
 
-  } else if (spatial_scale %in% c("subglobal", "global")) {
+  } else if (spatial_scale %in% c("regional", "global")) {
     if (approach %in% c("wang-erlandsson2022", "porkka2024")) {
       control_variable <- calc_water_deviations(
         files_scenario = files_scenario,

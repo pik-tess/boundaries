@@ -17,7 +17,7 @@ required outputs. Available options are \code{c("biome", "nitrogen", "lsc", "blu
 or just \code{"all"} or \code{"benchmark"}. Default is \code{"all"}.}
 
 \item{spatial_scale}{character. Spatial resolution, available options
-are \code{"subglobal"} (at the biome level), \code{"global"} and
+are \code{"regional"} (at the biome level), \code{"global"} and
 \code{"grid"} or \code{"all"} (default).}
 
 \item{approach}{List of character strings containing the approach to
@@ -40,7 +40,7 @@ in the boundaries package (\code{"./inst/metric_files.yml"}).
 list_outputs(
   "biome",
   approach = list("biome" = approach),
-  spatial_scale = "subglobal",
+  spatial_scale = "regional",
   only_first_filename = FALSE
 )
 }

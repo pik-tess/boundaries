@@ -93,7 +93,7 @@ classify_biomes <- function(config_reference = NULL, # nolint:cyclocomp_linter
     output_files <- list_outputs(
       "biome",
       approach = list("biome" = approach),
-      spatial_scale = "subglobal",
+      spatial_scale = "regional",
       only_first_filename = FALSE
     )
 

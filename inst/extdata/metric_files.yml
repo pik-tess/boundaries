@@ -5,7 +5,7 @@ metric:
     # Biome classification
     biome:
         spatial_scale:
-            subglobal:
+            regional:
                 default:
                     # LPJmL output IDs with required resolution
                     output: &biome_output
@@ -83,7 +83,7 @@ metric:
                         highrisk: 6000
                     control_variable: "bluewater consumption"
                     unit: "km3/yr"
-            subglobal:
+            regional:
                 wang-erlandsson2022: &wang-erlandsson2022_bw_sub
                     output:
                         terr_area:
@@ -158,7 +158,7 @@ metric:
                     unit: "%"
                 porkka2024: 
                     <<: *wang-erlandsson2022_gw
-            subglobal:
+            regional:
                 wang-erlandsson2022: &wang-erlandsson2022_gw_sub
                     output:
                         terr_area:
@@ -275,7 +275,7 @@ metric:
                         highrisk: 46
                     control_variable: "deforestation"
                     unit: "%"
-            subglobal:
+            regional:
                 steffen2015: &steffen2015_lsc
                     # LPJmL output IDs with required resolution
                     output:
@@ -351,7 +351,7 @@ metric:
                         highrisk: 20
                     control_variable: "BioCol"
                     unit: "%"
-            subglobal:
+            regional:
                 stenzel2023:
                     output:
                       <<: [*biome_output, *stenzel2023_biosphere_output]

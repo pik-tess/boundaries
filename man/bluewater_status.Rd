@@ -27,9 +27,9 @@ bluewater_status(
 via \code{\link[=calc_status]{calc_status()}}.}
 
 \item{spatial_scale}{character string indicating spatial resolution
-options: "global", "subglobal", "grid";
+options: "global", "regional", "grid";
 for "grid" the approach "gerten2020" is applicable based on EFR calculations;
-for "global"/"subglobal" the share (\%) of total global/basin area with
+for "global"/"regional" the share (\%) of total global/basin area with
 deviations is calculated}
 
 \item{time_span_scenario}{time span to use output from the scenario run,
@@ -43,7 +43,7 @@ approach is \code{"gerten2020"} based on
 \href{https://doi.org/10.1038/s41893-019-0465-1}{Gerten et al. 2020}
 for spatial_scale = "grid" and
 "wang_erlandsson2022" as well as "porkka2024" for
-spatial_scale = "global" or "subglobal"}
+spatial_scale = "global" or "regional"}
 
 \item{time_series_avg}{integer. Number of years to be used for the moving
 average calculation. If \code{NULL}, all years are averaged for one status
